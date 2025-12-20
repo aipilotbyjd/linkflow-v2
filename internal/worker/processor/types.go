@@ -227,12 +227,7 @@ func parseNodes(data models.JSON) ([]*NodeDefinition, error) {
 
 	nodesRaw, ok := data["nodes"].([]interface{})
 	if !ok {
-		// Try direct array
-		if arr, ok := data.([]interface{}); ok {
-			nodesRaw = arr
-		} else {
-			return nil, nil
-		}
+		return nil, nil
 	}
 
 	nodes := make([]*NodeDefinition, 0, len(nodesRaw))
@@ -284,11 +279,7 @@ func parseConnections(data models.JSON) ([]*Connection, error) {
 
 	connsRaw, ok := data["connections"].([]interface{})
 	if !ok {
-		if arr, ok := data.([]interface{}); ok {
-			connsRaw = arr
-		} else {
-			return nil, nil
-		}
+		return nil, nil
 	}
 
 	connections := make([]*Connection, 0, len(connsRaw))

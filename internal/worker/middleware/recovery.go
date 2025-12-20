@@ -86,7 +86,7 @@ func (m *RetryOnPanicMiddleware) Execute(ctx context.Context, rctx *processor.Ru
 
 	for attempt := 0; attempt <= m.maxRetries; attempt++ {
 		output, err, panicked := m.executeWithRecovery(ctx, rctx, node, next)
-		if !panicked {
+		if panicked == nil {
 			return output, err
 		}
 

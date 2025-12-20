@@ -3,212 +3,90 @@ package middleware
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/worker/processor"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// MetricsMiddleware collects Prometheus metrics for node execution
+// MetricsMiddleware collects metrics for node execution
 type MetricsMiddleware struct {
-	nodeExecutionsTotal *prometheus.CounterVec
-	nodeDuration        *prometheus.HistogramVec
-	nodeErrorsTotal     *prometheus.CounterVec
-	activeNodes         *prometheus.GaugeVec
+	nodeExecutions sync.Map // key -> *nodeMetrics
+	mu             sync.RWMutex
+}
+
+type nodeMetrics struct {
+	total    int64
+	errors   int64
+	duration int64 // total duration in ms
 }
 
 // NewMetricsMiddleware creates a new metrics middleware
 func NewMetricsMiddleware() *MetricsMiddleware {
-	return &MetricsMiddleware{
-		nodeExecutionsTotal: promauto.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "linkflow_node_executions_total",
-				Help: "Total number of node executions",
-			},
-			[]string{"workspace_id", "node_type", "status"},
-		),
-		nodeDuration: promauto.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "linkflow_node_duration_seconds",
-				Help:    "Duration of node executions in seconds",
-				Buckets: prometheus.ExponentialBuckets(0.001, 2, 15), // 1ms to ~16s
-			},
-			[]string{"workspace_id", "node_type"},
-		),
-		nodeErrorsTotal: promauto.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "linkflow_node_errors_total",
-				Help: "Total number of node execution errors",
-			},
-			[]string{"workspace_id", "node_type", "error_type"},
-		),
-		activeNodes: promauto.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "linkflow_active_nodes",
-				Help: "Number of currently executing nodes",
-			},
-			[]string{"workspace_id", "node_type"},
-		),
-	}
+	return &MetricsMiddleware{}
 }
 
 // Execute implements Middleware
 func (m *MetricsMiddleware) Execute(ctx context.Context, rctx *processor.RuntimeContext, node *processor.NodeDefinition, next NextFunc) (map[string]interface{}, error) {
-	workspaceID := rctx.WorkspaceID.String()
-	nodeType := node.Type
-
-	// Track active nodes
-	m.activeNodes.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-	}).Inc()
-	defer m.activeNodes.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-	}).Dec()
+	key := node.Type
 
 	// Track duration
 	startTime := time.Now()
 	result, err := next(ctx)
-	duration := time.Since(startTime)
+	duration := time.Since(startTime).Milliseconds()
 
-	m.nodeDuration.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-	}).Observe(duration.Seconds())
+	// Get or create metrics
+	metricsI, _ := m.nodeExecutions.LoadOrStore(key, &nodeMetrics{})
+	metrics := metricsI.(*nodeMetrics)
 
-	// Track result
-	status := "success"
-	if err != nil {
-		status = "error"
-		m.nodeErrorsTotal.With(prometheus.Labels{
-			"workspace_id": workspaceID,
-			"node_type":    nodeType,
-			"error_type":   classifyError(err),
-		}).Inc()
-	}
-
-	m.nodeExecutionsTotal.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-		"status":       status,
-	}).Inc()
+	atomic.AddInt64(&metrics.total, 1)
+	atomic.AddInt64(&metrics.duration, duration)
 
 	if err != nil {
+		atomic.AddInt64(&metrics.errors, 1)
 		return nil, err
 	}
+
 	return result.Output, nil
 }
 
-// classifyError categorizes errors for metrics
-func classifyError(err error) string {
-	errStr := err.Error()
+// GetMetrics returns collected metrics
+func (m *MetricsMiddleware) GetMetrics() map[string]interface{} {
+	result := make(map[string]interface{})
 
-	switch {
-	case contains(errStr, "timeout"):
-		return "timeout"
-	case contains(errStr, "cancelled") || contains(errStr, "context canceled"):
-		return "cancelled"
-	case contains(errStr, "rate limit"):
-		return "rate_limit"
-	case contains(errStr, "authentication") || contains(errStr, "unauthorized"):
-		return "auth"
-	case contains(errStr, "not found") || contains(errStr, "404"):
-		return "not_found"
-	case contains(errStr, "connection") || contains(errStr, "network"):
-		return "network"
-	default:
-		return "unknown"
-	}
-}
+	m.nodeExecutions.Range(func(key, value interface{}) bool {
+		metrics := value.(*nodeMetrics)
+		total := atomic.LoadInt64(&metrics.total)
+		errors := atomic.LoadInt64(&metrics.errors)
+		duration := atomic.LoadInt64(&metrics.duration)
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && findSubstring(s, substr)
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
+		avgDuration := int64(0)
+		if total > 0 {
+			avgDuration = duration / total
 		}
-	}
-	return false
+
+		result[key.(string)] = map[string]interface{}{
+			"total":            total,
+			"errors":           errors,
+			"error_rate":       float64(errors) / float64(total),
+			"avg_duration_ms":  avgDuration,
+			"total_duration_ms": duration,
+		}
+		return true
+	})
+
+	return result
 }
 
-// WorkflowMetrics tracks workflow-level metrics
-type WorkflowMetrics struct {
-	executionsTotal *prometheus.CounterVec
-	duration        *prometheus.HistogramVec
-	nodesPerExec    *prometheus.HistogramVec
-	activeWorkflows *prometheus.GaugeVec
-}
-
-// NewWorkflowMetrics creates workflow metrics
-func NewWorkflowMetrics() *WorkflowMetrics {
-	return &WorkflowMetrics{
-		executionsTotal: promauto.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "linkflow_workflow_executions_total",
-				Help: "Total number of workflow executions",
-			},
-			[]string{"workspace_id", "trigger_type", "status"},
-		),
-		duration: promauto.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "linkflow_workflow_duration_seconds",
-				Help:    "Duration of workflow executions in seconds",
-				Buckets: prometheus.ExponentialBuckets(0.1, 2, 15), // 100ms to ~27min
-			},
-			[]string{"workspace_id"},
-		),
-		nodesPerExec: promauto.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "linkflow_workflow_nodes_count",
-				Help:    "Number of nodes executed per workflow",
-				Buckets: prometheus.LinearBuckets(1, 5, 20), // 1 to 100
-			},
-			[]string{"workspace_id"},
-		),
-		activeWorkflows: promauto.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "linkflow_active_workflows",
-				Help: "Number of currently executing workflows",
-			},
-			[]string{"workspace_id"},
-		),
-	}
-}
-
-// RecordStart records workflow start
-func (m *WorkflowMetrics) RecordStart(workspaceID string) {
-	m.activeWorkflows.With(prometheus.Labels{"workspace_id": workspaceID}).Inc()
-}
-
-// RecordComplete records workflow completion
-func (m *WorkflowMetrics) RecordComplete(workspaceID, triggerType, status string, duration time.Duration, nodesCount int) {
-	m.activeWorkflows.With(prometheus.Labels{"workspace_id": workspaceID}).Dec()
-
-	m.executionsTotal.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"trigger_type": triggerType,
-		"status":       status,
-	}).Inc()
-
-	m.duration.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-	}).Observe(duration.Seconds())
-
-	m.nodesPerExec.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-	}).Observe(float64(nodesCount))
+// Reset resets all metrics
+func (m *MetricsMiddleware) Reset() {
+	m.nodeExecutions = sync.Map{}
 }
 
 // MetricsCollector implements processor.MetricsCollector
 type MetricsCollector struct {
 	nodeMetrics     *MetricsMiddleware
 	workflowMetrics *WorkflowMetrics
-	mu              sync.RWMutex
 }
 
 // NewMetricsCollector creates a new metrics collector
@@ -221,127 +99,133 @@ func NewMetricsCollector() *MetricsCollector {
 
 // RecordNodeExecution records node execution metrics
 func (mc *MetricsCollector) RecordNodeExecution(workspaceID, nodeType string, duration time.Duration, err error) {
-	status := "success"
-	if err != nil {
-		status = "error"
-	}
+	key := nodeType
 
-	mc.nodeMetrics.nodeExecutionsTotal.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-		"status":       status,
-	}).Inc()
+	metricsI, _ := mc.nodeMetrics.nodeExecutions.LoadOrStore(key, &nodeMetrics{})
+	metrics := metricsI.(*nodeMetrics)
 
-	mc.nodeMetrics.nodeDuration.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"node_type":    nodeType,
-	}).Observe(duration.Seconds())
+	atomic.AddInt64(&metrics.total, 1)
+	atomic.AddInt64(&metrics.duration, duration.Milliseconds())
 
 	if err != nil {
-		mc.nodeMetrics.nodeErrorsTotal.With(prometheus.Labels{
-			"workspace_id": workspaceID,
-			"node_type":    nodeType,
-			"error_type":   classifyError(err),
-		}).Inc()
+		atomic.AddInt64(&metrics.errors, 1)
 	}
 }
 
 // RecordWorkflowExecution records workflow execution metrics
 func (mc *MetricsCollector) RecordWorkflowExecution(workspaceID string, duration time.Duration, nodesCount int, err error) {
-	status := "success"
+	mc.workflowMetrics.RecordExecution(duration, nodesCount, err)
+}
+
+// GetMetrics returns all metrics
+func (mc *MetricsCollector) GetMetrics() map[string]interface{} {
+	return map[string]interface{}{
+		"nodes":     mc.nodeMetrics.GetMetrics(),
+		"workflows": mc.workflowMetrics.GetMetrics(),
+	}
+}
+
+// WorkflowMetrics tracks workflow-level metrics
+type WorkflowMetrics struct {
+	total       int64
+	completed   int64
+	failed      int64
+	duration    int64
+	totalNodes  int64
+	mu          sync.RWMutex
+}
+
+// NewWorkflowMetrics creates workflow metrics
+func NewWorkflowMetrics() *WorkflowMetrics {
+	return &WorkflowMetrics{}
+}
+
+// RecordExecution records a workflow execution
+func (m *WorkflowMetrics) RecordExecution(duration time.Duration, nodesCount int, err error) {
+	atomic.AddInt64(&m.total, 1)
+	atomic.AddInt64(&m.duration, duration.Milliseconds())
+	atomic.AddInt64(&m.totalNodes, int64(nodesCount))
+
 	if err != nil {
-		status = "error"
+		atomic.AddInt64(&m.failed, 1)
+	} else {
+		atomic.AddInt64(&m.completed, 1)
+	}
+}
+
+// GetMetrics returns workflow metrics
+func (m *WorkflowMetrics) GetMetrics() map[string]interface{} {
+	total := atomic.LoadInt64(&m.total)
+	completed := atomic.LoadInt64(&m.completed)
+	failed := atomic.LoadInt64(&m.failed)
+	duration := atomic.LoadInt64(&m.duration)
+	totalNodes := atomic.LoadInt64(&m.totalNodes)
+
+	avgDuration := int64(0)
+	avgNodes := float64(0)
+	if total > 0 {
+		avgDuration = duration / total
+		avgNodes = float64(totalNodes) / float64(total)
 	}
 
-	mc.workflowMetrics.executionsTotal.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-		"trigger_type": "unknown", // Would need to be passed in
-		"status":       status,
-	}).Inc()
-
-	mc.workflowMetrics.duration.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-	}).Observe(duration.Seconds())
-
-	mc.workflowMetrics.nodesPerExec.With(prometheus.Labels{
-		"workspace_id": workspaceID,
-	}).Observe(float64(nodesCount))
+	return map[string]interface{}{
+		"total":             total,
+		"completed":         completed,
+		"failed":            failed,
+		"success_rate":      float64(completed) / float64(total),
+		"avg_duration_ms":   avgDuration,
+		"total_duration_ms": duration,
+		"avg_nodes":         avgNodes,
+	}
 }
 
 // QueueMetrics tracks queue-related metrics
 type QueueMetrics struct {
-	queueDepth          *prometheus.GaugeVec
-	queueLatency        *prometheus.HistogramVec
-	processingTime      *prometheus.HistogramVec
-	retriesTotal        *prometheus.CounterVec
-	deadLetterTotal     *prometheus.CounterVec
+	enqueued   int64
+	dequeued   int64
+	processed  int64
+	retries    int64
+	deadLetter int64
+	mu         sync.RWMutex
 }
 
 // NewQueueMetrics creates queue metrics
 func NewQueueMetrics() *QueueMetrics {
-	return &QueueMetrics{
-		queueDepth: promauto.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "linkflow_queue_depth",
-				Help: "Current queue depth",
-			},
-			[]string{"queue_name"},
-		),
-		queueLatency: promauto.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "linkflow_queue_latency_seconds",
-				Help:    "Time from enqueue to dequeue",
-				Buckets: prometheus.ExponentialBuckets(0.001, 2, 15),
-			},
-			[]string{"queue_name"},
-		),
-		processingTime: promauto.NewHistogramVec(
-			prometheus.HistogramOpts{
-				Name:    "linkflow_queue_processing_seconds",
-				Help:    "Time to process a queue item",
-				Buckets: prometheus.ExponentialBuckets(0.01, 2, 15),
-			},
-			[]string{"queue_name"},
-		),
-		retriesTotal: promauto.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "linkflow_queue_retries_total",
-				Help: "Total number of queue retries",
-			},
-			[]string{"queue_name"},
-		),
-		deadLetterTotal: promauto.NewCounterVec(
-			prometheus.CounterOpts{
-				Name: "linkflow_queue_dead_letter_total",
-				Help: "Total items sent to dead letter queue",
-			},
-			[]string{"queue_name"},
-		),
-	}
+	return &QueueMetrics{}
 }
 
 // RecordEnqueue records when an item is enqueued
-func (m *QueueMetrics) RecordEnqueue(queueName string) {
-	m.queueDepth.With(prometheus.Labels{"queue_name": queueName}).Inc()
+func (m *QueueMetrics) RecordEnqueue() {
+	atomic.AddInt64(&m.enqueued, 1)
 }
 
 // RecordDequeue records when an item is dequeued
-func (m *QueueMetrics) RecordDequeue(queueName string, latency time.Duration) {
-	m.queueDepth.With(prometheus.Labels{"queue_name": queueName}).Dec()
-	m.queueLatency.With(prometheus.Labels{"queue_name": queueName}).Observe(latency.Seconds())
+func (m *QueueMetrics) RecordDequeue() {
+	atomic.AddInt64(&m.dequeued, 1)
 }
 
 // RecordProcessed records when an item is processed
-func (m *QueueMetrics) RecordProcessed(queueName string, duration time.Duration) {
-	m.processingTime.With(prometheus.Labels{"queue_name": queueName}).Observe(duration.Seconds())
+func (m *QueueMetrics) RecordProcessed() {
+	atomic.AddInt64(&m.processed, 1)
 }
 
 // RecordRetry records a retry
-func (m *QueueMetrics) RecordRetry(queueName string) {
-	m.retriesTotal.With(prometheus.Labels{"queue_name": queueName}).Inc()
+func (m *QueueMetrics) RecordRetry() {
+	atomic.AddInt64(&m.retries, 1)
 }
 
 // RecordDeadLetter records a dead letter
-func (m *QueueMetrics) RecordDeadLetter(queueName string) {
-	m.deadLetterTotal.With(prometheus.Labels{"queue_name": queueName}).Inc()
+func (m *QueueMetrics) RecordDeadLetter() {
+	atomic.AddInt64(&m.deadLetter, 1)
+}
+
+// GetMetrics returns queue metrics
+func (m *QueueMetrics) GetMetrics() map[string]interface{} {
+	return map[string]interface{}{
+		"enqueued":    atomic.LoadInt64(&m.enqueued),
+		"dequeued":    atomic.LoadInt64(&m.dequeued),
+		"processed":   atomic.LoadInt64(&m.processed),
+		"retries":     atomic.LoadInt64(&m.retries),
+		"dead_letter": atomic.LoadInt64(&m.deadLetter),
+	}
 }

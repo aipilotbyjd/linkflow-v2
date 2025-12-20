@@ -269,9 +269,9 @@ func (pt *ProgressTracker) GetProgress(ctx context.Context) (map[string]interfac
 }
 
 // GetProgressByID gets progress for any execution
-func GetProgressByID(ctx context.Context, redis *redis.Client, executionID uuid.UUID) (map[string]interface{}, error) {
+func GetProgressByID(ctx context.Context, redisClient *redis.Client, executionID uuid.UUID) (map[string]interface{}, error) {
 	key := fmt.Sprintf("execution:progress:%s", executionID)
-	data, err := redis.Get(ctx, key).Bytes()
+	data, err := redisClient.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
