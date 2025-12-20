@@ -28,45 +28,15 @@ type Registry struct {
 	nodes map[string]Node
 }
 
+// NewRegistry creates a basic registry with stub nodes (for backward compatibility)
+// For production use, prefer NewNodeFactory().CreateRegistry() for full implementations
 func NewRegistry() *Registry {
-	r := &Registry{
-		nodes: make(map[string]Node),
-	}
-
-	// Register built-in nodes
-	// Triggers
-	r.Register(&ManualTrigger{})
-	r.Register(&WebhookTrigger{})
-	r.Register(&ScheduleTrigger{})
-
-	// Logic (stubs - see logic/ package for full implementations)
-	r.Register(&ConditionNode{})
-	r.Register(&SwitchNode{})
-	r.Register(&LoopNode{})
-	r.Register(&MergeNode{})
-	r.Register(&WaitNode{})
-
-	// Actions (stubs - see actions/ package for full implementations)
-	r.Register(&HTTPRequestNode{})
-	r.Register(&CodeNode{})
-	r.Register(&SetVariableNode{})
-	r.Register(&RespondNode{})
-
-	// Integrations (stubs - see integrations/ package for full implementations)
-	r.Register(&SlackNode{})
-	r.Register(&EmailNode{})
-	r.Register(&OpenAINode{})
-
-	return r
+	return NewNodeFactory(nil).CreateRegistry()
 }
 
-func NewFullRegistry() *Registry {
-	r := &Registry{
-		nodes: make(map[string]Node),
-	}
-
-	// All nodes are registered via RegisterNode() calls from main
-	return r
+// NewRegistryWithDeps creates a registry with full node implementations and dependencies
+func NewRegistryWithDeps(deps *Dependencies) *Registry {
+	return NewNodeFactory(deps).CreateRegistry()
 }
 
 func (r *Registry) Register(node Node) {

@@ -157,6 +157,7 @@ func (e *Executor) executeWorkflow(ctx context.Context, executionID uuid.UUID, w
 	execCtx := &ExecutionContext{
 		ExecutionID: executionID,
 		WorkflowID:  workflow.ID,
+		WorkspaceID: workspaceID,
 		Input:       input,
 		Variables:   make(map[string]interface{}),
 		NodeOutputs: make(map[string]interface{}),
@@ -256,6 +257,7 @@ func (e *Executor) prepareNodeInput(execCtx *ExecutionContext, node *NodeData) m
 type ExecutionContext struct {
 	ExecutionID uuid.UUID
 	WorkflowID  uuid.UUID
+	WorkspaceID uuid.UUID
 	Input       models.JSON
 	Variables   map[string]interface{}
 	NodeOutputs map[string]interface{}

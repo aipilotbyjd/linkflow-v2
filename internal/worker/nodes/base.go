@@ -2,220 +2,151 @@ package nodes
 
 import (
 	"context"
+	"time"
+
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/redis/go-redis/v9"
 )
 
-// Base trigger nodes
+// Trigger nodes
+
 type ManualTrigger struct{}
 
-func (n *ManualTrigger) Type() string {
-	return "trigger.manual"
-}
+func (n *ManualTrigger) Type() string { return "trigger.manual" }
 
 func (n *ManualTrigger) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"triggered": true,
 		"input":     execCtx.Input["$input"],
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	}, nil
 }
 
 type WebhookTrigger struct{}
 
-func (n *WebhookTrigger) Type() string {
-	return "trigger.webhook"
-}
+func (n *WebhookTrigger) Type() string { return "trigger.webhook" }
 
 func (n *WebhookTrigger) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"triggered": true,
 		"data":      execCtx.Input["$input"],
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	}, nil
 }
 
 type ScheduleTrigger struct{}
 
-func (n *ScheduleTrigger) Type() string {
-	return "trigger.schedule"
-}
+func (n *ScheduleTrigger) Type() string { return "trigger.schedule" }
 
 func (n *ScheduleTrigger) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"triggered": true,
 		"input":     execCtx.Input["$input"],
+		"timestamp": time.Now().UTC().Format(time.RFC3339),
 	}, nil
 }
 
-// Logic nodes
-type ConditionNode struct{}
-
-func (n *ConditionNode) Type() string {
-	return "logic.condition"
-}
-
-func (n *ConditionNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement condition evaluation
-	condition, _ := execCtx.Config["condition"].(bool)
-	return map[string]interface{}{
-		"result": condition,
-		"branch": "true",
-	}, nil
-}
-
-type SwitchNode struct{}
-
-func (n *SwitchNode) Type() string {
-	return "logic.switch"
-}
-
-func (n *SwitchNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement switch logic
-	return map[string]interface{}{
-		"case": "default",
-	}, nil
-}
-
-type LoopNode struct{}
-
-func (n *LoopNode) Type() string {
-	return "logic.loop"
-}
-
-func (n *LoopNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement loop logic
-	items, _ := execCtx.Config["items"].([]interface{})
-	return map[string]interface{}{
-		"items": items,
-		"count": len(items),
-	}, nil
-}
-
-type MergeNode struct{}
-
-func (n *MergeNode) Type() string {
-	return "logic.merge"
-}
-
-func (n *MergeNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// Merge all inputs
-	merged := make(map[string]interface{})
-	for k, v := range execCtx.Input {
-		if k != "$input" && k != "$vars" {
-			merged[k] = v
-		}
-	}
-	return map[string]interface{}{
-		"merged": merged,
-	}, nil
-}
-
-type WaitNode struct{}
-
-func (n *WaitNode) Type() string {
-	return "logic.wait"
-}
-
-func (n *WaitNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement wait/delay logic
-	return map[string]interface{}{
-		"waited": true,
-	}, nil
-}
-
-// Action nodes
-type HTTPRequestNode struct{}
-
-func (n *HTTPRequestNode) Type() string {
-	return "action.http"
-}
-
-func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement HTTP request
-	return map[string]interface{}{
-		"status":  200,
-		"body":    nil,
-		"headers": map[string]string{},
-	}, nil
-}
-
-type CodeNode struct{}
-
-func (n *CodeNode) Type() string {
-	return "action.code"
-}
-
-func (n *CodeNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement code execution sandbox
-	return map[string]interface{}{
-		"result": nil,
-	}, nil
-}
-
+// SetVariableNode sets a variable in the execution context
 type SetVariableNode struct{}
 
-func (n *SetVariableNode) Type() string {
-	return "action.set"
-}
+func (n *SetVariableNode) Type() string { return "action.set" }
 
 func (n *SetVariableNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
 	name, _ := execCtx.Config["name"].(string)
 	value := execCtx.Config["value"]
-
 	execCtx.Variables[name] = value
-
-	return map[string]interface{}{
-		"name":  name,
-		"value": value,
-	}, nil
+	return map[string]interface{}{"name": name, "value": value}, nil
 }
 
+// RespondNode sends response back for webhook triggers
 type RespondNode struct{}
 
-func (n *RespondNode) Type() string {
-	return "action.respond"
-}
+func (n *RespondNode) Type() string { return "action.respond" }
 
 func (n *RespondNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement webhook response
+	statusCode := getIntBase(execCtx.Config, "statusCode", 200)
+	body := execCtx.Config["body"]
+	headers := getMapBase(execCtx.Config, "headers")
+
 	return map[string]interface{}{
-		"responded": true,
+		"responded":  true,
+		"statusCode": statusCode,
+		"body":       body,
+		"headers":    headers,
 	}, nil
 }
 
-// Integration nodes
-type SlackNode struct{}
-
-func (n *SlackNode) Type() string {
-	return "integration.slack"
+// SubWorkflowNode executes another workflow
+type SubWorkflowNode struct {
+	queueClient *queue.Client
+	redisClient *redis.Client
 }
 
-func (n *SlackNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement Slack integration
-	return map[string]interface{}{
-		"sent": true,
-	}, nil
+func (n *SubWorkflowNode) Type() string { return "action.sub_workflow" }
+
+func (n *SubWorkflowNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
+	// Implementation delegated to actions package
+	return map[string]interface{}{"error": "sub_workflow requires dependencies"}, nil
 }
 
-type EmailNode struct{}
-
-func (n *EmailNode) Type() string {
-	return "integration.email"
+// ExecuteWorkflowNode executes a workflow dynamically
+type ExecuteWorkflowNode struct {
+	queueClient *queue.Client
+	redisClient *redis.Client
 }
 
-func (n *EmailNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement email sending
-	return map[string]interface{}{
-		"sent": true,
-	}, nil
+func (n *ExecuteWorkflowNode) Type() string { return "action.execute_workflow" }
+
+func (n *ExecuteWorkflowNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
+	return map[string]interface{}{"error": "execute_workflow requires dependencies"}, nil
 }
 
-type OpenAINode struct{}
+// FunctionNode executes a function on items
+type FunctionNode struct{}
 
-func (n *OpenAINode) Type() string {
-	return "integration.openai"
+func (n *FunctionNode) Type() string { return "action.function" }
+
+func (n *FunctionNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
+	return map[string]interface{}{"result": execCtx.Input}, nil
 }
 
-func (n *OpenAINode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
-	// TODO: Implement OpenAI integration
-	return map[string]interface{}{
-		"response": "",
-	}, nil
+// TransformNode transforms data
+type TransformNode struct{}
+
+func (n *TransformNode) Type() string { return "action.transform" }
+
+func (n *TransformNode) Execute(ctx context.Context, execCtx *ExecutionContext) (map[string]interface{}, error) {
+	return map[string]interface{}{"items": execCtx.Input["$json"]}, nil
+}
+
+// Helper functions for base nodes
+func getStringBase(m map[string]interface{}, key, defaultVal string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return defaultVal
+}
+
+func getIntBase(m map[string]interface{}, key string, defaultVal int) int {
+	if v, ok := m[key].(float64); ok {
+		return int(v)
+	}
+	if v, ok := m[key].(int); ok {
+		return v
+	}
+	return defaultVal
+}
+
+func getBoolBase(m map[string]interface{}, key string, defaultVal bool) bool {
+	if v, ok := m[key].(bool); ok {
+		return v
+	}
+	return defaultVal
+}
+
+func getMapBase(m map[string]interface{}, key string) map[string]interface{} {
+	if v, ok := m[key].(map[string]interface{}); ok {
+		return v
+	}
+	return make(map[string]interface{})
 }
