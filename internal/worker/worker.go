@@ -13,23 +13,40 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/email"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/linkflow-ai/linkflow/internal/worker/cache"
 	"github.com/linkflow-ai/linkflow/internal/worker/events"
 	"github.com/linkflow-ai/linkflow/internal/worker/executor"
+	"github.com/linkflow-ai/linkflow/internal/worker/middleware"
 	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/processor"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
+// Worker handles background job processing
 type Worker struct {
-	cfg           *config.Config
-	server        *queue.Server
-	executor      *executor.Executor
-	executionSvc  *services.ExecutionService
-	credentialSvc *services.CredentialService
-	emailSvc      *email.Service
-	publisher     *events.Publisher
+	cfg          *config.Config
+	server       *queue.Server
+	processor    *processor.Processor
+	executor     *executor.Executor
+	cancellation *processor.CancellationManager
+	emailSvc     *email.Service
+	publisher    *events.Publisher
+	metrics      *middleware.MetricsCollector
+	redisClient  *redis.Client
 }
 
+// Dependencies holds all external dependencies for the worker
+type Dependencies struct {
+	ExecutionSvc  *services.ExecutionService
+	CredentialSvc *services.CredentialService
+	WorkflowSvc   *services.WorkflowService
+	RedisClient   *redis.Client
+	EmailSvc      *email.Service
+	QueueClient   *queue.Client
+}
+
+// New creates a new worker with the scalable architecture
 func New(
 	cfg *config.Config,
 	executionSvc *services.ExecutionService,
@@ -38,8 +55,13 @@ func New(
 	redisClient *redis.Client,
 	emailSvc *email.Service,
 ) *Worker {
+	// Create queue server
 	server := queue.NewServer(&cfg.Redis, 10)
+
+	// Create event publisher
 	publisher := events.NewPublisher(redisClient)
+
+	// Create queue client for node dependencies
 	queueClient := queue.NewClient(&cfg.Redis)
 
 	// Set global dependencies for nodes that need them
@@ -48,16 +70,70 @@ func New(
 		RedisClient: redisClient,
 	})
 
-	exec := executor.NewWithPublisher(executionSvc, credentialSvc, workflowSvc, publisher)
+	// Create middleware chain
+	middlewareChain := middleware.NewChain(
+		middleware.NewRecoveryMiddleware(middleware.RecoveryConfig{
+			LogStackTrace: cfg.App.Debug,
+		}),
+		middleware.NewLoggingMiddleware(middleware.LoggingOptions{
+			LogInput:    cfg.App.Debug,
+			LogOutput:   cfg.App.Debug,
+			LogDuration: true,
+		}),
+		middleware.NewMetricsMiddleware(),
+		middleware.NewTimeoutMiddleware(middleware.TimeoutConfig{
+			DefaultTimeout: 5 * time.Minute,
+			NodeTimeouts:   middleware.DefaultTimeouts(),
+		}),
+		middleware.NewRateLimitMiddleware(middleware.DefaultRateLimitConfig()),
+	)
+
+	// Create result cache
+	resultCache := cache.NewResultCache(redisClient, cache.ResultCacheConfig{
+		TTL: 1 * time.Hour,
+	})
+
+	// Create metrics collector
+	metricsCollector := middleware.NewMetricsCollector()
+
+	// Create processor
+	proc := processor.New(processor.Config{
+		Middleware: middlewareChain,
+		Cache:      resultCache,
+		Metrics:    metricsCollector,
+	})
+
+	// Create cancellation manager
+	cancellation := processor.NewCancellationManager(redisClient)
+
+	// Create credential cache
+	credCache := cache.NewCredentialCache(redisClient, cache.CredentialCacheConfig{
+		RedisTTL:  5 * time.Minute,
+		MemoryTTL: 1 * time.Minute,
+	})
+
+	// Create executor
+	exec := executor.New(
+		proc,
+		executionSvc,
+		credentialSvc,
+		workflowSvc,
+		publisher,
+		cancellation,
+		credCache,
+		redisClient,
+	)
 
 	w := &Worker{
-		cfg:           cfg,
-		server:        server,
-		executor:      exec,
-		executionSvc:  executionSvc,
-		credentialSvc: credentialSvc,
-		emailSvc:      emailSvc,
-		publisher:     publisher,
+		cfg:          cfg,
+		server:       server,
+		processor:    proc,
+		executor:     exec,
+		cancellation: cancellation,
+		emailSvc:     emailSvc,
+		publisher:    publisher,
+		metrics:      metricsCollector,
+		redisClient:  redisClient,
 	}
 
 	// Register handlers
@@ -65,18 +141,53 @@ func New(
 	server.HandleFunc(queue.TypeNotification, w.handleNotification)
 	server.HandleFunc(queue.TypeWebhookDelivery, w.handleWebhookDelivery)
 	server.HandleFunc("email:send", w.handleEmailSend)
+	server.HandleFunc("workflow:cancel", w.handleWorkflowCancel)
 
 	return w
 }
 
+// Start starts the worker
 func (w *Worker) Start() error {
-	log.Info().Msg("Starting worker...")
+	log.Info().Msg("Starting worker with scalable architecture...")
+
+	// Start cancellation listener
+	go w.cancellation.Listen(context.Background())
+
+	// Start credential cache cleanup
+	ctx := context.Background()
+	go func() {
+		ticker := time.NewTicker(5 * time.Minute)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				// Cleanup handled by cache internally
+			}
+		}
+	}()
+
 	return w.server.Start()
 }
 
+// Shutdown gracefully shuts down the worker
 func (w *Worker) Shutdown() {
+	log.Info().Msg("Shutting down worker...")
 	w.server.Shutdown()
 }
+
+// GetExecutor returns the executor for API access
+func (w *Worker) GetExecutor() *executor.Executor {
+	return w.executor
+}
+
+// GetCancellationManager returns the cancellation manager
+func (w *Worker) GetCancellationManager() *processor.CancellationManager {
+	return w.cancellation
+}
+
+// Handler implementations
 
 func (w *Worker) handleWorkflowExecution(ctx context.Context, task *asynq.Task) error {
 	var payload queue.WorkflowExecutionPayload
@@ -131,6 +242,40 @@ func (w *Worker) handleWebhookDelivery(ctx context.Context, task *asynq.Task) er
 		Msg("Delivering webhook")
 
 	return w.deliverWebhookRequest(ctx, payload)
+}
+
+func (w *Worker) handleEmailSend(ctx context.Context, task *asynq.Task) error {
+	if w.emailSvc == nil {
+		log.Warn().Msg("Email service not configured")
+		return nil
+	}
+
+	var emailData email.Email
+	if err := json.Unmarshal(task.Payload(), &emailData); err != nil {
+		return err
+	}
+
+	return w.emailSvc.Send(ctx, &emailData)
+}
+
+func (w *Worker) handleWorkflowCancel(ctx context.Context, task *asynq.Task) error {
+	var payload struct {
+		ExecutionID string `json:"execution_id"`
+		Reason      string `json:"reason"`
+		RequestedBy string `json:"requested_by"`
+	}
+	if err := json.Unmarshal(task.Payload(), &payload); err != nil {
+		return err
+	}
+
+	log.Info().
+		Str("execution_id", payload.ExecutionID).
+		Str("reason", payload.Reason).
+		Msg("Processing workflow cancellation")
+
+	// The cancellation manager handles this via Redis pubsub
+	// This handler is for explicit queue-based cancellation
+	return nil
 }
 
 func (w *Worker) deliverWebhook(ctx context.Context, url string, data map[string]interface{}) error {
@@ -200,18 +345,4 @@ func (w *Worker) deliverWebhookRequest(ctx context.Context, payload queue.Webhoo
 		Msg("Webhook delivered")
 
 	return nil
-}
-
-func (w *Worker) handleEmailSend(ctx context.Context, task *asynq.Task) error {
-	if w.emailSvc == nil {
-		log.Warn().Msg("Email service not configured")
-		return nil
-	}
-
-	var emailData email.Email
-	if err := json.Unmarshal(task.Payload(), &emailData); err != nil {
-		return err
-	}
-
-	return w.emailSvc.Send(ctx, &emailData)
 }
