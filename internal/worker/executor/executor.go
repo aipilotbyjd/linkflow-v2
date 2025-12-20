@@ -10,6 +10,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/linkflow-ai/linkflow/internal/worker/events"
 	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
 	"github.com/rs/zerolog/log"
 )
@@ -19,6 +20,7 @@ type Executor struct {
 	credentialSvc *services.CredentialService
 	workflowSvc   *services.WorkflowService
 	registry      *nodes.Registry
+	publisher     *events.Publisher
 }
 
 func New(
@@ -31,6 +33,21 @@ func New(
 		credentialSvc: credentialSvc,
 		workflowSvc:   workflowSvc,
 		registry:      nodes.NewRegistry(),
+	}
+}
+
+func NewWithPublisher(
+	executionSvc *services.ExecutionService,
+	credentialSvc *services.CredentialService,
+	workflowSvc *services.WorkflowService,
+	publisher *events.Publisher,
+) *Executor {
+	return &Executor{
+		executionSvc:  executionSvc,
+		credentialSvc: credentialSvc,
+		workflowSvc:   workflowSvc,
+		registry:      nodes.NewRegistry(),
+		publisher:     publisher,
 	}
 }
 
@@ -57,6 +74,7 @@ func (e *Executor) Execute(ctx context.Context, payload queue.WorkflowExecutionP
 	workflow, err := e.workflowSvc.GetByID(ctx, payload.WorkflowID)
 	if err != nil {
 		e.executionSvc.Fail(ctx, execution.ID, "Workflow not found", nil)
+		e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, "Workflow not found", nil)
 		return fmt.Errorf("workflow not found: %w", err)
 	}
 
@@ -65,11 +83,17 @@ func (e *Executor) Execute(ctx context.Context, payload queue.WorkflowExecutionP
 		return err
 	}
 
+	// Publish execution started event
+	e.publishExecutionStarted(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, payload.TriggerType)
+
+	startTime := time.Now()
+
 	// Build DAG and execute
-	result, err := e.executeWorkflow(ctx, execution.ID, workflow, payload.InputData)
+	result, err := e.executeWorkflow(ctx, execution.ID, workflow, payload.InputData, payload.WorkspaceID)
 	if err != nil {
 		nodeID := extractErrorNodeID(err)
 		e.executionSvc.Fail(ctx, execution.ID, err.Error(), nodeID)
+		e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, err.Error(), nodeID)
 		return err
 	}
 
@@ -78,14 +102,36 @@ func (e *Executor) Execute(ctx context.Context, payload queue.WorkflowExecutionP
 		return err
 	}
 
+	durationMs := time.Since(startTime).Milliseconds()
+	e.publishExecutionCompleted(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, durationMs, len(result))
+
 	log.Info().
 		Str("execution_id", execution.ID.String()).
+		Int64("duration_ms", durationMs).
 		Msg("Workflow execution completed")
 
 	return nil
 }
 
-func (e *Executor) executeWorkflow(ctx context.Context, executionID uuid.UUID, workflow *models.Workflow, input models.JSON) (models.JSON, error) {
+func (e *Executor) publishExecutionStarted(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, triggerType string) {
+	if e.publisher != nil {
+		e.publisher.ExecutionStarted(ctx, workspaceID, workflowID, executionID, triggerType)
+	}
+}
+
+func (e *Executor) publishExecutionCompleted(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, durationMs int64, nodesCompleted int) {
+	if e.publisher != nil {
+		e.publisher.ExecutionCompleted(ctx, workspaceID, workflowID, executionID, durationMs, nodesCompleted)
+	}
+}
+
+func (e *Executor) publishExecutionFailed(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, errorMsg string, errorNodeID *string) {
+	if e.publisher != nil {
+		e.publisher.ExecutionFailed(ctx, workspaceID, workflowID, executionID, errorMsg, errorNodeID)
+	}
+}
+
+func (e *Executor) executeWorkflow(ctx context.Context, executionID uuid.UUID, workflow *models.Workflow, input models.JSON, workspaceID uuid.UUID) (models.JSON, error) {
 	// Parse nodes from workflow
 	nodesData, err := parseNodes(workflow.Nodes)
 	if err != nil {

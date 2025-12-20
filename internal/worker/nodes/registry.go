@@ -37,24 +37,33 @@ func NewRegistry() *Registry {
 	r.Register(&WebhookTrigger{})
 	r.Register(&ScheduleTrigger{})
 
-	// Logic
+	// Logic (stubs - see logic/ package for full implementations)
 	r.Register(&ConditionNode{})
 	r.Register(&SwitchNode{})
 	r.Register(&LoopNode{})
 	r.Register(&MergeNode{})
 	r.Register(&WaitNode{})
 
-	// Actions
+	// Actions (stubs - see actions/ package for full implementations)
 	r.Register(&HTTPRequestNode{})
 	r.Register(&CodeNode{})
 	r.Register(&SetVariableNode{})
 	r.Register(&RespondNode{})
 
-	// Integrations
+	// Integrations (stubs - see integrations/ package for full implementations)
 	r.Register(&SlackNode{})
 	r.Register(&EmailNode{})
 	r.Register(&OpenAINode{})
 
+	return r
+}
+
+func NewFullRegistry() *Registry {
+	r := &Registry{
+		nodes: make(map[string]Node),
+	}
+
+	// All nodes are registered via RegisterNode() calls from main
 	return r
 }
 
