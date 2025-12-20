@@ -1,0 +1,94 @@
+package middleware
+
+import (
+	"context"
+	"net/http"
+	"strings"
+
+	"github.com/linkflow-ai/linkflow/internal/api/dto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+)
+
+type contextKey string
+
+const (
+	UserContextKey      contextKey = "user"
+	WorkspaceContextKey contextKey = "workspace"
+)
+
+type AuthMiddleware struct {
+	jwtManager *crypto.JWTManager
+}
+
+func NewAuthMiddleware(jwtManager *crypto.JWTManager) *AuthMiddleware {
+	return &AuthMiddleware{jwtManager: jwtManager}
+}
+
+func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			dto.ErrorResponse(w, http.StatusUnauthorized, "missing authorization header")
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid authorization header format")
+			return
+		}
+
+		token := parts[1]
+		claims, err := m.jwtManager.ValidateToken(token)
+		if err != nil {
+			if err == crypto.ErrExpiredToken {
+				dto.ErrorResponse(w, http.StatusUnauthorized, "token expired")
+				return
+			}
+			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+
+		if claims.Type != "access" {
+			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid token type")
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (m *AuthMiddleware) OptionalAuthenticate(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		token := parts[1]
+		claims, err := m.jwtManager.ValidateToken(token)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserContextKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func GetUserFromContext(ctx context.Context) *crypto.Claims {
+	claims, ok := ctx.Value(UserContextKey).(*crypto.Claims)
+	if !ok {
+		return nil
+	}
+	return claims
+}

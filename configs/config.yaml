@@ -1,0 +1,71 @@
+app:
+  name: linkflow
+  environment: development
+  debug: true
+  url: http://localhost:8080
+  frontend_url: http://localhost:3000
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  name: linkflow
+  sslmode: disable
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: 5m
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: "change-this-to-a-32-character-key"
+  access_expiry: 15m
+  refresh_expiry: 168h  # 7 days
+  issuer: linkflow
+
+oauth:
+  google:
+    client_id: ""
+    client_secret: ""
+    redirect_url: http://localhost:8080/api/v1/auth/oauth/google/callback
+  github:
+    client_id: ""
+    client_secret: ""
+    redirect_url: http://localhost:8080/api/v1/auth/oauth/github/callback
+  microsoft:
+    client_id: ""
+    client_secret: ""
+    redirect_url: http://localhost:8080/api/v1/auth/oauth/microsoft/callback
+
+s3:
+  endpoint: ""
+  region: us-east-1
+  bucket: linkflow
+  access_key_id: ""
+  secret_access_key: ""
+  use_ssl: true
+
+stripe:
+  secret_key: ""
+  webhook_secret: ""
+  publishable_key: ""
+
+smtp:
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  from: ""
+  from_name: LinkFlow
