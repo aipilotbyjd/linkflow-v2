@@ -99,10 +99,11 @@ const (
 
 // Trigger types
 const (
-	TriggerManual   = "manual"
-	TriggerSchedule = "schedule"
-	TriggerWebhook  = "webhook"
-	TriggerAPI      = "api"
+	TriggerManual      = "manual"
+	TriggerSchedule    = "schedule"
+	TriggerWebhook     = "webhook"
+	TriggerAPI         = "api"
+	TriggerSubWorkflow = "sub_workflow"
 )
 
 // Credential types

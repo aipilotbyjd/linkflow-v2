@@ -12,6 +12,7 @@ type Hub struct {
 	clients    map[*Client]bool
 	userConns  map[uuid.UUID]map[*Client]bool
 	wsConns    map[uuid.UUID]map[*Client]bool // workspace connections
+	execConns  map[uuid.UUID]map[*Client]bool // execution subscriptions
 	broadcast  chan []byte
 	register   chan *Client
 	unregister chan *Client
@@ -23,6 +24,7 @@ func NewHub() *Hub {
 		clients:    make(map[*Client]bool),
 		userConns:  make(map[uuid.UUID]map[*Client]bool),
 		wsConns:    make(map[uuid.UUID]map[*Client]bool),
+		execConns:  make(map[uuid.UUID]map[*Client]bool),
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -158,4 +160,57 @@ func (h *Hub) GetConnectionCount() int {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	return len(h.clients)
+}
+
+func (h *Hub) BroadcastToWorkspace(workspaceID uuid.UUID, event Event) {
+	h.SendToWorkspace(workspaceID, &event)
+}
+
+func (h *Hub) BroadcastToExecution(executionID uuid.UUID, event Event) {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return
+	}
+
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+
+	if conns, ok := h.execConns[executionID]; ok {
+		for client := range conns {
+			select {
+			case client.Send <- data:
+			default:
+				close(client.Send)
+				delete(h.clients, client)
+			}
+		}
+	}
+}
+
+func (h *Hub) SubscribeToExecution(client *Client, executionID uuid.UUID) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if _, ok := h.execConns[executionID]; !ok {
+		h.execConns[executionID] = make(map[*Client]bool)
+	}
+	h.execConns[executionID][client] = true
+}
+
+func (h *Hub) UnsubscribeFromExecution(client *Client, executionID uuid.UUID) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if conns, ok := h.execConns[executionID]; ok {
+		delete(conns, client)
+		if len(conns) == 0 {
+			delete(h.execConns, executionID)
+		}
+	}
+}
+
+func (h *Hub) CleanupExecutionSubscriptions(executionID uuid.UUID) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.execConns, executionID)
 }

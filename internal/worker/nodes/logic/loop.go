@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
 )
@@ -148,20 +147,4 @@ func (n *LoopNode) executeWhile(ctx context.Context, execCtx *nodes.ExecutionCon
 	}, nil
 }
 
-func getInt(config map[string]interface{}, key string, defaultVal int) int {
-	if v, ok := config[key]; ok {
-		switch val := v.(type) {
-		case int:
-			return val
-		case int64:
-			return int(val)
-		case float64:
-			return int(val)
-		case string:
-			if i, err := fmt.Sscanf(val, "%d"); err == nil {
-				return i
-			}
-		}
-	}
-	return defaultVal
-}
+// getInt is defined in error_handling.go

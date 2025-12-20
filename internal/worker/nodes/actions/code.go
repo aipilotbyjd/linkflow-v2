@@ -343,6 +343,13 @@ func getInt(config map[string]interface{}, key string, defaultVal int) int {
 	return defaultVal
 }
 
+func getBool(config map[string]interface{}, key string, defaultVal bool) bool {
+	if v, ok := config[key].(bool); ok {
+		return v
+	}
+	return defaultVal
+}
+
 var _ nodes.Node = (*CodeNode)(nil)
 var _ nodes.Node = (*FunctionNode)(nil)
 var _ nodes.Node = (*TransformNode)(nil)

@@ -185,3 +185,11 @@ func (s *ScheduleService) ValidateCron(cronExpr string) error {
 	_, err := s.cronParser.Parse(cronExpr)
 	return err
 }
+
+func (s *ScheduleService) GetDueBatch(ctx context.Context, limit, offset int) ([]models.Schedule, error) {
+	return s.scheduleRepo.FindDueBatch(ctx, limit, offset)
+}
+
+func (s *ScheduleService) GetDueByPriority(ctx context.Context, priority string) ([]models.Schedule, error) {
+	return s.scheduleRepo.FindDueByPriority(ctx, priority)
+}

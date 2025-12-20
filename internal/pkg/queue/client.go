@@ -85,6 +85,23 @@ func (c *Client) EnqueuePriorityWorkflowExecution(ctx context.Context, payload W
 	return c.client.EnqueueContext(ctx, task)
 }
 
+func (c *Client) EnqueueDelayedWorkflowExecution(ctx context.Context, payload WorkflowExecutionPayload, delay time.Duration) (*asynq.TaskInfo, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	task := asynq.NewTask(TypeWorkflowExecution, data,
+		asynq.Queue(QueueLow),
+		asynq.MaxRetry(3),
+		asynq.Timeout(5*time.Minute),
+		asynq.Retention(24*time.Hour),
+		asynq.ProcessIn(delay),
+	)
+
+	return c.client.EnqueueContext(ctx, task)
+}
+
 // Notification
 type NotificationPayload struct {
 	Type       string                 `json:"type"` // email, slack, discord, etc.

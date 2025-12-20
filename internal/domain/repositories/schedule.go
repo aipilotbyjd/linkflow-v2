@@ -88,3 +88,25 @@ func (r *ScheduleRepository) DeactivateByWorkflow(ctx context.Context, workflowI
 		Where("workflow_id = ?", workflowID).
 		Update("is_active", false).Error
 }
+
+func (r *ScheduleRepository) FindDueBatch(ctx context.Context, limit, offset int) ([]models.Schedule, error) {
+	var schedules []models.Schedule
+	err := r.DB().WithContext(ctx).
+		Preload("Workflow").
+		Where("is_active = ? AND next_run_at <= ?", true, time.Now()).
+		Order("next_run_at ASC").
+		Offset(offset).
+		Limit(limit).
+		Find(&schedules).Error
+	return schedules, err
+}
+
+func (r *ScheduleRepository) FindDueByPriority(ctx context.Context, priority string) ([]models.Schedule, error) {
+	var schedules []models.Schedule
+	err := r.DB().WithContext(ctx).
+		Preload("Workflow").
+		Where("is_active = ? AND next_run_at <= ? AND priority = ?", true, time.Now(), priority).
+		Order("next_run_at ASC").
+		Find(&schedules).Error
+	return schedules, err
+}

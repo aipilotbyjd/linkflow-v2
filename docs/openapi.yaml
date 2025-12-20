@@ -1,0 +1,1325 @@
+openapi: 3.0.3
+info:
+  title: Linkflow API
+  description: |
+    Linkflow is a workflow automation platform similar to n8n. This API allows you to:
+    - Manage workflows and their executions
+    - Configure credentials for integrations
+    - Set up schedules and webhooks
+    - Monitor execution status in real-time
+  version: 1.0.0
+  contact:
+    name: Linkflow Support
+    email: support@linkflow.ai
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8090/api/v1
+    description: Development server
+  - url: https://api.linkflow.ai/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management
+  - name: Workspaces
+    description: Workspace management
+  - name: Workflows
+    description: Workflow CRUD operations
+  - name: Executions
+    description: Workflow execution management
+  - name: Credentials
+    description: Integration credentials
+  - name: Schedules
+    description: Workflow scheduling
+  - name: Webhooks
+    description: Webhook endpoints
+  - name: Billing
+    description: Billing and usage
+
+paths:
+  # Authentication
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already exists
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with email and password
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout user
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  /auth/oauth/{provider}:
+    get:
+      tags: [Authentication]
+      summary: Initiate OAuth flow
+      operationId: oauthRedirect
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, microsoft]
+        - name: purpose
+          in: query
+          schema:
+            type: string
+            enum: [login, signup, connect]
+            default: login
+      responses:
+        '307':
+          description: Redirect to OAuth provider
+
+  /auth/oauth/{provider}/callback:
+    get:
+      tags: [Authentication]
+      summary: OAuth callback handler
+      operationId: oauthCallback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '307':
+          description: Redirect to frontend with tokens
+
+  # Users
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    put:
+      tags: [Users]
+      summary: Update current user
+      operationId: updateCurrentUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # Workspaces
+  /workspaces:
+    get:
+      tags: [Workspaces]
+      summary: List user workspaces
+      operationId: listWorkspaces
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of workspaces
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Workspace'
+
+    post:
+      tags: [Workspaces]
+      summary: Create a workspace
+      operationId: createWorkspace
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '201':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+
+  /workspaces/{workspaceId}:
+    get:
+      tags: [Workspaces]
+      summary: Get workspace by ID
+      operationId: getWorkspace
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceId'
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+
+  # Workflows
+  /workflows:
+    get:
+      tags: [Workflows]
+      summary: List workflows
+      operationId: listWorkflows
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, archived]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of workflows
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowList'
+
+    post:
+      tags: [Workflows]
+      summary: Create a workflow
+      operationId: createWorkflow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowRequest'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /workflows/{workflowId}:
+    get:
+      tags: [Workflows]
+      summary: Get workflow by ID
+      operationId: getWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+    put:
+      tags: [Workflows]
+      summary: Update workflow
+      operationId: updateWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkflowRequest'
+      responses:
+        '200':
+          description: Workflow updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+    delete:
+      tags: [Workflows]
+      summary: Delete workflow
+      operationId: deleteWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '204':
+          description: Workflow deleted
+
+  /workflows/{workflowId}/execute:
+    post:
+      tags: [Workflows]
+      summary: Execute workflow
+      operationId: executeWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input_data:
+                  type: object
+      responses:
+        '202':
+          description: Execution queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /workflows/{workflowId}/activate:
+    post:
+      tags: [Workflows]
+      summary: Activate workflow
+      operationId: activateWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /workflows/{workflowId}/deactivate:
+    post:
+      tags: [Workflows]
+      summary: Deactivate workflow
+      operationId: deactivateWorkflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: Workflow deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /workflows/{workflowId}/versions:
+    get:
+      tags: [Workflows]
+      summary: Get workflow versions
+      operationId: getWorkflowVersions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+      responses:
+        '200':
+          description: List of versions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowVersion'
+
+  /workflows/{workflowId}/versions/{version}/restore:
+    post:
+      tags: [Workflows]
+      summary: Restore workflow version
+      operationId: restoreWorkflowVersion
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/WorkflowId'
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Version restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  /workflows/templates:
+    get:
+      tags: [Workflows]
+      summary: List workflow templates
+      operationId: listWorkflowTemplates
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of templates
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowTemplate'
+
+  /workflows/templates/{templateId}/use:
+    post:
+      tags: [Workflows]
+      summary: Create workflow from template
+      operationId: useWorkflowTemplate
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Workflow created from template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+
+  # Executions
+  /executions:
+    get:
+      tags: [Executions]
+      summary: List executions
+      operationId: listExecutions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: workflow_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [queued, running, completed, failed, cancelled]
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionList'
+
+  /executions/{executionId}:
+    get:
+      tags: [Executions]
+      summary: Get execution by ID
+      operationId: getExecution
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /executions/{executionId}/cancel:
+    post:
+      tags: [Executions]
+      summary: Cancel execution
+      operationId: cancelExecution
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: Execution cancelled
+
+  /executions/{executionId}/retry:
+    post:
+      tags: [Executions]
+      summary: Retry failed execution
+      operationId: retryExecution
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '202':
+          description: Retry queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /executions/{executionId}/logs:
+    get:
+      tags: [Executions]
+      summary: Get execution logs
+      operationId: getExecutionLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ExecutionId'
+      responses:
+        '200':
+          description: Execution logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExecutionLog'
+
+  # Credentials
+  /credentials:
+    get:
+      tags: [Credentials]
+      summary: List credentials
+      operationId: listCredentials
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of credentials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Credential'
+
+    post:
+      tags: [Credentials]
+      summary: Create credential
+      operationId: createCredential
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCredentialRequest'
+      responses:
+        '201':
+          description: Credential created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+
+  /credentials/{credentialId}:
+    get:
+      tags: [Credentials]
+      summary: Get credential by ID
+      operationId: getCredential
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      responses:
+        '200':
+          description: Credential details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+
+    put:
+      tags: [Credentials]
+      summary: Update credential
+      operationId: updateCredential
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCredentialRequest'
+      responses:
+        '200':
+          description: Credential updated
+
+    delete:
+      tags: [Credentials]
+      summary: Delete credential
+      operationId: deleteCredential
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CredentialId'
+      responses:
+        '204':
+          description: Credential deleted
+
+  # Schedules
+  /schedules:
+    get:
+      tags: [Schedules]
+      summary: List schedules
+      operationId: listSchedules
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+
+    post:
+      tags: [Schedules]
+      summary: Create schedule
+      operationId: createSchedule
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScheduleRequest'
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+
+  /schedules/{scheduleId}:
+    delete:
+      tags: [Schedules]
+      summary: Delete schedule
+      operationId: deleteSchedule
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Schedule deleted
+
+  # Webhooks
+  /webhook/{endpointId}:
+    post:
+      tags: [Webhooks]
+      summary: Trigger webhook
+      operationId: triggerWebhook
+      parameters:
+        - name: endpointId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '202':
+          description: Webhook accepted
+
+  # WebSocket
+  /ws:
+    get:
+      tags: [WebSocket]
+      summary: WebSocket connection for real-time events
+      description: |
+        Connect to receive real-time execution events. 
+        
+        Events:
+        - `execution:started` - Workflow execution started
+        - `execution:completed` - Workflow execution completed
+        - `execution:failed` - Workflow execution failed
+        - `node:started` - Node execution started
+        - `node:completed` - Node execution completed
+        - `node:failed` - Node execution failed
+        - `log` - Execution log entry
+      security:
+        - BearerAuth: []
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  # Health
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    WorkflowId:
+      name: workflowId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ExecutionId:
+      name: executionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    CredentialId:
+      name: credentialId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    Page:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        minimum: 1
+        maximum: 100
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    RegisterRequest:
+      type: object
+      required: [email, password, first_name, last_name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        first_name:
+          type: string
+        last_name:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        mfa_code:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar_url:
+          type: string
+        email_verified:
+          type: boolean
+        mfa_enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        avatar_url:
+          type: string
+
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        plan:
+          type: string
+          enum: [free, starter, professional, enterprise]
+        owner_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    CreateWorkspaceRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, active, archived]
+        version:
+          type: integer
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+        settings:
+          type: object
+        tags:
+          type: array
+          items:
+            type: string
+        execution_count:
+          type: integer
+        last_executed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WorkflowList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workflow'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    CreateWorkflowRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+        settings:
+          type: object
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdateWorkflowRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+        settings:
+          type: object
+        tags:
+          type: array
+          items:
+            type: string
+
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        name:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        config:
+          type: object
+        credentials:
+          type: string
+          format: uuid
+
+    Connection:
+      type: object
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        source_handle:
+          type: string
+        target_handle:
+          type: string
+
+    WorkflowVersion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+        version:
+          type: integer
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+        created_by:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    WorkflowTemplate:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        icon:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/Connection'
+
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled, timeout]
+        trigger_type:
+          type: string
+          enum: [manual, schedule, webhook, sub_workflow]
+        input_data:
+          type: object
+        output_data:
+          type: object
+        error_message:
+          type: string
+        error_node_id:
+          type: string
+        nodes_completed:
+          type: integer
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    ExecutionList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Execution'
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ExecutionLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        execution_id:
+          type: string
+          format: uuid
+        node_id:
+          type: string
+        level:
+          type: string
+          enum: [debug, info, warn, error]
+        message:
+          type: string
+        data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    Credential:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateCredentialRequest:
+      type: object
+      required: [name, type, data]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        data:
+          type: object
+
+    UpdateCredentialRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        data:
+          type: object
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow_id:
+          type: string
+          format: uuid
+        cron:
+          type: string
+        timezone:
+          type: string
+        is_active:
+          type: boolean
+        next_run_at:
+          type: string
+          format: date-time
+        last_run_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    CreateScheduleRequest:
+      type: object
+      required: [workflow_id, cron]
+      properties:
+        workflow_id:
+          type: string
+          format: uuid
+        cron:
+          type: string
+        timezone:
+          type: string
+          default: UTC
+        input_data:
+          type: object

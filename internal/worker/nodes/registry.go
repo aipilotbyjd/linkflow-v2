@@ -10,10 +10,12 @@ import (
 type ExecutionContext struct {
 	ExecutionID   uuid.UUID
 	WorkflowID    uuid.UUID
+	WorkspaceID   uuid.UUID
 	NodeID        string
 	Input         map[string]interface{}
 	Config        map[string]interface{}
 	Variables     map[string]interface{}
+	Credentials   map[string]interface{}
 	GetCredential func(uuid.UUID) (*models.CredentialData, error)
 }
 
