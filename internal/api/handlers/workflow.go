@@ -13,7 +13,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 )
 
 type WorkflowHandler struct {

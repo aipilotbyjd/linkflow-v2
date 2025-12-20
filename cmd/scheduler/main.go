@@ -7,7 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/scheduler"
 	"github.com/rs/zerolog/log"
 )

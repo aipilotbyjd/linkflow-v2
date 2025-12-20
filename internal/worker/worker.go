@@ -7,7 +7,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/worker/executor"
 	"github.com/rs/zerolog/log"
 )

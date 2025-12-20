@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
 	"github.com/rs/zerolog/log"
 )

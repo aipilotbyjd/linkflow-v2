@@ -18,7 +18,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 )

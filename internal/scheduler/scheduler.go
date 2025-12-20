@@ -11,7 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog/log"
 )

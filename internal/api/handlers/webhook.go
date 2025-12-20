@@ -8,7 +8,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 )
 
 type WebhookHandler struct {
