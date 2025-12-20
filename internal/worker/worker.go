@@ -15,6 +15,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/worker/events"
 	"github.com/linkflow-ai/linkflow/internal/worker/executor"
+	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
@@ -39,6 +40,13 @@ func New(
 ) *Worker {
 	server := queue.NewServer(&cfg.Redis, 10)
 	publisher := events.NewPublisher(redisClient)
+	queueClient := queue.NewClient(&cfg.Redis)
+
+	// Set global dependencies for nodes that need them
+	nodes.SetGlobalDependencies(&nodes.Dependencies{
+		QueueClient: queueClient,
+		RedisClient: redisClient,
+	})
 
 	exec := executor.NewWithPublisher(executionSvc, credentialSvc, workflowSvc, publisher)
 

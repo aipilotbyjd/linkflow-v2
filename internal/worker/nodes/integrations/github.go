@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type GitHubNode struct{}
@@ -21,7 +21,7 @@ func (n *GitHubNode) Type() string {
 	return "integration.github"
 }
 
-func (n *GitHubNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *GitHubNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	credID := getString(execCtx.Config, "credentialId", "")
 	if credID == "" {
 		return nil, fmt.Errorf("credential ID is required")

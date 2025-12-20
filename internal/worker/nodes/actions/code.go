@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dop251/goja"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type CodeNode struct{}
@@ -20,7 +20,7 @@ func (n *CodeNode) Type() string {
 	return "action.code"
 }
 
-func (n *CodeNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *CodeNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	code := getString(execCtx.Config, "code", "")
 	if code == "" {
 		return nil, fmt.Errorf("code is required")
@@ -150,7 +150,7 @@ func (n *FunctionNode) Type() string {
 	return "action.function"
 }
 
-func (n *FunctionNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *FunctionNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	code := getString(execCtx.Config, "code", "")
 	if code == "" {
 		code = getString(execCtx.Config, "function", "")
@@ -191,7 +191,7 @@ func (n *TransformNode) Type() string {
 	return "action.transform"
 }
 
-func (n *TransformNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *TransformNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	mode := getString(execCtx.Config, "mode", "map")
 
 	var items []interface{}
@@ -350,6 +350,6 @@ func getBool(config map[string]interface{}, key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-var _ nodes.Node = (*CodeNode)(nil)
-var _ nodes.Node = (*FunctionNode)(nil)
-var _ nodes.Node = (*TransformNode)(nil)
+var _ core.Node = (*CodeNode)(nil)
+var _ core.Node = (*FunctionNode)(nil)
+var _ core.Node = (*TransformNode)(nil)

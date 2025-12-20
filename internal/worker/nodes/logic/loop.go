@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type LoopNode struct{}
@@ -16,7 +16,7 @@ func (n *LoopNode) Type() string {
 	return "logic.loop"
 }
 
-func (n *LoopNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *LoopNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	mode, _ := execCtx.Config["mode"].(string)
 	if mode == "" {
 		mode = "forEach"
@@ -34,13 +34,13 @@ func (n *LoopNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext)
 	}
 }
 
-func (n *LoopNode) executeForEach(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *LoopNode) executeForEach(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if itemsConfig, ok := execCtx.Config["items"].([]interface{}); ok {
 		items = itemsConfig
 	} else if itemsPath, ok := execCtx.Config["items"].(string); ok {
-		resolved := getNestedValue(execCtx.Input, itemsPath)
+		resolved := core.GetNestedValue(execCtx.Input, itemsPath)
 		if arr, ok := resolved.([]interface{}); ok {
 			items = arr
 		}
@@ -48,7 +48,7 @@ func (n *LoopNode) executeForEach(ctx context.Context, execCtx *nodes.ExecutionC
 		items = jsonData
 	}
 
-	limit := getInt(execCtx.Config, "limit", 1000)
+	limit := core.GetInt(execCtx.Config, "limit", 1000)
 	if len(items) > limit {
 		items = items[:limit]
 	}
@@ -80,9 +80,9 @@ func (n *LoopNode) executeForEach(ctx context.Context, execCtx *nodes.ExecutionC
 	}, nil
 }
 
-func (n *LoopNode) executeTimes(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
-	times := getInt(execCtx.Config, "times", 1)
-	limit := getInt(execCtx.Config, "limit", 1000)
+func (n *LoopNode) executeTimes(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
+	times := core.GetInt(execCtx.Config, "times", 1)
+	limit := core.GetInt(execCtx.Config, "limit", 1000)
 	if times > limit {
 		times = limit
 	}
@@ -113,8 +113,8 @@ func (n *LoopNode) executeTimes(ctx context.Context, execCtx *nodes.ExecutionCon
 	}, nil
 }
 
-func (n *LoopNode) executeWhile(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
-	limit := getInt(execCtx.Config, "limit", 1000)
+func (n *LoopNode) executeWhile(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
+	limit := core.GetInt(execCtx.Config, "limit", 1000)
 	results := make([]map[string]interface{}, 0)
 	iteration := 0
 
@@ -147,4 +147,4 @@ func (n *LoopNode) executeWhile(ctx context.Context, execCtx *nodes.ExecutionCon
 	}, nil
 }
 
-// getInt is defined in error_handling.go
+// core.GetInt is defined in error_handling.go

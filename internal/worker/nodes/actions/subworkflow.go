@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -30,7 +30,7 @@ func (n *SubWorkflowNode) Type() string {
 	return "action.sub_workflow"
 }
 
-func (n *SubWorkflowNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *SubWorkflowNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 
@@ -183,7 +183,7 @@ func (n *ExecuteWorkflowNode) Type() string {
 	return "action.execute_workflow"
 }
 
-func (n *ExecuteWorkflowNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *ExecuteWorkflowNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type EmailNode struct{}
@@ -17,7 +17,7 @@ func (n *EmailNode) Type() string {
 	return "integration.email"
 }
 
-func (n *EmailNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *EmailNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	operation := getString(config, "operation", "send")
 
@@ -31,7 +31,7 @@ func (n *EmailNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext
 	}
 }
 
-func (n *EmailNode) sendEmail(ctx context.Context, execCtx *nodes.ExecutionContext, config map[string]interface{}) (map[string]interface{}, error) {
+func (n *EmailNode) sendEmail(ctx context.Context, execCtx *core.ExecutionContext, config map[string]interface{}) (map[string]interface{}, error) {
 	// Get SMTP credential
 	credIDStr := getString(config, "credentialId", "")
 	if credIDStr == "" {
@@ -116,7 +116,7 @@ func (n *EmailNode) sendEmail(ctx context.Context, execCtx *nodes.ExecutionConte
 	}, nil
 }
 
-func (n *EmailNode) sendHTMLEmail(ctx context.Context, execCtx *nodes.ExecutionContext, config map[string]interface{}) (map[string]interface{}, error) {
+func (n *EmailNode) sendHTMLEmail(ctx context.Context, execCtx *core.ExecutionContext, config map[string]interface{}) (map[string]interface{}, error) {
 	// Get SMTP credential
 	credIDStr := getString(config, "credentialId", "")
 	if credIDStr == "" {
@@ -349,4 +349,4 @@ func sendMailSSL(addr string, auth smtp.Auth, from string, to []string, msg []by
 	return client.Quit()
 }
 
-var _ nodes.Node = (*EmailNode)(nil)
+var _ core.Node = (*EmailNode)(nil)

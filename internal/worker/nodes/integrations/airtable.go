@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type AirtableNode struct{}
@@ -22,7 +22,7 @@ func (n *AirtableNode) Type() string {
 	return "integration.airtable"
 }
 
-func (n *AirtableNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *AirtableNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	credID := getString(execCtx.Config, "credentialId", "")
 	if credID == "" {
 		return nil, fmt.Errorf("credential ID is required")

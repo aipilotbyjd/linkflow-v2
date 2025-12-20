@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type TelegramNode struct{}
@@ -22,7 +22,7 @@ func (n *TelegramNode) Type() string {
 	return "integration.telegram"
 }
 
-func (n *TelegramNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *TelegramNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	credID := getString(execCtx.Config, "credentialId", "")
 	if credID == "" {
 		return nil, fmt.Errorf("credential ID is required")

@@ -9,7 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type PostgresNode struct{}
@@ -18,7 +18,7 @@ func (n *PostgresNode) Type() string {
 	return "integration.postgres"
 }
 
-func (n *PostgresNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *PostgresNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	operation := getString(config, "operation", "query")
 
@@ -349,4 +349,4 @@ func getMap(m map[string]interface{}, key string) map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-var _ nodes.Node = (*PostgresNode)(nil)
+var _ core.Node = (*PostgresNode)(nil)

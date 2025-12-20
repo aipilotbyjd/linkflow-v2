@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type SlackNode struct{}
@@ -18,7 +18,7 @@ func (n *SlackNode) Type() string {
 	return "integration.slack"
 }
 
-func (n *SlackNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *SlackNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	operation := getString(config, "operation", "sendMessage")
 
@@ -215,4 +215,4 @@ func (n *SlackNode) makeRequest(ctx context.Context, token, method, url string, 
 	return result, nil
 }
 
-var _ nodes.Node = (*SlackNode)(nil)
+var _ core.Node = (*SlackNode)(nil)

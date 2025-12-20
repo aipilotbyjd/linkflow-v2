@@ -19,7 +19,6 @@ type Executor struct {
 	executionSvc  *services.ExecutionService
 	credentialSvc *services.CredentialService
 	workflowSvc   *services.WorkflowService
-	registry      *nodes.Registry
 	publisher     *events.Publisher
 }
 
@@ -32,7 +31,6 @@ func New(
 		executionSvc:  executionSvc,
 		credentialSvc: credentialSvc,
 		workflowSvc:   workflowSvc,
-		registry:      nodes.NewRegistry(),
 	}
 }
 
@@ -46,7 +44,6 @@ func NewWithPublisher(
 		executionSvc:  executionSvc,
 		credentialSvc: credentialSvc,
 		workflowSvc:   workflowSvc,
-		registry:      nodes.NewRegistry(),
 		publisher:     publisher,
 	}
 }
@@ -197,8 +194,8 @@ func (e *Executor) executeNode(ctx context.Context, execCtx *ExecutionContext, n
 		return err
 	}
 
-	// Get node handler
-	handler := e.registry.Get(node.Type)
+	// Get node handler from global registry
+	handler := nodes.Get(node.Type)
 	if handler == nil {
 		e.executionSvc.FailNodeExecution(ctx, nodeExec.ID, "Unknown node type")
 		return fmt.Errorf("unknown node type: %s", node.Type)

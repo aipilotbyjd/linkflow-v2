@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type OpenAINode struct{}
@@ -18,7 +18,7 @@ func (n *OpenAINode) Type() string {
 	return "integration.openai"
 }
 
-func (n *OpenAINode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *OpenAINode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	operation := getString(config, "operation", "chat")
 
@@ -307,4 +307,4 @@ func (n *OpenAINode) makeRequest(ctx context.Context, apiKey, method, url string
 	return result, nil
 }
 
-var _ nodes.Node = (*OpenAINode)(nil)
+var _ core.Node = (*OpenAINode)(nil)

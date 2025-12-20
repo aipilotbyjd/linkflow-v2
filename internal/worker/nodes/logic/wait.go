@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type WaitNode struct{}
@@ -17,14 +17,14 @@ func (n *WaitNode) Type() string {
 	return "logic.wait"
 }
 
-func (n *WaitNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *WaitNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	unit, _ := execCtx.Config["unit"].(string)
 	if unit == "" {
 		unit = "seconds"
 	}
 
-	amount := getInt(execCtx.Config, "amount", 1)
-	maxWait := getInt(execCtx.Config, "maxWait", 3600)
+	amount := core.GetInt(execCtx.Config, "amount", 1)
+	maxWait := core.GetInt(execCtx.Config, "maxWait", 3600)
 
 	var duration time.Duration
 	switch unit {
@@ -74,7 +74,7 @@ func (n *ErrorTriggerNode) Type() string {
 	return "trigger.error"
 }
 
-func (n *ErrorTriggerNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *ErrorTriggerNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	errorData := execCtx.Input["$error"]
 	if errorData == nil {
 		errorData = map[string]interface{}{
@@ -100,7 +100,7 @@ func (n *StopErrorNode) Type() string {
 	return "action.stopError"
 }
 
-func (n *StopErrorNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *StopErrorNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	errorMsg, _ := execCtx.Config["message"].(string)
 	if errorMsg == "" {
 		errorMsg = "Workflow stopped by Stop and Error node"
@@ -141,8 +141,8 @@ func (n *RespondWebhookNode) Type() string {
 	return "action.respondWebhook"
 }
 
-func (n *RespondWebhookNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
-	statusCode := getInt(execCtx.Config, "statusCode", 200)
+func (n *RespondWebhookNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
+	statusCode := core.GetInt(execCtx.Config, "statusCode", 200)
 	body := execCtx.Config["body"]
 	headers, _ := execCtx.Config["headers"].(map[string]interface{})
 	contentType, _ := execCtx.Config["contentType"].(string)
@@ -179,7 +179,7 @@ func (n *NoOpNode) Type() string {
 	return "logic.noop"
 }
 
-func (n *NoOpNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *NoOpNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	return map[string]interface{}{
 		"data": execCtx.Input["$json"],
 	}, nil

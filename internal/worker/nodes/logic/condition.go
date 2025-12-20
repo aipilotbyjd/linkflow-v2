@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type ConditionNode struct{}
@@ -21,7 +21,7 @@ func (n *ConditionNode) Type() string {
 	return "logic.condition"
 }
 
-func (n *ConditionNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *ConditionNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	conditions, _ := execCtx.Config["conditions"].([]interface{})
 	combineWith, _ := execCtx.Config["combineWith"].(string)
 	if combineWith == "" {
@@ -143,26 +143,12 @@ func (n *ConditionNode) resolveValue(value interface{}, input map[string]interfa
 	}
 	if strings.HasPrefix(str, "{{") && strings.HasSuffix(str, "}}") {
 		path := strings.TrimSpace(str[2 : len(str)-2])
-		return getNestedValue(input, path)
+		return core.GetNestedValue(input, path)
 	}
 	return value
 }
 
-func getNestedValue(data interface{}, path string) interface{} {
-	path = strings.TrimPrefix(path, "$json.")
-	path = strings.TrimPrefix(path, "$input.")
-	parts := strings.Split(path, ".")
-	current := data
 
-	for _, part := range parts {
-		if m, ok := current.(map[string]interface{}); ok {
-			current = m[part]
-		} else {
-			return nil
-		}
-	}
-	return current
-}
 
 func toFloat(v interface{}) float64 {
 	switch val := v.(type) {

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type SwitchNode struct{}
@@ -19,7 +19,7 @@ func (n *SwitchNode) Type() string {
 	return "logic.switch"
 }
 
-func (n *SwitchNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *SwitchNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	mode, _ := execCtx.Config["mode"].(string)
 	if mode == "" {
 		mode = "rules"
@@ -48,7 +48,7 @@ func (n *SwitchNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContex
 	}, nil
 }
 
-func (n *SwitchNode) evaluateExpressionMode(execCtx *nodes.ExecutionContext) (string, int) {
+func (n *SwitchNode) evaluateExpressionMode(execCtx *core.ExecutionContext) (string, int) {
 	value := n.resolveValue(execCtx.Config["value"], execCtx.Input)
 	cases, _ := execCtx.Config["cases"].([]interface{})
 
@@ -70,7 +70,7 @@ func (n *SwitchNode) evaluateExpressionMode(execCtx *nodes.ExecutionContext) (st
 	return "default", -1
 }
 
-func (n *SwitchNode) evaluateRulesMode(execCtx *nodes.ExecutionContext) (string, int) {
+func (n *SwitchNode) evaluateRulesMode(execCtx *core.ExecutionContext) (string, int) {
 	rules, _ := execCtx.Config["rules"].([]interface{})
 
 	for i, r := range rules {
@@ -170,7 +170,7 @@ func (n *SwitchNode) resolveValue(value interface{}, input map[string]interface{
 	}
 	if strings.HasPrefix(str, "{{") && strings.HasSuffix(str, "}}") {
 		path := strings.TrimSpace(str[2 : len(str)-2])
-		return getNestedValue(input, path)
+		return core.GetNestedValue(input, path)
 	}
 	return value
 }

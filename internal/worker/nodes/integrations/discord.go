@@ -9,7 +9,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 const discordAPIBase = "https://discord.com/api/v10"
@@ -20,7 +20,7 @@ func (n *DiscordNode) Type() string {
 	return "integration.discord"
 }
 
-func (n *DiscordNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *DiscordNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	operation := getString(config, "operation", "sendMessage")
 
@@ -259,4 +259,4 @@ func (n *DiscordNode) makeRequest(ctx context.Context, token, method, url string
 	return result, nil
 }
 
-var _ nodes.Node = (*DiscordNode)(nil)
+var _ core.Node = (*DiscordNode)(nil)

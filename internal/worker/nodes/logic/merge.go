@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
 type MergeNode struct{}
@@ -18,7 +18,7 @@ func (n *MergeNode) Type() string {
 	return "logic.merge"
 }
 
-func (n *MergeNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *MergeNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	mode, _ := execCtx.Config["mode"].(string)
 	if mode == "" {
 		mode = "append"
@@ -42,7 +42,7 @@ func (n *MergeNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext
 	}
 }
 
-func (n *MergeNode) collectInputs(execCtx *nodes.ExecutionContext) []interface{} {
+func (n *MergeNode) collectInputs(execCtx *core.ExecutionContext) []interface{} {
 	var inputs []interface{}
 
 	for key, value := range execCtx.Input {
@@ -153,7 +153,7 @@ func (n *MergeNode) chooseBranchMode(inputs []interface{}, config map[string]int
 			}, nil
 		}
 	case "specified":
-		idx := getInt(config, "branchIndex", 0)
+		idx := core.GetInt(config, "branchIndex", 0)
 		if idx >= 0 && idx < len(inputs) {
 			return map[string]interface{}{
 				"data":        inputs[idx],
@@ -186,7 +186,7 @@ func (n *FilterNode) Type() string {
 	return "logic.filter"
 }
 
-func (n *FilterNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *FilterNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if arr, ok := execCtx.Input["$json"].([]interface{}); ok {
@@ -261,7 +261,7 @@ func (n *SortNode) Type() string {
 	return "logic.sort"
 }
 
-func (n *SortNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *SortNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if arr, ok := execCtx.Input["$json"].([]interface{}); ok {
@@ -318,7 +318,7 @@ func (n *LimitNode) Type() string {
 	return "logic.limit"
 }
 
-func (n *LimitNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *LimitNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if arr, ok := execCtx.Input["$json"].([]interface{}); ok {
@@ -327,8 +327,8 @@ func (n *LimitNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext
 		items = arr
 	}
 
-	limit := getInt(execCtx.Config, "limit", 10)
-	offset := getInt(execCtx.Config, "offset", 0)
+	limit := core.GetInt(execCtx.Config, "limit", 10)
+	offset := core.GetInt(execCtx.Config, "offset", 0)
 
 	if offset > len(items) {
 		offset = len(items)
@@ -358,7 +358,7 @@ func (n *UniqueNode) Type() string {
 	return "logic.unique"
 }
 
-func (n *UniqueNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *UniqueNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if arr, ok := execCtx.Input["$json"].([]interface{}); ok {
@@ -411,7 +411,7 @@ func (n *SplitBatchesNode) Type() string {
 	return "logic.splitBatches"
 }
 
-func (n *SplitBatchesNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *SplitBatchesNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	var items []interface{}
 
 	if arr, ok := execCtx.Input["$json"].([]interface{}); ok {
@@ -420,7 +420,7 @@ func (n *SplitBatchesNode) Execute(ctx context.Context, execCtx *nodes.Execution
 		items = arr
 	}
 
-	batchSize := getInt(execCtx.Config, "batchSize", 10)
+	batchSize := core.GetInt(execCtx.Config, "batchSize", 10)
 	if batchSize < 1 {
 		batchSize = 1
 	}

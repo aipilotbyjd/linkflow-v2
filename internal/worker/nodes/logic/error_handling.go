@@ -5,32 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
-
-func getString(m map[string]interface{}, key, defaultVal string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return defaultVal
-}
-
-func getInt(m map[string]interface{}, key string, defaultVal int) int {
-	if v, ok := m[key].(float64); ok {
-		return int(v)
-	}
-	if v, ok := m[key].(int); ok {
-		return v
-	}
-	return defaultVal
-}
-
-func getBool(m map[string]interface{}, key string, defaultVal bool) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
-	}
-	return defaultVal
-}
 
 // TryCatchNode wraps node execution with error handling
 type TryCatchNode struct{}
@@ -39,12 +15,12 @@ func (n *TryCatchNode) Type() string {
 	return "logic.try_catch"
 }
 
-func (n *TryCatchNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *TryCatchNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 
-	continueOnFail := getBool(config, "continueOnFail", true)
-	errorOutput := getString(config, "errorOutput", "error")
+	continueOnFail := core.GetBool(config, "continueOnFail", true)
+	errorOutput := core.GetString(config, "errorOutput", "error")
 
 	// The try block execution is handled by the executor
 	// This node just passes through input and handles error routing
@@ -80,15 +56,15 @@ func (n *RetryNode) Type() string {
 	return "logic.retry"
 }
 
-func (n *RetryNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *RetryNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 
-	maxRetries := getInt(config, "maxRetries", 3)
-	initialDelay := getInt(config, "initialDelay", 1000) // ms
-	maxDelay := getInt(config, "maxDelay", 30000)        // ms
-	backoffType := getString(config, "backoffType", "exponential")
-	retryOn := getStringArray(config, "retryOn") // specific error types to retry
+	maxRetries := core.GetInt(config, "maxRetries", 3)
+	initialDelay := core.GetInt(config, "initialDelay", 1000) // ms
+	maxDelay := core.GetInt(config, "maxDelay", 30000)        // ms
+	backoffType := core.GetString(config, "backoffType", "exponential")
+	retryOn := core.GetStringArray(config, "retryOn") // specific error types to retry
 
 	// Get current retry count
 	retryCount := 0
@@ -180,11 +156,11 @@ func (n *ThrowErrorNode) Type() string {
 	return "logic.throw_error"
 }
 
-func (n *ThrowErrorNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *ThrowErrorNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 
-	errorMessage := getString(config, "errorMessage", "Custom error")
-	errorType := getString(config, "errorType", "Error")
+	errorMessage := core.GetString(config, "errorMessage", "Custom error")
+	errorType := core.GetString(config, "errorType", "Error")
 
 	return nil, &CustomError{
 		Type:    errorType,
@@ -208,7 +184,7 @@ func (n *ContinueOnFailNode) Type() string {
 	return "logic.continue_on_fail"
 }
 
-func (n *ContinueOnFailNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *ContinueOnFailNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	input := execCtx.Input
 
 	// Check for error from previous node
@@ -235,12 +211,12 @@ func (n *TimeoutNode) Type() string {
 	return "logic.timeout"
 }
 
-func (n *TimeoutNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *TimeoutNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 
-	timeoutMs := getInt(config, "timeout", 30000)
-	onTimeout := getString(config, "onTimeout", "error") // error, continue, default
+	timeoutMs := core.GetInt(config, "timeout", 30000)
+	onTimeout := core.GetString(config, "onTimeout", "error") // error, continue, default
 
 	// Check if timeout occurred
 	if timedOut, ok := input["$timedOut"].(bool); ok && timedOut {
@@ -277,12 +253,12 @@ func (n *FallbackNode) Type() string {
 	return "logic.fallback"
 }
 
-func (n *FallbackNode) Execute(ctx context.Context, execCtx *nodes.ExecutionContext) (map[string]interface{}, error) {
+func (n *FallbackNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
 	config := execCtx.Config
 	input := execCtx.Input
 
 	fallbackValue := config["fallbackValue"]
-	useFallbackOn := getStringArray(config, "useFallbackOn") // error types
+	useFallbackOn := core.GetStringArray(config, "useFallbackOn") // error types
 
 	// Check for error
 	errMsg, hasError := input["$error"].(string)
@@ -302,23 +278,4 @@ func (n *FallbackNode) Execute(ctx context.Context, execCtx *nodes.ExecutionCont
 	}, nil
 }
 
-// Helper function to get string array from config
-func getStringArray(m map[string]interface{}, key string) []string {
-	v, ok := m[key]
-	if !ok {
-		return nil
-	}
 
-	arr, ok := v.([]interface{})
-	if !ok {
-		return nil
-	}
-
-	result := make([]string, 0, len(arr))
-	for _, item := range arr {
-		if s, ok := item.(string); ok {
-			result = append(result, s)
-		}
-	}
-	return result
-}
