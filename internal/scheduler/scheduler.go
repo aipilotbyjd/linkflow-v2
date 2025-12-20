@@ -169,9 +169,31 @@ func (s *Scheduler) processDueSchedules() {
 }
 
 func (s *Scheduler) recoverStaleJobs() {
-	// TODO: Implement stale job recovery
+	ctx := context.Background()
+
 	// Find executions stuck in "running" for more than 10 minutes
-	log.Debug().Msg("Stale job recovery completed")
+	staleExecutions, err := s.executionSvc.GetStaleExecutions(ctx, 10*time.Minute)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get stale executions")
+		return
+	}
+
+	for _, exec := range staleExecutions {
+		log.Warn().
+			Str("execution_id", exec.ID.String()).
+			Str("workflow_id", exec.WorkflowID.String()).
+			Time("started_at", *exec.StartedAt).
+			Msg("Marking stale execution as failed")
+
+		// Mark as failed due to timeout
+		if err := s.executionSvc.Fail(ctx, exec.ID, "Execution timed out (stale job recovery)", nil); err != nil {
+			log.Error().Err(err).Str("execution_id", exec.ID.String()).Msg("Failed to mark execution as failed")
+		}
+	}
+
+	if len(staleExecutions) > 0 {
+		log.Info().Int("count", len(staleExecutions)).Msg("Recovered stale executions")
+	}
 }
 
 func (s *Scheduler) cleanupOldData() {
@@ -179,12 +201,23 @@ func (s *Scheduler) cleanupOldData() {
 
 	log.Info().Msg("Starting data cleanup...")
 
-	// TODO: Delete old executions based on retention policy
-	// TODO: Delete old webhook logs
-	// TODO: Vacuum database
+	// Default retention: 30 days for executions
+	retentionDays := 30
+	if s.cfg.App.ExecutionRetentionDays > 0 {
+		retentionDays = s.cfg.App.ExecutionRetentionDays
+	}
+
+	cutoff := time.Now().AddDate(0, 0, -retentionDays)
+
+	// Delete old executions
+	deleted, err := s.executionSvc.DeleteOlderThan(ctx, cutoff)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to delete old executions")
+	} else if deleted > 0 {
+		log.Info().Int64("deleted", deleted).Int("retention_days", retentionDays).Msg("Deleted old executions")
+	}
 
 	log.Info().Msg("Data cleanup completed")
-	_ = ctx
 }
 
 func (s *Scheduler) aggregateUsage() {
@@ -192,8 +225,20 @@ func (s *Scheduler) aggregateUsage() {
 
 	log.Debug().Msg("Aggregating usage...")
 
-	// TODO: Aggregate execution counts per workspace
-	// TODO: Update usage records
+	// Get hourly execution counts per workspace
+	hourStart := time.Now().Truncate(time.Hour).Add(-time.Hour)
+	hourEnd := hourStart.Add(time.Hour)
 
-	_ = ctx
+	stats, err := s.executionSvc.GetHourlyStats(ctx, hourStart, hourEnd)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get hourly stats")
+		return
+	}
+
+	for workspaceID, count := range stats {
+		log.Debug().
+			Str("workspace_id", workspaceID.String()).
+			Int64("executions", count).
+			Msg("Hourly execution count")
+	}
 }

@@ -114,6 +114,14 @@ func (r *WorkflowRepository) Search(ctx context.Context, workspaceID uuid.UUID, 
 	return workflows, total, err
 }
 
+func (r *WorkflowRepository) FindActiveWithWebhook(ctx context.Context, endpointID string) ([]models.Workflow, error) {
+	var workflows []models.Workflow
+	err := r.DB().WithContext(ctx).
+		Where("status = ? AND settings->>'webhookEndpoint' = ?", models.WorkflowStatusActive, endpointID).
+		Find(&workflows).Error
+	return workflows, err
+}
+
 // Version methods
 type WorkflowVersionRepository struct {
 	*BaseRepository[models.WorkflowVersion]

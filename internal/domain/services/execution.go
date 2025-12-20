@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
@@ -166,4 +167,16 @@ func (s *ExecutionService) Retry(ctx context.Context, executionID uuid.UUID, tri
 		TriggerData: original.TriggerData,
 		InputData:   original.InputData,
 	})
+}
+
+func (s *ExecutionService) GetStaleExecutions(ctx context.Context, staleAfter time.Duration) ([]models.Execution, error) {
+	return s.executionRepo.FindStale(ctx, staleAfter)
+}
+
+func (s *ExecutionService) DeleteOlderThan(ctx context.Context, cutoff time.Time) (int64, error) {
+	return s.executionRepo.DeleteOlderThan(ctx, cutoff)
+}
+
+func (s *ExecutionService) GetHourlyStats(ctx context.Context, start, end time.Time) (map[uuid.UUID]int64, error) {
+	return s.executionRepo.GetHourlyStatsByWorkspace(ctx, start, end)
 }

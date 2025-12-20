@@ -139,6 +139,31 @@ func (r *ExecutionRepository) DeleteOlderThan(ctx context.Context, cutoff time.T
 	return result.RowsAffected, result.Error
 }
 
+func (r *ExecutionRepository) GetHourlyStatsByWorkspace(ctx context.Context, start, end time.Time) (map[uuid.UUID]int64, error) {
+	type stat struct {
+		WorkspaceID uuid.UUID `gorm:"column:workspace_id"`
+		Count       int64     `gorm:"column:count"`
+	}
+	var stats []stat
+
+	err := r.DB().WithContext(ctx).
+		Model(&models.Execution{}).
+		Select("workspace_id, COUNT(*) as count").
+		Where("created_at BETWEEN ? AND ?", start, end).
+		Group("workspace_id").
+		Find(&stats).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID]int64)
+	for _, s := range stats {
+		result[s.WorkspaceID] = s.Count
+	}
+	return result, nil
+}
+
 // Node Execution methods
 type NodeExecutionRepository struct {
 	*BaseRepository[models.NodeExecution]

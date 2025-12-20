@@ -198,3 +198,50 @@ func (s *WorkflowService) RestoreVersion(ctx context.Context, workflowID uuid.UU
 		Settings:    v.Settings,
 	}, userID)
 }
+
+// WebhookEndpoint represents a webhook endpoint for a workflow
+type WebhookEndpoint struct {
+	WorkflowID   uuid.UUID
+	EndpointID   string
+	Secret       string
+	ResponseMode string // "immediate" or "wait"
+}
+
+func (s *WorkflowService) GetWebhookByEndpoint(ctx context.Context, endpointID string) (*WebhookEndpoint, error) {
+	// Look for workflow with matching webhook endpoint in settings
+	workflows, err := s.workflowRepo.FindActiveWithWebhook(ctx, endpointID)
+	if err != nil {
+		return nil, err
+	}
+	if len(workflows) == 0 {
+		return nil, ErrWorkflowNotFound
+	}
+
+	workflow := workflows[0]
+	
+	// Extract webhook settings from workflow
+	settings := workflow.Settings
+	var secret, responseMode string
+	
+	if settings != nil {
+		if webhookSettings, ok := settings["webhook"].(map[string]interface{}); ok {
+			if s, ok := webhookSettings["secret"].(string); ok {
+				secret = s
+			}
+			if rm, ok := webhookSettings["responseMode"].(string); ok {
+				responseMode = rm
+			}
+		}
+	}
+	
+	if responseMode == "" {
+		responseMode = "immediate"
+	}
+
+	return &WebhookEndpoint{
+		WorkflowID:   workflow.ID,
+		EndpointID:   endpointID,
+		Secret:       secret,
+		ResponseMode: responseMode,
+	}, nil
+}

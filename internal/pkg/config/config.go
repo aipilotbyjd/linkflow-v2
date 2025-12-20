@@ -20,11 +20,12 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Name        string
-	Environment string
-	Debug       bool
-	URL         string
-	FrontendURL string
+	Name                   string
+	Environment            string
+	Debug                  bool
+	URL                    string
+	FrontendURL            string
+	ExecutionRetentionDays int
 }
 
 type ServerConfig struct {
