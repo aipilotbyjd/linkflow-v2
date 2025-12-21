@@ -581,7 +581,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Simple HTTP Workflow\",\n  \"description\": \"Fetches data from API\",\n  \"nodes\": {\n    \"nodes\": [\n      {\n        \"id\": \"trigger_1\",\n        \"type\": \"trigger.manual\",\n        \"name\": \"Manual Trigger\",\n        \"position\": { \"x\": 100, \"y\": 100 },\n        \"parameters\": {}\n      },\n      {\n        \"id\": \"http_1\",\n        \"type\": \"action.http\",\n        \"name\": \"HTTP Request\",\n        \"position\": { \"x\": 300, \"y\": 100 },\n        \"parameters\": {\n          \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n          \"method\": \"GET\"\n        }\n      }\n    ]\n  },\n  \"connections\": {\n    \"connections\": [\n      {\n        \"id\": \"conn_1\",\n        \"source_node_id\": \"trigger_1\",\n        \"target_node_id\": \"http_1\"\n      }\n    ]\n  }\n}"
+							"raw": "{\n  \"name\": \"Simple HTTP Workflow\",\n  \"description\": \"Fetches data from API\",\n  \"nodes\": [\n    {\n      \"id\": \"trigger_1\",\n      \"type\": \"trigger.manual\",\n      \"name\": \"Manual Trigger\",\n      \"position\": { \"x\": 100, \"y\": 100 },\n      \"parameters\": {}\n    },\n    {\n      \"id\": \"http_1\",\n      \"type\": \"action.http\",\n      \"name\": \"HTTP Request\",\n      \"position\": { \"x\": 300, \"y\": 100 },\n      \"parameters\": {\n        \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n        \"method\": \"GET\"\n      }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"conn_1\",\n      \"source_node_id\": \"trigger_1\",\n      \"target_node_id\": \"http_1\"\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows",
