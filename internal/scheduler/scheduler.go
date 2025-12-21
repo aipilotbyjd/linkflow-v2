@@ -2,243 +2,251 @@ package scheduler
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
+	"sync"
 	"time"
 
-	"github.com/linkflow-ai/linkflow/internal/domain/models"
-	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	"github.com/robfig/cron/v3"
+	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/cron"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/dispatcher"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/leader"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/metrics"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/poller"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/recovery"
+	"github.com/linkflow-ai/linkflow/internal/scheduler/store"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type Scheduler struct {
-	cfg           *config.Config
-	cron          *cron.Cron
-	leader        *LeaderElection
-	scheduleSvc   *services.ScheduleService
-	executionSvc  *services.ExecutionService
-	queueClient   *queue.Client
-	done          chan struct{}
+	config *Config
+
+	// Components
+	election     *leader.Election
+	poller       *poller.Poller
+	dispatcher   *dispatcher.Dispatcher
+	staleRecov   *recovery.StaleRecovery
+	cleanup      *recovery.Cleanup
+	backpressure *dispatcher.BackpressureMonitor
+	metrics      *metrics.Collector
+
+	// Lifecycle
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
-func New(
-	cfg *config.Config,
-	redisClient *pkgredis.Client,
-	scheduleSvc *services.ScheduleService,
-	executionSvc *services.ExecutionService,
-	queueClient *queue.Client,
-) *Scheduler {
-	c := cron.New(cron.WithSeconds())
+type Dependencies struct {
+	DB    *gorm.DB
+	Redis *pkgredis.Client
+	Queue *queue.Client
+}
+
+func New(cfg *Config, deps *Dependencies) *Scheduler {
+	if cfg == nil {
+		cfg = DefaultConfig()
+	}
+	cfg.Validate()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	// Create store
+	pgStore := store.NewPostgresStore(deps.DB)
+	cachedStore := store.NewCachedStore(pgStore, deps.Redis)
+
+	// Create leader election
+	election := leader.NewElection(deps.Redis, cfg.LeaderKey, cfg.LeaderTTL)
+
+	// Create cron calculator
+	calculator := cron.NewCalculator()
+
+	// Create rate limiters
+	globalLimiter := dispatcher.NewSlidingWindowLimiter(
+		deps.Redis, "scheduler:ratelimit:global", cfg.GlobalRateLimit, time.Minute,
+	)
+	wsLimiter := dispatcher.NewSlidingWindowLimiter(
+		deps.Redis, "scheduler:ratelimit:workspace", cfg.WorkspaceLimit, time.Minute,
+	)
+
+	// Create dispatcher
+	disp := dispatcher.NewDispatcher(deps.Queue, globalLimiter, wsLimiter)
+
+	// Create poller
+	poll := poller.NewPoller(cachedStore, disp, calculator, cfg.BatchSize, cfg.PollInterval)
+
+	// Create backpressure monitor
+	bp := dispatcher.NewBackpressureMonitor(deps.Redis, "asynq:queue:default", 10000)
+	poll.SetBackpressure(bp)
+
+	// Create recovery
+	staleRecov := recovery.NewStaleRecovery(cachedStore, calculator, cfg.StaleThreshold)
+	cleanup := recovery.NewCleanup(deps.DB, cfg.RetentionDays)
+
+	// Create metrics
+	metricsCollector := metrics.NewCollector()
 
 	return &Scheduler{
-		cfg:          cfg,
-		cron:         c,
-		leader:       NewLeaderElection(redisClient, "scheduler-leader"),
-		scheduleSvc:  scheduleSvc,
-		executionSvc: executionSvc,
-		queueClient:  queueClient,
-		done:         make(chan struct{}),
+		config:       cfg,
+		election:     election,
+		poller:       poll,
+		dispatcher:   disp,
+		staleRecov:   staleRecov,
+		cleanup:      cleanup,
+		backpressure: bp,
+		metrics:      metricsCollector,
+		ctx:          ctx,
+		cancel:       cancel,
 	}
 }
 
 func (s *Scheduler) Start() error {
-	log.Info().Msg("Starting scheduler...")
+	log.Info().
+		Str("leader_key", s.config.LeaderKey).
+		Dur("poll_interval", s.config.PollInterval).
+		Int("batch_size", s.config.BatchSize).
+		Msg("Starting scheduler")
 
-	// Try to acquire leadership
-	go s.runWithLeadership()
+	// Start leader election loop
+	s.wg.Add(1)
+	go s.leaderLoop()
 
-	// Wait for shutdown signal
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Info().Msg("Shutting down scheduler...")
-	close(s.done)
-	s.cron.Stop()
+	// Start backpressure monitor
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		s.backpressure.Start(s.ctx)
+	}()
 
 	return nil
 }
 
-func (s *Scheduler) runWithLeadership() {
-	for {
-		select {
-		case <-s.done:
-			return
-		default:
-		}
+func (s *Scheduler) Stop() error {
+	log.Info().Msg("Stopping scheduler...")
 
-		ctx := context.Background()
-		acquired, err := s.leader.TryAcquire(ctx)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to acquire leadership")
-			time.Sleep(5 * time.Second)
-			continue
-		}
+	s.cancel()
 
-		if acquired {
-			log.Info().Msg("Acquired leadership, starting jobs")
-			s.setupJobs()
-			s.cron.Start()
-			s.maintainLeadership(ctx)
-			s.cron.Stop()
-			log.Info().Msg("Lost leadership, stopping jobs")
-		} else {
-			log.Debug().Msg("Not leader, waiting...")
-			time.Sleep(5 * time.Second)
-		}
+	// Wait with timeout
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Info().Msg("Scheduler stopped gracefully")
+	case <-time.After(s.config.ShutdownTimeout):
+		log.Warn().Msg("Scheduler shutdown timed out")
 	}
+
+	// Release leadership
+	s.election.Release(context.Background())
+
+	return nil
 }
 
-func (s *Scheduler) maintainLeadership(ctx context.Context) {
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
+func (s *Scheduler) leaderLoop() {
+	defer s.wg.Done()
+
+	extendTicker := time.NewTicker(s.config.LeaderTTL / 3)
+	defer extendTicker.Stop()
+
+	acquireTicker := time.NewTicker(5 * time.Second)
+	defer acquireTicker.Stop()
+
+	var pollerCancel context.CancelFunc
+	var recoveryCancel context.CancelFunc
+	var cleanupCancel context.CancelFunc
+
+	stopWorkers := func() {
+		if pollerCancel != nil {
+			pollerCancel()
+			pollerCancel = nil
+		}
+		if recoveryCancel != nil {
+			recoveryCancel()
+			recoveryCancel = nil
+		}
+		if cleanupCancel != nil {
+			cleanupCancel()
+			cleanupCancel = nil
+		}
+	}
+
+	startWorkers := func() {
+		var pollerCtx, recoveryCtx, cleanupCtx context.Context
+
+		pollerCtx, pollerCancel = context.WithCancel(s.ctx)
+		recoveryCtx, recoveryCancel = context.WithCancel(s.ctx)
+		cleanupCtx, cleanupCancel = context.WithCancel(s.ctx)
+
+		s.wg.Add(3)
+		go func() {
+			defer s.wg.Done()
+			s.poller.Run(pollerCtx)
+		}()
+		go func() {
+			defer s.wg.Done()
+			s.staleRecov.Run(recoveryCtx)
+		}()
+		go func() {
+			defer s.wg.Done()
+			s.cleanup.Run(cleanupCtx)
+		}()
+	}
 
 	for {
 		select {
-		case <-s.done:
-			s.leader.Release(ctx)
+		case <-s.ctx.Done():
+			stopWorkers()
 			return
-		case <-ticker.C:
-			if !s.leader.Extend(ctx) {
-				return
+
+		case <-acquireTicker.C:
+			if !s.election.IsLeader() {
+				acquired, err := s.election.TryAcquire(s.ctx)
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to acquire leadership")
+					continue
+				}
+				if acquired {
+					s.metrics.SetLeader(true)
+					startWorkers()
+				}
+			}
+
+		case <-extendTicker.C:
+			if s.election.IsLeader() {
+				if !s.election.Extend(s.ctx) {
+					log.Warn().Msg("Lost leadership")
+					s.metrics.SetLeader(false)
+					stopWorkers()
+				}
 			}
 		}
 	}
 }
 
-func (s *Scheduler) setupJobs() {
-	// Check for due schedules every minute
-	s.cron.AddFunc("0 * * * * *", s.processDueSchedules)
-
-	// Recover stale jobs every 5 minutes
-	s.cron.AddFunc("0 */5 * * * *", s.recoverStaleJobs)
-
-	// Cleanup old data daily at 3 AM
-	s.cron.AddFunc("0 0 3 * * *", s.cleanupOldData)
-
-	// Aggregate usage hourly
-	s.cron.AddFunc("0 0 * * * *", s.aggregateUsage)
+func (s *Scheduler) IsLeader() bool {
+	return s.election.IsLeader()
 }
 
-func (s *Scheduler) processDueSchedules() {
-	ctx := context.Background()
-
-	schedules, err := s.scheduleSvc.GetDue(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get due schedules")
-		return
-	}
-
-	for _, schedule := range schedules {
-		log.Info().
-			Str("schedule_id", schedule.ID.String()).
-			Str("workflow_id", schedule.WorkflowID.String()).
-			Msg("Executing scheduled workflow")
-
-		// Queue workflow execution
-		task, err := s.queueClient.EnqueueWorkflowExecution(ctx, queue.WorkflowExecutionPayload{
-			WorkflowID:  schedule.WorkflowID,
-			WorkspaceID: schedule.WorkspaceID,
-			TriggerType: models.TriggerSchedule,
-			InputData:   schedule.InputData,
-		})
-		if err != nil {
-			log.Error().
-				Err(err).
-				Str("schedule_id", schedule.ID.String()).
-				Msg("Failed to queue scheduled workflow")
-			continue
-		}
-
-		// Record the run (this also updates next_run_at)
-		// Note: We use a placeholder execution ID here, the actual execution will be created by the worker
-		if err := s.scheduleSvc.RecordRun(ctx, schedule.ID, schedule.ID); err != nil {
-			log.Error().
-				Err(err).
-				Str("schedule_id", schedule.ID.String()).
-				Msg("Failed to record schedule run")
-		}
-
-		_ = task
-	}
+func (s *Scheduler) Metrics() *metrics.Collector {
+	return s.metrics
 }
 
-func (s *Scheduler) recoverStaleJobs() {
-	ctx := context.Background()
+func (s *Scheduler) Health() map[string]interface{} {
+	snapshot := s.metrics.Snapshot()
+	pollerStats := s.poller.Stats()
+	dispatcherStats := s.dispatcher.Stats()
 
-	// Find executions stuck in "running" for more than 10 minutes
-	staleExecutions, err := s.executionSvc.GetStaleExecutions(ctx, 10*time.Minute)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get stale executions")
-		return
-	}
-
-	for _, exec := range staleExecutions {
-		log.Warn().
-			Str("execution_id", exec.ID.String()).
-			Str("workflow_id", exec.WorkflowID.String()).
-			Time("started_at", *exec.StartedAt).
-			Msg("Marking stale execution as failed")
-
-		// Mark as failed due to timeout
-		if err := s.executionSvc.Fail(ctx, exec.ID, "Execution timed out (stale job recovery)", nil); err != nil {
-			log.Error().Err(err).Str("execution_id", exec.ID.String()).Msg("Failed to mark execution as failed")
-		}
-	}
-
-	if len(staleExecutions) > 0 {
-		log.Info().Int("count", len(staleExecutions)).Msg("Recovered stale executions")
-	}
-}
-
-func (s *Scheduler) cleanupOldData() {
-	ctx := context.Background()
-
-	log.Info().Msg("Starting data cleanup...")
-
-	// Default retention: 30 days for executions
-	retentionDays := 30
-	if s.cfg.App.ExecutionRetentionDays > 0 {
-		retentionDays = s.cfg.App.ExecutionRetentionDays
-	}
-
-	cutoff := time.Now().AddDate(0, 0, -retentionDays)
-
-	// Delete old executions
-	deleted, err := s.executionSvc.DeleteOlderThan(ctx, cutoff)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to delete old executions")
-	} else if deleted > 0 {
-		log.Info().Int64("deleted", deleted).Int("retention_days", retentionDays).Msg("Deleted old executions")
-	}
-
-	log.Info().Msg("Data cleanup completed")
-}
-
-func (s *Scheduler) aggregateUsage() {
-	ctx := context.Background()
-
-	log.Debug().Msg("Aggregating usage...")
-
-	// Get hourly execution counts per workspace
-	hourStart := time.Now().Truncate(time.Hour).Add(-time.Hour)
-	hourEnd := hourStart.Add(time.Hour)
-
-	stats, err := s.executionSvc.GetHourlyStats(ctx, hourStart, hourEnd)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to get hourly stats")
-		return
-	}
-
-	for workspaceID, count := range stats {
-		log.Debug().
-			Str("workspace_id", workspaceID.String()).
-			Int64("executions", count).
-			Msg("Hourly execution count")
+	return map[string]interface{}{
+		"is_leader":        snapshot.IsLeader,
+		"uptime_seconds":   int64(snapshot.Uptime.Seconds()),
+		"polls_total":      pollerStats.PollCount,
+		"last_poll_at":     pollerStats.LastPollAt,
+		"dispatched_total": dispatcherStats.Dispatched,
+		"skipped_total":    dispatcherStats.Skipped,
+		"failed_total":     dispatcherStats.Failed,
+		"queue_depth":      s.backpressure.QueueDepth(),
 	}
 }
