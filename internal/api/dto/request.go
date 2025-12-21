@@ -70,21 +70,21 @@ type UpdateMemberRoleRequest struct {
 
 // Workflow
 type CreateWorkflowRequest struct {
-	Name        string      `json:"name" validate:"required,min=1,max=255"`
-	Description *string     `json:"description,omitempty" validate:"omitempty,max=1000"`
-	Nodes       models.JSON `json:"nodes" validate:"required"`
-	Connections models.JSON `json:"connections" validate:"required"`
-	Settings    models.JSON `json:"settings,omitempty"`
-	Tags        []string    `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
+	Name        string           `json:"name" validate:"required,min=1,max=255"`
+	Description *string          `json:"description,omitempty" validate:"omitempty,max=1000"`
+	Nodes       models.JSONArray `json:"nodes" validate:"required"`
+	Connections models.JSONArray `json:"connections" validate:"required"`
+	Settings    models.JSON      `json:"settings,omitempty"`
+	Tags        []string         `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
 }
 
 type UpdateWorkflowRequest struct {
-	Name        *string     `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
-	Description *string     `json:"description,omitempty" validate:"omitempty,max=1000"`
-	Nodes       models.JSON `json:"nodes,omitempty"`
-	Connections models.JSON `json:"connections,omitempty"`
-	Settings    models.JSON `json:"settings,omitempty"`
-	Tags        []string    `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
+	Name        *string          `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+	Description *string          `json:"description,omitempty" validate:"omitempty,max=1000"`
+	Nodes       models.JSONArray `json:"nodes,omitempty"`
+	Connections models.JSONArray `json:"connections,omitempty"`
+	Settings    models.JSON      `json:"settings,omitempty"`
+	Tags        []string         `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
 }
 
 type ExecuteWorkflowRequest struct {

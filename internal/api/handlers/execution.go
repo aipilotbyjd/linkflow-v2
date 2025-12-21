@@ -42,7 +42,7 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.ExecutionResponse
+	response := []dto.ExecutionResponse{}
 	for _, exec := range executions {
 		var startedAt, completedAt *int64
 		if exec.StartedAt != nil {
@@ -141,7 +141,7 @@ func (h *ExecutionHandler) GetNodes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.NodeExecutionResponse
+	response := []dto.NodeExecutionResponse{}
 	for _, ne := range nodeExecutions {
 		var startedAt, completedAt *int64
 		if ne.StartedAt != nil {

@@ -51,7 +51,7 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.WorkflowResponse
+	response := []dto.WorkflowResponse{}
 	for _, wf := range workflows {
 		var lastExecutedAt *int64
 		if wf.LastExecutedAt != nil {
@@ -372,7 +372,7 @@ func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.WorkflowVersionResponse
+	response := []dto.WorkflowVersionResponse{}
 	for _, v := range versions {
 		response = append(response, dto.WorkflowVersionResponse{
 			ID:            v.ID.String(),

@@ -34,8 +34,8 @@ type CreateWorkflowInput struct {
 	CreatedBy   uuid.UUID
 	Name        string
 	Description *string
-	Nodes       models.JSON
-	Connections models.JSON
+	Nodes       models.JSONArray
+	Connections models.JSONArray
 	Settings    models.JSON
 	Tags        []string
 }
@@ -86,8 +86,8 @@ func (s *WorkflowService) Search(ctx context.Context, workspaceID uuid.UUID, que
 type UpdateWorkflowInput struct {
 	Name        *string
 	Description *string
-	Nodes       models.JSON
-	Connections models.JSON
+	Nodes       models.JSONArray
+	Connections models.JSONArray
 	Settings    models.JSON
 	Tags        []string
 }

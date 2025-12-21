@@ -38,7 +38,7 @@ func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.PlanResponse
+	response := []dto.PlanResponse{}
 	for _, plan := range plans {
 		response = append(response, dto.PlanResponse{
 			ID:               plan.ID,
@@ -183,7 +183,7 @@ func (h *BillingHandler) GetInvoices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []map[string]interface{}
+	response := []map[string]interface{}{}
 	for _, inv := range invoices {
 		response = append(response, map[string]interface{}{
 			"id":          inv.ID.String(),

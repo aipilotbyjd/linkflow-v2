@@ -220,18 +220,13 @@ func ParseWorkflow(workflow *models.Workflow) (*WorkflowDefinition, error) {
 	return def, nil
 }
 
-func parseNodes(data models.JSON) ([]*NodeDefinition, error) {
+func parseNodes(data models.JSONArray) ([]*NodeDefinition, error) {
 	if data == nil {
 		return nil, nil
 	}
 
-	nodesRaw, ok := data["nodes"].([]interface{})
-	if !ok {
-		return nil, nil
-	}
-
-	nodes := make([]*NodeDefinition, 0, len(nodesRaw))
-	for _, nodeRaw := range nodesRaw {
+	nodes := make([]*NodeDefinition, 0, len(data))
+	for _, nodeRaw := range data {
 		nodeMap, ok := nodeRaw.(map[string]interface{})
 		if !ok {
 			continue
@@ -272,18 +267,13 @@ func parseNodes(data models.JSON) ([]*NodeDefinition, error) {
 	return nodes, nil
 }
 
-func parseConnections(data models.JSON) ([]*Connection, error) {
+func parseConnections(data models.JSONArray) ([]*Connection, error) {
 	if data == nil {
 		return nil, nil
 	}
 
-	connsRaw, ok := data["connections"].([]interface{})
-	if !ok {
-		return nil, nil
-	}
-
-	connections := make([]*Connection, 0, len(connsRaw))
-	for _, connRaw := range connsRaw {
+	connections := make([]*Connection, 0, len(data))
+	for _, connRaw := range data {
 		connMap, ok := connRaw.(map[string]interface{})
 		if !ok {
 			continue

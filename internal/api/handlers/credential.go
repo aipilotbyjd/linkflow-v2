@@ -39,7 +39,7 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.CredentialResponse
+	response := []dto.CredentialResponse{}
 	for _, cred := range credentials {
 		var lastUsedAt *int64
 		if cred.LastUsedAt != nil {

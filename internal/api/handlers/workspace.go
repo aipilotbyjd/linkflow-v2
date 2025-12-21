@@ -37,7 +37,7 @@ func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.WorkspaceResponse
+	response := []dto.WorkspaceResponse{}
 	for _, ws := range workspaces {
 		response = append(response, dto.WorkspaceResponse{
 			ID:          ws.ID.String(),
@@ -188,7 +188,7 @@ func (h *WorkspaceHandler) GetMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.WorkspaceMemberResponse
+	response := []dto.WorkspaceMemberResponse{}
 	for _, m := range members {
 		var joinedAt, invitedAt *int64
 		if m.JoinedAt != nil {

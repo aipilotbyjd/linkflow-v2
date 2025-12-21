@@ -15,8 +15,8 @@ type Workflow struct {
 	Description    *string        `gorm:"type:text" json:"description,omitempty"`
 	Status         string         `gorm:"size:20;not null;default:draft;index" json:"status"`
 	Version        int            `gorm:"not null;default:1" json:"version"`
-	Nodes          JSON           `gorm:"type:jsonb;not null;default:'[]'" json:"nodes"`
-	Connections    JSON           `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
+	Nodes          JSONArray      `gorm:"type:jsonb;not null;default:'[]'" json:"nodes"`
+	Connections    JSONArray      `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
 	Settings       JSON           `gorm:"type:jsonb;default:'{}'" json:"settings"`
 	Tags           StringArray    `gorm:"type:text[]" json:"tags"`
 	FolderID       *uuid.UUID     `gorm:"type:uuid" json:"folder_id,omitempty"`
@@ -44,8 +44,8 @@ type WorkflowVersion struct {
 	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkflowID    uuid.UUID  `gorm:"type:uuid;index;not null" json:"workflow_id"`
 	Version       int        `gorm:"not null" json:"version"`
-	Nodes         JSON       `gorm:"type:jsonb;not null" json:"nodes"`
-	Connections   JSON       `gorm:"type:jsonb;not null" json:"connections"`
+	Nodes         JSONArray  `gorm:"type:jsonb;not null" json:"nodes"`
+	Connections   JSONArray  `gorm:"type:jsonb;not null" json:"connections"`
 	Settings      JSON       `gorm:"type:jsonb" json:"settings"`
 	CreatedBy     *uuid.UUID `gorm:"type:uuid" json:"created_by,omitempty"`
 	ChangeMessage *string    `gorm:"type:text" json:"change_message,omitempty"`

@@ -39,7 +39,7 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var response []dto.ScheduleResponse
+	response := []dto.ScheduleResponse{}
 	for _, sched := range schedules {
 		var nextRunAt, lastRunAt *int64
 		if sched.NextRunAt != nil {
