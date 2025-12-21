@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "linkflow-api-v1",
 		"name": "LinkFlow API",
-		"description": "Complete API collection for LinkFlow - Production-ready workflow automation platform",
+		"description": "# LinkFlow API\n\nComplete API collection for LinkFlow - Production-ready workflow automation platform.\n\n## Getting Started\n\n1. Import this collection and the environment file\n2. Set `base_url` in environment (default: `http://localhost:8090`)\n3. Register a new user or login\n4. Tokens are auto-saved and refreshed\n\n## Features\n\n- **Workflows**: Create, execute, import/export, duplicate\n- **Executions**: Monitor, retry, cancel\n- **Schedules**: Cron-based workflow scheduling\n- **Credentials**: Secure credential management\n- **Billing**: Subscriptions and usage tracking",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -21,6 +21,7 @@
 			"script": {
 				"type": "text/javascript",
 				"exec": [
+					"// Auto-refresh token if expired",
 					"const tokenExpiry = pm.environment.get('token_expires_at');",
 					"const refreshToken = pm.environment.get('refresh_token');",
 					"",
@@ -48,7 +49,7 @@
 	],
 	"item": [
 		{
-			"name": "Health",
+			"name": "🏥 Health",
 			"item": [
 				{
 					"name": "Health Check",
@@ -60,11 +61,12 @@
 							"raw": "{{base_url}}/health",
 							"host": ["{{base_url}}"],
 							"path": ["health"]
-						}
+						},
+						"description": "Overall system health status"
 					}
 				},
 				{
-					"name": "Liveness",
+					"name": "Liveness Probe",
 					"request": {
 						"auth": { "type": "noauth" },
 						"method": "GET",
@@ -73,11 +75,12 @@
 							"raw": "{{base_url}}/health/live",
 							"host": ["{{base_url}}"],
 							"path": ["health", "live"]
-						}
+						},
+						"description": "Kubernetes liveness probe"
 					}
 				},
 				{
-					"name": "Readiness",
+					"name": "Readiness Probe",
 					"request": {
 						"auth": { "type": "noauth" },
 						"method": "GET",
@@ -86,13 +89,15 @@
 							"raw": "{{base_url}}/health/ready",
 							"host": ["{{base_url}}"],
 							"path": ["health", "ready"]
-						}
+						},
+						"description": "Kubernetes readiness probe"
 					}
 				}
-			]
+			],
+			"description": "Health check endpoints for monitoring and Kubernetes probes"
 		},
 		{
-			"name": "Authentication",
+			"name": "🔐 Authentication",
 			"item": [
 				{
 					"name": "Register",
@@ -100,6 +105,7 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 201) {",
 									"    const data = pm.response.json().data;",
@@ -108,10 +114,8 @@
 									"    pm.environment.set('token_expires_at', data.expires_at * 1000);",
 									"    pm.environment.set('user_id', data.user.id);",
 									"    pm.environment.set('user_email', data.user.email);",
-									"}",
-									"pm.test('Status 201', () => pm.response.to.have.status(201));"
-								],
-								"type": "text/javascript"
+									"}"
+								]
 							}
 						}
 					],
@@ -123,13 +127,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{$randomEmail}}\",\n  \"password\": \"{{default_password}}\",\n  \"first_name\": \"{{$randomFirstName}}\",\n  \"last_name\": \"{{$randomLastName}}\"\n}"
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"SecurePass123!\",\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/register",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "register"]
-						}
+						},
+						"description": "Register a new user account"
 					}
 				},
 				{
@@ -138,6 +143,7 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    const data = pm.response.json().data;",
@@ -147,10 +153,8 @@
 									"        pm.environment.set('token_expires_at', data.expires_at * 1000);",
 									"        pm.environment.set('user_id', data.user.id);",
 									"    }",
-									"}",
-									"pm.test('Status 200', () => pm.response.to.have.status(200));"
-								],
-								"type": "text/javascript"
+									"}"
+								]
 							}
 						}
 					],
@@ -162,32 +166,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+							"raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"SecurePass123!\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "login"]
-						}
-					}
-				},
-				{
-					"name": "Login with MFA",
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{default_password}}\",\n  \"mfa_code\": \"123456\"\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "login"]
-						}
+						"description": "Login with email and password"
 					}
 				},
 				{
@@ -196,6 +182,7 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    const data = pm.response.json().data;",
@@ -203,8 +190,7 @@
 									"    pm.environment.set('refresh_token', data.refresh_token);",
 									"    pm.environment.set('token_expires_at', data.expires_at * 1000);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -216,32 +202,18 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+							"raw": "{\n    \"refresh_token\": \"{{refresh_token}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/refresh",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "refresh"]
-						}
+						},
+						"description": "Get new access token using refresh token"
 					}
 				},
 				{
 					"name": "Logout",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 204) {",
-									"    pm.environment.unset('access_token');",
-									"    pm.environment.unset('refresh_token');",
-									"    pm.environment.unset('token_expires_at');",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -249,7 +221,8 @@
 							"raw": "{{base_url}}/api/v1/auth/logout",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "logout"]
-						}
+						},
+						"description": "Invalidate current session"
 					}
 				},
 				{
@@ -262,13 +235,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"{{user_email}}\"\n}"
+							"raw": "{\n    \"email\": \"user@example.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/forgot-password",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "forgot-password"]
-						}
+						},
+						"description": "Request password reset email"
 					}
 				},
 				{
@@ -281,30 +255,18 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"NewPassword123!\"\n}"
+							"raw": "{\n    \"token\": \"reset-token-from-email\",\n    \"password\": \"NewSecurePass123!\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/reset-password",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "reset-password"]
-						}
+						},
+						"description": "Reset password with token"
 					}
 				},
 				{
 					"name": "Setup MFA",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    pm.environment.set('mfa_secret', pm.response.json().data.secret);",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -312,7 +274,8 @@
 							"raw": "{{base_url}}/api/v1/auth/mfa/setup",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "mfa", "setup"]
-						}
+						},
+						"description": "Setup multi-factor authentication"
 					}
 				},
 				{
@@ -324,37 +287,34 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"code\": \"123456\"\n}"
+							"raw": "{\n    \"code\": \"123456\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/mfa/verify",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "auth", "mfa", "verify"]
-						}
+						},
+						"description": "Verify MFA code"
 					}
 				},
 				{
 					"name": "Disable MFA",
 					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"code\": \"123456\"\n}"
-						},
+						"method": "DELETE",
+						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/auth/mfa/disable",
+							"raw": "{{base_url}}/api/v1/auth/mfa",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "mfa", "disable"]
-						}
+							"path": ["api", "v1", "auth", "mfa"]
+						},
+						"description": "Disable multi-factor authentication"
 					}
 				}
-			]
+			],
+			"description": "User authentication and account security"
 		},
 		{
-			"name": "Users",
+			"name": "👤 Users",
 			"item": [
 				{
 					"name": "Get Current User",
@@ -365,7 +325,8 @@
 							"raw": "{{base_url}}/api/v1/users/me",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "users", "me"]
-						}
+						},
+						"description": "Get current user profile"
 					}
 				},
 				{
@@ -377,19 +338,21 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"first_name\": \"Updated\",\n  \"last_name\": \"Name\"\n}"
+							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/me",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "users", "me"]
-						}
+						},
+						"description": "Update current user profile"
 					}
 				}
-			]
+			],
+			"description": "User profile management"
 		},
 		{
-			"name": "Workspaces",
+			"name": "🏢 Workspaces",
 			"item": [
 				{
 					"name": "List Workspaces",
@@ -397,6 +360,7 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 200) {",
 									"    const data = pm.response.json().data;",
@@ -404,8 +368,7 @@
 									"        pm.environment.set('workspace_id', data[0].id);",
 									"    }",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -416,7 +379,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces"]
-						}
+						},
+						"description": "List all workspaces for current user"
 					}
 				},
 				{
@@ -425,12 +389,13 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 201) {",
-									"    pm.environment.set('workspace_id', pm.response.json().data.id);",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('workspace_id', data.id);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -441,13 +406,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"{{$randomCompanyName}}\",\n  \"slug\": \"{{$randomWord}}-{{$timestamp}}\"\n}"
+							"raw": "{\n    \"name\": \"My Workspace\",\n    \"slug\": \"my-workspace\",\n    \"description\": \"Main workspace for automation\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces"]
-						}
+						},
+						"description": "Create a new workspace"
 					}
 				},
 				{
@@ -459,7 +425,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
-						}
+						},
+						"description": "Get workspace details"
 					}
 				},
 				{
@@ -471,13 +438,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Workspace\"\n}"
+							"raw": "{\n    \"name\": \"Updated Workspace Name\",\n    \"description\": \"Updated description\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
-						}
+						},
+						"description": "Update workspace settings"
 					}
 				},
 				{
@@ -489,11 +457,12 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
-						}
+						},
+						"description": "Delete a workspace"
 					}
 				},
 				{
-					"name": "List Members",
+					"name": "Get Members",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -501,7 +470,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members"]
-						}
+						},
+						"description": "List workspace members"
 					}
 				},
 				{
@@ -513,38 +483,56 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"email\": \"newmember@example.com\",\n  \"role\": \"member\"\n}"
+							"raw": "{\n    \"email\": \"teammate@example.com\",\n    \"role\": \"member\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members"]
-						}
+						},
+						"description": "Invite a new member (roles: admin, member, viewer)"
+					}
+				},
+				{
+					"name": "Update Member Role",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members/{{member_user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members", "{{member_user_id}}"]
+						},
+						"description": "Update a member's role"
+					}
+				},
+				{
+					"name": "Remove Member",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members/{{member_user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members", "{{member_user_id}}"]
+						},
+						"description": "Remove a member from workspace"
 					}
 				}
-			]
+			],
+			"description": "Workspace and team management"
 		},
 		{
-			"name": "Workflows",
+			"name": "⚡ Workflows",
 			"item": [
 				{
 					"name": "List Workflows",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const data = pm.response.json().data;",
-									"    if (data && data.length > 0) {",
-									"        pm.environment.set('workflow_id', data[0].id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -556,7 +544,8 @@
 								{ "key": "page", "value": "1" },
 								{ "key": "per_page", "value": "20" }
 							]
-						}
+						},
+						"description": "List all workflows in workspace"
 					}
 				},
 				{
@@ -565,12 +554,13 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 201) {",
-									"    pm.environment.set('workflow_id', pm.response.json().data.id);",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('workflow_id', data.id);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -581,13 +571,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Simple HTTP Workflow\",\n  \"description\": \"Fetches data from API\",\n  \"nodes\": [\n    {\n      \"id\": \"trigger_1\",\n      \"type\": \"trigger.manual\",\n      \"name\": \"Manual Trigger\",\n      \"position\": { \"x\": 100, \"y\": 100 },\n      \"parameters\": {}\n    },\n    {\n      \"id\": \"http_1\",\n      \"type\": \"action.http\",\n      \"name\": \"HTTP Request\",\n      \"position\": { \"x\": 300, \"y\": 100 },\n      \"parameters\": {\n        \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n        \"method\": \"GET\"\n      }\n    }\n  ],\n  \"connections\": [\n    {\n      \"id\": \"conn_1\",\n      \"source_node_id\": \"trigger_1\",\n      \"target_node_id\": \"http_1\"\n    }\n  ]\n}"
+							"raw": "{\n    \"name\": \"My HTTP Workflow\",\n    \"description\": \"Fetches data from an API\",\n    \"nodes\": [\n        {\n            \"id\": \"trigger_1\",\n            \"type\": \"trigger.manual\",\n            \"name\": \"Manual Trigger\",\n            \"position\": { \"x\": 100, \"y\": 100 },\n            \"parameters\": {}\n        },\n        {\n            \"id\": \"http_1\",\n            \"type\": \"action.http\",\n            \"name\": \"HTTP Request\",\n            \"position\": { \"x\": 300, \"y\": 100 },\n            \"parameters\": {\n                \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n                \"method\": \"GET\"\n            }\n        }\n    ],\n    \"connections\": [\n        {\n            \"id\": \"conn_1\",\n            \"source_node_id\": \"trigger_1\",\n            \"target_node_id\": \"http_1\"\n        }\n    ],\n    \"tags\": [\"api\", \"http\"]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows"]
-						}
+						},
+						"description": "Create a new workflow"
 					}
 				},
 				{
@@ -599,7 +590,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
-						}
+						},
+						"description": "Get workflow details"
 					}
 				},
 				{
@@ -611,101 +603,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Workflow\",\n  \"description\": \"Updated description\"\n}"
+							"raw": "{\n    \"name\": \"Updated Workflow Name\",\n    \"description\": \"Updated description\",\n    \"tags\": [\"updated\", \"api\"]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
-						}
-					}
-				},
-				{
-					"name": "Execute Workflow",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200 || pm.response.code === 202) {",
-									"    const data = pm.response.json().data;",
-									"    if (data && data.task_id) {",
-									"        pm.environment.set('execution_id', data.task_id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"input\": {\n    \"key\": \"value\"\n  }\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/execute",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "execute"]
-						}
-					}
-				},
-				{
-					"name": "Clone Workflow",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Cloned Workflow\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/clone",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "clone"]
-						}
-					}
-				},
-				{
-					"name": "Activate Workflow",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/activate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "activate"]
-						}
-					}
-				},
-				{
-					"name": "Deactivate Workflow",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/deactivate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "deactivate"]
-						}
-					}
-				},
-				{
-					"name": "List Versions",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions"]
-						}
+						"description": "Update workflow"
 					}
 				},
 				{
@@ -717,32 +622,173 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
-						}
+						},
+						"description": "Delete a workflow"
 					}
-				}
-			]
-		},
-		{
-			"name": "Executions",
-			"item": [
+				},
 				{
-					"name": "List Executions",
+					"name": "Execute Workflow",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
-									"if (pm.response.code === 200) {",
+									"if (pm.response.code === 202) {",
 									"    const data = pm.response.json().data;",
-									"    if (data && data.length > 0) {",
-									"        pm.environment.set('execution_id', data[0].id);",
-									"    }",
+									"    pm.environment.set('execution_id', data.execution_id);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"input_data\": {\n        \"key\": \"value\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/execute",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "execute"]
+						},
+						"description": "Execute a workflow manually"
+					}
+				},
+				{
+					"name": "Activate Workflow",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/activate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "activate"]
+						},
+						"description": "Activate workflow for triggers"
+					}
+				},
+				{
+					"name": "Deactivate Workflow",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/deactivate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "deactivate"]
+						},
+						"description": "Deactivate workflow"
+					}
+				},
+				{
+					"name": "Clone Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Cloned Workflow\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/clone",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "clone"]
+						},
+						"description": "Clone an existing workflow"
+					}
+				},
+				{
+					"name": "Duplicate Workflow (with Variables)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Duplicated Workflow\",\n    \"variables\": {\n        \"API_URL\": \"https://api.newsite.com\",\n        \"API_KEY\": \"new-api-key\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/duplicate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "duplicate"]
+						},
+						"description": "Duplicate workflow with variable substitution"
+					}
+				},
+				{
+					"name": "Export Workflow",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/export",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "export"]
+						},
+						"description": "Export workflow as JSON file"
+					}
+				},
+				{
+					"name": "Import Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"version\": \"1.0\",\n    \"workflow\": {\n        \"name\": \"Imported Workflow\",\n        \"description\": \"Workflow imported from file\",\n        \"nodes\": [\n            {\n                \"id\": \"trigger_1\",\n                \"type\": \"trigger.manual\",\n                \"name\": \"Manual Trigger\",\n                \"position\": { \"x\": 100, \"y\": 100 },\n                \"parameters\": {}\n            }\n        ],\n        \"connections\": [],\n        \"tags\": [\"imported\"]\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/import",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "import"]
+						},
+						"description": "Import workflow from JSON"
+					}
+				},
+				{
+					"name": "Get Versions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions"]
+						},
+						"description": "List workflow versions"
+					}
+				},
+				{
+					"name": "Get Specific Version",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1"]
+						},
+						"description": "Get a specific workflow version"
+					}
+				}
+			],
+			"description": "Workflow management and execution"
+		},
+		{
+			"name": "📊 Executions",
+			"item": [
+				{
+					"name": "List Executions",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -754,7 +800,8 @@
 								{ "key": "page", "value": "1" },
 								{ "key": "per_page", "value": "20" }
 							]
-						}
+						},
+						"description": "List all executions"
 					}
 				},
 				{
@@ -766,7 +813,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}"]
-						}
+						},
+						"description": "Get execution details"
 					}
 				},
 				{
@@ -778,7 +826,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/nodes",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "nodes"]
-						}
+						},
+						"description": "Get node execution details"
 					}
 				},
 				{
@@ -790,7 +839,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/cancel",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "cancel"]
-						}
+						},
+						"description": "Cancel a running execution"
 					}
 				},
 				{
@@ -802,32 +852,18 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/retry",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "retry"]
-						}
+						},
+						"description": "Retry a failed execution"
 					}
 				}
-			]
+			],
+			"description": "Execution monitoring and control"
 		},
 		{
-			"name": "Credentials",
+			"name": "🔑 Credentials",
 			"item": [
 				{
 					"name": "List Credentials",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const data = pm.response.json().data;",
-									"    if (data && data.length > 0) {",
-									"        pm.environment.set('credential_id', data[0].id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -835,21 +871,23 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials"]
-						}
+						},
+						"description": "List all credentials"
 					}
 				},
 				{
-					"name": "Create API Key Credential",
+					"name": "Create Credential",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 201) {",
-									"    pm.environment.set('credential_id', pm.response.json().data.id);",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('credential_id', data.id);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -860,31 +898,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"My API Key\",\n  \"type\": \"api_key\",\n  \"data\": {\n    \"api_key\": \"sk-test-1234567890\"\n  }\n}"
+							"raw": "{\n    \"name\": \"My API Key\",\n    \"type\": \"api_key\",\n    \"description\": \"API key for external service\",\n    \"data\": {\n        \"api_key\": \"sk-xxxxxxxxxxxxx\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials"]
-						}
-					}
-				},
-				{
-					"name": "Create OAuth2 Credential",
-					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Slack OAuth\",\n  \"type\": \"oauth2\",\n  \"data\": {\n    \"access_token\": \"xoxb-your-token\",\n    \"refresh_token\": \"xoxr-refresh\",\n    \"token_type\": \"Bearer\",\n    \"expires_at\": 1735689600\n  }\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials"]
-						}
+						"description": "Create a new credential"
 					}
 				},
 				{
@@ -896,7 +917,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
-						}
+						},
+						"description": "Get credential details (data is encrypted)"
 					}
 				},
 				{
@@ -908,25 +930,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Credential\"\n}"
+							"raw": "{\n    \"name\": \"Updated API Key\",\n    \"description\": \"Updated description\",\n    \"data\": {\n        \"api_key\": \"sk-new-key-xxxxx\"\n    }\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
-						}
-					}
-				},
-				{
-					"name": "Test Credential",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}/test",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}", "test"]
-						}
+						},
+						"description": "Update credential"
 					}
 				},
 				{
@@ -938,32 +949,31 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
-						}
+						},
+						"description": "Delete a credential"
+					}
+				},
+				{
+					"name": "Test Credential",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}", "test"]
+						},
+						"description": "Test if credential is valid"
 					}
 				}
-			]
+			],
+			"description": "Secure credential storage"
 		},
 		{
-			"name": "Schedules",
+			"name": "⏰ Schedules",
 			"item": [
 				{
 					"name": "List Schedules",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const data = pm.response.json().data;",
-									"    if (data && data.length > 0) {",
-									"        pm.environment.set('schedule_id', data[0].id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -971,7 +981,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules"]
-						}
+						},
+						"description": "List all schedules"
 					}
 				},
 				{
@@ -980,12 +991,13 @@
 						{
 							"listen": "test",
 							"script": {
+								"type": "text/javascript",
 								"exec": [
 									"if (pm.response.code === 201) {",
-									"    pm.environment.set('schedule_id', pm.response.json().data.id);",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('schedule_id', data.id);",
 									"}"
-								],
-								"type": "text/javascript"
+								]
 							}
 						}
 					],
@@ -996,13 +1008,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Every 5 Minutes\",\n  \"workflow_id\": \"{{workflow_id}}\",\n  \"cron_expression\": \"*/5 * * * *\",\n  \"timezone\": \"UTC\",\n  \"is_active\": true\n}"
+							"raw": "{\n    \"workflow_id\": \"{{workflow_id}}\",\n    \"name\": \"Daily Report\",\n    \"description\": \"Run workflow every day at 9 AM\",\n    \"cron_expression\": \"0 9 * * *\",\n    \"timezone\": \"America/New_York\",\n    \"enabled\": true\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules"]
-						}
+						},
+						"description": "Create a cron schedule"
 					}
 				},
 				{
@@ -1014,7 +1027,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
-						}
+						},
+						"description": "Get schedule details"
 					}
 				},
 				{
@@ -1026,37 +1040,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Schedule\",\n  \"cron_expression\": \"0 * * * *\"\n}"
+							"raw": "{\n    \"name\": \"Updated Schedule\",\n    \"cron_expression\": \"0 10 * * *\",\n    \"enabled\": true\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
-						}
-					}
-				},
-				{
-					"name": "Pause Schedule",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/pause",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "pause"]
-						}
-					}
-				},
-				{
-					"name": "Resume Schedule",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/resume",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "resume"]
-						}
+						},
+						"description": "Update schedule"
 					}
 				},
 				{
@@ -1068,24 +1059,54 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
-						}
+						},
+						"description": "Delete a schedule"
+					}
+				},
+				{
+					"name": "Pause Schedule",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/pause",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "pause"]
+						},
+						"description": "Pause a schedule"
+					}
+				},
+				{
+					"name": "Resume Schedule",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/resume",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "resume"]
+						},
+						"description": "Resume a paused schedule"
 					}
 				}
-			]
+			],
+			"description": "Cron-based workflow scheduling"
 		},
 		{
-			"name": "Billing",
+			"name": "💳 Billing",
 			"item": [
 				{
 					"name": "Get Plans",
 					"request": {
+						"auth": { "type": "noauth" },
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/plans",
+							"raw": "{{base_url}}/api/v1/billing/plans",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "plans"]
-						}
+							"path": ["api", "v1", "billing", "plans"]
+						},
+						"description": "List available subscription plans"
 					}
 				},
 				{
@@ -1097,7 +1118,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"]
-						}
+						},
+						"description": "Get current subscription"
 					}
 				},
 				{
@@ -1109,13 +1131,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"plan_id\": \"pro\",\n  \"billing_cycle\": \"monthly\"\n}"
+							"raw": "{\n    \"plan_id\": \"pro\",\n    \"billing_cycle\": \"monthly\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"]
-						}
+						},
+						"description": "Create or upgrade subscription"
 					}
 				},
 				{
@@ -1124,10 +1147,14 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription?at_period_end=true",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"]
-						}
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"],
+							"query": [
+								{ "key": "at_period_end", "value": "true" }
+							]
+						},
+						"description": "Cancel subscription"
 					}
 				},
 				{
@@ -1139,7 +1166,8 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/usage",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "usage"]
-						}
+						},
+						"description": "Get current billing period usage"
 					}
 				},
 				{
@@ -1151,47 +1179,18 @@
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/invoices",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "invoices"]
-						}
-					}
-				}
-			]
-		},
-		{
-			"name": "Webhooks",
-			"item": [
-				{
-					"name": "Trigger Webhook GET",
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/webhooks/{{webhook_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["webhooks", "{{webhook_id}}"]
-						}
-					}
-				},
-				{
-					"name": "Trigger Webhook POST",
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"event\": \"user.created\",\n  \"data\": {\n    \"id\": \"12345\",\n    \"email\": \"user@example.com\"\n  }\n}"
 						},
-						"url": {
-							"raw": "{{base_url}}/webhooks/{{webhook_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["webhooks", "{{webhook_id}}"]
-						}
+						"description": "List billing invoices"
 					}
 				}
-			]
+			],
+			"description": "Subscription and billing management"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8090"
 		}
 	]
 }
