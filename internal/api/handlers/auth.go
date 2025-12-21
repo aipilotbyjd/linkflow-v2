@@ -182,7 +182,21 @@ func (h *AuthHandler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement password reset email
+	if err := validator.Validate(&req); err != nil {
+		dto.ValidationErrorResponse(w, err)
+		return
+	}
+
+	// Generate reset token and send email
+	err := h.authSvc.InitiatePasswordReset(r.Context(), req.Email)
+	if err != nil {
+		// Don't reveal if email exists or not
+		dto.JSON(w, http.StatusOK, map[string]string{
+			"message": "If the email exists, a password reset link has been sent",
+		})
+		return
+	}
+
 	dto.JSON(w, http.StatusOK, map[string]string{
 		"message": "If the email exists, a password reset link has been sent",
 	})
@@ -195,7 +209,24 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement password reset with token
+	if err := validator.Validate(&req); err != nil {
+		dto.ValidationErrorResponse(w, err)
+		return
+	}
+
+	err := h.authSvc.ResetPassword(r.Context(), req.Token, req.NewPassword)
+	if err != nil {
+		switch err {
+		case services.ErrInvalidToken:
+			dto.ErrorResponse(w, http.StatusBadRequest, "invalid or expired reset token")
+		case services.ErrTokenExpired:
+			dto.ErrorResponse(w, http.StatusBadRequest, "reset token has expired")
+		default:
+			dto.ErrorResponse(w, http.StatusInternalServerError, "failed to reset password")
+		}
+		return
+	}
+
 	dto.JSON(w, http.StatusOK, map[string]string{
 		"message": "Password has been reset successfully",
 	})

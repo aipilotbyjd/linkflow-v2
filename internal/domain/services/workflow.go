@@ -201,10 +201,11 @@ func (s *WorkflowService) RestoreVersion(ctx context.Context, workflowID uuid.UU
 
 // WebhookEndpoint represents a webhook endpoint for a workflow
 type WebhookEndpoint struct {
-	WorkflowID   uuid.UUID
-	EndpointID   string
-	Secret       string
-	ResponseMode string // "immediate" or "wait"
+	WorkflowID      uuid.UUID
+	EndpointID      string
+	Secret          string
+	ResponseMode    string // "immediate" or "wait"
+	ResponseTimeout int    // timeout in seconds for wait mode
 }
 
 func (s *WorkflowService) GetWebhookByEndpoint(ctx context.Context, endpointID string) (*WebhookEndpoint, error) {

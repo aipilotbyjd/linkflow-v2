@@ -3,10 +3,14 @@ package integrations
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
@@ -231,23 +235,202 @@ func (n *OpenAINode) generateImage(ctx context.Context, apiKey string, config ma
 }
 
 func (n *OpenAINode) editImage(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: Implement image edit with multipart form
-	return nil, fmt.Errorf("image edit not yet implemented")
+	prompt := getString(config, "prompt", "")
+	size := getString(config, "size", "1024x1024")
+	imageCount := getInt(config, "n", 1)
+	responseFormat := getString(config, "responseFormat", "url")
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add image file
+	if err := n.addFileToMultipart(writer, "image", config); err != nil {
+		return nil, fmt.Errorf("failed to add image: %w", err)
+	}
+
+	// Add mask if provided
+	if mask := config["mask"]; mask != nil {
+		if maskConfig, ok := mask.(map[string]interface{}); ok {
+			if err := n.addFileToMultipartFromConfig(writer, "mask", maskConfig); err != nil {
+				return nil, fmt.Errorf("failed to add mask: %w", err)
+			}
+		}
+	}
+
+	writer.WriteField("prompt", prompt)
+	writer.WriteField("size", size)
+	writer.WriteField("n", fmt.Sprintf("%d", imageCount))
+	writer.WriteField("response_format", responseFormat)
+	writer.Close()
+
+	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/images/edits", &buf, writer.FormDataContentType())
 }
 
 func (n *OpenAINode) createImageVariation(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: Implement image variation with multipart form
-	return nil, fmt.Errorf("image variation not yet implemented")
+	size := getString(config, "size", "1024x1024")
+	imageCount := getInt(config, "n", 1)
+	responseFormat := getString(config, "responseFormat", "url")
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add image file
+	if err := n.addFileToMultipart(writer, "image", config); err != nil {
+		return nil, fmt.Errorf("failed to add image: %w", err)
+	}
+
+	writer.WriteField("size", size)
+	writer.WriteField("n", fmt.Sprintf("%d", imageCount))
+	writer.WriteField("response_format", responseFormat)
+	writer.Close()
+
+	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/images/variations", &buf, writer.FormDataContentType())
 }
 
 func (n *OpenAINode) transcribeAudio(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: Implement audio transcription with multipart form
-	return nil, fmt.Errorf("audio transcription not yet implemented")
+	model := getString(config, "model", "whisper-1")
+	language := getString(config, "language", "")
+	prompt := getString(config, "prompt", "")
+	responseFormat := getString(config, "responseFormat", "json")
+	temperature := getFloat(config, "temperature", 0)
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add audio file
+	if err := n.addFileToMultipart(writer, "file", config); err != nil {
+		return nil, fmt.Errorf("failed to add audio file: %w", err)
+	}
+
+	writer.WriteField("model", model)
+	if language != "" {
+		writer.WriteField("language", language)
+	}
+	if prompt != "" {
+		writer.WriteField("prompt", prompt)
+	}
+	writer.WriteField("response_format", responseFormat)
+	writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
+	writer.Close()
+
+	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/audio/transcriptions", &buf, writer.FormDataContentType())
 }
 
 func (n *OpenAINode) translateAudio(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: Implement audio translation with multipart form
-	return nil, fmt.Errorf("audio translation not yet implemented")
+	model := getString(config, "model", "whisper-1")
+	prompt := getString(config, "prompt", "")
+	responseFormat := getString(config, "responseFormat", "json")
+	temperature := getFloat(config, "temperature", 0)
+
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+
+	// Add audio file
+	if err := n.addFileToMultipart(writer, "file", config); err != nil {
+		return nil, fmt.Errorf("failed to add audio file: %w", err)
+	}
+
+	writer.WriteField("model", model)
+	if prompt != "" {
+		writer.WriteField("prompt", prompt)
+	}
+	writer.WriteField("response_format", responseFormat)
+	writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
+	writer.Close()
+
+	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/audio/translations", &buf, writer.FormDataContentType())
+}
+
+func (n *OpenAINode) addFileToMultipart(writer *multipart.Writer, fieldName string, config map[string]interface{}) error {
+	// Look for file data in config
+	if fileData, ok := config["file"].(map[string]interface{}); ok {
+		return n.addFileToMultipartFromConfig(writer, fieldName, fileData)
+	}
+	if imageData, ok := config["image"].(map[string]interface{}); ok {
+		return n.addFileToMultipartFromConfig(writer, fieldName, imageData)
+	}
+	return fmt.Errorf("no file data provided")
+}
+
+func (n *OpenAINode) addFileToMultipartFromConfig(writer *multipart.Writer, fieldName string, fileConfig map[string]interface{}) error {
+	filename := getString(fileConfig, "filename", "file")
+	
+	// Get file content
+	var content []byte
+	var err error
+	
+	if path, ok := fileConfig["path"].(string); ok {
+		content, err = os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read file: %w", err)
+		}
+		if filename == "file" {
+			filename = filepath.Base(path)
+		}
+	} else if b64, ok := fileConfig["content"].(string); ok {
+		content, err = base64.StdEncoding.DecodeString(b64)
+		if err != nil {
+			content = []byte(b64)
+		}
+	} else if raw, ok := fileConfig["data"].([]byte); ok {
+		content = raw
+	} else {
+		return fmt.Errorf("no file content provided (use 'path', 'content', or 'data')")
+	}
+	
+	part, err := writer.CreateFormFile(fieldName, filename)
+	if err != nil {
+		return err
+	}
+	_, err = part.Write(content)
+	return err
+}
+
+func (n *OpenAINode) makeMultipartRequest(ctx context.Context, apiKey, url string, body *bytes.Buffer, contentType string) (map[string]interface{}, error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", contentType)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+
+	var result map[string]interface{}
+	json.Unmarshal(respBody, &result)
+
+	if resp.StatusCode >= 400 {
+		if errObj, ok := result["error"].(map[string]interface{}); ok {
+			return result, fmt.Errorf("OpenAI API error: %s", errObj["message"])
+		}
+		return result, fmt.Errorf("OpenAI API error: %d", resp.StatusCode)
+	}
+
+	// Extract data for convenience
+	if data, ok := result["data"].([]interface{}); ok && len(data) > 0 {
+		if item, ok := data[0].(map[string]interface{}); ok {
+			if url := item["url"]; url != nil {
+				result["url"] = url
+			}
+			if b64 := item["b64_json"]; b64 != nil {
+				result["b64_json"] = b64
+			}
+		}
+	}
+	
+	// Extract text for transcription/translation
+	if text, ok := result["text"].(string); ok {
+		result["transcript"] = text
+	}
+
+	return result, nil
 }
 
 func (n *OpenAINode) moderateContent(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {

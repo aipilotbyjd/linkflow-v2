@@ -214,3 +214,26 @@ func (h *Hub) CleanupExecutionSubscriptions(executionID uuid.UUID) {
 	defer h.mu.Unlock()
 	delete(h.execConns, executionID)
 }
+
+func (h *Hub) SubscribeToWorkflow(client *Client, workflowID uuid.UUID) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	// Use wsConns for workflow subscriptions (workspace connections)
+	if _, ok := h.wsConns[workflowID]; !ok {
+		h.wsConns[workflowID] = make(map[*Client]bool)
+	}
+	h.wsConns[workflowID][client] = true
+}
+
+func (h *Hub) UnsubscribeFromWorkflow(client *Client, workflowID uuid.UUID) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	if conns, ok := h.wsConns[workflowID]; ok {
+		delete(conns, client)
+		if len(conns) == 0 {
+			delete(h.wsConns, workflowID)
+		}
+	}
+}

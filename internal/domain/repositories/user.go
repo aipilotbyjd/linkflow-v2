@@ -200,3 +200,35 @@ func (r *APIKeyRepository) Revoke(ctx context.Context, keyID uuid.UUID) error {
 		Where("id = ?", keyID).
 		Update("revoked_at", now).Error
 }
+
+// Password reset token methods
+func (r *UserRepository) CreatePasswordResetToken(ctx context.Context, token *models.PasswordResetToken) error {
+	return r.DB().WithContext(ctx).Create(token).Error
+}
+
+func (r *UserRepository) FindPasswordResetToken(ctx context.Context, token string) (*models.PasswordResetToken, error) {
+	var resetToken models.PasswordResetToken
+	err := r.DB().WithContext(ctx).Where("token = ?", token).First(&resetToken).Error
+	if err != nil {
+		return nil, err
+	}
+	return &resetToken, nil
+}
+
+func (r *UserRepository) DeletePasswordResetToken(ctx context.Context, token string) error {
+	return r.DB().WithContext(ctx).Where("token = ?", token).Delete(&models.PasswordResetToken{}).Error
+}
+
+func (r *UserRepository) MarkPasswordResetTokenUsed(ctx context.Context, token string) error {
+	now := time.Now()
+	return r.DB().WithContext(ctx).Model(&models.PasswordResetToken{}).
+		Where("token = ?", token).
+		Update("used_at", now).Error
+}
+
+func (r *UserRepository) CleanupExpiredResetTokens(ctx context.Context) (int64, error) {
+	result := r.DB().WithContext(ctx).
+		Where("expires_at < ? OR used_at IS NOT NULL", time.Now()).
+		Delete(&models.PasswordResetToken{})
+	return result.RowsAffected, result.Error
+}

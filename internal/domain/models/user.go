@@ -99,3 +99,18 @@ type OAuthConnection struct {
 func (OAuthConnection) TableName() string {
 	return "oauth_connections"
 }
+
+type PasswordResetToken struct {
+	ID        uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	UserID    uuid.UUID  `gorm:"type:uuid;index;not null" json:"user_id"`
+	Token     string     `gorm:"size:255;uniqueIndex;not null" json:"-"`
+	ExpiresAt time.Time  `gorm:"not null" json:"expires_at"`
+	UsedAt    *time.Time `json:"used_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+
+	User User `gorm:"foreignKey:UserID" json:"-"`
+}
+
+func (PasswordResetToken) TableName() string {
+	return "password_reset_tokens"
+}

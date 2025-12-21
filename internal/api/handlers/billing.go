@@ -1,10 +1,15 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
@@ -14,11 +19,16 @@ import (
 )
 
 type BillingHandler struct {
-	billingSvc *services.BillingService
+	billingSvc          *services.BillingService
+	stripeWebhookSecret string
 }
 
 func NewBillingHandler(billingSvc *services.BillingService) *BillingHandler {
 	return &BillingHandler{billingSvc: billingSvc}
+}
+
+func NewBillingHandlerWithWebhookSecret(billingSvc *services.BillingService, webhookSecret string) *BillingHandler {
+	return &BillingHandler{billingSvc: billingSvc, stripeWebhookSecret: webhookSecret}
 }
 
 func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
@@ -207,7 +217,15 @@ func (h *BillingHandler) HandleStripeWebhook(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// TODO: Verify Stripe signature
+	// Verify Stripe signature if webhook secret is configured
+	if h.stripeWebhookSecret != "" {
+		sigHeader := r.Header.Get("Stripe-Signature")
+		if !h.verifyStripeSignature(body, sigHeader) {
+			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid signature")
+			return
+		}
+	}
+
 	var event map[string]interface{}
 	if err := json.Unmarshal(body, &event); err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid JSON")
@@ -223,4 +241,50 @@ func (h *BillingHandler) HandleStripeWebhook(w http.ResponseWriter, r *http.Requ
 	}
 
 	dto.JSON(w, http.StatusOK, map[string]string{"received": "true"})
+}
+
+func (h *BillingHandler) verifyStripeSignature(payload []byte, sigHeader string) bool {
+	if sigHeader == "" {
+		return false
+	}
+
+	// Parse signature header
+	// Format: t=timestamp,v1=signature
+	var timestamp string
+	var signature string
+	
+	parts := strings.Split(sigHeader, ",")
+	for _, part := range parts {
+		kv := strings.SplitN(part, "=", 2)
+		if len(kv) != 2 {
+			continue
+		}
+		switch kv[0] {
+		case "t":
+			timestamp = kv[1]
+		case "v1":
+			signature = kv[1]
+		}
+	}
+
+	if timestamp == "" || signature == "" {
+		return false
+	}
+
+	// Verify timestamp is not too old (5 minute tolerance)
+	ts, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil {
+		return false
+	}
+	if time.Now().Unix()-ts > 300 {
+		return false
+	}
+
+	// Compute expected signature
+	signedPayload := timestamp + "." + string(payload)
+	mac := hmac.New(sha256.New, []byte(h.stripeWebhookSecret))
+	mac.Write([]byte(signedPayload))
+	expectedSig := hex.EncodeToString(mac.Sum(nil))
+
+	return hmac.Equal([]byte(signature), []byte(expectedSig))
 }

@@ -206,7 +206,7 @@ func (rctx *RuntimeContext) ResolveExpression(expr string) (interface{}, error) 
 		JSON:        rctx.Input["$json"],
 		Node:        rctx.GetAllNodeOutputs(),
 		Vars:        rctx.Variables,
-		Env:         make(map[string]string), // TODO: populate from config
+		Env:         rctx.getEnvironmentVariables(),
 		Now:         time.Now(),
 		Today:       time.Now().Format("2006-01-02"),
 		Timestamp:   time.Now().Unix(),
@@ -215,6 +215,24 @@ func (rctx *RuntimeContext) ResolveExpression(expr string) (interface{}, error) 
 	}
 
 	return rctx.expression.Evaluate(expr, exprCtx)
+}
+
+// getEnvironmentVariables returns environment variables available to expressions
+func (rctx *RuntimeContext) getEnvironmentVariables() map[string]string {
+	env := make(map[string]string)
+	
+	// Add execution-related env vars
+	env["EXECUTION_ID"] = rctx.ExecutionID.String()
+	env["WORKFLOW_ID"] = rctx.WorkflowID.String()
+	env["WORKSPACE_ID"] = rctx.WorkspaceID.String()
+	env["TRACE_ID"] = rctx.TraceID
+	
+	// Note: In production, additional environment variables can be injected
+	// via the processor's configuration or from the workflow settings
+	// e.g., API keys, base URLs, feature flags, etc.
+	// For security, system environment variables are NOT exposed directly
+	
+	return env
 }
 
 // ResolveConfig resolves all expressions in a config map

@@ -3,12 +3,18 @@ package actions
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -74,8 +80,44 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 			}
 
 		case "multipart":
-			// TODO: Handle multipart form data
-			contentType = "multipart/form-data"
+			var buf bytes.Buffer
+			writer := multipart.NewWriter(&buf)
+			
+			if formData, ok := body.(map[string]interface{}); ok {
+				for k, v := range formData {
+					switch val := v.(type) {
+					case map[string]interface{}:
+						// File upload: {"filename": "...", "content": "base64...", "contentType": "..."}
+						if filename, ok := val["filename"].(string); ok {
+							part, err := writer.CreateFormFile(k, filename)
+							if err != nil {
+								return nil, fmt.Errorf("failed to create form file: %w", err)
+							}
+							
+							if content, ok := val["content"].(string); ok {
+								// Check if base64 encoded
+								if decoded, err := base64.StdEncoding.DecodeString(content); err == nil {
+									part.Write(decoded)
+								} else {
+									part.Write([]byte(content))
+								}
+							} else if filePath, ok := val["path"].(string); ok {
+								// Read from file path
+								fileContent, err := os.ReadFile(filePath)
+								if err != nil {
+									return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
+								}
+								part.Write(fileContent)
+							}
+						}
+					default:
+						writer.WriteField(k, fmt.Sprintf("%v", v))
+					}
+				}
+			}
+			writer.Close()
+			reqBody = &buf
+			contentType = writer.FormDataContentType()
 
 		case "raw":
 			if str, ok := body.(string); ok {
@@ -83,7 +125,40 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 			}
 
 		case "binary":
-			// TODO: Handle binary data
+			switch val := body.(type) {
+			case string:
+				// Base64 encoded binary
+				if decoded, err := base64.StdEncoding.DecodeString(val); err == nil {
+					reqBody = bytes.NewReader(decoded)
+				} else {
+					reqBody = strings.NewReader(val)
+				}
+			case map[string]interface{}:
+				// File reference: {"path": "/path/to/file"}
+				if filePath, ok := val["path"].(string); ok {
+					fileContent, err := os.ReadFile(filePath)
+					if err != nil {
+						return nil, fmt.Errorf("failed to read binary file: %w", err)
+					}
+					reqBody = bytes.NewReader(fileContent)
+					// Try to detect content type
+					ext := strings.ToLower(filepath.Ext(filePath))
+					switch ext {
+					case ".pdf":
+						contentType = "application/pdf"
+					case ".png":
+						contentType = "image/png"
+					case ".jpg", ".jpeg":
+						contentType = "image/jpeg"
+					case ".gif":
+						contentType = "image/gif"
+					case ".zip":
+						contentType = "application/zip"
+					default:
+						contentType = "application/octet-stream"
+					}
+				}
+			}
 		}
 	}
 
@@ -125,13 +200,41 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 		}
 
 	case "oauth2":
-		// Get credential and use access token
-		if credID := getStringHTTP(config, "credentialId", ""); credID != "" {
-			// TODO: Get credential from context
+		// Get access token from config (should be resolved from credential)
+		token := getStringHTTP(config, "accessToken", "")
+		if token == "" {
+			token = getStringHTTP(config, "token", "")
+		}
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
 		}
 
 	case "digest":
-		// TODO: Implement digest auth
+		// Digest authentication requires a challenge-response
+		username := getStringHTTP(config, "username", "")
+		password := getStringHTTP(config, "password", "")
+		if username != "" && password != "" {
+			// First request to get WWW-Authenticate header
+			transport := &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: ignoreSsl},
+			}
+			probeClient := &http.Client{
+				Timeout:   time.Duration(timeout) * time.Second,
+				Transport: transport,
+			}
+			probeReq, _ := http.NewRequestWithContext(ctx, method, urlStr, nil)
+			probeResp, err := probeClient.Do(probeReq)
+			if err == nil && probeResp.StatusCode == 401 {
+				wwwAuth := probeResp.Header.Get("WWW-Authenticate")
+				probeResp.Body.Close()
+				if strings.HasPrefix(wwwAuth, "Digest ") {
+					authHeader := computeDigestAuth(wwwAuth, username, password, method, urlStr)
+					req.Header.Set("Authorization", authHeader)
+				}
+			} else if probeResp != nil {
+				probeResp.Body.Close()
+			}
+		}
 
 	case "none":
 		// No authentication
@@ -231,4 +334,80 @@ func getMapHTTP(m map[string]interface{}, key string) map[string]interface{} {
 		return v
 	}
 	return make(map[string]interface{})
+}
+
+// computeDigestAuth computes the Digest authentication header
+func computeDigestAuth(wwwAuth, username, password, method, uri string) string {
+	params := parseDigestChallenge(wwwAuth)
+	
+	realm := params["realm"]
+	nonce := params["nonce"]
+	qop := params["qop"]
+	opaque := params["opaque"]
+	algorithm := params["algorithm"]
+	if algorithm == "" {
+		algorithm = "MD5"
+	}
+
+	// Parse URI path
+	parsedURL, _ := url.Parse(uri)
+	digestURI := parsedURL.RequestURI()
+	
+	// Generate client nonce and nonce count
+	cnonce := hex.EncodeToString(md5.New().Sum([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))[:16]
+	nc := "00000001"
+	
+	// Compute HA1 = MD5(username:realm:password)
+	ha1 := md5Hash(fmt.Sprintf("%s:%s:%s", username, realm, password))
+	
+	// Compute HA2 = MD5(method:digestURI)
+	ha2 := md5Hash(fmt.Sprintf("%s:%s", method, digestURI))
+	
+	// Compute response
+	var response string
+	if qop == "auth" || qop == "auth-int" {
+		response = md5Hash(fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2))
+	} else {
+		response = md5Hash(fmt.Sprintf("%s:%s:%s", ha1, nonce, ha2))
+	}
+	
+	// Build Authorization header
+	auth := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", response="%s"`,
+		username, realm, nonce, digestURI, response)
+	
+	if qop != "" {
+		auth += fmt.Sprintf(`, qop=%s, nc=%s, cnonce="%s"`, qop, nc, cnonce)
+	}
+	if opaque != "" {
+		auth += fmt.Sprintf(`, opaque="%s"`, opaque)
+	}
+	if algorithm != "" {
+		auth += fmt.Sprintf(`, algorithm=%s`, algorithm)
+	}
+	
+	return auth
+}
+
+// parseDigestChallenge parses the WWW-Authenticate header
+func parseDigestChallenge(header string) map[string]string {
+	params := make(map[string]string)
+	header = strings.TrimPrefix(header, "Digest ")
+	
+	parts := strings.Split(header, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if idx := strings.Index(part, "="); idx > 0 {
+			key := strings.TrimSpace(part[:idx])
+			value := strings.TrimSpace(part[idx+1:])
+			value = strings.Trim(value, `"`)
+			params[key] = value
+		}
+	}
+	return params
+}
+
+// md5Hash computes MD5 hash
+func md5Hash(data string) string {
+	hash := md5.Sum([]byte(data))
+	return hex.EncodeToString(hash[:])
 }

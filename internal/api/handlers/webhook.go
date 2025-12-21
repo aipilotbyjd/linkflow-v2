@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -109,17 +110,114 @@ func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// Return response based on webhook config
 	if webhook.ResponseMode == "wait" {
-		// TODO: Wait for execution to complete and return result
-		dto.Accepted(w, map[string]interface{}{
-			"status":  "processing",
-			"message": "Workflow execution queued",
-		})
+		// Wait for execution to complete
+		result, err := h.waitForExecution(ctx, workflow, triggerData, webhook.ResponseTimeout)
+		if err != nil {
+			log.Error().Err(err).Msg("Execution failed or timed out")
+			dto.ErrorResponse(w, http.StatusInternalServerError, "execution failed: "+err.Error())
+			return
+		}
+		dto.JSON(w, http.StatusOK, result)
 	} else {
 		dto.Accepted(w, map[string]interface{}{
 			"status":  "accepted",
 			"message": "Webhook received",
 		})
 	}
+}
+
+func (h *WebhookHandler) waitForExecution(ctx context.Context, workflow *models.Workflow, triggerData models.JSON, timeout int) (map[string]interface{}, error) {
+	if timeout <= 0 || timeout > 30 {
+		timeout = 30 // Default 30 second timeout for sync webhooks
+	}
+
+	// Create execution directly for sync waiting
+	execution, err := h.executionSvc.Create(ctx, services.CreateExecutionInput{
+		WorkflowID:  workflow.ID,
+		WorkspaceID: workflow.WorkspaceID,
+		TriggerType: "webhook",
+		TriggerData: triggerData,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Queue and wait
+	payload := queue.WorkflowExecutionPayload{
+		WorkflowID:  workflow.ID,
+		WorkspaceID: workflow.WorkspaceID,
+		ExecutionID: execution.ID,
+		TriggerType: "webhook",
+		InputData:   triggerData,
+	}
+	h.queueClient.EnqueueWorkflowExecution(ctx, payload)
+
+	// Poll for completion
+	ticker := NewPollTicker(100, timeout*1000)
+	for ticker.Next() {
+		exec, err := h.executionSvc.GetByID(ctx, execution.ID)
+		if err != nil {
+			continue
+		}
+		
+		switch exec.Status {
+		case models.ExecutionStatusCompleted:
+			// Return the output from the last node or respond node
+			output := make(map[string]interface{})
+			if exec.OutputData != nil {
+				output["data"] = exec.OutputData
+			}
+			output["execution_id"] = exec.ID.String()
+			output["status"] = "completed"
+			return output, nil
+			
+		case models.ExecutionStatusFailed, models.ExecutionStatusCancelled:
+			errMsg := exec.Status
+			if exec.ErrorMessage != nil {
+				errMsg = *exec.ErrorMessage
+			}
+			return nil, executionError(exec.Status, errMsg)
+		}
+	}
+
+	return nil, executionError("timeout", "execution timed out")
+}
+
+type PollTicker struct {
+	intervalMs int
+	maxMs      int
+	elapsed    int
+}
+
+func NewPollTicker(intervalMs, maxMs int) *PollTicker {
+	return &PollTicker{intervalMs: intervalMs, maxMs: maxMs}
+}
+
+func (p *PollTicker) Next() bool {
+	if p.elapsed >= p.maxMs {
+		return false
+	}
+	if p.elapsed > 0 {
+		<-time.After(time.Duration(p.intervalMs) * time.Millisecond)
+	}
+	p.elapsed += p.intervalMs
+	return true
+}
+
+func executionError(status, msg string) error {
+	if msg == "" {
+		msg = status
+	}
+	return &ExecutionError{Status: status, Message: msg}
+}
+
+type ExecutionError struct {
+	Status  string
+	Message string
+}
+
+func (e *ExecutionError) Error() string {
+	return e.Message
 }
 
 func (h *WebhookHandler) verifySignature(r *http.Request, body []byte, secret string) bool {

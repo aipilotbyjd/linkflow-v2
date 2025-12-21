@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -102,7 +103,118 @@ func (c *Client) WritePump() {
 	}
 }
 
+type WSMessage struct {
+	Type    string          `json:"type"`
+	Payload json.RawMessage `json:"payload"`
+}
+
+type SubscribePayload struct {
+	ExecutionID string `json:"execution_id"`
+	WorkflowID  string `json:"workflow_id"`
+}
+
+type UnsubscribePayload struct {
+	ExecutionID string `json:"execution_id"`
+	WorkflowID  string `json:"workflow_id"`
+}
+
 func (c *Client) handleMessage(message []byte) {
-	// TODO: Parse message and handle subscriptions
-	_ = message
+	var msg WSMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		log.Warn().Err(err).Msg("Failed to parse WebSocket message")
+		c.sendError("Invalid message format")
+		return
+	}
+
+	switch msg.Type {
+	case "subscribe":
+		var payload SubscribePayload
+		if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+			c.sendError("Invalid subscribe payload")
+			return
+		}
+		c.handleSubscribe(payload)
+
+	case "unsubscribe":
+		var payload UnsubscribePayload
+		if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+			c.sendError("Invalid unsubscribe payload")
+			return
+		}
+		c.handleUnsubscribe(payload)
+
+	case "ping":
+		c.sendPong()
+
+	default:
+		c.sendError("Unknown message type: " + msg.Type)
+	}
+}
+
+func (c *Client) handleSubscribe(payload SubscribePayload) {
+	if payload.ExecutionID != "" {
+		execID, err := uuid.Parse(payload.ExecutionID)
+		if err != nil {
+			c.sendError("Invalid execution ID")
+			return
+		}
+		c.Hub.SubscribeToExecution(c, execID)
+		c.sendAck("subscribed", map[string]string{"execution_id": payload.ExecutionID})
+	}
+	if payload.WorkflowID != "" {
+		workflowID, err := uuid.Parse(payload.WorkflowID)
+		if err != nil {
+			c.sendError("Invalid workflow ID")
+			return
+		}
+		c.Hub.SubscribeToWorkflow(c, workflowID)
+		c.sendAck("subscribed", map[string]string{"workflow_id": payload.WorkflowID})
+	}
+}
+
+func (c *Client) handleUnsubscribe(payload UnsubscribePayload) {
+	if payload.ExecutionID != "" {
+		execID, _ := uuid.Parse(payload.ExecutionID)
+		c.Hub.UnsubscribeFromExecution(c, execID)
+		c.sendAck("unsubscribed", map[string]string{"execution_id": payload.ExecutionID})
+	}
+	if payload.WorkflowID != "" {
+		workflowID, _ := uuid.Parse(payload.WorkflowID)
+		c.Hub.UnsubscribeFromWorkflow(c, workflowID)
+		c.sendAck("unsubscribed", map[string]string{"workflow_id": payload.WorkflowID})
+	}
+}
+
+func (c *Client) sendAck(msgType string, data interface{}) {
+	response := map[string]interface{}{
+		"type": msgType,
+		"data": data,
+	}
+	jsonData, _ := json.Marshal(response)
+	select {
+	case c.Send <- jsonData:
+	default:
+		log.Warn().Msg("WebSocket send buffer full")
+	}
+}
+
+func (c *Client) sendError(message string) {
+	response := map[string]interface{}{
+		"type":  "error",
+		"error": message,
+	}
+	jsonData, _ := json.Marshal(response)
+	select {
+	case c.Send <- jsonData:
+	default:
+	}
+}
+
+func (c *Client) sendPong() {
+	response := map[string]string{"type": "pong"}
+	jsonData, _ := json.Marshal(response)
+	select {
+	case c.Send <- jsonData:
+	default:
+	}
 }

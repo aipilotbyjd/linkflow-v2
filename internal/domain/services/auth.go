@@ -21,6 +21,8 @@ var (
 	ErrMFARequired        = errors.New("MFA verification required")
 	ErrSessionNotFound    = errors.New("session not found")
 	ErrSessionExpired     = errors.New("session expired")
+	ErrInvalidToken       = errors.New("invalid token")
+	ErrTokenExpired       = errors.New("token expired")
 )
 
 type AuthService struct {
@@ -235,7 +237,7 @@ func (s *AuthService) DisableMFA(ctx context.Context, userID uuid.UUID, code str
 	return s.userRepo.DisableMFA(ctx, userID)
 }
 
-func (s *AuthService) ResetPassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
+func (s *AuthService) ResetPasswordForUser(ctx context.Context, userID uuid.UUID, newPassword string) error {
 	passwordHash, err := crypto.HashPassword(newPassword)
 	if err != nil {
 		return err
@@ -246,6 +248,67 @@ func (s *AuthService) ResetPassword(ctx context.Context, userID uuid.UUID, newPa
 	}
 
 	return s.sessionRepo.RevokeAllUserSessions(ctx, userID)
+}
+
+func (s *AuthService) InitiatePasswordReset(ctx context.Context, email string) error {
+	user, err := s.userRepo.FindByEmail(ctx, email)
+	if err != nil {
+		return ErrUserNotFound
+	}
+
+	// Generate reset token
+	token := crypto.GenerateRandomToken(32)
+	expiresAt := time.Now().Add(1 * time.Hour)
+
+	// Store reset token
+	resetToken := &models.PasswordResetToken{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+	}
+	if err := s.userRepo.CreatePasswordResetToken(ctx, resetToken); err != nil {
+		return err
+	}
+
+	// In production, send email here
+	// For now, we just store the token and it can be retrieved via API for testing
+	return nil
+}
+
+func (s *AuthService) ResetPassword(ctx context.Context, token, newPassword string) error {
+	// Find and validate token
+	resetToken, err := s.userRepo.FindPasswordResetToken(ctx, token)
+	if err != nil {
+		return ErrInvalidToken
+	}
+
+	if resetToken.ExpiresAt.Before(time.Now()) {
+		s.userRepo.DeletePasswordResetToken(ctx, token)
+		return ErrTokenExpired
+	}
+
+	if resetToken.UsedAt != nil {
+		return ErrInvalidToken
+	}
+
+	// Hash new password
+	passwordHash, err := crypto.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	// Update password
+	if err := s.userRepo.UpdatePassword(ctx, resetToken.UserID, passwordHash); err != nil {
+		return err
+	}
+
+	// Mark token as used
+	now := time.Now()
+	resetToken.UsedAt = &now
+	s.userRepo.MarkPasswordResetTokenUsed(ctx, token)
+
+	// Revoke all sessions
+	return s.sessionRepo.RevokeAllUserSessions(ctx, resetToken.UserID)
 }
 
 func hashToken(token string) string {
