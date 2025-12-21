@@ -9,7 +9,7 @@ import (
 
 type Response struct {
 	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    interface{} `json:"data"`
 	Error   *ErrorData  `json:"error,omitempty"`
 	Meta    *Meta       `json:"meta,omitempty"`
 }
@@ -21,10 +21,10 @@ type ErrorData struct {
 }
 
 type Meta struct {
-	Page       int   `json:"page,omitempty"`
-	PerPage    int   `json:"per_page,omitempty"`
-	Total      int64 `json:"total,omitempty"`
-	TotalPages int   `json:"total_pages,omitempty"`
+	Page       int   `json:"page"`
+	PerPage    int   `json:"per_page"`
+	Total      int64 `json:"total"`
+	TotalPages int   `json:"total_pages"`
 }
 
 func JSON(w http.ResponseWriter, status int, data interface{}) {
