@@ -1093,6 +1093,105 @@
 			"description": "Cron-based workflow scheduling"
 		},
 		{
+			"name": "🎨 Workflow Editor",
+			"item": [
+				{
+					"name": "List Node Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/node-types",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "node-types"]
+						},
+						"description": "List all available node types for the workflow editor. Returns node metadata including type, name, description, category, and input/output schema."
+					}
+				},
+				{
+					"name": "List Node Types by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/node-types?category=action",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "node-types"],
+							"query": [
+								{ "key": "category", "value": "action" }
+							]
+						},
+						"description": "Filter node types by category (trigger, action, logic, integration)"
+					}
+				},
+				{
+					"name": "Get Node Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/node-types/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "node-types", "categories"]
+						},
+						"description": "Get all node categories with their counts. Categories include: trigger, action, logic, integration"
+					}
+				},
+				{
+					"name": "Get Node Type Details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/node-types/action.http",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "node-types", "action.http"]
+						},
+						"description": "Get detailed information about a specific node type including its input/output schema for the editor UI"
+					}
+				},
+				{
+					"name": "Validate Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nodes\": [\n        {\n            \"id\": \"trigger_1\",\n            \"type\": \"trigger.manual\",\n            \"name\": \"Start\",\n            \"position\": { \"x\": 100, \"y\": 100 }\n        },\n        {\n            \"id\": \"http_1\",\n            \"type\": \"action.http\",\n            \"name\": \"HTTP Request\",\n            \"position\": { \"x\": 300, \"y\": 100 },\n            \"parameters\": {\n                \"url\": \"https://api.example.com/data\",\n                \"method\": \"GET\"\n            }\n        }\n    ],\n    \"connections\": [\n        {\n            \"source\": \"trigger_1\",\n            \"target\": \"http_1\"\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/validate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "validate"]
+						},
+						"description": "Validate a workflow definition before saving. Checks for:\n- Valid node types\n- Unique node IDs\n- Valid connections\n- Presence of trigger nodes\n\nReturns validation errors and warnings."
+					}
+				},
+				{
+					"name": "Test Single Node",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"node_type\": \"action.http\",\n    \"parameters\": {\n        \"url\": \"https://httpbin.org/get\",\n        \"method\": \"GET\"\n    },\n    \"input\": {}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/test-node",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "test-node"]
+						},
+						"description": "Test a single node execution without creating a workflow. Useful for testing node configuration in the editor before saving.\n\nReturns:\n- success: boolean\n- output: node execution result\n- duration: execution time in ms\n- error: error message if failed"
+					}
+				}
+			],
+			"description": "APIs for the visual workflow editor - node discovery, validation, and testing"
+		},
+		{
 			"name": "💳 Billing",
 			"item": [
 				{
@@ -1185,6 +1284,73 @@
 				}
 			],
 			"description": "Subscription and billing management"
+		},
+		{
+			"name": "🔗 Webhooks",
+			"item": [
+				{
+					"name": "Trigger Webhook (POST)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"event\": \"order.created\",\n    \"data\": {\n        \"order_id\": \"12345\",\n        \"customer\": \"john@example.com\",\n        \"total\": 99.99\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/webhooks/{{webhook_endpoint_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["webhooks", "{{webhook_endpoint_id}}"]
+						},
+						"description": "Trigger a workflow via webhook. The endpoint_id is defined in the workflow settings.\n\nThe webhook payload is available in the workflow as:\n- $input.method - HTTP method\n- $input.headers - Request headers\n- $input.body - Raw body string\n- $input.json - Parsed JSON body\n- $input.query - Query parameters"
+					}
+				},
+				{
+					"name": "Trigger Webhook (GET)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/webhooks/{{webhook_endpoint_id}}?param1=value1&param2=value2",
+							"host": ["{{base_url}}"],
+							"path": ["webhooks", "{{webhook_endpoint_id}}"],
+							"query": [
+								{ "key": "param1", "value": "value1" },
+								{ "key": "param2", "value": "value2" }
+							]
+						},
+						"description": "Trigger a workflow via webhook using GET request. Query parameters are available in $input.query"
+					}
+				}
+			],
+			"description": "Webhook endpoints for triggering workflows from external systems"
+		},
+		{
+			"name": "🔌 WebSocket",
+			"item": [
+				{
+					"name": "WebSocket Connection Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}", "description": "JWT access token" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}", "description": "Workspace to receive events for" }
+							]
+						},
+						"description": "## WebSocket Real-time Events\n\n**Connection URL:** `ws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}`\n\n### Authentication\nPass JWT token as query parameter. Workspace ID is optional but required to receive workspace events.\n\n### Events Received\n\n| Event | Description |\n|-------|-------------|\n| `execution.started` | Workflow execution began |\n| `execution.completed` | Workflow execution finished successfully |\n| `execution.failed` | Workflow execution failed |\n| `execution.cancelled` | Workflow execution was cancelled |\n| `node.started` | A node began executing |\n| `node.completed` | A node finished executing |\n| `node.failed` | A node failed |\n\n### Event Format\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-01-01T00:00:00Z\",\n  \"data\": {\n    \"execution_id\": \"uuid\",\n    \"workflow_id\": \"uuid\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```\n\n### Client Messages\n\n**Subscribe to execution:**\n```json\n{\"type\": \"subscribe\", \"payload\": {\"execution_id\": \"uuid\"}}\n```\n\n**Subscribe to workflow:**\n```json\n{\"type\": \"subscribe\", \"payload\": {\"workflow_id\": \"uuid\"}}\n```\n\n**Unsubscribe:**\n```json\n{\"type\": \"unsubscribe\", \"payload\": {\"execution_id\": \"uuid\"}}\n```\n\n**Ping (keep-alive):**\n```json\n{\"type\": \"ping\"}\n```\n\n### Example Usage (JavaScript)\n```javascript\nconst ws = new WebSocket(`ws://localhost:8090/ws?token=${token}&workspace_id=${workspaceId}`);\n\nws.onmessage = (event) => {\n  const data = JSON.parse(event.data);\n  console.log('Event:', data.type, data.data);\n};\n\n// Subscribe to specific execution\nws.send(JSON.stringify({\n  type: 'subscribe',\n  payload: { execution_id: 'exec-uuid' }\n}));\n```"
+					}
+				}
+			],
+			"description": "WebSocket endpoints for real-time workflow execution updates.\n\n**Note:** Postman doesn't support WebSocket testing directly. Use the connection info to connect via browser console, wscat, or your application.\n\n### Quick Test with wscat\n```bash\nwscat -c \"ws://localhost:8090/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```"
 		}
 	],
 	"variable": [

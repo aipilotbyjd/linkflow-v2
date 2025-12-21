@@ -56,6 +56,10 @@ func NewServer(
 	wsHub := websocket.NewHub()
 	go wsHub.Run()
 
+	// WebSocket subscriber (listens to Redis events and broadcasts to clients)
+	wsSubscriber := websocket.NewSubscriber(redisClient.Client, wsHub)
+	wsSubscriber.Start()
+
 	// Global middleware
 	router.Use(chimiddleware.RequestID)
 	router.Use(chimiddleware.RealIP)
@@ -86,6 +90,7 @@ func NewServer(
 	healthHandler := handlers.NewHealthHandlerWithDeps(db, redisClient.Client)
 	webhookHandler := handlers.NewWebhookHandler(svc.Workflow, svc.Execution, queueClient)
 	wsHandler := handlers.NewWebSocketHandler(wsHub, jwtManager)
+	nodeTypeHandler := handlers.NewNodeTypeHandler(svc.Workflow, svc.Execution)
 
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager)
@@ -131,6 +136,11 @@ func NewServer(
 			r.Get("/users/me", userHandler.GetCurrentUser)
 			r.Put("/users/me", userHandler.UpdateCurrentUser)
 
+			// Node Types (for workflow editor)
+			r.Get("/node-types", nodeTypeHandler.ListNodeTypes)
+			r.Get("/node-types/categories", nodeTypeHandler.GetNodeCategories)
+			r.Get("/node-types/{nodeType}", nodeTypeHandler.GetNodeType)
+
 			// Workspaces
 			r.Get("/workspaces", workspaceHandler.List)
 			r.Post("/workspaces", workspaceHandler.Create)
@@ -162,6 +172,8 @@ func NewServer(
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
 				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
 				r.Post("/workflows/import", workflowHandler.Import)
+				r.Post("/workflows/validate", nodeTypeHandler.ValidateWorkflow)
+				r.Post("/workflows/test-node", nodeTypeHandler.TestNode)
 
 				// Executions
 				r.Get("/executions", executionHandler.List)

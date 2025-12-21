@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	ws "github.com/linkflow-ai/linkflow/internal/api/websocket"
@@ -100,14 +101,30 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Get workspace ID from query param or JWT
+	var workspaceID *uuid.UUID
+	if claims.WorkspaceID != nil {
+		workspaceID = claims.WorkspaceID
+	} else if wsIDStr := r.URL.Query().Get("workspace_id"); wsIDStr != "" {
+		wsID, err := uuid.Parse(wsIDStr)
+		if err == nil {
+			workspaceID = &wsID
+		}
+	}
+
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to upgrade WebSocket connection")
 		return
 	}
 
-	client := ws.NewClient(h.hub, conn, claims.UserID, claims.WorkspaceID)
+	client := ws.NewClient(h.hub, conn, claims.UserID, workspaceID)
 	h.hub.Register(client)
+
+	log.Debug().
+		Str("user_id", claims.UserID.String()).
+		Bool("has_workspace", workspaceID != nil).
+		Msg("WebSocket client registered")
 
 	go client.WritePump()
 	go client.ReadPump()

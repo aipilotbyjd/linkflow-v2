@@ -43,7 +43,8 @@ func (s *Subscriber) subscribeToEvents() {
 	defer s.wg.Done()
 
 	// Subscribe to all workspace channels using pattern
-	pubsub := s.redisClient.PSubscribe(s.ctx, "workspace:*:events")
+	// Worker publishes to "workspace:{id}" channel
+	pubsub := s.redisClient.PSubscribe(s.ctx, "workspace:*")
 	defer pubsub.Close()
 
 	ch := pubsub.Channel()
@@ -61,9 +62,19 @@ func (s *Subscriber) subscribeToEvents() {
 	}
 }
 
+// WorkerEvent is the event structure from the worker
+type WorkerEvent struct {
+	Type        string                 `json:"type"`
+	WorkspaceID uuid.UUID              `json:"workspace_id"`
+	WorkflowID  uuid.UUID              `json:"workflow_id,omitempty"`
+	ExecutionID uuid.UUID              `json:"execution_id,omitempty"`
+	NodeID      string                 `json:"node_id,omitempty"`
+	Data        map[string]interface{} `json:"data,omitempty"`
+	Timestamp   string                 `json:"timestamp"`
+}
+
 func (s *Subscriber) handleMessage(msg *redis.Message) {
 	// Parse workspace ID from channel name
-	// Channel format: workspace:{workspaceId}:events
 	var workspaceID uuid.UUID
 	_, err := parseChannelWorkspaceID(msg.Channel, &workspaceID)
 	if err != nil {
@@ -71,25 +82,49 @@ func (s *Subscriber) handleMessage(msg *redis.Message) {
 		return
 	}
 
-	// Parse the event
-	var event Event
-	if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+	// Parse the worker event
+	var workerEvent WorkerEvent
+	if err := json.Unmarshal([]byte(msg.Payload), &workerEvent); err != nil {
 		log.Error().Err(err).Msg("Failed to unmarshal event")
 		return
 	}
 
+	// Convert to WebSocket event format
+	data := workerEvent.Data
+	if data == nil {
+		data = make(map[string]interface{})
+	}
+	data["workflow_id"] = workerEvent.WorkflowID.String()
+	data["execution_id"] = workerEvent.ExecutionID.String()
+	if workerEvent.NodeID != "" {
+		data["node_id"] = workerEvent.NodeID
+	}
+
+	wsEvent := Event{
+		Type: EventType(workerEvent.Type),
+		Data: data,
+	}
+
+	log.Debug().
+		Str("type", workerEvent.Type).
+		Str("workspace_id", workspaceID.String()).
+		Str("execution_id", workerEvent.ExecutionID.String()).
+		Msg("Broadcasting WebSocket event")
+
 	// Broadcast to all clients in the workspace
-	s.hub.BroadcastToWorkspace(workspaceID, event)
+	s.hub.BroadcastToWorkspace(workspaceID, wsEvent)
 }
 
 func parseChannelWorkspaceID(channel string, workspaceID *uuid.UUID) (bool, error) {
-	// Channel format: workspace:{workspaceId}:events
-	var wsIDStr string
-	_, err := parsePattern(channel, "workspace:%s:events", &wsIDStr)
-	if err != nil {
-		return false, err
+	// Channel format: workspace:{workspaceId}
+	prefix := "workspace:"
+	
+	if len(channel) <= len(prefix) || channel[:len(prefix)] != prefix {
+		return false, nil
 	}
-
+	
+	wsIDStr := channel[len(prefix):]
+	
 	id, err := uuid.Parse(wsIDStr)
 	if err != nil {
 		return false, err
@@ -97,32 +132,6 @@ func parseChannelWorkspaceID(channel string, workspaceID *uuid.UUID) (bool, erro
 
 	*workspaceID = id
 	return true, nil
-}
-
-func parsePattern(s, pattern string, args ...interface{}) (int, error) {
-	// Simple pattern parser for workspace:{id}:events format
-	var id string
-	n := 0
-	
-	// Find the UUID between "workspace:" and ":events"
-	prefix := "workspace:"
-	suffix := ":events"
-	
-	if len(s) > len(prefix)+len(suffix) && s[:len(prefix)] == prefix {
-		rest := s[len(prefix):]
-		if idx := len(rest) - len(suffix); idx > 0 && rest[idx:] == suffix {
-			id = rest[:idx]
-			n = 1
-		}
-	}
-	
-	if n > 0 && len(args) > 0 {
-		if ptr, ok := args[0].(*string); ok {
-			*ptr = id
-		}
-	}
-	
-	return n, nil
 }
 
 // ExecutionLogStreamer streams execution logs in real-time

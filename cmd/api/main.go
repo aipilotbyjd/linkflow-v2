@@ -11,6 +11,12 @@ import (
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/rs/zerolog/log"
+
+	// Import node packages to register them via init()
+	_ "github.com/linkflow-ai/linkflow/internal/worker/nodes/actions"
+	_ "github.com/linkflow-ai/linkflow/internal/worker/nodes/integrations"
+	_ "github.com/linkflow-ai/linkflow/internal/worker/nodes/logic"
+	_ "github.com/linkflow-ai/linkflow/internal/worker/nodes/triggers"
 )
 
 func main() {
