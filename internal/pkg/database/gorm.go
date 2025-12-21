@@ -49,6 +49,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Session{},
 		&models.APIKey{},
 		&models.OAuthConnection{},
+		&models.PasswordResetToken{},
 
 		// Workspaces
 		&models.Workspace{},
