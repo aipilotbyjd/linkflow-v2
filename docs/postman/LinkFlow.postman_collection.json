@@ -58,9 +58,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/health",
+							"raw": "{{base_url}}/api/v1/health",
 							"host": ["{{base_url}}"],
-							"path": ["health"]
+							"path": ["api", "v1", "health"]
 						},
 						"description": "Overall system health status"
 					}
@@ -72,9 +72,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/health/live",
+							"raw": "{{base_url}}/api/v1/health/live",
 							"host": ["{{base_url}}"],
-							"path": ["health", "live"]
+							"path": ["api", "v1", "health", "live"]
 						},
 						"description": "Kubernetes liveness probe"
 					}
@@ -86,9 +86,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/health/ready",
+							"raw": "{{base_url}}/api/v1/health/ready",
 							"host": ["{{base_url}}"],
-							"path": ["health", "ready"]
+							"path": ["api", "v1", "health", "ready"]
 						},
 						"description": "Kubernetes readiness probe"
 					}
