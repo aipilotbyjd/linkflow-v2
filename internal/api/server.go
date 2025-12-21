@@ -21,6 +21,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type Server struct {
@@ -47,6 +48,7 @@ func NewServer(
 	jwtManager *crypto.JWTManager,
 	redisClient *pkgredis.Client,
 	queueClient *queue.Client,
+	db *gorm.DB,
 ) *Server {
 	router := chi.NewRouter()
 
@@ -81,7 +83,7 @@ func NewServer(
 	credentialHandler := handlers.NewCredentialHandler(svc.Credential)
 	scheduleHandler := handlers.NewScheduleHandler(svc.Schedule)
 	billingHandler := handlers.NewBillingHandler(svc.Billing)
-	healthHandler := handlers.NewHealthHandler()
+	healthHandler := handlers.NewHealthHandlerWithDeps(db, redisClient.Client)
 	webhookHandler := handlers.NewWebhookHandler(svc.Workflow, svc.Execution, queueClient)
 	wsHandler := handlers.NewWebSocketHandler(wsHub, jwtManager)
 

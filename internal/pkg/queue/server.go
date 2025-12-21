@@ -57,6 +57,11 @@ func (s *Server) Start() error {
 	return s.server.Start(s.mux)
 }
 
+func (s *Server) Run() error {
+	log.Info().Msg("Running queue server (blocking)...")
+	return s.server.Run(s.mux)
+}
+
 func (s *Server) Shutdown() {
 	log.Info().Msg("Shutting down queue server...")
 	s.server.Shutdown()

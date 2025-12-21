@@ -111,6 +111,7 @@ func main() {
 		jwtManager,
 		redisClient,
 		queueClient,
+		db,
 	)
 
 	// Start server

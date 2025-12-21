@@ -168,7 +168,7 @@ func (w *Worker) Start() error {
 		}
 	}()
 
-	return w.server.Start()
+	return w.server.Run()
 }
 
 // Shutdown gracefully shuts down the worker
