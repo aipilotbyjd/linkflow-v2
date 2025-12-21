@@ -22,10 +22,16 @@ type Execution struct {
 	QueuedAt          time.Time  `gorm:"default:now()" json:"queued_at"`
 	StartedAt         *time.Time `json:"started_at,omitempty"`
 	CompletedAt       *time.Time `json:"completed_at,omitempty"`
+	PausedAt          *time.Time `json:"paused_at,omitempty"`
+	ResumedAt         *time.Time `json:"resumed_at,omitempty"`
 	NodesTotal        int        `gorm:"default:0" json:"nodes_total"`
 	NodesCompleted    int        `gorm:"default:0" json:"nodes_completed"`
 	RetryCount        int        `gorm:"default:0" json:"retry_count"`
+	MaxRetries        int        `gorm:"default:3" json:"max_retries"`
+	Priority          int        `gorm:"default:5;index" json:"priority"` // 1-10, higher = more priority
+	TimeoutSeconds    int        `gorm:"default:3600" json:"timeout_seconds"`
 	ParentExecutionID *uuid.UUID `gorm:"type:uuid" json:"parent_execution_id,omitempty"`
+	BatchID           *uuid.UUID `gorm:"type:uuid;index" json:"batch_id,omitempty"` // For bulk executions
 	CreatedAt         time.Time  `json:"created_at"`
 
 	// Relations

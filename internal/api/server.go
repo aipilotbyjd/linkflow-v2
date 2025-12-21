@@ -157,6 +157,9 @@ func NewServer(
 				r.Post("/workflows/{workflowID}/deactivate", workflowHandler.Deactivate)
 				r.Get("/workflows/{workflowID}/versions", workflowHandler.GetVersions)
 				r.Get("/workflows/{workflowID}/versions/{version}", workflowHandler.GetVersion)
+				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
+				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
+				r.Post("/workflows/import", workflowHandler.Import)
 
 				// Executions
 				r.Get("/executions", executionHandler.List)

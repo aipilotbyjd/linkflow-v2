@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -12,8 +15,8 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
 
 type WorkflowHandler struct {
@@ -417,5 +420,177 @@ func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
 		Settings:      v.Settings,
 		ChangeMessage: v.ChangeMessage,
 		CreatedAt:     v.CreatedAt.Unix(),
+	})
+}
+
+// Export exports a workflow as JSON
+func (h *WorkflowHandler) Export(w http.ResponseWriter, r *http.Request) {
+	workflowIDStr := chi.URLParam(r, "workflowID")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	workflow, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+
+	exportData := map[string]interface{}{
+		"version":     "1.0",
+		"exportedAt":  time.Now().Unix(),
+		"workflow": map[string]interface{}{
+			"name":        workflow.Name,
+			"description": workflow.Description,
+			"nodes":       workflow.Nodes,
+			"connections": workflow.Connections,
+			"settings":    workflow.Settings,
+			"tags":        workflow.Tags,
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.json\"", workflow.Name))
+	json.NewEncoder(w).Encode(exportData)
+}
+
+// Import imports a workflow from JSON
+func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
+	claims := middleware.GetUserFromContext(r.Context())
+	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	if claims == nil || wsCtx == nil {
+		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+		return
+	}
+
+	var importData struct {
+		Version  string `json:"version"`
+		Workflow struct {
+			Name        string              `json:"name"`
+			Description *string             `json:"description"`
+			Nodes       models.JSONArray    `json:"nodes"`
+			Connections models.JSONArray    `json:"connections"`
+			Settings    models.JSON         `json:"settings"`
+			Tags        []string            `json:"tags"`
+		} `json:"workflow"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&importData); err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid import data")
+		return
+	}
+
+	if importData.Workflow.Name == "" {
+		dto.ErrorResponse(w, http.StatusBadRequest, "workflow name is required")
+		return
+	}
+
+	workflow, err := h.workflowSvc.Create(r.Context(), services.CreateWorkflowInput{
+		WorkspaceID: wsCtx.WorkspaceID,
+		CreatedBy:   claims.UserID,
+		Name:        importData.Workflow.Name + " (Imported)",
+		Description: importData.Workflow.Description,
+		Nodes:       importData.Workflow.Nodes,
+		Connections: importData.Workflow.Connections,
+		Settings:    importData.Workflow.Settings,
+		Tags:        importData.Workflow.Tags,
+	})
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to import workflow")
+		return
+	}
+
+	dto.Created(w, dto.WorkflowResponse{
+		ID:          workflow.ID.String(),
+		Name:        workflow.Name,
+		Description: workflow.Description,
+		Status:      workflow.Status,
+		Version:     workflow.Version,
+		Nodes:       workflow.Nodes,
+		Connections: workflow.Connections,
+		Settings:    workflow.Settings,
+		Tags:        workflow.Tags,
+		CreatedAt:   workflow.CreatedAt.Unix(),
+		UpdatedAt:   workflow.UpdatedAt.Unix(),
+	})
+}
+
+// Duplicate creates a copy of a workflow with optional variable substitution
+func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
+	claims := middleware.GetUserFromContext(r.Context())
+	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	if claims == nil || wsCtx == nil {
+		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+		return
+	}
+
+	workflowIDStr := chi.URLParam(r, "workflowID")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	var req struct {
+		Name      string            `json:"name"`
+		Variables map[string]string `json:"variables"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	original, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+
+	name := req.Name
+	if name == "" {
+		name = original.Name + " (Copy)"
+	}
+
+	// Apply variable substitution to nodes if variables provided
+	nodes := original.Nodes
+	connections := original.Connections
+	if len(req.Variables) > 0 {
+		nodesJSON, _ := json.Marshal(nodes)
+		nodesStr := string(nodesJSON)
+		for key, value := range req.Variables {
+			nodesStr = strings.ReplaceAll(nodesStr, "{{"+key+"}}", value)
+		}
+		json.Unmarshal([]byte(nodesStr), &nodes)
+	}
+
+	workflow, err := h.workflowSvc.Create(r.Context(), services.CreateWorkflowInput{
+		WorkspaceID: wsCtx.WorkspaceID,
+		CreatedBy:   claims.UserID,
+		Name:        name,
+		Description: original.Description,
+		Nodes:       nodes,
+		Connections: connections,
+		Settings:    original.Settings,
+		Tags:        original.Tags,
+	})
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to duplicate workflow")
+		return
+	}
+
+	dto.Created(w, dto.WorkflowResponse{
+		ID:          workflow.ID.String(),
+		Name:        workflow.Name,
+		Description: workflow.Description,
+		Status:      workflow.Status,
+		Version:     workflow.Version,
+		Nodes:       workflow.Nodes,
+		Connections: workflow.Connections,
+		Settings:    workflow.Settings,
+		Tags:        workflow.Tags,
+		CreatedAt:   workflow.CreatedAt.Unix(),
+		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
 }
