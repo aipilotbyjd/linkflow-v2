@@ -31,6 +31,10 @@ build-scheduler:
 run-api:
 	$(GOCMD) run ./cmd/api
 
+# Run with hot reload (requires air: go install github.com/air-verse/air@latest)
+dev:
+	air
+
 run-worker:
 	$(GOCMD) run ./cmd/worker
 
