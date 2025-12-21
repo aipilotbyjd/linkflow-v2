@@ -28,9 +28,13 @@ func NewServer(cfg *config.RedisConfig, concurrency int) *Server {
 				QueueLow:      1,
 			},
 			ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+				taskID := "unknown"
+				if rw := task.ResultWriter(); rw != nil {
+					taskID = rw.TaskID()
+				}
 				log.Error().
 					Str("task_type", task.Type()).
-					Str("task_id", task.ResultWriter().TaskID()).
+					Str("task_id", taskID).
 					Err(err).
 					Msg("Task failed")
 			}),
