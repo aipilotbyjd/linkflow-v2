@@ -8,276 +8,294 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
 
+// AirtableNode handles Airtable operations
 type AirtableNode struct{}
 
-func NewAirtableNode() *AirtableNode {
-	return &AirtableNode{}
-}
-
 func (n *AirtableNode) Type() string {
-	return "integration.airtable"
+	return "integrations.airtable"
 }
 
 func (n *AirtableNode) Execute(ctx context.Context, execCtx *core.ExecutionContext) (map[string]interface{}, error) {
-	credID := getString(execCtx.Config, "credentialId", "")
-	if credID == "" {
-		return nil, fmt.Errorf("credential ID is required")
-	}
+	config := execCtx.Config
 
-	cred, err := execCtx.GetCredential(parseUUID(credID))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get credential: %w", err)
-	}
-
-	apiKey := cred.APIKey
+	apiKey := core.GetString(config, "apiKey", "")
 	if apiKey == "" {
-		apiKey = cred.Token
+		return nil, fmt.Errorf("apiKey is required")
 	}
-	operation := getString(execCtx.Config, "operation", "listRecords")
+
+	baseId := core.GetString(config, "baseId", "")
+	tableName := core.GetString(config, "tableName", "")
+
+	operation := core.GetString(config, "operation", "list")
 
 	switch operation {
-	case "listRecords":
-		return n.listRecords(ctx, apiKey, execCtx.Config)
-	case "getRecord":
-		return n.getRecord(ctx, apiKey, execCtx.Config)
-	case "createRecord":
-		return n.createRecord(ctx, apiKey, execCtx.Config)
-	case "createRecords":
-		return n.createRecords(ctx, apiKey, execCtx.Config)
-	case "updateRecord":
-		return n.updateRecord(ctx, apiKey, execCtx.Config)
-	case "updateRecords":
-		return n.updateRecords(ctx, apiKey, execCtx.Config)
-	case "deleteRecord":
-		return n.deleteRecord(ctx, apiKey, execCtx.Config)
-	case "deleteRecords":
-		return n.deleteRecords(ctx, apiKey, execCtx.Config)
+	case "list":
+		return n.listRecords(ctx, config, baseId, tableName, apiKey)
+	case "get":
+		return n.getRecord(ctx, config, baseId, tableName, apiKey)
+	case "create":
+		return n.createRecord(ctx, config, baseId, tableName, apiKey, execCtx.Input)
+	case "update":
+		return n.updateRecord(ctx, config, baseId, tableName, apiKey, execCtx.Input)
+	case "delete":
+		return n.deleteRecord(ctx, config, baseId, tableName, apiKey)
+	case "search":
+		return n.searchRecords(ctx, config, baseId, tableName, apiKey)
 	case "listBases":
 		return n.listBases(ctx, apiKey)
-	case "getBaseSchema":
-		return n.getBaseSchema(ctx, apiKey, execCtx.Config)
+	case "listTables":
+		return n.listTables(ctx, config, apiKey)
 	default:
-		return nil, fmt.Errorf("unknown operation: %s", operation)
+		return n.listRecords(ctx, config, baseId, tableName, apiKey)
 	}
 }
 
-func (n *AirtableNode) listRecords(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	baseURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseID, url.PathEscape(tableID))
+func (n *AirtableNode) listRecords(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
+	}
+
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseId, url.PathEscape(tableName))
 
 	params := url.Values{}
-	if pageSize := getInt(config, "pageSize", 0); pageSize > 0 {
-		params.Set("pageSize", fmt.Sprintf("%d", pageSize))
+	if maxRecords := core.GetInt(config, "maxRecords", 0); maxRecords > 0 {
+		params.Set("maxRecords", fmt.Sprintf("%d", maxRecords))
 	}
-	if offset := getString(config, "offset", ""); offset != "" {
-		params.Set("offset", offset)
-	}
-	if view := getString(config, "view", ""); view != "" {
+	if view := core.GetString(config, "view", ""); view != "" {
 		params.Set("view", view)
 	}
-	if formula := getString(config, "filterByFormula", ""); formula != "" {
-		params.Set("filterByFormula", formula)
+	if filterFormula := core.GetString(config, "filterByFormula", ""); filterFormula != "" {
+		params.Set("filterByFormula", filterFormula)
 	}
-	if fields, ok := config["fields"].([]interface{}); ok {
-		for _, f := range fields {
-			params.Add("fields[]", fmt.Sprintf("%v", f))
-		}
+	if sort := core.GetString(config, "sort", ""); sort != "" {
+		params.Set("sort[0][field]", sort)
+		params.Set("sort[0][direction]", core.GetString(config, "sortDirection", "asc"))
 	}
-	if sort, ok := config["sort"].([]interface{}); ok {
-		for i, s := range sort {
-			if sortMap, ok := s.(map[string]interface{}); ok {
-				if field, ok := sortMap["field"].(string); ok {
-					params.Add(fmt.Sprintf("sort[%d][field]", i), field)
-				}
-				if direction, ok := sortMap["direction"].(string); ok {
-					params.Add(fmt.Sprintf("sort[%d][direction]", i), direction)
-				}
-			}
-		}
+	if offset := core.GetString(config, "offset", ""); offset != "" {
+		params.Set("offset", offset)
 	}
 
-	reqURL := baseURL
 	if len(params) > 0 {
-		reqURL += "?" + params.Encode()
+		endpoint += "?" + params.Encode()
 	}
 
-	return n.makeRequest(ctx, apiKey, "GET", reqURL, nil)
+	result, err := n.makeRequest(ctx, "GET", endpoint, nil, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"records": result["records"],
+		"offset":  result["offset"],
+	}, nil
 }
 
-func (n *AirtableNode) getRecord(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	recordID := getString(config, "recordId", "")
-	url := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseID, url.PathEscape(tableID), recordID)
-	return n.makeRequest(ctx, apiKey, "GET", url, nil)
+func (n *AirtableNode) getRecord(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
+	}
+
+	recordId := core.GetString(config, "recordId", "")
+	if recordId == "" {
+		return nil, fmt.Errorf("recordId is required")
+	}
+
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseId, url.PathEscape(tableName), recordId)
+	return n.makeRequest(ctx, "GET", endpoint, nil, apiKey)
 }
 
-func (n *AirtableNode) createRecord(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseID, url.PathEscape(tableID))
-
-	payload := map[string]interface{}{
-		"fields": config["fields"],
+func (n *AirtableNode) createRecord(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string, input map[string]interface{}) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
 	}
 
-	if typecast := getBool(config, "typecast", false); typecast {
-		payload["typecast"] = true
+	fields := config["fields"]
+	if fields == nil {
+		fields = input["fields"]
+	}
+	if fields == nil {
+		fields = input
 	}
 
-	return n.makeRequest(ctx, apiKey, "POST", reqURL, payload)
+	body := map[string]interface{}{
+		"fields": fields,
+	}
+
+	// Support batch create
+	if records, ok := config["records"].([]interface{}); ok {
+		body = map[string]interface{}{
+			"records": records,
+		}
+	}
+
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseId, url.PathEscape(tableName))
+	bodyJSON, _ := json.Marshal(body)
+
+	result, err := n.makeRequest(ctx, "POST", endpoint, bodyJSON, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"created": true,
+		"id":      result["id"],
+		"fields":  result["fields"],
+		"records": result["records"],
+	}, nil
 }
 
-func (n *AirtableNode) createRecords(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseID, url.PathEscape(tableID))
-
-	records, ok := config["records"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("records must be an array")
+func (n *AirtableNode) updateRecord(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string, input map[string]interface{}) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
 	}
 
-	payload := map[string]interface{}{
-		"records": records,
+	recordId := core.GetString(config, "recordId", "")
+	if recordId == "" {
+		return nil, fmt.Errorf("recordId is required")
 	}
 
-	if typecast := getBool(config, "typecast", false); typecast {
-		payload["typecast"] = true
+	fields := config["fields"]
+	if fields == nil {
+		fields = input["fields"]
+	}
+	if fields == nil {
+		fields = input
 	}
 
-	return n.makeRequest(ctx, apiKey, "POST", reqURL, payload)
+	body := map[string]interface{}{
+		"fields": fields,
+	}
+
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseId, url.PathEscape(tableName), recordId)
+	bodyJSON, _ := json.Marshal(body)
+
+	result, err := n.makeRequest(ctx, "PATCH", endpoint, bodyJSON, apiKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"updated":  true,
+		"id":       result["id"],
+		"fields":   result["fields"],
+	}, nil
 }
 
-func (n *AirtableNode) updateRecord(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	recordID := getString(config, "recordId", "")
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseID, url.PathEscape(tableID), recordID)
-
-	payload := map[string]interface{}{
-		"fields": config["fields"],
+func (n *AirtableNode) deleteRecord(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
 	}
 
-	if typecast := getBool(config, "typecast", false); typecast {
-		payload["typecast"] = true
+	recordId := core.GetString(config, "recordId", "")
+	if recordId == "" {
+		return nil, fmt.Errorf("recordId is required")
 	}
 
-	method := "PATCH"
-	if replace := getBool(config, "replaceAllFields", false); replace {
-		method = "PUT"
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseId, url.PathEscape(tableName), recordId)
+
+	result, err := n.makeRequest(ctx, "DELETE", endpoint, nil, apiKey)
+	if err != nil {
+		return nil, err
 	}
 
-	return n.makeRequest(ctx, apiKey, method, reqURL, payload)
+	return map[string]interface{}{
+		"deleted": result["deleted"],
+		"id":      result["id"],
+	}, nil
 }
 
-func (n *AirtableNode) updateRecords(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s", baseID, url.PathEscape(tableID))
-
-	records, ok := config["records"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("records must be an array")
+func (n *AirtableNode) searchRecords(ctx context.Context, config map[string]interface{}, baseId, tableName, apiKey string) (map[string]interface{}, error) {
+	if baseId == "" || tableName == "" {
+		return nil, fmt.Errorf("baseId and tableName are required")
 	}
 
-	payload := map[string]interface{}{
-		"records": records,
+	field := core.GetString(config, "field", "")
+	value := core.GetString(config, "value", "")
+
+	if field == "" || value == "" {
+		return nil, fmt.Errorf("field and value are required for search")
 	}
 
-	if typecast := getBool(config, "typecast", false); typecast {
-		payload["typecast"] = true
+	formula := fmt.Sprintf("{%s}='%s'", field, value)
+
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/%s/%s?filterByFormula=%s",
+		baseId, url.PathEscape(tableName), url.QueryEscape(formula))
+
+	result, err := n.makeRequest(ctx, "GET", endpoint, nil, apiKey)
+	if err != nil {
+		return nil, err
 	}
 
-	method := "PATCH"
-	if replace := getBool(config, "replaceAllFields", false); replace {
-		method = "PUT"
-	}
-
-	return n.makeRequest(ctx, apiKey, method, reqURL, payload)
-}
-
-func (n *AirtableNode) deleteRecord(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	recordID := getString(config, "recordId", "")
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s/%s", baseID, url.PathEscape(tableID), recordID)
-	return n.makeRequest(ctx, apiKey, "DELETE", reqURL, nil)
-}
-
-func (n *AirtableNode) deleteRecords(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	tableID := getString(config, "tableId", "")
-	recordIDs, ok := config["recordIds"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("recordIds must be an array")
-	}
-
-	params := url.Values{}
-	for _, id := range recordIDs {
-		params.Add("records[]", fmt.Sprintf("%v", id))
-	}
-
-	reqURL := fmt.Sprintf("https://api.airtable.com/v0/%s/%s?%s", baseID, url.PathEscape(tableID), params.Encode())
-	return n.makeRequest(ctx, apiKey, "DELETE", reqURL, nil)
+	return map[string]interface{}{
+		"records": result["records"],
+		"query":   formula,
+	}, nil
 }
 
 func (n *AirtableNode) listBases(ctx context.Context, apiKey string) (map[string]interface{}, error) {
-	return n.makeRequest(ctx, apiKey, "GET", "https://api.airtable.com/v0/meta/bases", nil)
+	endpoint := "https://api.airtable.com/v0/meta/bases"
+	return n.makeRequest(ctx, "GET", endpoint, nil, apiKey)
 }
 
-func (n *AirtableNode) getBaseSchema(ctx context.Context, apiKey string, config map[string]interface{}) (map[string]interface{}, error) {
-	baseID := getString(config, "baseId", "")
-	url := fmt.Sprintf("https://api.airtable.com/v0/meta/bases/%s/tables", baseID)
-	return n.makeRequest(ctx, apiKey, "GET", url, nil)
-}
-
-func (n *AirtableNode) makeRequest(ctx context.Context, apiKey, method, reqURL string, payload map[string]interface{}) (map[string]interface{}, error) {
-	var body io.Reader
-	if payload != nil {
-		jsonData, err := json.Marshal(payload)
-		if err != nil {
-			return nil, err
-		}
-		body = bytes.NewReader(jsonData)
+func (n *AirtableNode) listTables(ctx context.Context, config map[string]interface{}, apiKey string) (map[string]interface{}, error) {
+	baseId := core.GetString(config, "baseId", "")
+	if baseId == "" {
+		return nil, fmt.Errorf("baseId is required")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, reqURL, body)
+	endpoint := fmt.Sprintf("https://api.airtable.com/v0/meta/bases/%s/tables", baseId)
+	return n.makeRequest(ctx, "GET", endpoint, nil, apiKey)
+}
+
+func (n *AirtableNode) makeRequest(ctx context.Context, method, endpoint string, body []byte, apiKey string) (map[string]interface{}, error) {
+	var req *http.Request
+	var err error
+
+	if body != nil {
+		req, err = http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(body))
+	} else {
+		req, err = http.NewRequestWithContext(ctx, method, endpoint, nil)
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+apiKey)
-	if payload != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
+	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode >= 400 {
-		var errResp map[string]interface{}
-		_ = json.Unmarshal(respBody, &errResp)
-		if errMsg, ok := errResp["error"].(map[string]interface{}); ok {
-			return nil, fmt.Errorf("Airtable API error: %v - %v", errMsg["type"], errMsg["message"])
-		}
-		return nil, fmt.Errorf("Airtable API error: %s", string(respBody))
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		errMsg := "Airtable API error"
+		if err, ok := result["error"].(map[string]interface{}); ok {
+			if msg, ok := err["message"].(string); ok {
+				errMsg = msg
+			}
+		}
+		return nil, fmt.Errorf("%s (status %d)", errMsg, resp.StatusCode)
 	}
 
 	return result, nil
 }
+
+// Note: AirtableNode is already registered in integrations/init.go

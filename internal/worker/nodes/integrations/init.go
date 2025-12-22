@@ -93,4 +93,86 @@ func init() {
 		Version:     "1.0.0",
 		Tags:        []string{"ai", "llm"},
 	})
+
+	// New integrations
+	core.Register(&FTPNode{}, core.NodeMeta{
+		Name:        "FTP",
+		Description: "FTP file operations",
+		Category:    "integrations",
+		Icon:        "folder",
+		Version:     "1.0.0",
+		Tags:        []string{"files", "storage"},
+	})
+
+	core.Register(&SFTPNode{}, core.NodeMeta{
+		Name:        "SFTP",
+		Description: "Secure FTP file operations",
+		Category:    "integrations",
+		Icon:        "folder-lock",
+		Version:     "1.0.0",
+		Tags:        []string{"files", "storage"},
+	})
+
+	core.Register(&GraphQLNode{}, core.NodeMeta{
+		Name:        "GraphQL",
+		Description: "Execute GraphQL queries and mutations",
+		Category:    "integrations",
+		Icon:        "graphql",
+		Version:     "1.0.0",
+		Tags:        []string{"api"},
+	})
+
+	core.Register(&AWSS3Node{}, core.NodeMeta{
+		Name:        "AWS S3",
+		Description: "AWS S3 storage operations",
+		Category:    "integrations",
+		Icon:        "aws",
+		Version:     "1.0.0",
+		Tags:        []string{"cloud", "storage"},
+	})
+
+	core.Register(&TwilioNode{}, core.NodeMeta{
+		Name:        "Twilio",
+		Description: "Send SMS, MMS and make calls via Twilio",
+		Category:    "integrations",
+		Icon:        "phone",
+		Version:     "1.0.0",
+		Tags:        []string{"messaging", "communication"},
+	})
+
+	core.Register(&GoogleDriveNode{}, core.NodeMeta{
+		Name:        "Google Drive",
+		Description: "Google Drive file operations",
+		Category:    "integrations",
+		Icon:        "google-drive",
+		Version:     "1.0.0",
+		Tags:        []string{"cloud", "storage"},
+	})
+
+	core.Register(&JiraNode{}, core.NodeMeta{
+		Name:        "Jira",
+		Description: "Jira issue and project management",
+		Category:    "integrations",
+		Icon:        "jira",
+		Version:     "1.0.0",
+		Tags:        []string{"dev-tools", "project-management"},
+	})
+
+	core.Register(&SalesforceNode{}, core.NodeMeta{
+		Name:        "Salesforce",
+		Description: "Salesforce CRM operations",
+		Category:    "integrations",
+		Icon:        "salesforce",
+		Version:     "1.0.0",
+		Tags:        []string{"crm"},
+	})
+
+	core.Register(&SendGridNode{}, core.NodeMeta{
+		Name:        "SendGrid",
+		Description: "Send emails via SendGrid",
+		Category:    "integrations",
+		Icon:        "mail",
+		Version:     "1.0.0",
+		Tags:        []string{"messaging", "email"},
+	})
 }
