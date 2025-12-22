@@ -76,6 +76,13 @@ func main() {
 	usageRepo := repositories.NewUsageRepository(db)
 	invoiceRepo := repositories.NewInvoiceRepository(db)
 
+	// New feature repositories
+	pinnedDataRepo := repositories.NewPinnedDataRepository(db)
+	waitingExecRepo := repositories.NewWaitingExecutionRepository(db)
+	templateRepo := repositories.NewTemplateRepository(db)
+	oauthStateRepo := repositories.NewOAuthStateRepository(db)
+	webhookEndpointRepo := repositories.NewWebhookEndpointRepository(db)
+
 	// Initialize crypto
 	jwtManager := crypto.NewJWTManager(crypto.JWTConfig{
 		Secret:        cfg.JWT.Secret,
@@ -101,18 +108,37 @@ func main() {
 	scheduleSvc := services.NewScheduleService(scheduleRepo)
 	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
 
+	// New feature services
+	baseURL := cfg.App.FrontendURL
+	if cfg.Server.Port != 0 {
+		baseURL = "http://localhost:" + string(rune(cfg.Server.Port))
+	}
+	oauthSvc := services.NewOAuthService(oauthStateRepo, credentialRepo, baseURL)
+	templateSvc := services.NewTemplateService(templateRepo, workflowRepo)
+	webhookMgr := services.NewWebhookManager(webhookEndpointRepo, baseURL)
+	waitResumeMgr := services.NewWaitResumeManager(waitingExecRepo, baseURL)
+
 	// Create server
 	server := api.NewServer(
 		cfg,
 		&api.Services{
-			Auth:       authSvc,
-			User:       userSvc,
-			Workspace:  workspaceSvc,
-			Workflow:   workflowSvc,
-			Execution:  executionSvc,
-			Credential: credentialSvc,
-			Schedule:   scheduleSvc,
-			Billing:    billingSvc,
+			Auth:          authSvc,
+			User:          userSvc,
+			Workspace:     workspaceSvc,
+			Workflow:      workflowSvc,
+			Execution:     executionSvc,
+			Credential:    credentialSvc,
+			Schedule:      scheduleSvc,
+			Billing:       billingSvc,
+			OAuth:         oauthSvc,
+			Template:      templateSvc,
+			WebhookMgr:    webhookMgr,
+			WaitResumeMgr: waitResumeMgr,
+		},
+		&api.Repositories{
+			PinnedData:      pinnedDataRepo,
+			WaitingExec:     waitingExecRepo,
+			WebhookEndpoint: webhookEndpointRepo,
 		},
 		jwtManager,
 		redisClient,

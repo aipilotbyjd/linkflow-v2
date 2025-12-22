@@ -14,11 +14,12 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/api/handlers"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/api/websocket"
+	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
@@ -32,19 +33,30 @@ type Server struct {
 }
 
 type Services struct {
-	Auth       *services.AuthService
-	User       *services.UserService
-	Workspace  *services.WorkspaceService
-	Workflow   *services.WorkflowService
-	Execution  *services.ExecutionService
-	Credential *services.CredentialService
-	Schedule   *services.ScheduleService
-	Billing    *services.BillingService
+	Auth          *services.AuthService
+	User          *services.UserService
+	Workspace     *services.WorkspaceService
+	Workflow      *services.WorkflowService
+	Execution     *services.ExecutionService
+	Credential    *services.CredentialService
+	Schedule      *services.ScheduleService
+	Billing       *services.BillingService
+	OAuth         *services.OAuthService
+	Template      *services.TemplateService
+	WebhookMgr    *services.WebhookManager
+	WaitResumeMgr *services.WaitResumeManager
+}
+
+type Repositories struct {
+	PinnedData      *repositories.PinnedDataRepository
+	WaitingExec     *repositories.WaitingExecutionRepository
+	WebhookEndpoint *repositories.WebhookEndpointRepository
 }
 
 func NewServer(
 	cfg *config.Config,
 	svc *Services,
+	repos *Repositories,
 	jwtManager *crypto.JWTManager,
 	redisClient *pkgredis.Client,
 	queueClient *queue.Client,
@@ -92,6 +104,32 @@ func NewServer(
 	wsHandler := handlers.NewWebSocketHandler(wsHub, jwtManager)
 	nodeTypeHandler := handlers.NewNodeTypeHandler(svc.Workflow, svc.Execution)
 
+	// New feature handlers
+	var oauthHandler *handlers.OAuthHandler
+	if svc.OAuth != nil {
+		oauthHandler = handlers.NewOAuthHandler(svc.OAuth)
+	}
+
+	var templateHandler *handlers.TemplateHandler
+	if svc.Template != nil {
+		templateHandler = handlers.NewTemplateHandler(svc.Template)
+	}
+
+	var pinnedDataHandler *handlers.PinnedDataHandler
+	if repos != nil && repos.PinnedData != nil {
+		pinnedDataHandler = handlers.NewPinnedDataHandler(repos.PinnedData)
+	}
+
+	var webhookMgmtHandler *handlers.WebhookManagementHandler
+	if svc.WebhookMgr != nil {
+		webhookMgmtHandler = handlers.NewWebhookManagementHandler(svc.WebhookMgr)
+	}
+
+	var waitResumeHandler *handlers.WaitResumeHandler
+	if svc.WaitResumeMgr != nil && repos != nil && repos.WaitingExec != nil {
+		waitResumeHandler = handlers.NewWaitResumeHandler(svc.WaitResumeMgr, repos.WaitingExec)
+	}
+
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager, redisClient)
 	tenantMiddleware := middleware.NewTenantMiddleware(svc.Workspace)
@@ -119,6 +157,16 @@ func NewServer(
 
 			// Plans (public)
 			r.Get("/billing/plans", billingHandler.GetPlans)
+
+			// Templates (public)
+			if templateHandler != nil {
+				r.Get("/templates", templateHandler.List)
+				r.Get("/templates/featured", templateHandler.GetFeatured)
+				r.Get("/templates/categories", templateHandler.GetCategories)
+				r.Get("/templates/categories/{category}", templateHandler.GetByCategory)
+				r.Get("/templates/search", templateHandler.Search)
+				r.Get("/templates/{templateID}", templateHandler.Get)
+			}
 		})
 
 		// Protected routes
@@ -140,6 +188,17 @@ func NewServer(
 			r.Get("/node-types", nodeTypeHandler.ListNodeTypes)
 			r.Get("/node-types/categories", nodeTypeHandler.GetNodeCategories)
 			r.Get("/node-types/{nodeType}", nodeTypeHandler.GetNodeType)
+
+			// OAuth
+			if oauthHandler != nil {
+				r.Get("/oauth/providers", oauthHandler.GetProviders)
+			}
+
+			// Wait/Resume (public resume endpoint)
+			if waitResumeHandler != nil {
+				r.Post("/resume/{token}", waitResumeHandler.Resume)
+				r.Get("/resume/{token}/status", waitResumeHandler.GetWaitingStatus)
+			}
 
 			// Workspaces
 			r.Get("/workspaces", workspaceHandler.List)
@@ -205,6 +264,42 @@ func NewServer(
 				r.Delete("/billing/subscription", billingHandler.CancelSubscription)
 				r.Get("/billing/usage", billingHandler.GetUsage)
 				r.Get("/billing/invoices", billingHandler.GetInvoices)
+
+				// OAuth (workspace-scoped)
+				if oauthHandler != nil {
+					r.Get("/oauth/authorize/{provider}", oauthHandler.Authorize)
+					r.Post("/oauth/authorize", oauthHandler.Authorize)
+					r.Get("/oauth/callback/{provider}", oauthHandler.Callback)
+					r.Post("/credentials/{credentialID}/refresh", oauthHandler.RefreshToken)
+				}
+
+				// Templates (create workflow from template)
+				if templateHandler != nil {
+					r.Post("/templates/{templateID}/use", templateHandler.UseTemplate)
+				}
+
+				// Pinned Data
+				if pinnedDataHandler != nil {
+					r.Get("/workflows/{workflowID}/pinned-data", pinnedDataHandler.GetByWorkflow)
+					r.Get("/workflows/{workflowID}/pinned-data/{nodeID}", pinnedDataHandler.GetByNode)
+					r.Post("/workflows/{workflowID}/pinned-data", pinnedDataHandler.Set)
+					r.Delete("/workflows/{workflowID}/pinned-data/{nodeID}", pinnedDataHandler.Delete)
+				}
+
+				// Webhook Management
+				if webhookMgmtHandler != nil {
+					r.Post("/workflows/{workflowID}/webhooks", webhookMgmtHandler.Generate)
+					r.Get("/workflows/{workflowID}/webhooks", webhookMgmtHandler.List)
+					r.Post("/webhooks/{webhookID}/regenerate-secret", webhookMgmtHandler.RegenerateSecret)
+					r.Post("/webhooks/{webhookID}/activate", webhookMgmtHandler.Activate)
+					r.Post("/webhooks/{webhookID}/deactivate", webhookMgmtHandler.Deactivate)
+				}
+
+				// Waiting Executions
+				if waitResumeHandler != nil {
+					r.Get("/waiting-executions", waitResumeHandler.ListWaiting)
+					r.Get("/executions/{executionID}/waiting", waitResumeHandler.GetByExecution)
+				}
 			})
 		})
 	})
