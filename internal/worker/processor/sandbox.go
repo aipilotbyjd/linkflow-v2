@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/dop251/goja"
@@ -73,7 +72,7 @@ func (s *Sandbox) Execute(ctx context.Context, code string, input map[string]int
 
 	// Inject $json for convenience
 	if json, ok := input["$json"]; ok {
-		vm.Set("$json", json)
+		_ = vm.Set("$json", json)
 	}
 
 	// Inject helper functions
@@ -173,26 +172,26 @@ func (p *VMPool) createVM() *goja.Runtime {
 	vm.SetFieldNameMapper(goja.UncapFieldNameMapper())
 
 	// Remove dangerous globals
-	vm.Set("eval", goja.Undefined())
-	vm.Set("Function", goja.Undefined())
+	_ = vm.Set("eval", goja.Undefined())
+	_ = vm.Set("Function", goja.Undefined())
 
 	// Add console if enabled
 	if p.enableConsole {
 		console := vm.NewObject()
-		console.Set("log", func(call goja.FunctionCall) goja.Value {
+		_ = console.Set("log", func(call goja.FunctionCall) goja.Value {
 			// In production, you might want to capture these logs
 			return goja.Undefined()
 		})
-		console.Set("error", func(call goja.FunctionCall) goja.Value {
+		_ = console.Set("error", func(call goja.FunctionCall) goja.Value {
 			return goja.Undefined()
 		})
-		console.Set("warn", func(call goja.FunctionCall) goja.Value {
+		_ = console.Set("warn", func(call goja.FunctionCall) goja.Value {
 			return goja.Undefined()
 		})
-		console.Set("info", func(call goja.FunctionCall) goja.Value {
+		_ = console.Set("info", func(call goja.FunctionCall) goja.Value {
 			return goja.Undefined()
 		})
-		vm.Set("console", console)
+		_ = vm.Set("console", console)
 	}
 
 	return vm
@@ -223,10 +222,10 @@ func (p *VMPool) Put(vm *goja.Runtime) {
 
 func injectHelpers(vm *goja.Runtime) {
 	// JSON helpers
-	vm.Set("JSON", map[string]interface{}{
+	_ = vm.Set("JSON", map[string]interface{}{
 		"parse": func(s string) interface{} {
 			var v interface{}
-			json.Unmarshal([]byte(s), &v)
+			_ = json.Unmarshal([]byte(s), &v)
 			return v
 		},
 		"stringify": func(v interface{}) string {
@@ -236,7 +235,7 @@ func injectHelpers(vm *goja.Runtime) {
 	})
 
 	// Array helpers
-	vm.Set("Array", map[string]interface{}{
+	_ = vm.Set("Array", map[string]interface{}{
 		"isArray": func(v interface{}) bool {
 			_, ok := v.([]interface{})
 			return ok
@@ -244,7 +243,7 @@ func injectHelpers(vm *goja.Runtime) {
 	})
 
 	// Object helpers
-	vm.Set("Object", map[string]interface{}{
+	_ = vm.Set("Object", map[string]interface{}{
 		"keys": func(obj map[string]interface{}) []string {
 			keys := make([]string, 0, len(obj))
 			for k := range obj {
@@ -277,7 +276,7 @@ func injectHelpers(vm *goja.Runtime) {
 	})
 
 	// Math helpers (subset)
-	vm.Set("Math", map[string]interface{}{
+	_ = vm.Set("Math", map[string]interface{}{
 		"round": func(x float64) float64 { return float64(int(x + 0.5)) },
 		"floor": func(x float64) float64 { return float64(int(x)) },
 		"ceil": func(x float64) float64 {
@@ -333,7 +332,6 @@ func exportValue(val goja.Value) interface{} {
 // CodeExecutor is a higher-level code execution interface
 type CodeExecutor struct {
 	sandbox *Sandbox
-	mu      sync.RWMutex
 }
 
 // NewCodeExecutor creates a new code executor

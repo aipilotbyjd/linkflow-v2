@@ -269,6 +269,8 @@ func (n *TelegramNode) makeRequest(ctx context.Context, token, method string, pa
 	}, nil
 }
 
+// sendFileWithMultipart is reserved for future file upload support
+// nolint:unused
 func (n *TelegramNode) sendFileWithMultipart(ctx context.Context, token, method string, config map[string]interface{}, fileField string, fileData []byte, filename string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/%s", token, method)
 

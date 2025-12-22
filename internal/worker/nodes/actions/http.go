@@ -97,9 +97,9 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 							if content, ok := val["content"].(string); ok {
 								// Check if base64 encoded
 								if decoded, err := base64.StdEncoding.DecodeString(content); err == nil {
-									part.Write(decoded)
+									_, _ = part.Write(decoded)
 								} else {
-									part.Write([]byte(content))
+									_, _ = part.Write([]byte(content))
 								}
 							} else if filePath, ok := val["path"].(string); ok {
 								// Read from file path
@@ -107,11 +107,11 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 								if err != nil {
 									return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
 								}
-								part.Write(fileContent)
+								_, _ = part.Write(fileContent)
 							}
 						}
 					default:
-						writer.WriteField(k, fmt.Sprintf("%v", v))
+						_ = writer.WriteField(k, fmt.Sprintf("%v", v))
 					}
 				}
 			}
@@ -283,7 +283,7 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 	// Try to parse JSON response
 	var jsonData interface{}
 	if strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
-		json.Unmarshal(respBody, &jsonData)
+		_ = json.Unmarshal(respBody, &jsonData)
 	}
 
 	result := map[string]interface{}{

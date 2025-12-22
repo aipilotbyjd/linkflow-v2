@@ -249,12 +249,12 @@ func (n *DiscordNode) makeRequest(ctx context.Context, token, method, url string
 
 	if resp.StatusCode >= 400 {
 		var errResp map[string]interface{}
-		json.Unmarshal(respBody, &errResp)
+		_ = json.Unmarshal(respBody, &errResp)
 		return errResp, fmt.Errorf("Discord API error %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	var result map[string]interface{}
-	json.Unmarshal(respBody, &result)
+	_ = json.Unmarshal(respBody, &result)
 
 	return result, nil
 }

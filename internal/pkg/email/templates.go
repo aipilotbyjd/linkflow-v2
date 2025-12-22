@@ -1,34 +1,5 @@
 package email
 
-const baseTemplate = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
-        .header { background: #4F46E5; padding: 30px; text-align: center; }
-        .header h1 { color: #ffffff; margin: 0; font-size: 24px; }
-        .content { padding: 40px 30px; }
-        .button { display: inline-block; padding: 14px 30px; background: #4F46E5; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
-        .button:hover { background: #4338CA; }
-        .footer { padding: 30px; text-align: center; color: #666; font-size: 14px; background: #f9f9f9; }
-        .note { background: #FEF3C7; padding: 15px; border-radius: 6px; margin: 20px 0; }
-        .error { background: #FEE2E2; padding: 15px; border-radius: 6px; margin: 20px 0; color: #991B1B; }
-        .warning { background: #FEF3C7; padding: 15px; border-radius: 6px; margin: 20px 0; color: #92400E; }
-        .code { background: #F3F4F6; padding: 3px 8px; border-radius: 4px; font-family: monospace; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        {{.Content}}
-    </div>
-</body>
-</html>
-`
-
 const welcomeTemplate = `
 <!DOCTYPE html>
 <html>

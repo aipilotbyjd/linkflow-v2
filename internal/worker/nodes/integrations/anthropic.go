@@ -140,7 +140,7 @@ func (n *AnthropicNode) makeRequest(ctx context.Context, apiKey, url string, pay
 
 	if resp.StatusCode >= 400 {
 		var errResp map[string]interface{}
-		json.Unmarshal(body, &errResp)
+		_ = json.Unmarshal(body, &errResp)
 		if errMsg, ok := errResp["error"].(map[string]interface{}); ok {
 			return nil, fmt.Errorf("Anthropic API error: %v", errMsg["message"])
 		}

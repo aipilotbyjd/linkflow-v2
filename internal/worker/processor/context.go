@@ -344,7 +344,7 @@ func (rctx *RuntimeContext) PublishEvent(event *events.Event) error {
 // PublishNodeStarted publishes node started event
 func (rctx *RuntimeContext) PublishNodeStarted(node *NodeDefinition) {
 	if rctx.publisher != nil {
-		rctx.publisher.NodeStarted(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, node.Type, node.Name)
+		_ = rctx.publisher.NodeStarted(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, node.Type, node.Name)
 	}
 }
 
@@ -353,14 +353,14 @@ func (rctx *RuntimeContext) PublishNodeCompleted(node *NodeDefinition, durationM
 	if rctx.publisher != nil {
 		// Truncate output for preview
 		preview := truncateOutput(output, 1000)
-		rctx.publisher.NodeCompleted(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, durationMs, preview)
+		_ = rctx.publisher.NodeCompleted(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, durationMs, preview)
 	}
 }
 
 // PublishNodeFailed publishes node failed event
 func (rctx *RuntimeContext) PublishNodeFailed(node *NodeDefinition, errMsg string) {
 	if rctx.publisher != nil {
-		rctx.publisher.NodeFailed(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, errMsg)
+		_ = rctx.publisher.NodeFailed(rctx.ctx, rctx.WorkspaceID, rctx.WorkflowID, rctx.ExecutionID, node.ID, errMsg)
 	}
 }
 

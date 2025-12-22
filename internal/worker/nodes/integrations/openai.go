@@ -257,11 +257,11 @@ func (n *OpenAINode) editImage(ctx context.Context, apiKey string, config map[st
 		}
 	}
 
-	writer.WriteField("prompt", prompt)
-	writer.WriteField("size", size)
-	writer.WriteField("n", fmt.Sprintf("%d", imageCount))
-	writer.WriteField("response_format", responseFormat)
-	writer.Close()
+	_ = writer.WriteField("prompt", prompt)
+	_ = writer.WriteField("size", size)
+	_ = writer.WriteField("n", fmt.Sprintf("%d", imageCount))
+	_ = writer.WriteField("response_format", responseFormat)
+	_ = writer.Close()
 
 	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/images/edits", &buf, writer.FormDataContentType())
 }
@@ -279,10 +279,10 @@ func (n *OpenAINode) createImageVariation(ctx context.Context, apiKey string, co
 		return nil, fmt.Errorf("failed to add image: %w", err)
 	}
 
-	writer.WriteField("size", size)
-	writer.WriteField("n", fmt.Sprintf("%d", imageCount))
-	writer.WriteField("response_format", responseFormat)
-	writer.Close()
+	_ = writer.WriteField("size", size)
+	_ = writer.WriteField("n", fmt.Sprintf("%d", imageCount))
+	_ = writer.WriteField("response_format", responseFormat)
+	_ = writer.Close()
 
 	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/images/variations", &buf, writer.FormDataContentType())
 }
@@ -302,16 +302,16 @@ func (n *OpenAINode) transcribeAudio(ctx context.Context, apiKey string, config 
 		return nil, fmt.Errorf("failed to add audio file: %w", err)
 	}
 
-	writer.WriteField("model", model)
+	_ = writer.WriteField("model", model)
 	if language != "" {
-		writer.WriteField("language", language)
+		_ = writer.WriteField("language", language)
 	}
 	if prompt != "" {
-		writer.WriteField("prompt", prompt)
+		_ = writer.WriteField("prompt", prompt)
 	}
-	writer.WriteField("response_format", responseFormat)
-	writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
-	writer.Close()
+	_ = writer.WriteField("response_format", responseFormat)
+	_ = writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
+	_ = writer.Close()
 
 	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/audio/transcriptions", &buf, writer.FormDataContentType())
 }
@@ -330,13 +330,13 @@ func (n *OpenAINode) translateAudio(ctx context.Context, apiKey string, config m
 		return nil, fmt.Errorf("failed to add audio file: %w", err)
 	}
 
-	writer.WriteField("model", model)
+	_ = writer.WriteField("model", model)
 	if prompt != "" {
-		writer.WriteField("prompt", prompt)
+		_ = writer.WriteField("prompt", prompt)
 	}
-	writer.WriteField("response_format", responseFormat)
-	writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
-	writer.Close()
+	_ = writer.WriteField("response_format", responseFormat)
+	_ = writer.WriteField("temperature", fmt.Sprintf("%f", temperature))
+	_ = writer.Close()
 
 	return n.makeMultipartRequest(ctx, apiKey, "https://api.openai.com/v1/audio/translations", &buf, writer.FormDataContentType())
 }
@@ -404,7 +404,7 @@ func (n *OpenAINode) makeMultipartRequest(ctx context.Context, apiKey, url strin
 	respBody, _ := io.ReadAll(resp.Body)
 
 	var result map[string]interface{}
-	json.Unmarshal(respBody, &result)
+	_ = json.Unmarshal(respBody, &result)
 
 	if resp.StatusCode >= 400 {
 		if errObj, ok := result["error"].(map[string]interface{}); ok {
@@ -478,7 +478,7 @@ func (n *OpenAINode) makeRequest(ctx context.Context, apiKey, method, url string
 	respBody, _ := io.ReadAll(resp.Body)
 
 	var result map[string]interface{}
-	json.Unmarshal(respBody, &result)
+	_ = json.Unmarshal(respBody, &result)
 
 	if resp.StatusCode >= 400 {
 		if errObj, ok := result["error"].(map[string]interface{}); ok {

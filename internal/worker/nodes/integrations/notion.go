@@ -253,7 +253,7 @@ func (n *NotionNode) makeRequest(ctx context.Context, apiKey, method, url string
 
 	if resp.StatusCode >= 400 {
 		var errResp map[string]interface{}
-		json.Unmarshal(respBody, &errResp)
+		_ = json.Unmarshal(respBody, &errResp)
 		return nil, fmt.Errorf("Notion API error: %v - %s", errResp["message"], errResp["code"])
 	}
 

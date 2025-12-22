@@ -12,7 +12,6 @@ import (
 // MetricsMiddleware collects metrics for node execution
 type MetricsMiddleware struct {
 	nodeExecutions sync.Map // key -> *nodeMetrics
-	mu             sync.RWMutex
 }
 
 type nodeMetrics struct {
@@ -127,12 +126,11 @@ func (mc *MetricsCollector) GetMetrics() map[string]interface{} {
 
 // WorkflowMetrics tracks workflow-level metrics
 type WorkflowMetrics struct {
-	total       int64
-	completed   int64
-	failed      int64
-	duration    int64
-	totalNodes  int64
-	mu          sync.RWMutex
+	total      int64
+	completed  int64
+	failed     int64
+	duration   int64
+	totalNodes int64
 }
 
 // NewWorkflowMetrics creates workflow metrics
@@ -186,7 +184,6 @@ type QueueMetrics struct {
 	processed  int64
 	retries    int64
 	deadLetter int64
-	mu         sync.RWMutex
 }
 
 // NewQueueMetrics creates queue metrics

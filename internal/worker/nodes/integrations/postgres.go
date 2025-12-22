@@ -94,9 +94,7 @@ func (n *PostgresNode) executeQuery(ctx context.Context, db *sql.DB, config map[
 	}
 
 	args := make([]interface{}, len(params))
-	for i, p := range params {
-		args[i] = p
-	}
+	copy(args, params)
 
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -191,7 +189,7 @@ func (n *PostgresNode) executeInsert(ctx context.Context, db *sql.DB, config map
 			for i := range vals {
 				valPtrs[i] = &vals[i]
 			}
-			rows.Scan(valPtrs...)
+			_ = rows.Scan(valPtrs...)
 
 			row := make(map[string]interface{})
 			for i, col := range cols {
@@ -306,9 +304,7 @@ func (n *PostgresNode) executeRaw(ctx context.Context, db *sql.DB, config map[st
 	}
 
 	args := make([]interface{}, len(params))
-	for i, p := range params {
-		args[i] = p
-	}
+	copy(args, params)
 
 	// Determine if it's a SELECT or not
 	queryUpper := strings.ToUpper(strings.TrimSpace(query))
@@ -336,7 +332,7 @@ func getArray(m map[string]interface{}, key string) []interface{} {
 	// Try to parse from JSON string
 	if v, ok := m[key].(string); ok {
 		var arr []interface{}
-		json.Unmarshal([]byte(v), &arr)
+		_ = json.Unmarshal([]byte(v), &arr)
 		return arr
 	}
 	return nil

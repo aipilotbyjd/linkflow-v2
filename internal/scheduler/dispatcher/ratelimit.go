@@ -66,7 +66,7 @@ func (l *SlidingWindowLimiter) AllowN(ctx context.Context, key string, n int) bo
 	pipe = l.redis.Pipeline()
 	pipe.ZAdd(ctx, fullKey, members...)
 	pipe.Expire(ctx, fullKey, l.windowSize*2)
-	pipe.Exec(ctx)
+	_, _ = pipe.Exec(ctx)
 
 	return true
 }

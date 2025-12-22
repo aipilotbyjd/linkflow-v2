@@ -95,9 +95,7 @@ func (d *DAG) TopologicalSort() ([]string, error) {
 	}
 
 	// Start with root nodes
-	for _, nodeID := range d.RootNodes {
-		queue = append(queue, nodeID)
-	}
+	queue = append(queue, d.RootNodes...)
 
 	for len(queue) > 0 {
 		// Sort queue for deterministic order

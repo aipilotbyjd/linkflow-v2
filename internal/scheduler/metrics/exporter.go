@@ -18,7 +18,7 @@ func (e *Exporter) Handler() http.HandlerFunc {
 		snapshot := e.collector.Snapshot()
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(snapshot)
+		_ = json.NewEncoder(w).Encode(snapshot)
 	}
 }
 
@@ -39,7 +39,7 @@ func (e *Exporter) Health() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(code)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"status":    status,
 			"is_leader": snapshot.IsLeader,
 			"uptime_s":  int64(snapshot.Uptime.Seconds()),

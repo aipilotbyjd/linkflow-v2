@@ -517,7 +517,7 @@ func buildExpressionEnv(ctx *ExpressionContext) map[string]interface{} {
 		},
 		"fromJSON": func(s string) interface{} {
 			var v interface{}
-			json.Unmarshal([]byte(s), &v)
+			_ = json.Unmarshal([]byte(s), &v)
 			return v
 		},
 

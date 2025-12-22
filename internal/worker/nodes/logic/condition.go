@@ -124,8 +124,8 @@ func (n *ConditionNode) evaluateCondition(cond map[string]interface{}, input map
 	case "notIn":
 		return !isIn(leftValue, rightValue)
 	case "between":
-		min, _ := cond["min"]
-		max, _ := cond["max"]
+		min := cond["min"]
+		max := cond["max"]
 		v := toFloat(leftValue)
 		return v >= toFloat(min) && v <= toFloat(max)
 	default:

@@ -538,7 +538,7 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		Variables map[string]string `json:"variables"`
 	}
 	// Body is optional for duplicate - silently ignore decode errors
-	json.NewDecoder(r.Body).Decode(&req)
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	original, err := h.workflowSvc.GetByID(r.Context(), workflowID)
 	if err != nil {
@@ -560,7 +560,7 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		for key, value := range req.Variables {
 			nodesStr = strings.ReplaceAll(nodesStr, "{{"+key+"}}", value)
 		}
-		json.Unmarshal([]byte(nodesStr), &nodes)
+		_ = json.Unmarshal([]byte(nodesStr), &nodes)
 	}
 
 	workflow, err := h.workflowSvc.Create(r.Context(), services.CreateWorkflowInput{

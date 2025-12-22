@@ -267,7 +267,7 @@ func (n *AirtableNode) makeRequest(ctx context.Context, apiKey, method, reqURL s
 
 	if resp.StatusCode >= 400 {
 		var errResp map[string]interface{}
-		json.Unmarshal(respBody, &errResp)
+		_ = json.Unmarshal(respBody, &errResp)
 		if errMsg, ok := errResp["error"].(map[string]interface{}); ok {
 			return nil, fmt.Errorf("Airtable API error: %v - %v", errMsg["type"], errMsg["message"])
 		}

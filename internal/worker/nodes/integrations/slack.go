@@ -205,7 +205,7 @@ func (n *SlackNode) makeRequest(ctx context.Context, token, method, url string, 
 	respBody, _ := io.ReadAll(resp.Body)
 
 	var result map[string]interface{}
-	json.Unmarshal(respBody, &result)
+	_ = json.Unmarshal(respBody, &result)
 
 	if ok, _ := result["ok"].(bool); !ok {
 		errMsg, _ := result["error"].(string)
