@@ -48,6 +48,17 @@ type CredentialData struct {
 	// Bearer Token
 	Token string `json:"token,omitempty"`
 
+	// Database credentials
+	Host     string `json:"host,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	Database string `json:"database,omitempty"`
+
+	// Connection string (for MongoDB etc.)
+	ConnectionString string `json:"connectionString,omitempty"`
+
 	// Custom fields
 	Custom map[string]string `json:"custom,omitempty"`
+
+	// Generic data map for flexible access
+	Data map[string]interface{} `json:"data,omitempty"`
 }

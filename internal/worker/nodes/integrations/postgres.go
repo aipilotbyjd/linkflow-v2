@@ -3,7 +3,6 @@ package integrations
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -323,26 +322,6 @@ func (n *PostgresNode) executeRaw(ctx context.Context, db *sql.DB, config map[st
 		"executed":     true,
 		"rowsAffected": rowsAffected,
 	}, nil
-}
-
-func getArray(m map[string]interface{}, key string) []interface{} {
-	if v, ok := m[key].([]interface{}); ok {
-		return v
-	}
-	// Try to parse from JSON string
-	if v, ok := m[key].(string); ok {
-		var arr []interface{}
-		_ = json.Unmarshal([]byte(v), &arr)
-		return arr
-	}
-	return nil
-}
-
-func getMap(m map[string]interface{}, key string) map[string]interface{} {
-	if v, ok := m[key].(map[string]interface{}); ok {
-		return v
-	}
-	return make(map[string]interface{})
 }
 
 var _ core.Node = (*PostgresNode)(nil)

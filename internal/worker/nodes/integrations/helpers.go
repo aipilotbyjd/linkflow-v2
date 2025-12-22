@@ -50,3 +50,27 @@ func parseUUID(s string) uuid.UUID {
 	id, _ := uuid.Parse(s)
 	return id
 }
+
+func getArray(config map[string]interface{}, key string) []interface{} {
+	if v, ok := config[key].([]interface{}); ok {
+		return v
+	}
+	return nil
+}
+
+func getMap(config map[string]interface{}, key string) map[string]interface{} {
+	if v, ok := config[key].(map[string]interface{}); ok {
+		return v
+	}
+	return nil
+}
+
+func getStringFromMap(data map[string]interface{}, key, defaultVal string) string {
+	if data == nil {
+		return defaultVal
+	}
+	if v, ok := data[key].(string); ok {
+		return v
+	}
+	return defaultVal
+}
