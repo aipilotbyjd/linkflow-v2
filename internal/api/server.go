@@ -79,7 +79,7 @@ func NewServer(
 	router.Use(corsHandler.Handler)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(svc.Auth, jwtManager)
+	authHandler := handlers.NewAuthHandler(svc.Auth, jwtManager, redisClient)
 	userHandler := handlers.NewUserHandler(svc.User)
 	workspaceHandler := handlers.NewWorkspaceHandler(svc.Workspace, svc.Billing)
 	workflowHandler := handlers.NewWorkflowHandler(svc.Workflow, svc.Billing, queueClient)
@@ -93,7 +93,7 @@ func NewServer(
 	nodeTypeHandler := handlers.NewNodeTypeHandler(svc.Workflow, svc.Execution)
 
 	// Auth middleware
-	authMiddleware := middleware.NewAuthMiddleware(jwtManager)
+	authMiddleware := middleware.NewAuthMiddleware(jwtManager, redisClient)
 	tenantMiddleware := middleware.NewTenantMiddleware(svc.Workspace)
 	rateLimiter := middleware.NewRateLimiter(redisClient)
 

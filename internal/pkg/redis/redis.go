@@ -105,3 +105,35 @@ func (c *Client) GetIdempotencyResult(ctx context.Context, key string) (string, 
 func (c *Client) SetIdempotencyResult(ctx context.Context, key string, result string, ttl time.Duration) error {
 	return c.Set(ctx, "idempotency:result:"+key, result, ttl).Err()
 }
+
+// Token blacklist operations
+const tokenBlacklistPrefix = "token:blacklist:"
+
+// BlacklistToken adds a token to the blacklist with TTL matching token expiry
+func (c *Client) BlacklistToken(ctx context.Context, jti string, expiry time.Duration) error {
+	return c.Set(ctx, tokenBlacklistPrefix+jti, "1", expiry).Err()
+}
+
+// IsTokenBlacklisted checks if a token is in the blacklist
+func (c *Client) IsTokenBlacklisted(ctx context.Context, jti string) (bool, error) {
+	result, err := c.Exists(ctx, tokenBlacklistPrefix+jti).Result()
+	if err != nil {
+		return false, err
+	}
+	return result > 0, nil
+}
+
+// BlacklistUserTokens blacklists all tokens for a user by storing user ID with timestamp
+// Any token issued before this timestamp should be considered invalid
+func (c *Client) BlacklistUserTokens(ctx context.Context, userID string, expiry time.Duration) error {
+	return c.Set(ctx, "user:logout:"+userID, time.Now().Unix(), expiry).Err()
+}
+
+// GetUserLogoutTime returns the timestamp when user logged out (0 if never)
+func (c *Client) GetUserLogoutTime(ctx context.Context, userID string) (int64, error) {
+	result, err := c.Get(ctx, "user:logout:"+userID).Int64()
+	if err == redis.Nil {
+		return 0, nil
+	}
+	return result, err
+}

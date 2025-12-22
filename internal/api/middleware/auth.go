@@ -7,6 +7,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 )
 
 type contextKey string
@@ -17,11 +18,15 @@ const (
 )
 
 type AuthMiddleware struct {
-	jwtManager *crypto.JWTManager
+	jwtManager  *crypto.JWTManager
+	redisClient *pkgredis.Client
 }
 
-func NewAuthMiddleware(jwtManager *crypto.JWTManager) *AuthMiddleware {
-	return &AuthMiddleware{jwtManager: jwtManager}
+func NewAuthMiddleware(jwtManager *crypto.JWTManager, redisClient *pkgredis.Client) *AuthMiddleware {
+	return &AuthMiddleware{
+		jwtManager:  jwtManager,
+		redisClient: redisClient,
+	}
 }
 
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
@@ -52,6 +57,24 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		if claims.Type != "access" {
 			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid token type")
 			return
+		}
+
+		// Check if token is blacklisted (by JTI)
+		if claims.ID != "" {
+			blacklisted, err := m.redisClient.IsTokenBlacklisted(r.Context(), claims.ID)
+			if err == nil && blacklisted {
+				dto.ErrorResponse(w, http.StatusUnauthorized, "token has been revoked")
+				return
+			}
+		}
+
+		// Check if user logged out after token was issued
+		logoutTime, err := m.redisClient.GetUserLogoutTime(r.Context(), claims.UserID.String())
+		if err == nil && logoutTime > 0 && claims.IssuedAt != nil {
+			if logoutTime > claims.IssuedAt.Unix() {
+				dto.ErrorResponse(w, http.StatusUnauthorized, "token has been revoked")
+				return
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), UserContextKey, claims)

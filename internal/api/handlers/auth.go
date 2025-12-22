@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -12,6 +13,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/oauth"
+	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
 
@@ -19,20 +21,23 @@ type AuthHandler struct {
 	authSvc      *services.AuthService
 	jwtManager   *crypto.JWTManager
 	oauthManager *oauth.Manager
+	redisClient  *pkgredis.Client
 	frontendURL  string
 }
 
-func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager) *AuthHandler {
+func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client) *AuthHandler {
 	return &AuthHandler{
-		authSvc:    authSvc,
-		jwtManager: jwtManager,
+		authSvc:     authSvc,
+		jwtManager:  jwtManager,
+		redisClient: redisClient,
 	}
 }
 
-func NewAuthHandlerWithOAuth(authSvc *services.AuthService, jwtManager *crypto.JWTManager, oauthManager *oauth.Manager, frontendURL string) *AuthHandler {
+func NewAuthHandlerWithOAuth(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client, oauthManager *oauth.Manager, frontendURL string) *AuthHandler {
 	return &AuthHandler{
 		authSvc:      authSvc,
 		jwtManager:   jwtManager,
+		redisClient:  redisClient,
 		oauthManager: oauthManager,
 		frontendURL:  frontendURL,
 	}
@@ -147,9 +152,16 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authSvc.LogoutAll(r.Context(), claims.UserID); err != nil {
+	// Blacklist user tokens in Redis (invalidate all tokens issued before now)
+	// Use refresh token expiry (7 days) as TTL to cover all possible tokens
+	if err := h.redisClient.BlacklistUserTokens(r.Context(), claims.UserID.String(), 7*24*time.Hour); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "logout failed")
 		return
+	}
+
+	// Also revoke sessions in DB for audit trail
+	if err := h.authSvc.LogoutAll(r.Context(), claims.UserID); err != nil {
+		// Log error but don't fail - token is already blacklisted
 	}
 
 	dto.NoContent(w)
