@@ -780,6 +780,19 @@
 						},
 						"description": "Get a specific workflow version"
 					}
+				},
+				{
+					"name": "Rollback to Version",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1/rollback",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1", "rollback"]
+						},
+						"description": "Rollback workflow to a previous version. Creates a new version with the content from the specified historical version."
+					}
 				}
 			],
 			"description": "Workflow management and execution"
@@ -854,6 +867,83 @@
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "retry"]
 						},
 						"description": "Retry a failed execution"
+					}
+				},
+				{
+					"name": "Search Executions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/search?status=failed&workflow_id={{workflow_id}}&start_date=2024-01-01T00:00:00Z&q=timeout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "search"],
+							"query": [
+								{ "key": "status", "value": "failed", "description": "Filter by status: queued, running, completed, failed, cancelled, timeout" },
+								{ "key": "workflow_id", "value": "{{workflow_id}}", "description": "Filter by workflow ID" },
+								{ "key": "trigger_type", "value": "webhook", "disabled": true, "description": "Filter by trigger: manual, webhook, schedule" },
+								{ "key": "start_date", "value": "2024-01-01T00:00:00Z", "description": "Start date (RFC3339)" },
+								{ "key": "end_date", "value": "", "disabled": true, "description": "End date (RFC3339)" },
+								{ "key": "q", "value": "timeout", "description": "Search in error messages" },
+								{ "key": "page", "value": "1", "disabled": true },
+								{ "key": "per_page", "value": "20", "disabled": true }
+							]
+						},
+						"description": "Search executions with advanced filters. Supports filtering by status, workflow, trigger type, date range, and text search in error messages."
+					}
+				},
+				{
+					"name": "Get Execution Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/stats?period=24h",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "stats"],
+							"query": [
+								{ "key": "period", "value": "24h", "description": "Time period: 1h, 24h (default), 7d, 30d" }
+							]
+						},
+						"description": "Get execution statistics for the workspace. Returns total count by status, average duration, and time range."
+					}
+				},
+				{
+					"name": "Bulk Delete Executions",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"execution_ids\": [\"uuid-1\", \"uuid-2\", \"uuid-3\"],\n    \"older_than\": null,\n    \"status\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "bulk"]
+						},
+						"description": "Delete multiple executions at once.\n\nOptions:\n- `execution_ids`: Array of specific execution IDs to delete\n- `older_than`: Delete all executions older than this date (RFC3339)\n- `status`: Only delete executions with this status\n\nUse execution_ids OR older_than, not both."
+					}
+				},
+				{
+					"name": "Bulk Delete by Age",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"older_than\": \"2024-01-01T00:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "bulk"]
+						},
+						"description": "Delete all executions older than a specified date. Useful for cleanup of old execution history."
 					}
 				}
 			],
@@ -1831,6 +1921,71 @@
 				}
 			],
 			"description": "Pin test data to nodes for development and testing"
+		},
+		{
+			"name": "📈 Metrics & Monitoring",
+			"item": [
+				{
+					"name": "Prometheus Metrics",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/metrics",
+							"host": ["{{base_url}}"],
+							"path": ["metrics"]
+						},
+						"description": "Prometheus-compatible metrics endpoint for monitoring.\n\n### Available Metrics\n\n**HTTP Metrics:**\n- `linkflow_http_requests_total` - Total HTTP requests by method, path, status\n- `linkflow_http_request_duration_seconds` - Request latency histogram\n\n**Workflow Metrics:**\n- `linkflow_workflow_executions_total` - Executions by workspace, status, trigger\n- `linkflow_workflow_execution_duration_seconds` - Execution duration histogram\n- `linkflow_workflow_executions_in_progress` - Current running executions\n\n**Node Metrics:**\n- `linkflow_node_executions_total` - Node executions by type and status\n- `linkflow_node_execution_duration_seconds` - Node duration histogram\n\n**Webhook Metrics:**\n- `linkflow_webhooks_received_total` - Webhooks received by workspace\n- `linkflow_webhook_queue_depth` - Current webhook queue size\n- `linkflow_webhook_dlq_depth` - Dead letter queue size\n\n**Rate Limiting:**\n- `linkflow_rate_limit_hits_total` - Rate limit hits by workspace"
+					}
+				},
+				{
+					"name": "Webhook Stream Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "streams", "webhooks", "stats"]
+						},
+						"description": "Get Redis Streams webhook queue statistics.\n\nReturns:\n- `stream_length` - Messages in main queue\n- `dlq_length` - Messages in dead letter queue\n- `pending_count` - Messages being processed\n- `consumers` - Active consumer count"
+					}
+				},
+				{
+					"name": "Replay Dead Letter Queue",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/replay?count=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "streams", "webhooks", "replay"],
+							"query": [
+								{ "key": "count", "value": "10", "description": "Number of messages to replay (default: 10)" }
+							]
+						},
+						"description": "Replay failed webhooks from the dead letter queue back to the main queue for reprocessing."
+					}
+				},
+				{
+					"name": "Trim Webhook Stream",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/trim?maxlen=50000",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "admin", "streams", "webhooks", "trim"],
+							"query": [
+								{ "key": "maxlen", "value": "50000", "description": "Maximum messages to keep in stream" }
+							]
+						},
+						"description": "Trim old messages from the webhook stream to free up memory. Messages are trimmed from the oldest first."
+					}
+				}
+			],
+			"description": "Prometheus metrics and admin monitoring endpoints for webhook stream management"
 		},
 		{
 			"name": "🔗 Webhook Management",
