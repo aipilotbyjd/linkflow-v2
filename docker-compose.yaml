@@ -56,7 +56,7 @@ services:
       target: api
     container_name: linkflow-api
     ports:
-      - "8080:8080"
+      - "8090:8090"
     environment:
       - DATABASE_HOST=postgres
       - REDIS_HOST=redis
