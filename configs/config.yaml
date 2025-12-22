@@ -69,3 +69,29 @@ smtp:
   password: ""
   from: ""
   from_name: LinkFlow
+
+# Feature flags and configurations
+features:
+  webhook_stream:
+    # Enable Redis Streams for durable webhook buffering
+    # When enabled, webhooks are buffered to Redis Streams before processing
+    # This prevents webhook loss during high traffic or system restarts
+    enabled: true
+    
+    # Maximum messages to keep in the stream (older are trimmed)
+    max_len: 100000
+    
+    # Maximum messages in dead letter queue (failed webhooks)
+    dlq_max_len: 10000
+    
+    # Number of messages to process per batch
+    batch_size: 10
+    
+    # Max retry attempts before moving to DLQ
+    max_retries: 3
+    
+    # Seconds before a pending message is considered stale
+    stale_timeout: 300
+    
+    # Number of consumer goroutines in worker
+    consumer_count: 2

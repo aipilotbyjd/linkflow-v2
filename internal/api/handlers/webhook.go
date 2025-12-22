@@ -17,13 +17,15 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
 	"github.com/rs/zerolog/log"
 )
 
 type WebhookHandler struct {
-	workflowSvc  *services.WorkflowService
-	executionSvc *services.ExecutionService
-	queueClient  *queue.Client
+	workflowSvc   *services.WorkflowService
+	executionSvc  *services.ExecutionService
+	queueClient   *queue.Client
+	webhookStream *streams.WebhookStream // Redis Streams buffer
 }
 
 func NewWebhookHandler(
@@ -38,6 +40,11 @@ func NewWebhookHandler(
 	}
 }
 
+// SetWebhookStream enables Redis Streams buffering for webhooks
+func (h *WebhookHandler) SetWebhookStream(stream *streams.WebhookStream) {
+	h.webhookStream = stream
+}
+
 func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	endpointID := chi.URLParam(r, "endpointID")
@@ -49,6 +56,88 @@ func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// If Redis Streams buffering is enabled, use fast path
+	if h.webhookStream != nil {
+		h.handleWithStream(w, r, endpointID, body)
+		return
+	}
+
+	// Legacy direct processing path
+	h.handleDirect(w, r, ctx, endpointID, body)
+}
+
+// handleWithStream buffers the webhook to Redis Streams for durable processing
+// This is the fast path - accepts webhook immediately, processes asynchronously
+func (h *WebhookHandler) handleWithStream(w http.ResponseWriter, r *http.Request, endpointID string, body []byte) {
+	ctx := r.Context()
+
+	// Quick validation - just check endpoint exists
+	webhook, err := h.workflowSvc.GetWebhookByEndpoint(ctx, endpointID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "webhook endpoint not found")
+		return
+	}
+
+	// Verify signature if required (must do before buffering)
+	if webhook.Secret != "" {
+		if !h.verifySignature(r, body, webhook.Secret) {
+			dto.ErrorResponse(w, http.StatusUnauthorized, "invalid signature")
+			return
+		}
+	}
+
+	// Buffer to Redis Stream - this is fast and durable
+	event := streams.WebhookEvent{
+		EndpointID:  endpointID,
+		Method:      r.Method,
+		Path:        r.URL.Path,
+		Headers:     headerToMap(r.Header),
+		Query:       queryToMap(r.URL.Query()),
+		Body:        string(body),
+		ContentType: r.Header.Get("Content-Type"),
+		ReceivedAt:  time.Now(),
+	}
+
+	messageID, err := h.webhookStream.Publish(ctx, event)
+	if err != nil {
+		log.Error().Err(err).Str("endpoint_id", endpointID).Msg("Failed to buffer webhook")
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to accept webhook")
+		return
+	}
+
+	log.Debug().
+		Str("endpoint_id", endpointID).
+		Str("message_id", messageID).
+		Msg("Webhook buffered successfully")
+
+	// For sync webhooks that need to wait, fall back to direct processing
+	if webhook.ResponseMode == "wait" {
+		workflow, err := h.workflowSvc.GetByID(ctx, webhook.WorkflowID)
+		if err != nil || workflow.Status != models.WorkflowStatusActive {
+			dto.ErrorResponse(w, http.StatusNotFound, "workflow not active")
+			return
+		}
+
+		triggerData := h.buildTriggerData(r, body)
+		result, err := h.waitForExecution(ctx, workflow, triggerData, webhook.ResponseTimeout)
+		if err != nil {
+			dto.ErrorResponse(w, http.StatusInternalServerError, "execution failed: "+err.Error())
+			return
+		}
+		dto.JSON(w, http.StatusOK, result)
+		return
+	}
+
+	// Async webhook - return immediately
+	dto.Accepted(w, map[string]interface{}{
+		"status":     "accepted",
+		"message":    "Webhook received and queued",
+		"message_id": messageID,
+	})
+}
+
+// handleDirect processes webhook directly without buffering (legacy path)
+func (h *WebhookHandler) handleDirect(w http.ResponseWriter, r *http.Request, ctx context.Context, endpointID string, body []byte) {
 	// Look up webhook by endpoint ID
 	webhook, err := h.workflowSvc.GetWebhookByEndpoint(ctx, endpointID)
 	if err != nil {
@@ -77,7 +166,39 @@ func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build trigger data
+	triggerData := h.buildTriggerData(r, body)
+
+	// Queue workflow execution
+	err = h.queueWorkflowExecution(ctx, workflow, triggerData)
+	if err != nil {
+		log.Error().Err(err).Str("workflow_id", workflow.ID.String()).Msg("Failed to queue workflow")
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to queue execution")
+		return
+	}
+
+	log.Info().
+		Str("endpoint_id", endpointID).
+		Str("workflow_id", workflow.ID.String()).
+		Msg("Webhook triggered workflow execution")
+
+	// Return response based on webhook config
+	if webhook.ResponseMode == "wait" {
+		result, err := h.waitForExecution(ctx, workflow, triggerData, webhook.ResponseTimeout)
+		if err != nil {
+			log.Error().Err(err).Msg("Execution failed or timed out")
+			dto.ErrorResponse(w, http.StatusInternalServerError, "execution failed: "+err.Error())
+			return
+		}
+		dto.JSON(w, http.StatusOK, result)
+	} else {
+		dto.Accepted(w, map[string]interface{}{
+			"status":  "accepted",
+			"message": "Webhook received",
+		})
+	}
+}
+
+func (h *WebhookHandler) buildTriggerData(r *http.Request, body []byte) models.JSON {
 	triggerData := models.JSON{
 		"method":      r.Method,
 		"path":        r.URL.Path,
@@ -95,35 +216,7 @@ func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Queue workflow execution
-	err = h.queueWorkflowExecution(ctx, workflow, triggerData)
-	if err != nil {
-		log.Error().Err(err).Str("workflow_id", workflow.ID.String()).Msg("Failed to queue workflow")
-		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to queue execution")
-		return
-	}
-
-	log.Info().
-		Str("endpoint_id", endpointID).
-		Str("workflow_id", workflow.ID.String()).
-		Msg("Webhook triggered workflow execution")
-
-	// Return response based on webhook config
-	if webhook.ResponseMode == "wait" {
-		// Wait for execution to complete
-		result, err := h.waitForExecution(ctx, workflow, triggerData, webhook.ResponseTimeout)
-		if err != nil {
-			log.Error().Err(err).Msg("Execution failed or timed out")
-			dto.ErrorResponse(w, http.StatusInternalServerError, "execution failed: "+err.Error())
-			return
-		}
-		dto.JSON(w, http.StatusOK, result)
-	} else {
-		dto.Accepted(w, map[string]interface{}{
-			"status":  "accepted",
-			"message": "Webhook received",
-		})
-	}
+	return triggerData
 }
 
 func (h *WebhookHandler) waitForExecution(ctx context.Context, workflow *models.Workflow, triggerData models.JSON, timeout int) (map[string]interface{}, error) {

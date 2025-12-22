@@ -20,16 +20,18 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
+	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
 type Server struct {
-	cfg        *config.Config
-	router     *chi.Mux
-	httpServer *http.Server
-	wsHub      *websocket.Hub
+	cfg           *config.Config
+	router        *chi.Mux
+	httpServer    *http.Server
+	wsHub         *websocket.Hub
+	webhookStream *streams.WebhookStream
 }
 
 type Services struct {
@@ -103,6 +105,16 @@ func NewServer(
 	webhookHandler := handlers.NewWebhookHandler(svc.Workflow, svc.Execution, queueClient)
 	wsHandler := handlers.NewWebSocketHandler(wsHub, jwtManager)
 	nodeTypeHandler := handlers.NewNodeTypeHandler(svc.Workflow, svc.Execution)
+
+	// Initialize webhook stream if enabled
+	var webhookStream *streams.WebhookStream
+	var streamStatsHandler *handlers.StreamStatsHandler
+	if cfg.Features.WebhookStream.Enabled {
+		webhookStream = streams.NewWebhookStream(redisClient.Client)
+		webhookHandler.SetWebhookStream(webhookStream)
+		streamStatsHandler = handlers.NewStreamStatsHandler(webhookStream)
+		log.Info().Msg("Webhook stream buffering enabled")
+	}
 
 	// New feature handlers
 	var oauthHandler *handlers.OAuthHandler
@@ -311,6 +323,19 @@ func NewServer(
 		r.Post("/stripe", billingHandler.HandleStripeWebhook)
 	})
 
+	// Admin routes (protected)
+	router.Route("/api/v1/admin", func(r chi.Router) {
+		r.Use(authMiddleware.Authenticate)
+		// TODO: Add admin role check middleware
+
+		// Stream stats (webhook buffering)
+		if streamStatsHandler != nil {
+			r.Get("/streams/webhooks/stats", streamStatsHandler.GetStats)
+			r.Post("/streams/webhooks/replay", streamStatsHandler.ReplayDLQ)
+			r.Post("/streams/webhooks/trim", streamStatsHandler.Trim)
+		}
+	})
+
 	// WebSocket
 	router.Get("/ws", wsHandler.HandleConnection)
 
@@ -323,11 +348,17 @@ func NewServer(
 	}
 
 	return &Server{
-		cfg:        cfg,
-		router:     router,
-		httpServer: httpServer,
-		wsHub:      wsHub,
+		cfg:           cfg,
+		router:        router,
+		httpServer:    httpServer,
+		wsHub:         wsHub,
+		webhookStream: webhookStream,
 	}
+}
+
+// WebhookStream returns the webhook stream instance (for use by worker)
+func (s *Server) WebhookStream() *streams.WebhookStream {
+	return s.webhookStream
 }
 
 func (s *Server) Start() error {

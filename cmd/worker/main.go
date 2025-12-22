@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -14,7 +15,9 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/email"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
+	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
+	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
 	"github.com/linkflow-ai/linkflow/internal/worker"
 	"github.com/rs/zerolog/log"
 )
@@ -84,6 +87,39 @@ func main() {
 	}
 	emailSvc := email.NewService(emailCfg, asynqClient)
 
+	// Initialize queue client for webhook consumer
+	queueClient := queue.NewClient(&cfg.Redis)
+	defer queueClient.Close()
+
+	// Initialize webhook stream consumers if enabled
+	var webhookConsumers []*streams.WebhookConsumer
+	ctx, cancel := context.WithCancel(context.Background())
+
+	if cfg.Features.WebhookStream.Enabled {
+		webhookStream := streams.NewWebhookStream(redisClient.Client)
+
+		// Start multiple consumers based on config
+		consumerCount := cfg.Features.WebhookStream.ConsumerCount
+		if consumerCount < 1 {
+			consumerCount = 2
+		}
+
+		for i := 0; i < consumerCount; i++ {
+			consumerName := fmt.Sprintf("worker-%d-consumer-%d", os.Getpid(), i)
+			consumer := streams.NewWebhookConsumer(webhookStream, workflowSvc, queueClient, consumerName)
+
+			if err := consumer.Start(ctx); err != nil {
+				log.Error().Err(err).Int("consumer", i).Msg("Failed to start webhook consumer")
+				continue
+			}
+
+			webhookConsumers = append(webhookConsumers, consumer)
+			log.Info().Str("consumer", consumerName).Msg("Webhook stream consumer started")
+		}
+
+		log.Info().Int("count", len(webhookConsumers)).Msg("Webhook stream consumers running")
+	}
+
 	// Create worker
 	w := worker.New(cfg, executionSvc, credentialSvc, workflowSvc, redisClient.Client, emailSvc)
 
@@ -93,6 +129,13 @@ func main() {
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
 		log.Info().Msg("Shutting down worker...")
+
+		// Stop webhook consumers first
+		cancel()
+		for _, consumer := range webhookConsumers {
+			consumer.Stop()
+		}
+
 		w.Shutdown()
 	}()
 

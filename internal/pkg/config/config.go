@@ -18,6 +18,21 @@ type Config struct {
 	S3       S3Config
 	Stripe   StripeConfig
 	SMTP     SMTPConfig
+	Features FeaturesConfig
+}
+
+type FeaturesConfig struct {
+	WebhookStream WebhookStreamConfig
+}
+
+type WebhookStreamConfig struct {
+	Enabled       bool
+	MaxLen        int64 // Max messages in stream (default: 100000)
+	DLQMaxLen     int64 // Max messages in dead letter queue (default: 10000)
+	BatchSize     int   // Consumer batch size (default: 10)
+	MaxRetries    int   // Max retries before DLQ (default: 3)
+	StaleTimeout  int   // Seconds before message is considered stale (default: 300)
+	ConsumerCount int   // Number of consumer goroutines (default: 2)
 }
 
 type AppConfig struct {
@@ -210,6 +225,15 @@ func Load() (*Config, error) {
 	cfg.SMTP.From = viper.GetString("smtp.from")
 	cfg.SMTP.FromName = viper.GetString("smtp.from_name")
 
+	// Features - Webhook Stream
+	cfg.Features.WebhookStream.Enabled = viper.GetBool("features.webhook_stream.enabled")
+	cfg.Features.WebhookStream.MaxLen = viper.GetInt64("features.webhook_stream.max_len")
+	cfg.Features.WebhookStream.DLQMaxLen = viper.GetInt64("features.webhook_stream.dlq_max_len")
+	cfg.Features.WebhookStream.BatchSize = viper.GetInt("features.webhook_stream.batch_size")
+	cfg.Features.WebhookStream.MaxRetries = viper.GetInt("features.webhook_stream.max_retries")
+	cfg.Features.WebhookStream.StaleTimeout = viper.GetInt("features.webhook_stream.stale_timeout")
+	cfg.Features.WebhookStream.ConsumerCount = viper.GetInt("features.webhook_stream.consumer_count")
+
 	return &cfg, nil
 }
 
@@ -258,4 +282,13 @@ func setDefaults() {
 	// SMTP defaults
 	viper.SetDefault("smtp.port", 587)
 	viper.SetDefault("smtp.from_name", "LinkFlow")
+
+	// Features - Webhook Stream defaults
+	viper.SetDefault("features.webhook_stream.enabled", true)
+	viper.SetDefault("features.webhook_stream.max_len", 100000)
+	viper.SetDefault("features.webhook_stream.dlq_max_len", 10000)
+	viper.SetDefault("features.webhook_stream.batch_size", 10)
+	viper.SetDefault("features.webhook_stream.max_retries", 3)
+	viper.SetDefault("features.webhook_stream.stale_timeout", 300)
+	viper.SetDefault("features.webhook_stream.consumer_count", 2)
 }
