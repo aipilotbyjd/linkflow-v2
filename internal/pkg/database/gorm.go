@@ -87,6 +87,13 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.TemplateMarketplace{},
 		&models.TemplateRating{},
 		&models.WorkflowVariable{},
+
+		// New Features
+		&models.Template{},
+		&models.WaitingExecution{},
+		&models.PinnedData{},
+		&models.BinaryData{},
+		&models.OAuthState{},
 	)
 
 	if err != nil {

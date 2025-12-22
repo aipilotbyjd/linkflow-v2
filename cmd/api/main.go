@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/linkflow-ai/linkflow/internal/api"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
@@ -8,8 +10,8 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/rs/zerolog/log"
 
 	// Import node packages to register them via init()
@@ -103,15 +105,16 @@ func main() {
 	userSvc := services.NewUserService(userRepo)
 	workspaceSvc := services.NewWorkspaceService(workspaceRepo, memberRepo, invitationRepo)
 	workflowSvc := services.NewWorkflowService(workflowRepo, versionRepo)
+	workflowSvc.SetWebhookEndpointRepo(webhookEndpointRepo) // Enable webhook endpoint lookup
 	executionSvc := services.NewExecutionService(executionRepo, nodeExecutionRepo, workflowRepo)
 	credentialSvc := services.NewCredentialService(credentialRepo, encryptor)
 	scheduleSvc := services.NewScheduleService(scheduleRepo)
 	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
 
 	// New feature services
-	baseURL := cfg.App.FrontendURL
-	if cfg.Server.Port != 0 {
-		baseURL = "http://localhost:" + string(rune(cfg.Server.Port))
+	baseURL := cfg.App.URL
+	if baseURL == "" {
+		baseURL = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
 	}
 	oauthSvc := services.NewOAuthService(oauthStateRepo, credentialRepo, baseURL)
 	templateSvc := services.NewTemplateService(templateRepo, workflowRepo)

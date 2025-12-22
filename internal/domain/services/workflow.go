@@ -15,8 +15,9 @@ var (
 )
 
 type WorkflowService struct {
-	workflowRepo *repositories.WorkflowRepository
-	versionRepo  *repositories.WorkflowVersionRepository
+	workflowRepo        *repositories.WorkflowRepository
+	versionRepo         *repositories.WorkflowVersionRepository
+	webhookEndpointRepo *repositories.WebhookEndpointRepository
 }
 
 func NewWorkflowService(
@@ -27,6 +28,11 @@ func NewWorkflowService(
 		workflowRepo: workflowRepo,
 		versionRepo:  versionRepo,
 	}
+}
+
+// SetWebhookEndpointRepo sets the webhook endpoint repository (optional dependency)
+func (s *WorkflowService) SetWebhookEndpointRepo(repo *repositories.WebhookEndpointRepository) {
+	s.webhookEndpointRepo = repo
 }
 
 type CreateWorkflowInput struct {
@@ -209,7 +215,28 @@ type WebhookEndpoint struct {
 }
 
 func (s *WorkflowService) GetWebhookByEndpoint(ctx context.Context, endpointID string) (*WebhookEndpoint, error) {
-	// Look for workflow with matching webhook endpoint in settings
+	// First, check the webhook_endpoints table (new webhook management system)
+	if s.webhookEndpointRepo != nil {
+		endpoint, err := s.webhookEndpointRepo.FindByPath(ctx, endpointID)
+		if err == nil && endpoint != nil && endpoint.IsActive {
+			// Verify the workflow is active
+			workflow, err := s.workflowRepo.FindByID(ctx, endpoint.WorkflowID)
+			if err == nil && workflow.Status == models.WorkflowStatusActive {
+				secret := ""
+				if endpoint.Secret != nil {
+					secret = *endpoint.Secret
+				}
+				return &WebhookEndpoint{
+					WorkflowID:   endpoint.WorkflowID,
+					EndpointID:   endpointID,
+					Secret:       secret,
+					ResponseMode: "immediate",
+				}, nil
+			}
+		}
+	}
+
+	// Fallback: Look for workflow with matching webhook endpoint in settings
 	workflows, err := s.workflowRepo.FindActiveWithWebhook(ctx, endpointID)
 	if err != nil {
 		return nil, err
@@ -219,11 +246,11 @@ func (s *WorkflowService) GetWebhookByEndpoint(ctx context.Context, endpointID s
 	}
 
 	workflow := workflows[0]
-	
+
 	// Extract webhook settings from workflow
 	settings := workflow.Settings
 	var secret, responseMode string
-	
+
 	if settings != nil {
 		if webhookSettings, ok := settings["webhook"].(map[string]interface{}); ok {
 			if s, ok := webhookSettings["secret"].(string); ok {
@@ -234,7 +261,7 @@ func (s *WorkflowService) GetWebhookByEndpoint(ctx context.Context, endpointID s
 			}
 		}
 	}
-	
+
 	if responseMode == "" {
 		responseMode = "immediate"
 	}
