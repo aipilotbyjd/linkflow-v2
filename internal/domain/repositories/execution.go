@@ -164,6 +164,124 @@ func (r *ExecutionRepository) GetHourlyStatsByWorkspace(ctx context.Context, sta
 	return result, nil
 }
 
+// ExecutionFilter contains search criteria for executions
+type ExecutionFilter struct {
+	WorkspaceID *uuid.UUID
+	WorkflowID  *uuid.UUID
+	Status      *string
+	TriggerType *string
+	StartDate   *time.Time
+	EndDate     *time.Time
+	SearchQuery *string
+}
+
+// Search finds executions matching the given filter
+func (r *ExecutionRepository) Search(ctx context.Context, filter ExecutionFilter, opts *ListOptions) ([]models.Execution, int64, error) {
+	var executions []models.Execution
+	var total int64
+
+	query := r.DB().WithContext(ctx).Model(&models.Execution{})
+
+	// Apply filters
+	if filter.WorkspaceID != nil {
+		query = query.Where("workspace_id = ?", *filter.WorkspaceID)
+	}
+	if filter.WorkflowID != nil {
+		query = query.Where("workflow_id = ?", *filter.WorkflowID)
+	}
+	if filter.Status != nil {
+		query = query.Where("status = ?", *filter.Status)
+	}
+	if filter.TriggerType != nil {
+		query = query.Where("trigger_type = ?", *filter.TriggerType)
+	}
+	if filter.StartDate != nil {
+		query = query.Where("created_at >= ?", *filter.StartDate)
+	}
+	if filter.EndDate != nil {
+		query = query.Where("created_at <= ?", *filter.EndDate)
+	}
+	if filter.SearchQuery != nil && *filter.SearchQuery != "" {
+		searchTerm := "%" + *filter.SearchQuery + "%"
+		query = query.Where("error_message ILIKE ? OR error_node_id ILIKE ?", searchTerm, searchTerm)
+	}
+
+	// Get total count
+	query.Count(&total)
+
+	// Apply pagination
+	if opts != nil {
+		query = query.Offset(opts.Offset).Limit(opts.Limit).Order("created_at DESC")
+	}
+
+	err := query.Find(&executions).Error
+	return executions, total, err
+}
+
+// DeleteByIDs deletes executions by their IDs within a workspace
+func (r *ExecutionRepository) DeleteByIDs(ctx context.Context, workspaceID uuid.UUID, ids []uuid.UUID) (int64, error) {
+	result := r.DB().WithContext(ctx).
+		Where("workspace_id = ? AND id IN ?", workspaceID, ids).
+		Delete(&models.Execution{})
+	return result.RowsAffected, result.Error
+}
+
+// GetStats returns execution statistics for a workspace
+func (r *ExecutionRepository) GetStats(ctx context.Context, workspaceID uuid.UUID, start, end time.Time) (map[string]interface{}, error) {
+	var result []struct {
+		Status string `gorm:"column:status"`
+		Count  int64  `gorm:"column:count"`
+	}
+
+	err := r.DB().WithContext(ctx).
+		Model(&models.Execution{}).
+		Select("status, COUNT(*) as count").
+		Where("workspace_id = ? AND created_at BETWEEN ? AND ?", workspaceID, start, end).
+		Group("status").
+		Find(&result).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	stats := map[string]interface{}{
+		"total":      int64(0),
+		"completed":  int64(0),
+		"failed":     int64(0),
+		"running":    int64(0),
+		"queued":     int64(0),
+		"cancelled":  int64(0),
+		"timeout":    int64(0),
+		"by_status":  map[string]int64{},
+		"start_time": start.Format(time.RFC3339),
+		"end_time":   end.Format(time.RFC3339),
+	}
+
+	byStatus := make(map[string]int64)
+	var total int64
+	for _, r := range result {
+		byStatus[r.Status] = r.Count
+		total += r.Count
+		stats[r.Status] = r.Count
+	}
+	stats["total"] = total
+	stats["by_status"] = byStatus
+
+	// Get average duration for completed executions
+	var avgDuration struct {
+		AvgDuration float64 `gorm:"column:avg_duration"`
+	}
+	_ = r.DB().WithContext(ctx).
+		Model(&models.Execution{}).
+		Select("AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) as avg_duration").
+		Where("workspace_id = ? AND status = 'completed' AND completed_at IS NOT NULL AND started_at IS NOT NULL AND created_at BETWEEN ? AND ?", workspaceID, start, end).
+		Find(&avgDuration).Error
+
+	stats["avg_duration_seconds"] = avgDuration.AvgDuration
+
+	return stats, nil
+}
+
 // Node Execution methods
 type NodeExecutionRepository struct {
 	*BaseRepository[models.NodeExecution]

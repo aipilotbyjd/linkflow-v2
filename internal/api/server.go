@@ -18,6 +18,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/metrics"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
@@ -240,6 +241,7 @@ func NewServer(
 				r.Post("/workflows/{workflowID}/deactivate", workflowHandler.Deactivate)
 				r.Get("/workflows/{workflowID}/versions", workflowHandler.GetVersions)
 				r.Get("/workflows/{workflowID}/versions/{version}", workflowHandler.GetVersion)
+				r.Post("/workflows/{workflowID}/versions/{version}/rollback", workflowHandler.RollbackVersion)
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
 				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
 				r.Post("/workflows/import", workflowHandler.Import)
@@ -248,6 +250,9 @@ func NewServer(
 
 				// Executions
 				r.Get("/executions", executionHandler.List)
+				r.Get("/executions/search", executionHandler.Search)
+				r.Get("/executions/stats", executionHandler.Stats)
+				r.Delete("/executions/bulk", executionHandler.BulkDelete)
 				r.Get("/executions/{executionID}", executionHandler.Get)
 				r.Post("/executions/{executionID}/cancel", executionHandler.Cancel)
 				r.Post("/executions/{executionID}/retry", executionHandler.Retry)
@@ -335,6 +340,9 @@ func NewServer(
 			r.Post("/streams/webhooks/trim", streamStatsHandler.Trim)
 		}
 	})
+
+	// Metrics endpoint (Prometheus)
+	router.Handle("/metrics", metrics.Handler())
 
 	// WebSocket
 	router.Get("/ws", wsHandler.HandleConnection)

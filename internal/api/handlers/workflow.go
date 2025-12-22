@@ -517,6 +517,49 @@ func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// RollbackVersion restores workflow to a previous version
+func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request) {
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	workflowIDStr := chi.URLParam(r, "workflowID")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	versionStr := chi.URLParam(r, "version")
+	version, err := strconv.Atoi(versionStr)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusBadRequest, "invalid version")
+		return
+	}
+
+	workflow, err := h.workflowSvc.RestoreVersion(r.Context(), workflowID, version, claims.UserID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to rollback version")
+		return
+	}
+
+	dto.JSON(w, http.StatusOK, dto.WorkflowResponse{
+		ID:          workflow.ID.String(),
+		Name:        workflow.Name,
+		Description: workflow.Description,
+		Status:      workflow.Status,
+		Version:     workflow.Version,
+		Nodes:       workflow.Nodes,
+		Connections: workflow.Connections,
+		Settings:    workflow.Settings,
+		Tags:        workflow.Tags,
+		CreatedAt:   workflow.CreatedAt.Unix(),
+		UpdatedAt:   workflow.UpdatedAt.Unix(),
+	})
+}
+
 // Duplicate creates a copy of a workflow with optional variable substitution
 func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.GetUserFromContext(r.Context())

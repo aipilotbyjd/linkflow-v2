@@ -7,6 +7,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/metrics"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 )
 
@@ -113,6 +114,99 @@ func (rl *RateLimiter) LimitByEndpoint(limit int, window time.Duration) func(htt
 
 			if !allowed {
 				dto.ErrorResponse(w, http.StatusTooManyRequests, "rate limit exceeded")
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// LimitByWorkspace rate limits requests per workspace
+func (rl *RateLimiter) LimitByWorkspace(limit int, window time.Duration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			wsCtx := GetWorkspaceFromContext(r.Context())
+			if wsCtx == nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			key := fmt.Sprintf("ratelimit:workspace:%s", wsCtx.WorkspaceID.String())
+
+			allowed, remaining, err := rl.redis.RateLimit(r.Context(), key, limit, window)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", limit))
+			w.Header().Set("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+			w.Header().Set("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(window).Unix()))
+
+			if !allowed {
+				metrics.RecordRateLimitHit(wsCtx.WorkspaceID.String(), r.URL.Path)
+				dto.ErrorResponse(w, http.StatusTooManyRequests, "workspace rate limit exceeded")
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// LimitExecutions specifically rate limits workflow execution requests per workspace
+func (rl *RateLimiter) LimitExecutions(executionsPerMinute int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			wsCtx := GetWorkspaceFromContext(r.Context())
+			if wsCtx == nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			key := fmt.Sprintf("ratelimit:executions:%s", wsCtx.WorkspaceID.String())
+
+			allowed, remaining, err := rl.redis.RateLimit(r.Context(), key, executionsPerMinute, time.Minute)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			w.Header().Set("X-Execution-RateLimit-Limit", fmt.Sprintf("%d", executionsPerMinute))
+			w.Header().Set("X-Execution-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
+
+			if !allowed {
+				metrics.RecordRateLimitHit(wsCtx.WorkspaceID.String(), "executions")
+				dto.ErrorResponse(w, http.StatusTooManyRequests, "execution rate limit exceeded")
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+// LimitWebhooks rate limits incoming webhook requests
+func (rl *RateLimiter) LimitWebhooks(webhooksPerMinute int) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Get workspace from webhook path or use IP-based limiting
+			ip := r.RemoteAddr
+			if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+				ip = forwarded
+			}
+
+			key := fmt.Sprintf("ratelimit:webhooks:%s", ip)
+
+			allowed, _, err := rl.redis.RateLimit(r.Context(), key, webhooksPerMinute, time.Minute)
+			if err != nil {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			if !allowed {
+				dto.ErrorResponse(w, http.StatusTooManyRequests, "webhook rate limit exceeded")
 				return
 			}
 

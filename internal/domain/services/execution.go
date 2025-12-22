@@ -180,3 +180,18 @@ func (s *ExecutionService) DeleteOlderThan(ctx context.Context, cutoff time.Time
 func (s *ExecutionService) GetHourlyStats(ctx context.Context, start, end time.Time) (map[uuid.UUID]int64, error) {
 	return s.executionRepo.GetHourlyStatsByWorkspace(ctx, start, end)
 }
+
+// Search searches executions with filters
+func (s *ExecutionService) Search(ctx context.Context, filter repositories.ExecutionFilter, opts *repositories.ListOptions) ([]models.Execution, int64, error) {
+	return s.executionRepo.Search(ctx, filter, opts)
+}
+
+// DeleteByIDs deletes executions by their IDs
+func (s *ExecutionService) DeleteByIDs(ctx context.Context, workspaceID uuid.UUID, ids []uuid.UUID) (int64, error) {
+	return s.executionRepo.DeleteByIDs(ctx, workspaceID, ids)
+}
+
+// GetStats returns execution statistics
+func (s *ExecutionService) GetStats(ctx context.Context, workspaceID uuid.UUID, start, end time.Time) (map[string]interface{}, error) {
+	return s.executionRepo.GetStats(ctx, workspaceID, start, end)
+}
