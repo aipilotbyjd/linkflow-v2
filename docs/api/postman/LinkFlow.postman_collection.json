@@ -1333,30 +1333,169 @@
 			"name": "🔌 WebSocket",
 			"item": [
 				{
-					"name": "WebSocket Connection Info",
+					"name": "Real-time Events Connection",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
-							"host": ["{{base_url}}"],
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
 							"path": ["ws"],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}", "description": "JWT access token" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}", "description": "Workspace to receive events for" }
+								{ "key": "token", "value": "{{access_token}}", "description": "JWT access token (required)" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}", "description": "Workspace ID to receive events for" }
 							]
 						},
-						"description": "## WebSocket Real-time Events\n\n**Connection URL:** `ws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}`\n\n### Authentication\nPass JWT token as query parameter. Workspace ID is optional but required to receive workspace events.\n\n### Events Received\n\n| Event | Description |\n|-------|-------------|\n| `execution.started` | Workflow execution began |\n| `execution.completed` | Workflow execution finished successfully |\n| `execution.failed` | Workflow execution failed |\n| `execution.cancelled` | Workflow execution was cancelled |\n| `node.started` | A node began executing |\n| `node.completed` | A node finished executing |\n| `node.failed` | A node failed |\n\n### Event Format\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-01-01T00:00:00Z\",\n  \"data\": {\n    \"execution_id\": \"uuid\",\n    \"workflow_id\": \"uuid\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```\n\n### Client Messages\n\n**Subscribe to execution:**\n```json\n{\"type\": \"subscribe\", \"payload\": {\"execution_id\": \"uuid\"}}\n```\n\n**Subscribe to workflow:**\n```json\n{\"type\": \"subscribe\", \"payload\": {\"workflow_id\": \"uuid\"}}\n```\n\n**Unsubscribe:**\n```json\n{\"type\": \"unsubscribe\", \"payload\": {\"execution_id\": \"uuid\"}}\n```\n\n**Ping (keep-alive):**\n```json\n{\"type\": \"ping\"}\n```\n\n### Example Usage (JavaScript)\n```javascript\nconst ws = new WebSocket(`ws://localhost:8090/ws?token=${token}&workspace_id=${workspaceId}`);\n\nws.onmessage = (event) => {\n  const data = JSON.parse(event.data);\n  console.log('Event:', data.type, data.data);\n};\n\n// Subscribe to specific execution\nws.send(JSON.stringify({\n  type: 'subscribe',\n  payload: { execution_id: 'exec-uuid' }\n}));\n```"
+						"description": "## WebSocket Real-time Events\n\n**To use WebSocket in Postman:**\n1. Click 'New' → 'WebSocket Request'\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click 'Connect'\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Parameters\n| Parameter | Required | Description |\n|-----------|----------|-------------|\n| token | Yes | JWT access token |\n| workspace_id | Yes | Workspace to receive events for |\n\n### Events You'll Receive\n- `execution.started` - Workflow execution began\n- `execution.completed` - Execution finished successfully\n- `execution.failed` - Execution failed\n- `node.started` - Node began executing\n- `node.completed` - Node finished\n- `node.failed` - Node failed\n\n### Example Event\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```"
+					}
+				},
+				{
+					"name": "WS Message: Subscribe to Execution",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"execution_id\": \"{{execution_id}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+							]
+						},
+						"description": "## Subscribe to Execution Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"subscribed\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\nYou'll then receive all events for that specific execution."
+					}
+				},
+				{
+					"name": "WS Message: Subscribe to Workflow",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"workflow_id\": \"{{workflow_id}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+							]
+						},
+						"description": "## Subscribe to Workflow Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"subscribed\",\n  \"data\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```\n\nYou'll receive events for all executions of this workflow."
+					}
+				},
+				{
+					"name": "WS Message: Unsubscribe",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"execution_id\": \"{{execution_id}}\"\n  }\n}"
+						},
+						"url": {
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+							]
+						},
+						"description": "## Unsubscribe from Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\nOr for workflow:\n```json\n{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```"
+					}
+				},
+				{
+					"name": "WS Message: Ping",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"ping\"\n}"
+						},
+						"url": {
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+							]
+						},
+						"description": "## Ping (Keep-Alive)\n\n**Send this message to keep connection alive:**\n```json\n{\n  \"type\": \"ping\"\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"pong\"\n}\n```"
+					}
+				},
+				{
+					"name": "Event Reference: All Events",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"protocol": "ws",
+							"host": ["{{host}}"],
+							"port": "{{port}}",
+							"path": ["ws"],
+							"query": [
+								{ "key": "token", "value": "{{access_token}}" },
+								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+							]
+						},
+						"description": "## WebSocket Events Reference\n\n### execution.started\nReceived when a workflow execution begins.\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```\n\n### node.started\nReceived when a node begins executing.\n```json\n{\n  \"type\": \"node.started\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"workflow_id\": \"...\",\n    \"node_id\": \"http\",\n    \"node_name\": \"Fetch Data\",\n    \"node_type\": \"action.http\",\n    \"status\": \"running\"\n  }\n}\n```\n\n### node.completed\nReceived when a node finishes successfully.\n```json\n{\n  \"type\": \"node.completed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"node_id\": \"http\",\n    \"status\": \"completed\",\n    \"duration_ms\": 3302,\n    \"output_preview\": { \"status\": 200, \"ok\": true }\n  }\n}\n```\n\n### node.failed\nReceived when a node fails.\n```json\n{\n  \"type\": \"node.failed\",\n  \"data\": {\n    \"node_id\": \"http\",\n    \"status\": \"failed\",\n    \"error\": \"connection timeout\",\n    \"duration_ms\": 30000\n  }\n}\n```\n\n### execution.completed\nReceived when workflow finishes successfully.\n```json\n{\n  \"type\": \"execution.completed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"completed\",\n    \"duration_ms\": 3303,\n    \"nodes_completed\": 2\n  }\n}\n```\n\n### execution.failed\nReceived when workflow fails.\n```json\n{\n  \"type\": \"execution.failed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"failed\",\n    \"error\": \"Node 'http' failed: timeout\",\n    \"error_node_id\": \"http\"\n  }\n}\n```\n\n### execution.cancelled\nReceived when workflow is cancelled.\n```json\n{\n  \"type\": \"execution.cancelled\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"cancelled\",\n    \"cancelled_by\": \"user\"\n  }\n}\n```"
 					}
 				}
 			],
-			"description": "WebSocket endpoints for real-time workflow execution updates.\n\n**Note:** Postman doesn't support WebSocket testing directly. Use the connection info to connect via browser console, wscat, or your application.\n\n### Quick Test with wscat\n```bash\nwscat -c \"ws://localhost:8090/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```"
+			"description": "## WebSocket Real-time Events\n\nReceive real-time updates for workflow executions via WebSocket.\n\n### How to Test in Postman\n1. Click **New** → **WebSocket Request**\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click **Connect**\n4. Execute a workflow and watch events stream in!\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Quick Test (CLI)\n```bash\nwscat -c \"ws://localhost:8090/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```\n\n### JavaScript Example\n```javascript\nconst ws = new WebSocket(\n  `ws://localhost:8090/ws?token=${token}&workspace_id=${workspaceId}`\n);\n\nws.onmessage = (e) => {\n  const event = JSON.parse(e.data);\n  console.log(event.type, event.data);\n};\n```\n\n### Event Types\n| Event | Description |\n|-------|-------------|\n| execution.started | Workflow began |\n| execution.completed | Finished successfully |\n| execution.failed | Failed |\n| node.started | Node began |\n| node.completed | Node finished |\n| node.failed | Node failed |"
 		}
 	],
 	"variable": [
 		{
 			"key": "base_url",
 			"value": "http://localhost:8090"
+		},
+		{
+			"key": "host",
+			"value": "localhost"
+		},
+		{
+			"key": "port",
+			"value": "8090"
 		}
 	]
 }
