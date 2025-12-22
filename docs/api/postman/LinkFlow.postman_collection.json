@@ -1482,8 +1482,7 @@
 				}
 			],
 			"description": "## WebSocket Real-time Events\n\nReceive real-time updates for workflow executions via WebSocket.\n\n### How to Test in Postman\n1. Click **New** → **WebSocket Request**\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click **Connect**\n4. Execute a workflow and watch events stream in!\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Quick Test (CLI)\n```bash\nwscat -c \"ws://localhost:8090/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```\n\n### JavaScript Example\n```javascript\nconst ws = new WebSocket(\n  `ws://localhost:8090/ws?token=${token}&workspace_id=${workspaceId}`\n);\n\nws.onmessage = (e) => {\n  const event = JSON.parse(e.data);\n  console.log(event.type, event.data);\n};\n```\n\n### Event Types\n| Event | Description |\n|-------|-------------|\n| execution.started | Workflow began |\n| execution.completed | Finished successfully |\n| execution.failed | Failed |\n| node.started | Node began |\n| node.completed | Node finished |\n| node.failed | Node failed |"
-		}
-	],
+		},
 		{
 			"name": "🔐 OAuth",
 			"item": [
