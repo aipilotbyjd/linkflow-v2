@@ -362,7 +362,7 @@ func (p *Processor) executeNode(ctx context.Context, rctx *RuntimeContext, node 
 	// Cache result
 	if opts.EnableCaching && p.cache != nil && isCacheable(node.Type) {
 		cacheKey := fmt.Sprintf("%s:%s:%s", rctx.ExecutionID, node.ID, rctx.ComputeInputHash(node.ID, nodeInput))
-		p.cache.Set(ctx, cacheKey, output)
+		_ = p.cache.Set(ctx, cacheKey, output)
 	}
 
 	rctx.PublishNodeCompleted(node, durationMs, output)

@@ -336,7 +336,7 @@ func (m *Manager) DisconnectProvider(ctx context.Context, userID uuid.UUID, prov
 			var token Token
 			if json.Unmarshal([]byte(decrypted), &token) == nil {
 				if provider, ok := m.GetProvider(providerName); ok {
-					provider.RevokeToken(ctx, token.AccessToken)
+					_ = provider.RevokeToken(ctx, token.AccessToken)
 				}
 			}
 		}

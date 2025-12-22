@@ -63,7 +63,7 @@ func (s *ExecutionService) Create(ctx context.Context, input CreateExecutionInpu
 		return nil, err
 	}
 
-	s.workflowRepo.IncrementExecutionCount(ctx, input.WorkflowID)
+	_ = s.workflowRepo.IncrementExecutionCount(ctx, input.WorkflowID)
 
 	return execution, nil
 }

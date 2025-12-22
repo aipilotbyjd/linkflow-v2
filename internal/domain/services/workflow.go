@@ -66,7 +66,7 @@ func (s *WorkflowService) Create(ctx context.Context, input CreateWorkflowInput)
 		Settings:    workflow.Settings,
 		CreatedBy:   &input.CreatedBy,
 	}
-	s.versionRepo.Create(ctx, version)
+	_ = s.versionRepo.Create(ctx, version)
 
 	return workflow, nil
 }
@@ -131,7 +131,7 @@ func (s *WorkflowService) Update(ctx context.Context, workflowID uuid.UUID, inpu
 		Settings:    workflow.Settings,
 		CreatedBy:   &userID,
 	}
-	s.versionRepo.Create(ctx, version)
+	_ = s.versionRepo.Create(ctx, version)
 
 	return workflow, nil
 }

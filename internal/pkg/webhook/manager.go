@@ -197,7 +197,7 @@ func (m *Manager) HandleRequest(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"success":    true,
 			"message":    "Webhook received",
 			"webhookId":  webhookReq.ID,
@@ -222,7 +222,7 @@ func (m *Manager) HandleRequest(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(response.StatusCode)
 	if response.Body != nil {
-		json.NewEncoder(w).Encode(response.Body)
+		_ = json.NewEncoder(w).Encode(response.Body)
 	}
 }
 

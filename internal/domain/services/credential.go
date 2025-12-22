@@ -90,7 +90,7 @@ func (s *CredentialService) GetDecrypted(ctx context.Context, id uuid.UUID) (*mo
 		return nil, nil, err
 	}
 
-	s.credentialRepo.UpdateLastUsed(ctx, id)
+	_ = s.credentialRepo.UpdateLastUsed(ctx, id)
 
 	return credential, &data, nil
 }

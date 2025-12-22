@@ -196,12 +196,12 @@ func getBuiltInTemplates() []WorkflowTemplate {
 
 func parseJSON(s string) models.JSON {
 	var result models.JSON
-	json.Unmarshal([]byte(s), &result)
+	_ = json.Unmarshal([]byte(s), &result)
 	return result
 }
 
 func parseJSONArray(s string) models.JSONArray {
 	var result models.JSONArray
-	json.Unmarshal([]byte(s), &result)
+	_ = json.Unmarshal([]byte(s), &result)
 	return result
 }

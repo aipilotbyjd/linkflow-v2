@@ -36,7 +36,7 @@ func JSON(w http.ResponseWriter, status int, data interface{}) {
 		Data:    data,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func JSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta *Meta) {
@@ -49,7 +49,7 @@ func JSONWithMeta(w http.ResponseWriter, status int, data interface{}, meta *Met
 		Meta:    meta,
 	}
 
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func ErrorResponse(w http.ResponseWriter, status int, message string) {
@@ -64,7 +64,7 @@ func ErrorResponse(w http.ResponseWriter, status int, message string) {
 		},
 	}
 
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func ValidationErrorResponse(w http.ResponseWriter, err error) {
@@ -80,7 +80,7 @@ func ValidationErrorResponse(w http.ResponseWriter, err error) {
 		},
 	}
 
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func NoContent(w http.ResponseWriter) {

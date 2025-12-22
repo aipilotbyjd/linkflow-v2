@@ -271,7 +271,7 @@ func (h *WorkflowHandler) Execute(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req dto.ExecuteWorkflowRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	// Queue execution
 	task, err := h.queueClient.EnqueueWorkflowExecution(r.Context(), queue.WorkflowExecutionPayload{
@@ -453,7 +453,7 @@ func (h *WorkflowHandler) Export(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.json\"", workflow.Name))
-	json.NewEncoder(w).Encode(exportData)
+	_ = json.NewEncoder(w).Encode(exportData)
 }
 
 // Import imports a workflow from JSON

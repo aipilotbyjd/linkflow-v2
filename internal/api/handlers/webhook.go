@@ -150,7 +150,7 @@ func (h *WebhookHandler) waitForExecution(ctx context.Context, workflow *models.
 		TriggerType: "webhook",
 		InputData:   triggerData,
 	}
-	h.queueClient.EnqueueWorkflowExecution(ctx, payload)
+	_, _ = h.queueClient.EnqueueWorkflowExecution(ctx, payload)
 
 	// Poll for completion
 	ticker := NewPollTicker(100, timeout*1000)

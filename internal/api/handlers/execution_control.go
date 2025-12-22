@@ -51,7 +51,7 @@ func (h *ExecutionControlHandler) CancelExecution(w http.ResponseWriter, r *http
 	}
 
 	var req CancelExecutionRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	if req.Reason == "" {
 		req.Reason = "Cancelled by user"
@@ -72,7 +72,7 @@ func (h *ExecutionControlHandler) CancelExecution(w http.ResponseWriter, r *http
 	}
 
 	// Update execution status in database
-	h.executionSvc.Fail(r.Context(), executionID, req.Reason, nil)
+	_ = h.executionSvc.Fail(r.Context(), executionID, req.Reason, nil)
 
 	dto.JSON(w, http.StatusOK, map[string]interface{}{
 		"message":      "Execution cancelled",
@@ -131,7 +131,7 @@ func (h *ExecutionControlHandler) PreviewWorkflow(w http.ResponseWriter, r *http
 	}
 
 	var req PreviewWorkflowRequest
-	json.NewDecoder(r.Body).Decode(&req)
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	// Get workflow
 	workflow, err := h.workflowSvc.GetByID(r.Context(), workflowID)

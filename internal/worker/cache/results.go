@@ -286,10 +286,10 @@ func (c *CacheStatsCollector) GetStats(ctx context.Context) (*CacheStats, error)
 
 	stats := &CacheStats{}
 	if v, ok := data["hits"]; ok {
-		fmt.Sscanf(v, "%d", &stats.Hits)
+		_, _ = fmt.Sscanf(v, "%d", &stats.Hits)
 	}
 	if v, ok := data["misses"]; ok {
-		fmt.Sscanf(v, "%d", &stats.Misses)
+		_, _ = fmt.Sscanf(v, "%d", &stats.Misses)
 	}
 
 	total := stats.Hits + stats.Misses

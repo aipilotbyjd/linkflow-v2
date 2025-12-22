@@ -159,10 +159,8 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Also revoke sessions in DB for audit trail
-	if err := h.authSvc.LogoutAll(r.Context(), claims.UserID); err != nil {
-		// Log error but don't fail - token is already blacklisted
-	}
+	// Also revoke sessions in DB for audit trail (non-critical)
+	_ = h.authSvc.LogoutAll(r.Context(), claims.UserID)
 
 	dto.NoContent(w)
 }

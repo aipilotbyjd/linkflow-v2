@@ -229,7 +229,7 @@ func (r *CachedCredentialResolver) Get(ctx context.Context, credentialID uuid.UU
 	}
 
 	// Store in cache
-	r.cache.Set(ctx, credentialID, data)
+	_ = r.cache.Set(ctx, credentialID, data)
 
 	return data, nil
 }

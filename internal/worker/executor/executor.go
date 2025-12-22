@@ -172,13 +172,13 @@ func (e *Executor) ExecuteWithOptions(ctx context.Context, payload queue.Workflo
 		if result.ErrorNodeID == "" {
 			nodeID = nil
 		}
-		e.executionSvc.Fail(ctx, execution.ID, result.Error, nodeID)
+		_ = e.executionSvc.Fail(ctx, execution.ID, result.Error, nodeID)
 		e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, result.Error, nodeID)
 		return fmt.Errorf("workflow failed: %s", result.Error)
 	}
 
 	if result.Status == processor.StatusCancelled {
-		e.executionSvc.Fail(ctx, execution.ID, "Execution cancelled", nil)
+		_ = e.executionSvc.Fail(ctx, execution.ID, "Execution cancelled", nil)
 		e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, "Execution cancelled", nil)
 		return nil
 	}
@@ -248,7 +248,7 @@ func (e *Executor) createCredentialResolver(ctx context.Context) func(uuid.UUID)
 
 		// Cache the result
 		if e.credCache != nil {
-			e.credCache.Set(ctx, credID, data)
+			_ = e.credCache.Set(ctx, credID, data)
 		}
 
 		return data, nil
@@ -261,7 +261,7 @@ func (e *Executor) handleExecutionError(ctx context.Context, execution *models.E
 		nodeID = &result.ErrorNodeID
 	}
 
-	e.executionSvc.Fail(ctx, execution.ID, errMsg, nodeID)
+	_ = e.executionSvc.Fail(ctx, execution.ID, errMsg, nodeID)
 	e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, errMsg, nodeID)
 }
 
@@ -296,19 +296,19 @@ func (e *Executor) publishSubWorkflowResult(ctx context.Context, payload queue.W
 
 func (e *Executor) publishExecutionStarted(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, triggerType string) {
 	if e.publisher != nil {
-		e.publisher.ExecutionStarted(ctx, workspaceID, workflowID, executionID, triggerType)
+		_ = e.publisher.ExecutionStarted(ctx, workspaceID, workflowID, executionID, triggerType)
 	}
 }
 
 func (e *Executor) publishExecutionCompleted(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, durationMs int64, nodesCompleted int) {
 	if e.publisher != nil {
-		e.publisher.ExecutionCompleted(ctx, workspaceID, workflowID, executionID, durationMs, nodesCompleted)
+		_ = e.publisher.ExecutionCompleted(ctx, workspaceID, workflowID, executionID, durationMs, nodesCompleted)
 	}
 }
 
 func (e *Executor) publishExecutionFailed(ctx context.Context, workspaceID, workflowID, executionID uuid.UUID, errorMsg string, errorNodeID *string) {
 	if e.publisher != nil {
-		e.publisher.ExecutionFailed(ctx, workspaceID, workflowID, executionID, errorMsg, errorNodeID)
+		_ = e.publisher.ExecutionFailed(ctx, workspaceID, workflowID, executionID, errorMsg, errorNodeID)
 	}
 }
 

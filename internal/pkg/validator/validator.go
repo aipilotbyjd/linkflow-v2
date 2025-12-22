@@ -12,10 +12,16 @@ var validate *validator.Validate
 func init() {
 	validate = validator.New()
 
-	// Register custom validators
-	validate.RegisterValidation("slug", validateSlug)
-	validate.RegisterValidation("cron", validateCron)
-	validate.RegisterValidation("password", validatePassword)
+	// Register custom validators (errors indicate programmer error, so panic)
+	if err := validate.RegisterValidation("slug", validateSlug); err != nil {
+		panic("failed to register slug validator: " + err.Error())
+	}
+	if err := validate.RegisterValidation("cron", validateCron); err != nil {
+		panic("failed to register cron validator: " + err.Error())
+	}
+	if err := validate.RegisterValidation("password", validatePassword); err != nil {
+		panic("failed to register password validator: " + err.Error())
+	}
 }
 
 func Get() *validator.Validate {

@@ -26,7 +26,7 @@ func (n *SwitchNode) Execute(ctx context.Context, execCtx *core.ExecutionContext
 	}
 
 	var matchedCase string
-	var matchedIndex int = -1
+	var matchedIndex int
 
 	switch mode {
 	case "expression":

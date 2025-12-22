@@ -82,7 +82,7 @@ func (s *BillingService) CreateSubscription(ctx context.Context, input CreateSub
 		return nil, err
 	}
 
-	s.workspaceRepo.UpdatePlan(ctx, input.WorkspaceID, input.PlanID)
+	_ = s.workspaceRepo.UpdatePlan(ctx, input.WorkspaceID, input.PlanID)
 
 	return subscription, nil
 }

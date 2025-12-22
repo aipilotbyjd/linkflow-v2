@@ -46,7 +46,7 @@ func New(cfg *Config, deps *Dependencies) *Scheduler {
 	if cfg == nil {
 		cfg = DefaultConfig()
 	}
-	cfg.Validate()
+	_ = cfg.Validate()
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -140,7 +140,7 @@ func (s *Scheduler) Stop() error {
 	}
 
 	// Release leadership
-	s.election.Release(context.Background())
+	_ = s.election.Release(context.Background())
 
 	return nil
 }

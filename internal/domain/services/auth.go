@@ -125,10 +125,10 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*AuthResult,
 	}
 
 	if !crypto.CheckPassword(input.Password, user.PasswordHash) {
-		s.userRepo.IncrementFailedLogins(ctx, user.ID)
+		_ = s.userRepo.IncrementFailedLogins(ctx, user.ID)
 		if user.FailedLogins >= 4 {
 			lockUntil := time.Now().Add(15 * time.Minute)
-			s.userRepo.LockUser(ctx, user.ID, lockUntil)
+			_ = s.userRepo.LockUser(ctx, user.ID, lockUntil)
 		}
 		return nil, ErrInvalidCredentials
 	}
@@ -146,7 +146,7 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*AuthResult,
 		}
 	}
 
-	s.userRepo.UpdateLastLogin(ctx, user.ID)
+	_ = s.userRepo.UpdateLastLogin(ctx, user.ID)
 
 	tokenPair, err := s.jwtManager.GenerateTokenPair(user.ID, user.Email, nil)
 	if err != nil {
@@ -160,7 +160,7 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*AuthResult,
 		IPAddress: &input.IP,
 		UserAgent: &input.UserAgent,
 	}
-	s.sessionRepo.Create(ctx, session)
+	_ = s.sessionRepo.Create(ctx, session)
 
 	return &AuthResult{
 		User:      user,
@@ -283,7 +283,7 @@ func (s *AuthService) ResetPassword(ctx context.Context, token, newPassword stri
 	}
 
 	if resetToken.ExpiresAt.Before(time.Now()) {
-		s.userRepo.DeletePasswordResetToken(ctx, token)
+		_ = s.userRepo.DeletePasswordResetToken(ctx, token)
 		return ErrTokenExpired
 	}
 
@@ -305,7 +305,7 @@ func (s *AuthService) ResetPassword(ctx context.Context, token, newPassword stri
 	// Mark token as used
 	now := time.Now()
 	resetToken.UsedAt = &now
-	s.userRepo.MarkPasswordResetTokenUsed(ctx, token)
+	_ = s.userRepo.MarkPasswordResetTokenUsed(ctx, token)
 
 	// Revoke all sessions
 	return s.sessionRepo.RevokeAllUserSessions(ctx, resetToken.UserID)
