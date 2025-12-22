@@ -537,10 +537,8 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		Name      string            `json:"name"`
 		Variables map[string]string `json:"variables"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid request body")
-		return
-	}
+	// Body is optional for duplicate - silently ignore decode errors
+	json.NewDecoder(r.Body).Decode(&req)
 
 	original, err := h.workflowSvc.GetByID(r.Context(), workflowID)
 	if err != nil {
