@@ -1502,18 +1502,12 @@
 				{
 					"name": "Start OAuth Flow",
 					"request": {
-						"method": "POST",
-						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"scopes\": [\"https://www.googleapis.com/auth/spreadsheets\"],\n    \"redirectUrl\": \"https://myapp.com/oauth/complete\"\n}"
-						},
+						"method": "GET",
+						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/oauth/{{provider}}/authorize",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/oauth/authorize/{{provider}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "oauth", "{{provider}}", "authorize"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "oauth", "authorize", "{{provider}}"]
 						},
 						"description": "Initiate OAuth flow for a provider. Returns authorization URL to redirect user to.\n\nSupported providers: google, slack, github, notion, hubspot, salesforce, stripe, airtable"
 					}
@@ -1525,9 +1519,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/oauth/callback/{{provider}}?code={{oauth_code}}&state={{oauth_state}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/oauth/callback/{{provider}}?code={{oauth_code}}&state={{oauth_state}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "oauth", "callback", "{{provider}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "oauth", "callback", "{{provider}}"],
 							"query": [
 								{ "key": "code", "value": "{{oauth_code}}" },
 								{ "key": "state", "value": "{{oauth_state}}" }
@@ -1542,9 +1536,9 @@
 						"method": "POST",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/oauth/credentials/{{credential_id}}/refresh",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}/refresh",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "oauth", "credentials", "{{credential_id}}", "refresh"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}", "refresh"]
 						},
 						"description": "Refresh an OAuth token before it expires"
 					}
@@ -1607,9 +1601,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/templates/category/{{category}}",
+							"raw": "{{base_url}}/api/v1/templates/categories/{{category}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "category", "{{category}}"]
+							"path": ["api", "v1", "templates", "categories", "{{category}}"]
 						},
 						"description": "Get templates filtered by category"
 					}
@@ -1719,31 +1713,43 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/waiting",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/waiting-executions",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "waiting"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "waiting-executions"]
 						},
 						"description": "List executions waiting for external resume (webhook callback)"
 					}
 				},
 				{
+					"name": "Get Waiting by Execution",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/waiting",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "waiting"]
+						},
+						"description": "Get waiting executions for a specific execution"
+					}
+				},
+				{
 					"name": "Resume Waiting Execution",
 					"request": {
-						"auth": { "type": "noauth" },
 						"method": "POST",
 						"header": [
 							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"approved\": true,\n    \"comment\": \"Approved by manager\"\n}"
+							"raw": "{\n    \"data\": {\n        \"approved\": true,\n        \"comment\": \"Approved by manager\"\n    }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/webhook/resume/{{resume_token}}",
+							"raw": "{{base_url}}/api/v1/resume/{{resume_token}}",
 							"host": ["{{base_url}}"],
-							"path": ["webhook", "resume", "{{resume_token}}"]
+							"path": ["api", "v1", "resume", "{{resume_token}}"]
 						},
-						"description": "Resume a paused execution via webhook. The resume_token is provided when the workflow pauses at a Wait node."
+						"description": "Resume a paused execution. The resume_token is provided when the workflow pauses at a Wait node."
 					}
 				},
 				{
@@ -1752,24 +1758,11 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/executions/waiting/{{resume_token}}",
+							"raw": "{{base_url}}/api/v1/resume/{{resume_token}}/status",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "executions", "waiting", "{{resume_token}}"]
+							"path": ["api", "v1", "resume", "{{resume_token}}", "status"]
 						},
 						"description": "Check status of a waiting execution by resume token"
-					}
-				},
-				{
-					"name": "Cancel Waiting Execution",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/executions/waiting/{{resume_token}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "executions", "waiting", "{{resume_token}}"]
-						},
-						"description": "Cancel a waiting execution"
 					}
 				}
 			],
@@ -1784,9 +1777,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data"]
 						},
 						"description": "Get all pinned test data for a workflow"
 					}
@@ -1797,9 +1790,9 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned/{{node_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data/{{node_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned", "{{node_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data", "{{node_id}}"]
 						},
 						"description": "Get pinned data for a specific node"
 					}
@@ -1807,18 +1800,18 @@
 				{
 					"name": "Set Pinned Data",
 					"request": {
-						"method": "PUT",
+						"method": "POST",
 						"header": [
 							{ "key": "Content-Type", "value": "application/json" }
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Test User Data\",\n    \"data\": {\n        \"userId\": 123,\n        \"email\": \"test@example.com\",\n        \"items\": [\"a\", \"b\", \"c\"]\n    }\n}"
+							"raw": "{\n    \"node_id\": \"http_request_1\",\n    \"name\": \"Test User Data\",\n    \"data\": {\n        \"userId\": 123,\n        \"email\": \"test@example.com\",\n        \"items\": [\"a\", \"b\", \"c\"]\n    }\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned/{{node_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned", "{{node_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data"]
 						},
 						"description": "Pin test data to a node for development/testing. This data will be used instead of actual execution data during test runs."
 					}
@@ -1829,9 +1822,9 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned/{{node_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data/{{node_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned", "{{node_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data", "{{node_id}}"]
 						},
 						"description": "Remove pinned data from a node"
 					}
