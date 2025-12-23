@@ -43,6 +43,11 @@ func (Workflow) TableName() string {
 	return "workflows"
 }
 
+// GetWorkspaceID implements the WorkspaceOwned interface for authorization checks
+func (w *Workflow) GetWorkspaceID() uuid.UUID {
+	return w.WorkspaceID
+}
+
 type WorkflowVersion struct {
 	ID            uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkflowID    uuid.UUID  `gorm:"type:uuid;index;not null" json:"workflow_id"`

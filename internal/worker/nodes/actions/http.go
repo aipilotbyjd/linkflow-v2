@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,119 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
+
+// SSRF Protection: blocked IP ranges (private networks, localhost, metadata endpoints)
+var blockedCIDRs = []string{
+	"127.0.0.0/8",    // Loopback
+	"10.0.0.0/8",     // Private Class A
+	"172.16.0.0/12",  // Private Class B
+	"192.168.0.0/16", // Private Class C
+	"169.254.0.0/16", // Link-local (AWS/GCP metadata)
+	"0.0.0.0/8",      // Current network
+	"224.0.0.0/4",    // Multicast
+	"::1/128",        // IPv6 loopback
+	"fc00::/7",       // IPv6 private
+	"fe80::/10",      // IPv6 link-local
+}
+
+var parsedBlockedCIDRs []*net.IPNet
+
+func init() {
+	for _, cidr := range blockedCIDRs {
+		_, network, err := net.ParseCIDR(cidr)
+		if err == nil {
+			parsedBlockedCIDRs = append(parsedBlockedCIDRs, network)
+		}
+	}
+}
+
+// isBlockedURL checks if a URL targets internal/private resources (SSRF protection)
+func isBlockedURL(urlStr string) error {
+	parsed, err := url.Parse(urlStr)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Only allow http and https
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("only http and https schemes are allowed, got: %s", parsed.Scheme)
+	}
+
+	hostname := parsed.Hostname()
+	if hostname == "" {
+		return fmt.Errorf("empty hostname")
+	}
+
+	// Block common dangerous hostnames
+	lowerHost := strings.ToLower(hostname)
+	blockedHosts := []string{
+		"localhost", "127.0.0.1", "0.0.0.0", "::1",
+		"metadata.google.internal", "169.254.169.254",
+		"metadata.google.com", "kubernetes.default",
+	}
+	for _, blocked := range blockedHosts {
+		if lowerHost == blocked {
+			return fmt.Errorf("blocked hostname: %s", hostname)
+		}
+	}
+
+	// Block hostnames with suspicious patterns
+	if strings.Contains(lowerHost, "internal") ||
+		strings.Contains(lowerHost, "localhost") ||
+		strings.Contains(lowerHost, "metadata") {
+		return fmt.Errorf("suspicious hostname pattern: %s", hostname)
+	}
+
+	// Resolve and check IP addresses
+	ips, err := net.LookupIP(hostname)
+	if err == nil {
+		for _, ip := range ips {
+			for _, network := range parsedBlockedCIDRs {
+				if network.Contains(ip) {
+					return fmt.Errorf("IP address %s is in blocked range (private/internal network)", ip)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// validateFilePath checks if a file path is safe (path traversal protection)
+func validateFilePath(requestedPath string) error {
+	if requestedPath == "" {
+		return fmt.Errorf("empty path")
+	}
+
+	// Check for path traversal attempts
+	if strings.Contains(requestedPath, "..") {
+		return fmt.Errorf("path traversal detected: '..' not allowed")
+	}
+
+	// Check for null bytes
+	if strings.Contains(requestedPath, "\x00") {
+		return fmt.Errorf("null byte in path")
+	}
+
+	// Clean the path and verify it's within allowed directories
+	cleanPath := filepath.Clean(requestedPath)
+	
+	// Only allow paths in /tmp or explicitly allowed directories
+	allowedPrefixes := []string{"/tmp/", "/var/tmp/"}
+	allowed := false
+	for _, prefix := range allowedPrefixes {
+		if strings.HasPrefix(cleanPath, prefix) {
+			allowed = true
+			break
+		}
+	}
+
+	if !allowed {
+		return fmt.Errorf("file path not in allowed directory (only /tmp allowed): %s", cleanPath)
+	}
+
+	return nil
+}
 
 type HTTPRequestNode struct{}
 
@@ -53,6 +167,11 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 		}
 		u.RawQuery = q.Encode()
 		urlStr = u.String()
+	}
+
+	// SECURITY: Check for SSRF attacks before making request
+	if err := isBlockedURL(urlStr); err != nil {
+		return nil, fmt.Errorf("SSRF protection: %w", err)
 	}
 
 	// Build request body
@@ -102,6 +221,10 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 									_, _ = part.Write([]byte(content))
 								}
 							} else if filePath, ok := val["path"].(string); ok {
+								// SECURITY: Validate file path to prevent path traversal
+								if err := validateFilePath(filePath); err != nil {
+									return nil, fmt.Errorf("path traversal protection: %w", err)
+								}
 								// Read from file path
 								fileContent, err := os.ReadFile(filePath)
 								if err != nil {
@@ -136,6 +259,10 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 			case map[string]interface{}:
 				// File reference: {"path": "/path/to/file"}
 				if filePath, ok := val["path"].(string); ok {
+					// SECURITY: Validate file path to prevent path traversal
+					if err := validateFilePath(filePath); err != nil {
+						return nil, fmt.Errorf("path traversal protection: %w", err)
+					}
 					fileContent, err := os.ReadFile(filePath)
 					if err != nil {
 						return nil, fmt.Errorf("failed to read binary file: %w", err)

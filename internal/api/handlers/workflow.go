@@ -152,6 +152,11 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate workspace ownership to prevent cross-tenant access
+	if !ValidateWorkspaceOwnership(w, r, workflow) {
+		return
+	}
+
 	var lastExecutedAt *int64
 	if workflow.LastExecutedAt != nil {
 		ts := workflow.LastExecutedAt.Unix()
@@ -186,6 +191,16 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before modification
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
@@ -236,6 +251,16 @@ func (h *WorkflowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before deletion
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.workflowSvc.Delete(r.Context(), workflowID); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to delete workflow")
 		return
@@ -256,6 +281,16 @@ func (h *WorkflowHandler) Execute(w http.ResponseWriter, r *http.Request) {
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before execution
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
@@ -306,6 +341,16 @@ func (h *WorkflowHandler) Clone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before cloning
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	var req dto.CloneWorkflowRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid request body")
@@ -337,6 +382,16 @@ func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before activation
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.workflowSvc.Activate(r.Context(), workflowID); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to activate workflow")
 		return
@@ -350,6 +405,16 @@ func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before deactivation
+	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 

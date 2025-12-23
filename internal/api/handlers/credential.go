@@ -125,6 +125,11 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate workspace ownership to prevent cross-tenant access
+	if !ValidateWorkspaceOwnership(w, r, credential) {
+		return
+	}
+
 	var lastUsedAt *int64
 	if credential.LastUsedAt != nil {
 		ts := credential.LastUsedAt.Unix()
@@ -146,6 +151,16 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 	credentialID, err := uuid.Parse(credentialIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+		return
+	}
+
+	// SECURITY: First fetch and validate ownership before any modification
+	existing, err := h.credentialSvc.GetByID(r.Context(), credentialID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "credential not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
@@ -187,6 +202,16 @@ func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before deletion
+	existing, err := h.credentialSvc.GetByID(r.Context(), credentialID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "credential not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.credentialSvc.Delete(r.Context(), credentialID); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to delete credential")
 		return
@@ -200,6 +225,16 @@ func (h *CredentialHandler) Test(w http.ResponseWriter, r *http.Request) {
 	credentialID, err := uuid.Parse(credentialIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before testing
+	existing, err := h.credentialSvc.GetByID(r.Context(), credentialID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "credential not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 

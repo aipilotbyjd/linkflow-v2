@@ -45,13 +45,23 @@ func (h *WebhookHandler) SetWebhookStream(stream *streams.WebhookStream) {
 	h.webhookStream = stream
 }
 
+// MaxWebhookBodySize is the maximum allowed size for webhook request bodies (5MB)
+const MaxWebhookBodySize = 5 * 1024 * 1024
+
 func (h *WebhookHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	endpointID := chi.URLParam(r, "endpointID")
 
+	// SECURITY: Limit request body size to prevent DoS attacks
+	r.Body = http.MaxBytesReader(w, r.Body, MaxWebhookBodySize)
+
 	// Read request body
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
+		if err.Error() == "http: request body too large" {
+			dto.ErrorResponse(w, http.StatusRequestEntityTooLarge, "request body too large (max 5MB)")
+			return
+		}
 		dto.ErrorResponse(w, http.StatusBadRequest, "failed to read body")
 		return
 	}

@@ -46,6 +46,10 @@ func (Execution) TableName() string {
 	return "executions"
 }
 
+func (e *Execution) GetWorkspaceID() uuid.UUID {
+	return e.WorkspaceID
+}
+
 type NodeExecution struct {
 	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	ExecutionID  uuid.UUID  `gorm:"type:uuid;index;not null" json:"execution_id"`

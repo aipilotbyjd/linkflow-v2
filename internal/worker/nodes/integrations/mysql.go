@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,6 +12,33 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
+
+// validMySQLIdentifier validates SQL identifiers for MySQL
+var validMySQLIdentifier = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,63}$`)
+
+// validateMySQLIdentifier checks if an identifier is safe for use in MySQL queries
+func validateMySQLIdentifier(identifier string) error {
+	if identifier == "" {
+		return fmt.Errorf("identifier cannot be empty")
+	}
+	if !validMySQLIdentifier.MatchString(identifier) {
+		return fmt.Errorf("invalid identifier: %s", identifier)
+	}
+	lower := strings.ToLower(identifier)
+	dangerousKeywords := []string{"select", "insert", "update", "delete", "drop", "truncate", "alter", "create", "exec", "execute", "union", "grant", "revoke"}
+	for _, keyword := range dangerousKeywords {
+		if lower == keyword {
+			return fmt.Errorf("identifier cannot be a SQL keyword: %s", identifier)
+		}
+	}
+	return nil
+}
+
+// quoteIdentifierMySQL safely quotes a MySQL identifier
+func quoteIdentifierMySQL(identifier string) string {
+	escaped := strings.ReplaceAll(identifier, "`", "``")
+	return "`" + escaped + "`"
+}
 
 // MySQLNode handles MySQL database operations
 type MySQLNode struct{}
@@ -150,6 +178,11 @@ func (n *MySQLNode) executeInsert(ctx context.Context, db *sql.DB, config map[st
 		return nil, fmt.Errorf("table is required")
 	}
 
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateMySQLIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	// Use input data if config data is empty
 	if len(data) == 0 {
 		if inputData, ok := input["data"].(map[string]interface{}); ok {
@@ -167,13 +200,17 @@ func (n *MySQLNode) executeInsert(ctx context.Context, db *sql.DB, config map[st
 	values := make([]interface{}, 0, len(data))
 
 	for col, val := range data {
-		columns = append(columns, "`"+col+"`")
+		// SECURITY: Validate column names to prevent SQL injection
+		if err := validateMySQLIdentifier(col); err != nil {
+			return nil, fmt.Errorf("invalid column name %s: %w", col, err)
+		}
+		columns = append(columns, quoteIdentifierMySQL(col))
 		placeholders = append(placeholders, "?")
 		values = append(values, val)
 	}
 
-	query := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)",
-		table, strings.Join(columns, ", "), strings.Join(placeholders, ", "))
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		quoteIdentifierMySQL(table), strings.Join(columns, ", "), strings.Join(placeholders, ", "))
 
 	result, err := db.ExecContext(ctx, query, values...)
 	if err != nil {
@@ -200,6 +237,11 @@ func (n *MySQLNode) executeUpdate(ctx context.Context, db *sql.DB, config map[st
 		return nil, fmt.Errorf("table is required")
 	}
 
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateMySQLIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	if len(data) == 0 {
 		if inputData, ok := input["data"].(map[string]interface{}); ok {
 			data = inputData
@@ -215,11 +257,15 @@ func (n *MySQLNode) executeUpdate(ctx context.Context, db *sql.DB, config map[st
 	values := make([]interface{}, 0, len(data))
 
 	for col, val := range data {
-		setClauses = append(setClauses, fmt.Sprintf("`%s` = ?", col))
+		// SECURITY: Validate column names to prevent SQL injection
+		if err := validateMySQLIdentifier(col); err != nil {
+			return nil, fmt.Errorf("invalid column name %s: %w", col, err)
+		}
+		setClauses = append(setClauses, fmt.Sprintf("%s = ?", quoteIdentifierMySQL(col)))
 		values = append(values, val)
 	}
 
-	query := fmt.Sprintf("UPDATE `%s` SET %s", table, strings.Join(setClauses, ", "))
+	query := fmt.Sprintf("UPDATE %s SET %s", quoteIdentifierMySQL(table), strings.Join(setClauses, ", "))
 
 	if where != "" {
 		query += " WHERE " + where
@@ -248,11 +294,16 @@ func (n *MySQLNode) executeDelete(ctx context.Context, db *sql.DB, config map[st
 		return nil, fmt.Errorf("table is required")
 	}
 
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateMySQLIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	if where == "" {
 		return nil, fmt.Errorf("where clause is required for delete operations")
 	}
 
-	query := fmt.Sprintf("DELETE FROM `%s` WHERE %s", table, where)
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s", quoteIdentifierMySQL(table), where)
 
 	args := make([]interface{}, len(params))
 	copy(args, params)

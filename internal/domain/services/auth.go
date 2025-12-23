@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -312,5 +314,7 @@ func (s *AuthService) ResetPassword(ctx context.Context, token, newPassword stri
 }
 
 func hashToken(token string) string {
-	return token[:32]
+	// SECURITY: Use proper cryptographic hashing instead of truncation
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:])
 }

@@ -101,6 +101,11 @@ func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate workspace ownership to prevent cross-tenant access
+	if !ValidateWorkspaceOwnership(w, r, execution) {
+		return
+	}
+
 	var startedAt, completedAt *int64
 	if execution.StartedAt != nil {
 		ts := execution.StartedAt.Unix()
@@ -134,6 +139,16 @@ func (h *ExecutionHandler) GetNodes(w http.ResponseWriter, r *http.Request) {
 	executionID, err := uuid.Parse(executionIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid execution ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before accessing node data
+	existing, err := h.executionSvc.GetByID(r.Context(), executionID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "execution not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
@@ -181,6 +196,16 @@ func (h *ExecutionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before cancellation
+	existing, err := h.executionSvc.GetByID(r.Context(), executionID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "execution not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.executionSvc.Cancel(r.Context(), executionID); err != nil {
 		if err == services.ErrExecutionNotRunning {
 			dto.ErrorResponse(w, http.StatusBadRequest, "execution is not running")
@@ -204,6 +229,16 @@ func (h *ExecutionHandler) Retry(w http.ResponseWriter, r *http.Request) {
 	executionID, err := uuid.Parse(executionIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid execution ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before retry
+	existing, err := h.executionSvc.GetByID(r.Context(), executionID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "execution not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 

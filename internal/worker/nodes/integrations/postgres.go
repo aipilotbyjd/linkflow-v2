@@ -4,12 +4,42 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
 )
+
+// validSQLIdentifier validates SQL identifiers (table/column names) to prevent injection
+var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,63}$`)
+
+// validateIdentifier checks if an identifier is safe for use in SQL queries
+func validateIdentifier(identifier string) error {
+	if identifier == "" {
+		return fmt.Errorf("identifier cannot be empty")
+	}
+	if !validSQLIdentifier.MatchString(identifier) {
+		return fmt.Errorf("invalid identifier: %s (must be alphanumeric with underscores, start with letter/underscore)", identifier)
+	}
+	// Check for SQL keywords that could be dangerous
+	lower := strings.ToLower(identifier)
+	dangerousKeywords := []string{"select", "insert", "update", "delete", "drop", "truncate", "alter", "create", "exec", "execute", "union", "grant", "revoke"}
+	for _, keyword := range dangerousKeywords {
+		if lower == keyword {
+			return fmt.Errorf("identifier cannot be a SQL keyword: %s", identifier)
+		}
+	}
+	return nil
+}
+
+// quoteIdentifier safely quotes a PostgreSQL identifier
+func quoteIdentifierPg(identifier string) string {
+	// Double any existing quotes and wrap in quotes
+	escaped := strings.ReplaceAll(identifier, "\"", "\"\"")
+	return "\"" + escaped + "\""
+}
 
 type PostgresNode struct{}
 
@@ -147,6 +177,11 @@ func (n *PostgresNode) executeInsert(ctx context.Context, db *sql.DB, config map
 		return nil, fmt.Errorf("table is required")
 	}
 
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	if len(data) == 0 {
 		return nil, fmt.Errorf("data is required")
 	}
@@ -157,19 +192,37 @@ func (n *PostgresNode) executeInsert(ctx context.Context, db *sql.DB, config map
 
 	i := 1
 	for col, val := range data {
-		columns = append(columns, col)
+		// SECURITY: Validate column names to prevent SQL injection
+		if err := validateIdentifier(col); err != nil {
+			return nil, fmt.Errorf("invalid column name %s: %w", col, err)
+		}
+		columns = append(columns, quoteIdentifierPg(col))
 		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
 		values = append(values, val)
 		i++
 	}
 
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
-		table,
+		quoteIdentifierPg(table),
 		strings.Join(columns, ", "),
 		strings.Join(placeholders, ", "))
 
 	if returning != "" {
-		query += " RETURNING " + returning
+		// SECURITY: Validate RETURNING clause columns
+		returningCols := strings.Split(returning, ",")
+		quotedReturning := make([]string, 0, len(returningCols))
+		for _, col := range returningCols {
+			col = strings.TrimSpace(col)
+			if col == "*" {
+				quotedReturning = append(quotedReturning, "*")
+				continue
+			}
+			if err := validateIdentifier(col); err != nil {
+				return nil, fmt.Errorf("invalid RETURNING column %s: %w", col, err)
+			}
+			quotedReturning = append(quotedReturning, quoteIdentifierPg(col))
+		}
+		query += " RETURNING " + strings.Join(quotedReturning, ", ")
 	}
 
 	if returning != "" {
@@ -226,6 +279,11 @@ func (n *PostgresNode) executeUpdate(ctx context.Context, db *sql.DB, config map
 		return nil, fmt.Errorf("table is required")
 	}
 
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
 	if len(data) == 0 {
 		return nil, fmt.Errorf("data is required")
 	}
@@ -235,12 +293,16 @@ func (n *PostgresNode) executeUpdate(ctx context.Context, db *sql.DB, config map
 
 	i := 1
 	for col, val := range data {
-		sets = append(sets, fmt.Sprintf("%s = $%d", col, i))
+		// SECURITY: Validate column names to prevent SQL injection
+		if err := validateIdentifier(col); err != nil {
+			return nil, fmt.Errorf("invalid column name %s: %w", col, err)
+		}
+		sets = append(sets, fmt.Sprintf("%s = $%d", quoteIdentifierPg(col), i))
 		values = append(values, val)
 		i++
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET %s", table, strings.Join(sets, ", "))
+	query := fmt.Sprintf("UPDATE %s SET %s", quoteIdentifierPg(table), strings.Join(sets, ", "))
 
 	if where != "" {
 		// Rewrite placeholders in WHERE clause
@@ -273,7 +335,12 @@ func (n *PostgresNode) executeDelete(ctx context.Context, db *sql.DB, config map
 		return nil, fmt.Errorf("table is required")
 	}
 
-	query := fmt.Sprintf("DELETE FROM %s", table)
+	// SECURITY: Validate table name to prevent SQL injection
+	if err := validateIdentifier(table); err != nil {
+		return nil, fmt.Errorf("invalid table name: %w", err)
+	}
+
+	query := fmt.Sprintf("DELETE FROM %s", quoteIdentifierPg(table))
 
 	var values []interface{}
 	if where != "" {

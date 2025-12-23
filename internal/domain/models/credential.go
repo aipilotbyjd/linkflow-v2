@@ -28,6 +28,10 @@ func (Credential) TableName() string {
 	return "credentials"
 }
 
+func (c *Credential) GetWorkspaceID() uuid.UUID {
+	return c.WorkspaceID
+}
+
 // CredentialData represents the decrypted credential data structure
 type CredentialData struct {
 	// API Key

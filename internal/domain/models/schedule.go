@@ -35,3 +35,8 @@ type Schedule struct {
 func (Schedule) TableName() string {
 	return "schedules"
 }
+
+// GetWorkspaceID implements the WorkspaceOwned interface for authorization checks
+func (s *Schedule) GetWorkspaceID() uuid.UUID {
+	return s.WorkspaceID
+}

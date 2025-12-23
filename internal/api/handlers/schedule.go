@@ -159,6 +159,10 @@ func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !ValidateWorkspaceOwnership(w, r, schedule) {
+		return
+	}
+
 	var nextRunAt, lastRunAt *int64
 	if schedule.NextRunAt != nil {
 		ts := schedule.NextRunAt.Unix()
@@ -190,6 +194,16 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	scheduleID, err := uuid.Parse(scheduleIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before modification
+	existing, err := h.scheduleSvc.GetByID(r.Context(), scheduleID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "schedule not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
@@ -254,6 +268,16 @@ func (h *ScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before deletion
+	existing, err := h.scheduleSvc.GetByID(r.Context(), scheduleID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "schedule not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.scheduleSvc.Delete(r.Context(), scheduleID); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to delete schedule")
 		return
@@ -270,6 +294,16 @@ func (h *ScheduleHandler) Pause(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SECURITY: Validate ownership before pause
+	existing, err := h.scheduleSvc.GetByID(r.Context(), scheduleID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "schedule not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
 	if err := h.scheduleSvc.Pause(r.Context(), scheduleID); err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to pause schedule")
 		return
@@ -283,6 +317,16 @@ func (h *ScheduleHandler) Resume(w http.ResponseWriter, r *http.Request) {
 	scheduleID, err := uuid.Parse(scheduleIDStr)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+		return
+	}
+
+	// SECURITY: Validate ownership before resume
+	existing, err := h.scheduleSvc.GetByID(r.Context(), scheduleID)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "schedule not found")
+		return
+	}
+	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
