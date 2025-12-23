@@ -76,6 +76,7 @@ type RedisConfig struct {
 	Port     int
 	Password string
 	DB       int
+	TLS      bool
 }
 
 func (c *RedisConfig) Addr() string {
@@ -186,6 +187,7 @@ func Load() (*Config, error) {
 	cfg.Redis.Port = viper.GetInt("redis.port")
 	cfg.Redis.Password = viper.GetString("redis.password")
 	cfg.Redis.DB = viper.GetInt("redis.db")
+	cfg.Redis.TLS = viper.GetBool("redis.tls")
 
 	// JWT
 	cfg.JWT.Secret = viper.GetString("jwt.secret")
@@ -268,6 +270,7 @@ func setDefaults() {
 	viper.SetDefault("redis.port", 6379)
 	viper.SetDefault("redis.password", "")
 	viper.SetDefault("redis.db", 0)
+	viper.SetDefault("redis.tls", false)
 
 	// JWT defaults
 	viper.SetDefault("jwt.secret", "change-me-in-production")
