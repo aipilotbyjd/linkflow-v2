@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"crypto/tls"
 
 	"github.com/hibiken/asynq"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
@@ -14,12 +15,20 @@ type Server struct {
 }
 
 func NewServer(cfg *config.RedisConfig, concurrency int) *Server {
+	opts := asynq.RedisClientOpt{
+		Addr:     cfg.Addr(),
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	}
+
+	if cfg.TLS {
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+
 	server := asynq.NewServer(
-		asynq.RedisClientOpt{
-			Addr:     cfg.Addr(),
-			Password: cfg.Password,
-			DB:       cfg.DB,
-		},
+		opts,
 		asynq.Config{
 			Concurrency: concurrency,
 			Queues: map[string]int{

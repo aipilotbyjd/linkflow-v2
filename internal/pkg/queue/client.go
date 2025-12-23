@@ -2,6 +2,7 @@ package queue
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -29,12 +30,19 @@ type Client struct {
 }
 
 func NewClient(cfg *config.RedisConfig) *Client {
-	client := asynq.NewClient(asynq.RedisClientOpt{
+	opts := asynq.RedisClientOpt{
 		Addr:     cfg.Addr(),
 		Password: cfg.Password,
 		DB:       cfg.DB,
-	})
+	}
 
+	if cfg.TLS {
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+
+	client := asynq.NewClient(opts)
 	return &Client{client: client}
 }
 
