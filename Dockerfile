@@ -23,7 +23,7 @@ FROM alpine:3.19 AS api
 RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /bin/api /bin/api
 COPY --from=builder /app/configs /configs
-EXPOSE 8080
+EXPOSE 8090
 ENTRYPOINT ["/bin/api"]
 
 # Worker image

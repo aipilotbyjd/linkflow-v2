@@ -1,0 +1,150 @@
+# Render Blueprint - https://render.com/docs/blueprint-spec
+# Deploy: Connect repo to Render, it auto-detects this file
+
+services:
+  # API Server (Web Service)
+  - type: web
+    name: linkflow-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerTarget: api
+    plan: free
+    envVars:
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: DATABASE_NAME
+        sync: false
+      - key: DATABASE_SSLMODE
+        value: require
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_TLS
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_ENVIRONMENT
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+    healthCheckPath: /api/v1/health
+
+  # Background Worker
+  - type: worker
+    name: linkflow-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerTarget: worker
+    plan: free
+    envVars:
+      - key: DATABASE_HOST
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_HOST
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_USER
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_USER
+      - key: DATABASE_PASSWORD
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_PASSWORD
+      - key: DATABASE_NAME
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_NAME
+      - key: DATABASE_SSLMODE
+        value: require
+      - key: REDIS_HOST
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: REDIS_HOST
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: REDIS_PASSWORD
+      - key: REDIS_TLS
+        value: "true"
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: JWT_SECRET
+      - key: APP_ENVIRONMENT
+        value: production
+
+  # Scheduler
+  - type: worker
+    name: linkflow-scheduler
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerTarget: scheduler
+    plan: free
+    envVars:
+      - key: DATABASE_HOST
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_HOST
+      - key: DATABASE_PORT
+        value: "5432"
+      - key: DATABASE_USER
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_USER
+      - key: DATABASE_PASSWORD
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_PASSWORD
+      - key: DATABASE_NAME
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: DATABASE_NAME
+      - key: DATABASE_SSLMODE
+        value: require
+      - key: REDIS_HOST
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: REDIS_HOST
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: REDIS_PASSWORD
+      - key: REDIS_TLS
+        value: "true"
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: linkflow-api
+          envVarKey: JWT_SECRET
+      - key: APP_ENVIRONMENT
+        value: production
