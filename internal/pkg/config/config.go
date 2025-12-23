@@ -145,6 +145,8 @@ func Load() (*Config, error) {
 	_ = viper.BindEnv("redis.host", "REDIS_HOST")
 	_ = viper.BindEnv("redis.port", "REDIS_PORT")
 	_ = viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	_ = viper.BindEnv("redis.tls", "REDIS_TLS")
+	_ = viper.BindEnv("server.port", "PORT") // Render uses PORT env var
 
 	// Set defaults
 	setDefaults()
