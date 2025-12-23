@@ -6,9 +6,8 @@ services:
   - type: web
     name: linkflow-api
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.api
     dockerContext: .
-    dockerTarget: api
     plan: free
     envVars:
       - key: DATABASE_HOST
@@ -43,9 +42,8 @@ services:
   - type: worker
     name: linkflow-worker
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.worker
     dockerContext: .
-    dockerTarget: worker
     plan: free
     envVars:
       - key: DATABASE_HOST
@@ -98,9 +96,8 @@ services:
   - type: worker
     name: linkflow-scheduler
     runtime: docker
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile.scheduler
     dockerContext: .
-    dockerTarget: scheduler
     plan: free
     envVars:
       - key: DATABASE_HOST
