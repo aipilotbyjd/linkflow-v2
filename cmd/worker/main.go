@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
@@ -50,11 +51,17 @@ func main() {
 	}
 
 	// Initialize Asynq client for email queue
-	asynqClient := asynq.NewClient(asynq.RedisClientOpt{
+	asynqOpts := asynq.RedisClientOpt{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
 		Password: cfg.Redis.Password,
 		DB:       cfg.Redis.DB,
-	})
+	}
+	if cfg.Redis.TLS {
+		asynqOpts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+	asynqClient := asynq.NewClient(asynqOpts)
 	defer asynqClient.Close()
 
 	// Initialize repositories
