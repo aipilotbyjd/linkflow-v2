@@ -60,21 +60,33 @@ clean:
 	rm -f coverage.out coverage.html
 
 # Docker
+COMPOSE_FILE=deploy/docker/docker-compose.yaml
+COMPOSE_PROD_FILE=deploy/docker/docker-compose.prod.yml
+
 docker-build:
-	docker-compose build
+	docker-compose -f $(COMPOSE_FILE) build
 
 docker-up:
-	docker-compose up -d
+	docker-compose -f $(COMPOSE_FILE) up -d
 
 docker-down:
-	docker-compose down
+	docker-compose -f $(COMPOSE_FILE) down
 
 docker-logs:
-	docker-compose logs -f
+	docker-compose -f $(COMPOSE_FILE) logs -f
+
+docker-prod-build:
+	docker-compose -f $(COMPOSE_PROD_FILE) build
+
+docker-prod-up:
+	docker-compose -f $(COMPOSE_PROD_FILE) up -d
+
+docker-prod-down:
+	docker-compose -f $(COMPOSE_PROD_FILE) down
 
 # Development
 dev-deps:
-	docker-compose up -d postgres redis minio
+	docker-compose -f $(COMPOSE_FILE) up -d postgres redis minio
 
 dev-api: dev-deps
 	$(GOCMD) run ./cmd/api
@@ -111,9 +123,10 @@ help:
 	@echo "  test-coverage  - Run tests with coverage"
 	@echo "  deps           - Download dependencies"
 	@echo "  clean          - Clean build artifacts"
-	@echo "  docker-build   - Build Docker images"
-	@echo "  docker-up      - Start Docker containers"
-	@echo "  docker-down    - Stop Docker containers"
+	@echo "  docker-build   - Build Docker images (dev)"
+	@echo "  docker-up      - Start Docker containers (dev)"
+	@echo "  docker-down    - Stop Docker containers (dev)"
+	@echo "  docker-prod-*  - Production Docker commands"
 	@echo "  dev-deps       - Start development dependencies"
 	@echo "  dev-api        - Run API in development mode"
 	@echo "  lint           - Run linter"

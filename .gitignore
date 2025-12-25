@@ -1,1 +1,55 @@
-tmp/main
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test
+*.test
+coverage.out
+coverage.html
+
+# Dependency directories
+vendor/
+
+# Build cache
+*.o
+*.a
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Air (hot reload)
+tmp/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Config overrides (keep example)
+configs/config.local.yaml
+
+# Debug
+__debug_bin*
+debug/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Secrets (never commit)
+*.pem
+*.key
+secrets/

@@ -51,8 +51,8 @@ services:
 
   api:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
       target: api
     container_name: linkflow-api
     ports:
@@ -69,8 +69,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
       target: worker
     environment:
       - DATABASE_HOST=postgres
@@ -84,8 +84,8 @@ services:
 
   scheduler:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
       target: scheduler
     container_name: linkflow-scheduler
     environment:

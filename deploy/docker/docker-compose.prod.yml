@@ -3,8 +3,8 @@ version: '3.8'
 services:
   api:
     build:
-      context: .
-      dockerfile: Dockerfile.api
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api
     container_name: linkflow-api
     ports:
       - "8090:8090"
@@ -35,8 +35,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: Dockerfile.worker
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.worker
     container_name: linkflow-worker
     environment:
       - APP_ENVIRONMENT=production
@@ -56,8 +56,8 @@ services:
 
   scheduler:
     build:
-      context: .
-      dockerfile: Dockerfile.scheduler
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.scheduler
     container_name: linkflow-scheduler
     environment:
       - APP_ENVIRONMENT=production
