@@ -136,17 +136,23 @@ func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	// Bind specific environment variables for Docker compatibility
+	// Bind specific environment variables for Docker/Railway/Render compatibility
 	_ = viper.BindEnv("database.host", "DATABASE_HOST")
 	_ = viper.BindEnv("database.port", "DATABASE_PORT")
 	_ = viper.BindEnv("database.user", "DATABASE_USER")
 	_ = viper.BindEnv("database.password", "DATABASE_PASSWORD")
 	_ = viper.BindEnv("database.name", "DATABASE_NAME")
+	_ = viper.BindEnv("database.sslmode", "DATABASE_SSLMODE")
 	_ = viper.BindEnv("redis.host", "REDIS_HOST")
 	_ = viper.BindEnv("redis.port", "REDIS_PORT")
 	_ = viper.BindEnv("redis.password", "REDIS_PASSWORD")
 	_ = viper.BindEnv("redis.tls", "REDIS_TLS")
-	_ = viper.BindEnv("server.port", "PORT") // Render uses PORT env var
+	_ = viper.BindEnv("server.port", "PORT") // Railway/Render uses PORT env var
+	_ = viper.BindEnv("jwt.secret", "JWT_SECRET")
+	_ = viper.BindEnv("app.environment", "APP_ENVIRONMENT")
+	_ = viper.BindEnv("app.debug", "APP_DEBUG")
+	_ = viper.BindEnv("app.url", "APP_URL")
+	_ = viper.BindEnv("app.frontend_url", "APP_FRONTEND_URL")
 
 	// Set defaults
 	setDefaults()
