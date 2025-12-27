@@ -29,7 +29,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ..
       dockerfile: deploy/Dockerfile.api
     ports:
       - "8090:8090"
@@ -48,7 +48,7 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ""
       REDIS_TLS: "false"
-      JWT_SECRET: dev-secret-change-in-production
+      JWT_SECRET: dev-secret-change-in-production!
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
 
   worker:
     build:
-      context: .
+      context: ..
       dockerfile: deploy/Dockerfile.worker
     environment:
       APP_ENVIRONMENT: development
@@ -72,7 +72,7 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ""
       REDIS_TLS: "false"
-      JWT_SECRET: dev-secret-change-in-production
+      JWT_SECRET: dev-secret-change-in-production!
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,7 +81,7 @@ services:
 
   scheduler:
     build:
-      context: .
+      context: ..
       dockerfile: deploy/Dockerfile.scheduler
     environment:
       APP_ENVIRONMENT: development
@@ -96,7 +96,7 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: ""
       REDIS_TLS: "false"
-      JWT_SECRET: dev-secret-change-in-production
+      JWT_SECRET: dev-secret-change-in-production!
     depends_on:
       postgres:
         condition: service_healthy
