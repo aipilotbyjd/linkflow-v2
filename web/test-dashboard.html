@@ -1,731 +1,863 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkFlow Test Dashboard</title>
+    <title>LinkFlow - Test Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #6366f1;
-            --primary-dark: #4f46e5;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99,102,241,0.1);
             --success: #10b981;
+            --success-light: rgba(16,185,129,0.1);
             --warning: #f59e0b;
+            --warning-light: rgba(245,158,11,0.1);
             --danger: #ef4444;
-            --bg: #0f172a;
-            --bg-card: #1e293b;
-            --bg-input: #334155;
-            --text: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #475569;
+            --danger-light: rgba(239,68,68,0.1);
+            --info: #3b82f6;
+            --info-light: rgba(59,130,246,0.1);
+            --bg: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --bg-card-hover: #22222e;
+            --bg-input: #2a2a38;
+            --text: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #64748b;
+            --border: #2e2e3e;
+            --border-hover: #3e3e52;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4), 0 4px 6px -2px rgba(0,0,0,0.2);
+            --radius: 10px;
+            --radius-lg: 16px;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            line-height: 1.5;
         }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
+        /* Layout */
+        .app-layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
             z-index: 100;
         }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-info span {
-            color: var(--text-muted);
-        }
-
-        .ws-status {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.85rem;
-        }
-
-        .ws-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--danger);
-        }
-
-        .ws-dot.connected {
-            background: var(--success);
-        }
-
-        button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-        }
-
-        .btn-success {
-            background: var(--success);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--border);
-            color: var(--text);
-        }
-
-        .btn-outline:hover {
-            background: var(--bg-input);
-        }
-
-        .btn-sm {
-            padding: 4px 10px;
-            font-size: 0.8rem;
-        }
-
-        input,
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-input);
-            color: var(--text);
-            font-size: 0.95rem;
-        }
-
-        input:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 5px;
-            padding: 15px 20px;
-            background: var(--bg-card);
+        .main-content { flex: 1; margin-left: 260px; }
+        .header {
+            background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
-            flex-wrap: wrap;
-        }
-
-        .tab {
-            padding: 10px 20px;
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            border-radius: 6px;
-        }
-
-        .tab:hover {
-            background: var(--bg-input);
-        }
-
-        .tab.active {
-            background: var(--primary);
-            color: white;
-        }
-
-        .panel {
-            display: none;
-            padding: 20px;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        .card {
-            background: var(--bg-card);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-
-        .card-header {
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .grid {
-            display: grid;
-            gap: 20px;
-        }
-
-        .grid-2 {
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        }
-
-        .grid-3 {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: var(--bg-input);
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        .list-item:hover {
-            background: #3d4f66;
-        }
-
-        .list-item-info {
-            flex: 1;
-        }
-
-        .list-item-title {
-            font-weight: 500;
-        }
-
-        .list-item-meta {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .list-item-actions {
-            display: flex;
-            gap: 5px;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .badge-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
-        }
-
-        .badge-warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: var(--warning);
-        }
-
-        .badge-danger {
-            background: rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-        }
-
-        .badge-info {
-            background: rgba(99, 102, 241, 0.2);
-            color: var(--primary);
-        }
-
-        .log-panel {
-            background: #0d1117;
-            border-radius: 6px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.85rem;
-        }
-
-        .log-entry {
-            margin-bottom: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid #21262d;
-        }
-
-        .log-time {
-            color: #7d8590;
-        }
-
-        .log-type {
-            font-weight: 500;
-        }
-
-        .log-type.info {
-            color: #58a6ff;
-        }
-
-        .log-type.success {
-            color: #3fb950;
-        }
-
-        .log-type.error {
-            color: #f85149;
-        }
-
-        .log-type.event {
-            color: #d29922;
-        }
-
-        .json-view {
-            background: #0d1117;
-            border-radius: 6px;
-            padding: 15px;
-            overflow-x: auto;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.85rem;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-
-        .modal-overlay {
-            display: none;
-            position: fixed;
+            position: sticky;
             top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 1000;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+        .content { padding: 24px; }
+
+        /* Logo */
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: var(--radius);
+            display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.2rem;
+        }
+        .logo-text { font-size: 1.3rem; font-weight: 700; }
+        .logo-badge {
+            font-size: 0.65rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
         }
 
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 25px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
+        /* Navigation */
+        .nav-section { padding: 0 12px; margin-bottom: 24px; }
+        .nav-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
             color: var(--text-muted);
-            font-size: 1.5rem;
+            padding: 0 12px 8px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius);
+            color: var(--text-secondary);
             cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
         }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .stat-card {
-            background: var(--bg-input);
-            padding: 15px;
-            border-radius: 8px;
+        .nav-item:hover { background: var(--bg-card); color: var(--text); }
+        .nav-item.active { background: var(--primary-light); color: var(--primary); }
+        .nav-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 20px;
             text-align: center;
         }
 
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .node-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 10px;
-        }
-
-        .node-card {
-            background: var(--bg-input);
-            padding: 15px;
-            border-radius: 8px;
+        /* Buttons */
+        button, .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: var(--radius);
             cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-warning { background: var(--warning); color: black; }
+        .btn-ghost { background: transparent; color: var(--text-secondary); }
+        .btn-ghost:hover { background: var(--bg-card); color: var(--text); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-lg { padding: 14px 24px; font-size: 1rem; }
+        .btn-icon { padding: 8px; border-radius: 8px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Forms */
+        .form-group { margin-bottom: 16px; }
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 0.9rem;
             transition: all 0.2s;
         }
-
-        .node-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); }
+        .input-group { display: flex; gap: 8px; }
+        .input-group input { flex: 1; }
 
-        .node-icon {
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .card:hover { border-color: var(--border-hover); }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-title { font-size: 1rem; font-weight: 600; }
+        .card-body { padding: 20px; }
+        .card-footer { padding: 16px 20px; border-top: 1px solid var(--border); background: var(--bg-secondary); }
+
+        /* Grid */
+        .grid { display: grid; gap: 20px; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        @media (max-width: 1200px) { .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } .sidebar { display: none; } .main-content { margin-left: 0; } }
+
+        /* Stats */
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.5rem;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
+        .stat-value { font-size: 2rem; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 0.85rem; color: var(--text-muted); }
+        .stat-change { font-size: 0.8rem; margin-top: 8px; }
+        .stat-change.up { color: var(--success); }
+        .stat-change.down { color: var(--danger); }
 
-        .node-name {
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: 500;
-            margin-bottom: 4px;
         }
+        .badge-success { background: var(--success-light); color: var(--success); }
+        .badge-warning { background: var(--warning-light); color: var(--warning); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-info { background: var(--info-light); color: var(--info); }
+        .badge-primary { background: var(--primary-light); color: var(--primary); }
+        .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .badge-dot.success { background: var(--success); }
+        .badge-dot.warning { background: var(--warning); }
+        .badge-dot.danger { background: var(--danger); }
 
-        .node-type {
-            font-size: 0.8rem;
+        /* List Items */
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: var(--radius);
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .list-item:hover { background: var(--bg-card-hover); border-color: var(--border); }
+        .list-item + .list-item { border-top: 1px solid var(--border); }
+        .list-item-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .list-item-content { flex: 1; min-width: 0; }
+        .list-item-title { font-weight: 500; margin-bottom: 2px; }
+        .list-item-subtitle { font-size: 0.85rem; color: var(--text-muted); }
+        .list-item-actions { display: flex; gap: 8px; }
+
+        /* Tables */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+        tr:hover td { background: var(--bg-card-hover); }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg-secondary); border-radius: var(--radius); }
+        .tab {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.875rem;
             color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
         }
+        .tab:hover { color: var(--text); }
+        .tab.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); }
 
-        .execution-timeline {
-            position: relative;
-            padding-left: 30px;
+        /* Panels */
+        .panel { display: none; animation: fadeIn 0.3s; }
+        .panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
         }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-title { font-size: 1.1rem; font-weight: 600; }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: var(--bg-input); color: var(--text); }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; }
 
-        .execution-timeline::before {
+        /* Toast */
+        .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow-lg);
+            animation: toastIn 0.3s;
+            min-width: 300px;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        .toast-icon { font-size: 1.2rem; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 500; margin-bottom: 2px; }
+        .toast-message { font-size: 0.85rem; color: var(--text-muted); }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.warning { border-left: 3px solid var(--warning); }
+        .toast.info { border-left: 3px solid var(--info); }
+
+        /* Code/JSON */
+        .code-block {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .code-block .key { color: #7dd3fc; }
+        .code-block .string { color: #86efac; }
+        .code-block .number { color: #fcd34d; }
+        .code-block .boolean { color: #f472b6; }
+        .code-block .null { color: #94a3b8; }
+
+        /* Timeline */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before {
             content: '';
             position: absolute;
-            left: 10px;
+            left: 8px;
             top: 0;
             bottom: 0;
             width: 2px;
             background: var(--border);
         }
-
         .timeline-item {
             position: relative;
-            padding: 10px 15px;
-            margin-bottom: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
             background: var(--bg-input);
-            border-radius: 6px;
+            border-radius: var(--radius);
         }
-
         .timeline-item::before {
             content: '';
             position: absolute;
             left: -24px;
-            top: 15px;
-            width: 10px;
-            height: 10px;
+            top: 16px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
             background: var(--border);
+            border: 2px solid var(--bg);
         }
+        .timeline-item.completed::before { background: var(--success); }
+        .timeline-item.running::before { background: var(--warning); animation: pulse 1.5s infinite; }
+        .timeline-item.failed::before { background: var(--danger); }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); } 50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); } }
 
-        .timeline-item.completed::before {
-            background: var(--success);
+        /* Node Cards */
+        .node-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+        .node-card {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
+        .node-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: var(--shadow); }
+        .node-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .node-icon { font-size: 1.5rem; }
+        .node-name { font-weight: 500; }
+        .node-type { font-size: 0.8rem; color: var(--text-muted); }
+        .node-category { font-size: 0.7rem; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .timeline-item.running::before {
-            background: var(--warning);
-            animation: pulse 1s infinite;
-        }
-
-        .timeline-item.failed::before {
-            background: var(--danger);
-        }
-
-        @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .mt-20 {
-            margin-top: 20px;
-        }
-
-        .mb-10 {
-            margin-bottom: 10px;
-        }
-
-        .flex {
+        /* Connection Status */
+        .connection-status {
             display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .connection-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .connection-dot.connected { background: var(--success); animation: glow 2s infinite; }
+        .connection-dot.disconnected { background: var(--danger); }
+        .connection-dot.connecting { background: var(--warning); animation: blink 1s infinite; }
+        @keyframes glow { 0%, 100% { box-shadow: 0 0 4px var(--success); } 50% { box-shadow: 0 0 12px var(--success); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Search */
+        .search-box {
+            position: relative;
+            max-width: 300px;
+        }
+        .search-box input { padding-left: 40px; }
+        .search-box .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
         }
 
-        .gap-10 {
-            gap: 10px;
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state-title { font-size: 1.1rem; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+        .empty-state-text { font-size: 0.9rem; margin-bottom: 20px; }
+
+        /* Loading */
+        .loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Progress Bar */
+        .progress-bar { height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; }
+
+        /* Avatar */
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
-        .flex-1 {
+        /* Utility */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .gap-4 { gap: 16px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-4 { margin-top: 16px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-4 { margin-bottom: 16px; }
+        .text-sm { font-size: 0.875rem; }
+        .text-muted { color: var(--text-muted); }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .font-medium { font-weight: 500; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hidden { display: none !important; }
+
+        /* Login Screen */
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg-secondary) 100%);
+        }
+        .login-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: var(--shadow-lg);
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-logo-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+        .login-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+        .login-subtitle { color: var(--text-muted); }
+        .login-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        .login-divider::before, .login-divider::after {
+            content: '';
             flex: 1;
+            height: 1px;
+            background: var(--border);
         }
     </style>
 </head>
-
 <body>
     <!-- Login Screen -->
-    <div id="loginScreen">
-        <div class="container" style="max-width: 400px; margin-top: 100px;">
-            <div class="card">
-                <h2 class="text-center mb-10" style="color: var(--primary);">LinkFlow</h2>
-                <p class="text-center" style="color: var(--text-muted); margin-bottom: 25px;">Test Dashboard</p>
-
-                <div id="loginTab">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="loginEmail" placeholder="user@example.com" value="user@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="loginPassword" placeholder="Password" value="SecurePass123!">
-                    </div>
-                    <button class="btn-primary" style="width: 100%;" onclick="login()">Login</button>
-                    <p class="text-center mt-20" style="color: var(--text-muted);">
-                        Don't have an account? <a href="#" onclick="showRegister()"
-                            style="color: var(--primary);">Register</a>
-                    </p>
-                </div>
-
-                <div id="registerTab" class="hidden">
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="regEmail" placeholder="user@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" id="regPassword" placeholder="Password (min 8 chars)">
-                    </div>
-                    <div class="grid grid-2">
-                        <div class="form-group">
-                            <label>First Name</label>
-                            <input type="text" id="regFirstName" placeholder="John">
-                        </div>
-                        <div class="form-group">
-                            <label>Last Name</label>
-                            <input type="text" id="regLastName" placeholder="Doe">
-                        </div>
-                    </div>
-                    <button class="btn-primary" style="width: 100%;" onclick="register()">Register</button>
-                    <p class="text-center mt-20" style="color: var(--text-muted);">
-                        Already have an account? <a href="#" onclick="showLogin()"
-                            style="color: var(--primary);">Login</a>
-                    </p>
-                </div>
-
-                <div id="loginError" class="hidden"
-                    style="margin-top: 15px; padding: 10px; background: rgba(239,68,68,0.2); border-radius: 6px; color: var(--danger);">
-                </div>
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <div class="login-logo-icon">⚡</div>
+                <h1 class="login-title">LinkFlow</h1>
+                <p class="login-subtitle">Test Dashboard</p>
             </div>
-
-            <div class="card">
+            
+            <div id="loginForm">
                 <div class="form-group">
-                    <label>API Base URL</label>
-                    <input type="text" id="baseUrl" value="http://localhost:8090">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" placeholder="user@example.com" value="user@example.com">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" value="SecurePass123!">
+                </div>
+                <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="login()">
+                    Sign In
+                </button>
+                <p class="text-center mt-4 text-sm text-muted">
+                    Don't have an account? <a href="#" onclick="toggleAuthForm('register')" style="color: var(--primary);">Create one</a>
+                </p>
+            </div>
+            
+            <div id="registerForm" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="regEmail" placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="regPassword" placeholder="Min 8 characters">
+                </div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">First Name</label>
+                        <input type="text" id="regFirstName" placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Last Name</label>
+                        <input type="text" id="regLastName" placeholder="Doe">
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-lg" style="width: 100%;" onclick="register()">
+                    Create Account
+                </button>
+                <p class="text-center mt-4 text-sm text-muted">
+                    Already have an account? <a href="#" onclick="toggleAuthForm('login')" style="color: var(--primary);">Sign in</a>
+                </p>
+            </div>
+            
+            <div class="login-divider">Settings</div>
+            <div class="form-group">
+                <label class="form-label">API Base URL</label>
+                <input type="text" id="baseUrl" value="http://localhost:8090">
             </div>
         </div>
     </div>
 
     <!-- Main App -->
-    <div id="mainApp" class="hidden">
-        <header>
-            <div class="logo">LinkFlow</div>
-            <div class="user-info">
-                <div class="ws-status">
-                    <div class="ws-dot" id="wsDot"></div>
-                    <span id="wsStatus">Disconnected</span>
+    <div id="mainApp" class="app-layout hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">⚡</div>
+                <div>
+                    <span class="logo-text">LinkFlow</span>
+                    <span class="logo-badge">TEST</span>
                 </div>
-                <span id="userEmail"></span>
-                <select id="workspaceSelect" onchange="selectWorkspace(this.value)"
-                    style="width: auto; padding: 6px 12px;">
-                    <option value="">Select Workspace</option>
-                </select>
-                <button class="btn-outline" onclick="logout()">Logout</button>
             </div>
-        </header>
+            
+            <nav class="nav-section">
+                <div class="nav-title">Main</div>
+                <div class="nav-item active" data-tab="dashboard">
+                    <span class="nav-icon">📊</span>
+                    Dashboard
+                </div>
+                <div class="nav-item" data-tab="workflows">
+                    <span class="nav-icon">⚡</span>
+                    Workflows
+                </div>
+                <div class="nav-item" data-tab="executions">
+                    <span class="nav-icon">▶️</span>
+                    Executions
+                    <span class="nav-badge" id="runningCount" style="display: none;">0</span>
+                </div>
+            </nav>
+            
+            <nav class="nav-section">
+                <div class="nav-title">Configuration</div>
+                <div class="nav-item" data-tab="credentials">
+                    <span class="nav-icon">🔑</span>
+                    Credentials
+                </div>
+                <div class="nav-item" data-tab="schedules">
+                    <span class="nav-icon">⏰</span>
+                    Schedules
+                </div>
+                <div class="nav-item" data-tab="webhooks">
+                    <span class="nav-icon">🔗</span>
+                    Webhooks
+                </div>
+            </nav>
+            
+            <nav class="nav-section">
+                <div class="nav-title">Developer</div>
+                <div class="nav-item" data-tab="nodes">
+                    <span class="nav-icon">🧩</span>
+                    Node Types
+                </div>
+                <div class="nav-item" data-tab="websocket">
+                    <span class="nav-icon">📡</span>
+                    WebSocket
+                </div>
+                <div class="nav-item" data-tab="logs">
+                    <span class="nav-icon">📝</span>
+                    API Logs
+                </div>
+            </nav>
+        </aside>
 
-        <div class="tabs">
-            <button class="tab active" data-tab="dashboard">Dashboard</button>
-            <button class="tab" data-tab="workflows">Workflows</button>
-            <button class="tab" data-tab="executions">Executions</button>
-            <button class="tab" data-tab="credentials">Credentials</button>
-            <button class="tab" data-tab="schedules">Schedules</button>
-            <button class="tab" data-tab="webhooks">Webhooks</button>
-            <button class="tab" data-tab="nodes">Node Types</button>
-            <button class="tab" data-tab="websocket">WebSocket</button>
-            <button class="tab" data-tab="logs">API Logs</button>
-        </div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="flex items-center gap-4">
+                    <select id="workspaceSelect" onchange="selectWorkspace(this.value)" style="min-width: 200px;">
+                        <option value="">Select Workspace</option>
+                    </select>
+                    <button class="btn btn-sm btn-outline" onclick="openModal('createWorkspaceModal')">+ New</button>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="connection-status">
+                        <div class="connection-dot disconnected" id="wsDot"></div>
+                        <span id="wsStatusText">Disconnected</span>
+                    </div>
+                    <div class="avatar" id="userAvatar">U</div>
+                    <button class="btn btn-ghost btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
 
-        <div class="container">
-            <!-- Dashboard Panel -->
-            <div id="panel-dashboard" class="panel active">
-                <div class="grid grid-2">
-                    <div class="card">
+            <div class="content">
+                <!-- Dashboard Panel -->
+                <div id="panel-dashboard" class="panel active">
+                    <div class="grid grid-4 mb-4">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);">⚡</div>
+                            <div class="stat-value" id="statWorkflows">0</div>
+                            <div class="stat-label">Workflows</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✓</div>
+                            <div class="stat-value" id="statCompleted">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--danger-light); color: var(--danger);">✗</div>
+                            <div class="stat-value" id="statFailed">0</div>
+                            <div class="stat-label">Failed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--warning-light); color: var(--warning);">⏱</div>
+                            <div class="stat-value" id="statAvgTime">0ms</div>
+                            <div class="stat-label">Avg Duration</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">System Health</span>
+                                <button class="btn btn-ghost btn-sm" onclick="checkHealth()">↻ Refresh</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex justify-between items-center">
+                                        <span>Overall Status</span>
+                                        <span class="badge badge-success" id="healthOverall"><span class="badge-dot success"></span> Healthy</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Database</span>
+                                        <span class="badge badge-success" id="healthDB"><span class="badge-dot success"></span> Connected</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>Redis</span>
+                                        <span class="badge badge-success" id="healthRedis"><span class="badge-dot success"></span> Connected</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>WebSocket</span>
+                                        <span class="badge" id="healthWS"><span class="badge-dot"></span> Disconnected</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Quick Actions</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="flex flex-col gap-2">
+                                    <button class="btn btn-primary" onclick="openModal('createWorkflowModal')" style="width: 100%;">
+                                        ⚡ Create Workflow
+                                    </button>
+                                    <button class="btn btn-outline" onclick="switchTab('nodes')" style="width: 100%;">
+                                        🧩 Browse Nodes
+                                    </button>
+                                    <button class="btn btn-outline" onclick="switchTab('webhooks')" style="width: 100%;">
+                                        🔗 Test Webhook
+                                    </button>
+                                    <button class="btn btn-outline" onclick="connectWebSocket()" style="width: 100%;">
+                                        📡 Connect WebSocket
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-4">
                         <div class="card-header">
-                            <span class="card-title">System Health</span>
-                            <button class="btn-outline btn-sm" onclick="checkHealth()">Refresh</button>
+                            <span class="card-title">Recent Executions</span>
+                            <button class="btn btn-ghost btn-sm" onclick="loadRecentExecutions()">↻ Refresh</button>
                         </div>
-                        <div id="healthStatus" class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value" id="healthOverall">-</div>
-                                <div class="stat-label">Overall</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="healthDB">-</div>
-                                <div class="stat-label">Database</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="healthRedis">-</div>
-                                <div class="stat-label">Redis</div>
-                            </div>
+                        <div class="card-body" id="recentExecutions">
+                            <div class="loading"><div class="spinner"></div></div>
                         </div>
                     </div>
+                </div>
 
+                <!-- Workflows Panel -->
+                <div id="panel-workflows" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>Workflows</h2>
+                        <div class="flex gap-2">
+                            <div class="search-box">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="workflowSearch" placeholder="Search workflows..." oninput="filterWorkflows()">
+                            </div>
+                            <button class="btn btn-primary" onclick="openModal('createWorkflowModal')">+ Create Workflow</button>
+                        </div>
+                    </div>
                     <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Execution Stats</span>
-                            <select id="statsPeriod" onchange="loadExecutionStats()"
-                                style="width: auto; padding: 4px 8px;">
-                                <option value="1h">Last Hour</option>
-                                <option value="24h" selected>Last 24h</option>
-                                <option value="7d">Last 7 Days</option>
-                                <option value="30d">Last 30 Days</option>
-                            </select>
-                        </div>
-                        <div id="execStats" class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value" id="statsTotal">0</div>
-                                <div class="stat-label">Total</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statsCompleted" style="color: var(--success);">0</div>
-                                <div class="stat-label">Completed</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statsFailed" style="color: var(--danger);">0</div>
-                                <div class="stat-label">Failed</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statsAvgDuration">0ms</div>
-                                <div class="stat-label">Avg Duration</div>
-                            </div>
+                        <div class="card-body" id="workflowsList">
+                            <div class="loading"><div class="spinner"></div></div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Quick Actions</span>
-                    </div>
-                    <div class="flex gap-10" style="flex-wrap: wrap;">
-                        <button class="btn-primary" onclick="openCreateWorkspaceModal()">Create Workspace</button>
-                        <button class="btn-primary" onclick="switchTab('workflows'); openCreateWorkflowModal();">Create
-                            Workflow</button>
-                        <button class="btn-outline" onclick="loadNodeTypes()">Browse Node Types</button>
-                        <button class="btn-outline" onclick="testWebhook()">Test Webhook</button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Recent Executions</span>
-                        <button class="btn-outline btn-sm" onclick="loadRecentExecutions()">Refresh</button>
-                    </div>
-                    <div id="recentExecutions">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Workflows Panel -->
-            <div id="panel-workflows" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Workflows</span>
-                        <button class="btn-primary" onclick="openCreateWorkflowModal()">Create Workflow</button>
-                    </div>
-                    <div id="workflowsList">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Executions Panel -->
-            <div id="panel-executions" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Executions</span>
-                        <div class="flex gap-10">
-                            <select id="execStatusFilter" onchange="loadExecutions()"
-                                style="width: auto; padding: 6px 12px;">
+                <!-- Executions Panel -->
+                <div id="panel-executions" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>Executions</h2>
+                        <div class="flex gap-2">
+                            <select id="execStatusFilter" onchange="loadExecutions()">
                                 <option value="">All Status</option>
                                 <option value="queued">Queued</option>
                                 <option value="running">Running</option>
@@ -733,217 +865,284 @@
                                 <option value="failed">Failed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
-                            <button class="btn-outline btn-sm" onclick="loadExecutions()">Refresh</button>
+                            <button class="btn btn-outline" onclick="loadExecutions()">↻ Refresh</button>
                         </div>
                     </div>
-                    <div id="executionsList">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Credentials Panel -->
-            <div id="panel-credentials" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Credentials</span>
-                        <button class="btn-primary" onclick="openCreateCredentialModal()">Create Credential</button>
-                    </div>
-                    <div id="credentialsList">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Schedules Panel -->
-            <div id="panel-schedules" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Schedules</span>
-                        <button class="btn-primary" onclick="openCreateScheduleModal()">Create Schedule</button>
-                    </div>
-                    <div id="schedulesList">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Webhooks Panel -->
-            <div id="panel-webhooks" class="panel">
-                <div class="grid grid-2">
                     <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Webhook Tester</span>
+                        <div class="card-body" id="executionsList">
+                            <div class="loading"><div class="spinner"></div></div>
                         </div>
-                        <div class="form-group">
-                            <label>Endpoint ID</label>
-                            <input type="text" id="webhookEndpointId" placeholder="Enter webhook endpoint ID">
+                    </div>
+                </div>
+
+                <!-- Credentials Panel -->
+                <div id="panel-credentials" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>Credentials</h2>
+                        <button class="btn btn-primary" onclick="openModal('createCredentialModal')">+ Add Credential</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="credentialsList">
+                            <div class="loading"><div class="spinner"></div></div>
                         </div>
-                        <div class="form-group">
-                            <label>Method</label>
-                            <select id="webhookMethod">
-                                <option value="POST">POST</option>
-                                <option value="GET">GET</option>
-                            </select>
+                    </div>
+                </div>
+
+                <!-- Schedules Panel -->
+                <div id="panel-schedules" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>Schedules</h2>
+                        <button class="btn btn-primary" onclick="openModal('createScheduleModal')">+ Create Schedule</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" id="schedulesList">
+                            <div class="loading"><div class="spinner"></div></div>
                         </div>
-                        <div class="form-group">
-                            <label>Payload (JSON)</label>
-                            <textarea id="webhookPayload" rows="6" placeholder='{"event": "test", "data": {}}'>{
-    "event": "order.created",
-    "data": {
-        "order_id": "12345",
-        "customer": "john@example.com",
-        "total": 99.99
-    }
+                    </div>
+                </div>
+
+                <!-- Webhooks Panel -->
+                <div id="panel-webhooks" class="panel">
+                    <h2 class="mb-4">Webhook Tester</h2>
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Request</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Endpoint ID</label>
+                                    <input type="text" id="webhookEndpointId" placeholder="Enter webhook endpoint ID">
+                                </div>
+                                <div class="grid grid-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Method</label>
+                                        <select id="webhookMethod">
+                                            <option value="POST">POST</option>
+                                            <option value="GET">GET</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Content-Type</label>
+                                        <select id="webhookContentType">
+                                            <option value="application/json">application/json</option>
+                                            <option value="application/x-www-form-urlencoded">form-urlencoded</option>
+                                            <option value="text/plain">text/plain</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Headers (JSON)</label>
+                                    <textarea id="webhookHeaders" rows="3" placeholder='{"X-Custom-Header": "value"}'>{}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Payload</label>
+                                    <textarea id="webhookPayload" rows="8">{
+  "event": "order.created",
+  "data": {
+    "order_id": "12345",
+    "customer": "john@example.com",
+    "total": 99.99
+  }
 }</textarea>
-                        </div>
-                        <button class="btn-primary" onclick="triggerWebhook()">Send Webhook</button>
-                    </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Response</span>
-                        </div>
-                        <div id="webhookResponse" class="json-view">Response will appear here...</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Node Types Panel -->
-            <div id="panel-nodes" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">Available Node Types</span>
-                        <select id="nodeCategory" onchange="filterNodes()" style="width: auto; padding: 6px 12px;">
-                            <option value="">All Categories</option>
-                            <option value="trigger">Triggers</option>
-                            <option value="action">Actions</option>
-                            <option value="logic">Logic</option>
-                            <option value="integration">Integrations</option>
-                        </select>
-                    </div>
-                    <div id="nodeTypesList" class="node-grid">Loading...</div>
-                </div>
-            </div>
-
-            <!-- WebSocket Panel -->
-            <div id="panel-websocket" class="panel">
-                <div class="grid grid-2">
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">WebSocket Connection</span>
-                            <span class="badge" id="wsStatusBadge">Disconnected</span>
-                        </div>
-                        <p style="color: var(--text-muted); margin-bottom: 15px;">
-                            Real-time events from workflow executions. Connection is managed automatically when you
-                            select a workspace.
-                        </p>
-                        <div class="flex gap-10">
-                            <button class="btn-primary" onclick="connectWebSocket()">Connect</button>
-                            <button class="btn-danger" onclick="disconnectWebSocket()">Disconnect</button>
-                        </div>
-
-                        <div style="margin-top: 20px;">
-                            <div class="form-group">
-                                <label>Subscribe to Workflow</label>
-                                <div class="flex gap-10">
-                                    <input type="text" id="wsSubscribeWorkflow" placeholder="Workflow ID"
-                                        class="flex-1">
-                                    <button class="btn-outline" onclick="wsSubscribe('workflow')">Subscribe</button>
                                 </div>
+                                <button class="btn btn-primary" onclick="triggerWebhook()" style="width: 100%;">
+                                    🚀 Send Request
+                                </button>
                             </div>
-                            <div class="form-group">
-                                <label>Subscribe to Execution</label>
-                                <div class="flex gap-10">
-                                    <input type="text" id="wsSubscribeExecution" placeholder="Execution ID"
-                                        class="flex-1">
-                                    <button class="btn-outline" onclick="wsSubscribe('execution')">Subscribe</button>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Response</span>
+                                <span class="badge" id="webhookStatusBadge">-</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label class="form-label">Status & Time</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="webhookStatus" value="-" readonly>
+                                        <input type="text" id="webhookTime" value="-" readonly style="width: 100px;">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Response Body</label>
+                                    <div class="code-block" id="webhookResponse" style="min-height: 200px;">
+                                        Response will appear here...
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Live Events</span>
-                            <button class="btn-outline btn-sm" onclick="clearWsEvents()">Clear</button>
+                <!-- Node Types Panel -->
+                <div id="panel-nodes" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>Node Types</h2>
+                        <div class="flex gap-2">
+                            <div class="tabs">
+                                <button class="tab active" data-category="">All</button>
+                                <button class="tab" data-category="trigger">Triggers</button>
+                                <button class="tab" data-category="action">Actions</button>
+                                <button class="tab" data-category="logic">Logic</button>
+                                <button class="tab" data-category="integration">Integrations</button>
+                            </div>
                         </div>
-                        <div id="wsEvents" class="log-panel" style="max-height: 500px;">
-                            <div class="log-entry">
-                                <span class="log-time">--:--:--</span>
-                                <span class="log-type info">INFO</span>
-                                <span>Waiting for events...</span>
+                    </div>
+                    <div class="node-grid" id="nodeTypesList">
+                        <div class="loading"><div class="spinner"></div></div>
+                    </div>
+                </div>
+
+                <!-- WebSocket Panel -->
+                <div id="panel-websocket" class="panel">
+                    <h2 class="mb-4">WebSocket Monitor</h2>
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Connection</span>
+                                <span class="badge" id="wsConnectionBadge">Disconnected</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="flex gap-2 mb-4">
+                                    <button class="btn btn-success" onclick="connectWebSocket()">Connect</button>
+                                    <button class="btn btn-danger" onclick="disconnectWebSocket()">Disconnect</button>
+                                    <button class="btn btn-outline" onclick="sendWsPing()">Ping</button>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Subscribe to Workflow</label>
+                                    <div class="input-group">
+                                        <input type="text" id="wsWorkflowId" placeholder="Workflow ID">
+                                        <button class="btn btn-outline" onclick="wsSubscribe('workflow')">Subscribe</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">Subscribe to Execution</label>
+                                    <div class="input-group">
+                                        <input type="text" id="wsExecutionId" placeholder="Execution ID">
+                                        <button class="btn btn-outline" onclick="wsSubscribe('execution')">Subscribe</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Send Custom Message</label>
+                                    <textarea id="wsCustomMessage" rows="3" placeholder='{"type": "ping"}'></textarea>
+                                    <button class="btn btn-outline mt-2" onclick="sendWsCustom()">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <span class="card-title">Events</span>
+                                <button class="btn btn-ghost btn-sm" onclick="clearWsEvents()">Clear</button>
+                            </div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;" id="wsEvents">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📡</div>
+                                    <div class="empty-state-title">No Events Yet</div>
+                                    <div class="empty-state-text">Connect to WebSocket to receive events</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Logs Panel -->
+                <div id="panel-logs" class="panel">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>API Logs</h2>
+                        <div class="flex gap-2">
+                            <select id="logFilter">
+                                <option value="">All</option>
+                                <option value="success">Success</option>
+                                <option value="error">Error</option>
+                            </select>
+                            <button class="btn btn-outline" onclick="clearLogs()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body" style="max-height: 600px; overflow-y: auto;" id="apiLogs">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <div class="empty-state-title">No Logs Yet</div>
+                                <div class="empty-state-text">API requests will be logged here</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- API Logs Panel -->
-            <div id="panel-logs" class="panel">
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title">API Request Logs</span>
-                        <button class="btn-outline btn-sm" onclick="clearLogs()">Clear</button>
-                    </div>
-                    <div id="apiLogs" class="log-panel" style="max-height: 600px;">
-                        <div class="log-entry">
-                            <span class="log-time">--:--:--</span>
-                            <span class="log-type info">INFO</span>
-                            <span>API logs will appear here...</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </main>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modals -->
     <!-- Create Workspace Modal -->
     <div class="modal-overlay" id="createWorkspaceModal">
         <div class="modal">
             <div class="modal-header">
-                <h3>Create Workspace</h3>
-                <button class="modal-close" onclick="closeModal('createWorkspaceModal')">&times;</button>
+                <span class="modal-title">Create Workspace</span>
+                <div class="modal-close" onclick="closeModal('createWorkspaceModal')">✕</div>
             </div>
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="wsName" placeholder="My Workspace">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="wsName" placeholder="My Workspace">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Slug</label>
+                    <input type="text" id="wsSlug" placeholder="my-workspace">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="wsDescription" rows="3" placeholder="Optional description"></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Slug</label>
-                <input type="text" id="wsSlug" placeholder="my-workspace">
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('createWorkspaceModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createWorkspace()">Create</button>
             </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="wsDescription" rows="3" placeholder="Optional description"></textarea>
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="createWorkspace()">Create</button>
         </div>
     </div>
 
     <!-- Create Workflow Modal -->
     <div class="modal-overlay" id="createWorkflowModal">
-        <div class="modal">
+        <div class="modal" style="max-width: 700px;">
             <div class="modal-header">
-                <h3>Create Workflow</h3>
-                <button class="modal-close" onclick="closeModal('createWorkflowModal')">&times;</button>
+                <span class="modal-title">Create Workflow</span>
+                <div class="modal-close" onclick="closeModal('createWorkflowModal')">✕</div>
             </div>
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="wfName" placeholder="My Workflow">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="wfName" placeholder="My Workflow">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" id="wfDescription" placeholder="What does this workflow do?">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Template</label>
+                    <select id="wfTemplate" onchange="updateWorkflowTemplate()">
+                        <option value="http">HTTP Request</option>
+                        <option value="webhook">Webhook Handler</option>
+                        <option value="conditional">Conditional Logic</option>
+                        <option value="loop">Loop Example</option>
+                        <option value="transform">Data Transform</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Definition (JSON)</label>
+                    <textarea id="wfDefinition" rows="15" style="font-family: monospace;"></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Description</label>
-                <textarea id="wfDescription" rows="2" placeholder="Optional description"></textarea>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('createWorkflowModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createWorkflow()">Create Workflow</button>
             </div>
-            <div class="form-group">
-                <label>Template</label>
-                <select id="wfTemplate" onchange="updateWorkflowTemplate()">
-                    <option value="http">HTTP Request (Default)</option>
-                    <option value="webhook">Webhook Triggered</option>
-                    <option value="conditional">Conditional Logic</option>
-                    <option value="loop">Loop Example</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Workflow Definition (JSON)</label>
-                <textarea id="wfDefinition" rows="12" style="font-family: monospace; font-size: 0.85rem;"></textarea>
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="createWorkflow()">Create</button>
         </div>
     </div>
 
@@ -951,31 +1150,36 @@
     <div class="modal-overlay" id="createCredentialModal">
         <div class="modal">
             <div class="modal-header">
-                <h3>Create Credential</h3>
-                <button class="modal-close" onclick="closeModal('createCredentialModal')">&times;</button>
+                <span class="modal-title">Add Credential</span>
+                <div class="modal-close" onclick="closeModal('createCredentialModal')">✕</div>
             </div>
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="credName" placeholder="My API Key">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="credName" placeholder="My API Key">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type</label>
+                    <select id="credType">
+                        <option value="api_key">API Key</option>
+                        <option value="bearer">Bearer Token</option>
+                        <option value="basic_auth">Basic Auth</option>
+                        <option value="oauth2">OAuth2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" id="credDescription" placeholder="Optional description">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Credential Data (JSON)</label>
+                    <textarea id="credData" rows="5" placeholder='{"api_key": "sk-xxx"}'></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Type</label>
-                <select id="credType">
-                    <option value="api_key">API Key</option>
-                    <option value="oauth2">OAuth2</option>
-                    <option value="basic_auth">Basic Auth</option>
-                    <option value="bearer">Bearer Token</option>
-                </select>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('createCredentialModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createCredential()">Add Credential</button>
             </div>
-            <div class="form-group">
-                <label>Description</label>
-                <input type="text" id="credDescription" placeholder="Optional description">
-            </div>
-            <div class="form-group">
-                <label>Credential Data (JSON)</label>
-                <textarea id="credData" rows="4" placeholder='{"api_key": "sk-xxx"}'></textarea>
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="createCredential()">Create</button>
         </div>
     </div>
 
@@ -983,38 +1187,45 @@
     <div class="modal-overlay" id="createScheduleModal">
         <div class="modal">
             <div class="modal-header">
-                <h3>Create Schedule</h3>
-                <button class="modal-close" onclick="closeModal('createScheduleModal')">&times;</button>
+                <span class="modal-title">Create Schedule</span>
+                <div class="modal-close" onclick="closeModal('createScheduleModal')">✕</div>
             </div>
-            <div class="form-group">
-                <label>Workflow</label>
-                <select id="schedWorkflow"></select>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Workflow</label>
+                    <select id="schedWorkflow"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="schedName" placeholder="Daily Report">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cron Expression</label>
+                    <input type="text" id="schedCron" placeholder="*/5 * * * *" value="*/5 * * * *">
+                    <div class="text-sm text-muted mt-2">Examples: <code>*/5 * * * *</code> (every 5 min), <code>0 9 * * *</code> (daily 9am)</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Timezone</label>
+                    <input type="text" id="schedTimezone" value="UTC">
+                </div>
             </div>
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="schedName" placeholder="Daily Report">
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('createScheduleModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createSchedule()">Create Schedule</button>
             </div>
-            <div class="form-group">
-                <label>Cron Expression</label>
-                <input type="text" id="schedCron" placeholder="0 9 * * *" value="*/5 * * * *">
-                <small style="color: var(--text-muted);">Example: */5 * * * * (every 5 minutes)</small>
-            </div>
-            <div class="form-group">
-                <label>Timezone</label>
-                <input type="text" id="schedTimezone" value="UTC">
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="createSchedule()">Create</button>
         </div>
     </div>
 
     <!-- Execution Detail Modal -->
     <div class="modal-overlay" id="executionDetailModal">
-        <div class="modal" style="max-width: 800px;">
+        <div class="modal" style="max-width: 900px;">
             <div class="modal-header">
-                <h3>Execution Details</h3>
-                <button class="modal-close" onclick="closeModal('executionDetailModal')">&times;</button>
+                <span class="modal-title">Execution Details</span>
+                <div class="modal-close" onclick="closeModal('executionDetailModal')">✕</div>
             </div>
-            <div id="executionDetail">Loading...</div>
+            <div class="modal-body" id="executionDetail">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
         </div>
     </div>
 
@@ -1022,900 +1233,978 @@
     <div class="modal-overlay" id="nodeDetailModal">
         <div class="modal" style="max-width: 700px;">
             <div class="modal-header">
-                <h3 id="nodeDetailTitle">Node Details</h3>
-                <button class="modal-close" onclick="closeModal('nodeDetailModal')">&times;</button>
+                <span class="modal-title" id="nodeDetailTitle">Node Details</span>
+                <div class="modal-close" onclick="closeModal('nodeDetailModal')">✕</div>
             </div>
-            <div id="nodeDetail">Loading...</div>
+            <div class="modal-body" id="nodeDetail">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
         </div>
     </div>
 
-    <script>
-        // State
-        let state = {
-            baseUrl: 'http://api.linkflow.icu',
-            accessToken: null,
-            refreshToken: null,
-            user: null,
-            workspaces: [],
-            currentWorkspace: null,
-            workflows: [],
-            nodeTypes: [],
-            ws: null
-        };
+<script>
+// ============ STATE ============
+const state = {
+    baseUrl: 'http://localhost:8090',
+    accessToken: null,
+    refreshToken: null,
+    user: null,
+    workspaces: [],
+    currentWorkspace: null,
+    workflows: [],
+    nodeTypes: [],
+    ws: null,
+    wsReconnectAttempts: 0,
+    maxReconnectAttempts: 5
+};
 
-        // Workflow Templates
-        const workflowTemplates = {
-            http: {
-                nodes: [
-                    { id: "trigger_1", type: "trigger.manual", name: "Manual Trigger", position: { x: 100, y: 100 }, parameters: {} },
-                    { id: "http_1", type: "action.http", name: "HTTP Request", position: { x: 300, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts/1", method: "GET" } }
-                ],
-                connections: [{ id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" }]
-            },
-            webhook: {
-                nodes: [
-                    { id: "trigger_1", type: "trigger.webhook", name: "Webhook Trigger", position: { x: 100, y: 100 }, parameters: { method: "POST" } },
-                    { id: "http_1", type: "action.http", name: "Process Data", position: { x: 300, y: 100 }, parameters: { url: "https://httpbin.org/post", method: "POST", body: "{{$input.json}}" } },
-                    { id: "respond_1", type: "action.respond", name: "Respond", position: { x: 500, y: 100 }, parameters: { status_code: 200, body: { success: true } } }
-                ],
-                connections: [
-                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
-                    { id: "conn_2", source_node_id: "http_1", target_node_id: "respond_1" }
-                ]
-            },
-            conditional: {
-                nodes: [
-                    { id: "trigger_1", type: "trigger.manual", name: "Start", position: { x: 100, y: 150 }, parameters: {} },
-                    { id: "http_1", type: "action.http", name: "Get User", position: { x: 300, y: 150 }, parameters: { url: "https://jsonplaceholder.typicode.com/users/1", method: "GET" } },
-                    { id: "if_1", type: "logic.if", name: "Check Status", position: { x: 500, y: 150 }, parameters: { condition: "{{$node.http_1.data.id}} == 1" } },
-                    { id: "set_true", type: "action.set", name: "Set True", position: { x: 700, y: 100 }, parameters: { values: { result: "User found" } } },
-                    { id: "set_false", type: "action.set", name: "Set False", position: { x: 700, y: 200 }, parameters: { values: { result: "User not found" } } }
-                ],
-                connections: [
-                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
-                    { id: "conn_2", source_node_id: "http_1", target_node_id: "if_1" },
-                    { id: "conn_3", source_node_id: "if_1", source_handle: "true", target_node_id: "set_true" },
-                    { id: "conn_4", source_node_id: "if_1", source_handle: "false", target_node_id: "set_false" }
-                ]
-            },
-            loop: {
-                nodes: [
-                    { id: "trigger_1", type: "trigger.manual", name: "Start", position: { x: 100, y: 100 }, parameters: {} },
-                    { id: "http_1", type: "action.http", name: "Get Posts", position: { x: 300, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts?_limit=3", method: "GET" } },
-                    { id: "loop_1", type: "logic.loop", name: "Loop Posts", position: { x: 500, y: 100 }, parameters: { items: "{{$node.http_1.data}}" } },
-                    { id: "set_1", type: "action.set", name: "Process Item", position: { x: 700, y: 100 }, parameters: { values: { title: "{{$item.title}}" } } }
-                ],
-                connections: [
-                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
-                    { id: "conn_2", source_node_id: "http_1", target_node_id: "loop_1" },
-                    { id: "conn_3", source_node_id: "loop_1", target_node_id: "set_1" }
-                ]
-            }
-        };
+// ============ WORKFLOW TEMPLATES ============
+const workflowTemplates = {
+    http: {
+        nodes: [
+            { id: "trigger", type: "trigger.manual", name: "Start", position: { x: 100, y: 100 }, parameters: {} },
+            { id: "http", type: "action.http", name: "HTTP Request", position: { x: 350, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts/1", method: "GET" } }
+        ],
+        connections: [{ id: "c1", source_node_id: "trigger", target_node_id: "http" }]
+    },
+    webhook: {
+        nodes: [
+            { id: "trigger", type: "trigger.webhook", name: "Webhook", position: { x: 100, y: 100 }, parameters: { method: "POST" } },
+            { id: "process", type: "action.http", name: "Process", position: { x: 350, y: 100 }, parameters: { url: "https://httpbin.org/post", method: "POST" } },
+            { id: "respond", type: "action.respond", name: "Respond", position: { x: 600, y: 100 }, parameters: { status_code: 200 } }
+        ],
+        connections: [{ id: "c1", source_node_id: "trigger", target_node_id: "process" }, { id: "c2", source_node_id: "process", target_node_id: "respond" }]
+    },
+    conditional: {
+        nodes: [
+            { id: "trigger", type: "trigger.manual", name: "Start", position: { x: 100, y: 150 }, parameters: {} },
+            { id: "http", type: "action.http", name: "Get Data", position: { x: 350, y: 150 }, parameters: { url: "https://jsonplaceholder.typicode.com/users/1", method: "GET" } },
+            { id: "if", type: "logic.if", name: "Check", position: { x: 600, y: 150 }, parameters: { condition: "{{$node.http.data.id}} == 1" } },
+            { id: "true", type: "action.set", name: "True Path", position: { x: 850, y: 80 }, parameters: { values: { result: "found" } } },
+            { id: "false", type: "action.set", name: "False Path", position: { x: 850, y: 220 }, parameters: { values: { result: "not found" } } }
+        ],
+        connections: [
+            { id: "c1", source_node_id: "trigger", target_node_id: "http" },
+            { id: "c2", source_node_id: "http", target_node_id: "if" },
+            { id: "c3", source_node_id: "if", source_handle: "true", target_node_id: "true" },
+            { id: "c4", source_node_id: "if", source_handle: "false", target_node_id: "false" }
+        ]
+    },
+    loop: {
+        nodes: [
+            { id: "trigger", type: "trigger.manual", name: "Start", position: { x: 100, y: 100 }, parameters: {} },
+            { id: "http", type: "action.http", name: "Get Items", position: { x: 350, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts?_limit=3", method: "GET" } },
+            { id: "loop", type: "logic.loop", name: "Loop", position: { x: 600, y: 100 }, parameters: {} },
+            { id: "process", type: "action.set", name: "Process Item", position: { x: 850, y: 100 }, parameters: {} }
+        ],
+        connections: [
+            { id: "c1", source_node_id: "trigger", target_node_id: "http" },
+            { id: "c2", source_node_id: "http", target_node_id: "loop" },
+            { id: "c3", source_node_id: "loop", target_node_id: "process" }
+        ]
+    },
+    transform: {
+        nodes: [
+            { id: "trigger", type: "trigger.manual", name: "Start", position: { x: 100, y: 100 }, parameters: {} },
+            { id: "http", type: "action.http", name: "Fetch", position: { x: 350, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/users", method: "GET" } },
+            { id: "filter", type: "logic.filter", name: "Filter", position: { x: 600, y: 100 }, parameters: { condition: "item.id < 5" } },
+            { id: "set", type: "action.set", name: "Transform", position: { x: 850, y: 100 }, parameters: { values: { processed: true } } }
+        ],
+        connections: [
+            { id: "c1", source_node_id: "trigger", target_node_id: "http" },
+            { id: "c2", source_node_id: "http", target_node_id: "filter" },
+            { id: "c3", source_node_id: "filter", target_node_id: "set" }
+        ]
+    }
+};
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            state.baseUrl = localStorage.getItem('linkflow_base_url') || 'http://localhost:8090';
-            document.getElementById('baseUrl').value = state.baseUrl;
-
-            const savedToken = localStorage.getItem('linkflow_token');
-            const savedRefresh = localStorage.getItem('linkflow_refresh');
-            if (savedToken && savedRefresh) {
-                state.accessToken = savedToken;
-                state.refreshToken = savedRefresh;
-                initApp();
-            }
-
-            // Tab switching
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    switchTab(tab.dataset.tab);
-                });
-            });
-
-            // Initialize workflow template
-            updateWorkflowTemplate();
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+    state.baseUrl = localStorage.getItem('linkflow_base_url') || 'http://localhost:8090';
+    document.getElementById('baseUrl').value = state.baseUrl;
+    
+    const savedToken = localStorage.getItem('linkflow_token');
+    if (savedToken) {
+        state.accessToken = savedToken;
+        state.refreshToken = localStorage.getItem('linkflow_refresh');
+        initApp();
+    }
+    
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => switchTab(item.dataset.tab));
+    });
+    
+    // Node category tabs
+    document.querySelectorAll('[data-category]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('[data-category]').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            filterNodes(tab.dataset.category);
         });
+    });
+    
+    // Modal close on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) overlay.classList.remove('active');
+        });
+    });
+    
+    updateWorkflowTemplate();
+});
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-            document.getElementById(`panel-${tabId}`).classList.add('active');
+function switchTab(tabId) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabId}"]`)?.classList.add('active');
+    document.getElementById(`panel-${tabId}`).classList.add('active');
+    
+    if (tabId === 'workflows') loadWorkflows();
+    if (tabId === 'executions') loadExecutions();
+    if (tabId === 'credentials') loadCredentials();
+    if (tabId === 'schedules') loadSchedules();
+    if (tabId === 'nodes') loadNodeTypes();
+}
 
-            // Load data for specific tabs
-            if (tabId === 'workflows') loadWorkflows();
-            if (tabId === 'executions') loadExecutions();
-            if (tabId === 'credentials') loadCredentials();
-            if (tabId === 'schedules') loadSchedules();
-            if (tabId === 'nodes') loadNodeTypes();
+// ============ API ============
+async function api(method, path, body = null, auth = true) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (auth && state.accessToken) headers['Authorization'] = `Bearer ${state.accessToken}`;
+    
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    
+    const start = Date.now();
+    try {
+        const res = await fetch(`${state.baseUrl}${path}`, options);
+        const duration = Date.now() - start;
+        const data = await res.json().catch(() => ({}));
+        
+        logApiCall(method, path, res.status, duration, data);
+        
+        if (res.status === 401 && state.refreshToken) {
+            const refreshed = await refreshToken();
+            if (refreshed) return api(method, path, body, auth);
         }
+        
+        return { status: res.status, data: data.data || data, error: data.error || data.message };
+    } catch (err) {
+        logApiCall(method, path, 0, Date.now() - start, { error: err.message });
+        return { status: 0, error: err.message };
+    }
+}
 
-        // API Helper
-        async function api(method, path, body = null, auth = true) {
-            const url = `${state.baseUrl}${path}`;
-            const headers = { 'Content-Type': 'application/json' };
-            if (auth && state.accessToken) {
-                headers['Authorization'] = `Bearer ${state.accessToken}`;
-            }
+function logApiCall(method, path, status, duration, data) {
+    const el = document.getElementById('apiLogs');
+    const isEmpty = el.querySelector('.empty-state');
+    if (isEmpty) el.innerHTML = '';
+    
+    const isSuccess = status >= 200 && status < 300;
+    const entry = document.createElement('div');
+    entry.className = 'list-item';
+    entry.innerHTML = `
+        <div class="list-item-icon" style="background: ${isSuccess ? 'var(--success-light)' : 'var(--danger-light)'}; color: ${isSuccess ? 'var(--success)' : 'var(--danger)'};">
+            ${isSuccess ? '✓' : '✗'}
+        </div>
+        <div class="list-item-content">
+            <div class="list-item-title">${method} ${path}</div>
+            <div class="list-item-subtitle">${new Date().toLocaleTimeString()} • ${duration}ms • Status: ${status || 'Error'}</div>
+        </div>
+        <span class="badge ${isSuccess ? 'badge-success' : 'badge-danger'}">${status || 'ERR'}</span>
+    `;
+    el.insertBefore(entry, el.firstChild);
+}
 
-            const options = { method, headers };
-            if (body) options.body = JSON.stringify(body);
+function clearLogs() {
+    document.getElementById('apiLogs').innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <div class="empty-state-title">No Logs Yet</div>
+            <div class="empty-state-text">API requests will be logged here</div>
+        </div>
+    `;
+}
 
-            const startTime = Date.now();
-            try {
-                const res = await fetch(url, options);
-                const duration = Date.now() - startTime;
-                const data = await res.json().catch(() => ({}));
+// ============ AUTH ============
+function toggleAuthForm(form) {
+    document.getElementById('loginForm').classList.toggle('hidden', form === 'register');
+    document.getElementById('registerForm').classList.toggle('hidden', form === 'login');
+}
 
-                logApi(method, path, res.status, duration, data);
+async function login() {
+    state.baseUrl = document.getElementById('baseUrl').value;
+    localStorage.setItem('linkflow_base_url', state.baseUrl);
+    
+    const res = await api('POST', '/api/v1/auth/login', {
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+    }, false);
+    
+    if (res.status === 200 && res.data.access_token) {
+        state.accessToken = res.data.access_token;
+        state.refreshToken = res.data.refresh_token;
+        state.user = res.data.user;
+        localStorage.setItem('linkflow_token', state.accessToken);
+        localStorage.setItem('linkflow_refresh', state.refreshToken);
+        initApp();
+        toast('Welcome back!', 'success');
+    } else {
+        toast(res.error || 'Login failed', 'error');
+    }
+}
 
-                if (res.status === 401 && state.refreshToken) {
-                    const refreshed = await refreshToken();
-                    if (refreshed) {
-                        headers['Authorization'] = `Bearer ${state.accessToken}`;
-                        const retryRes = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
-                        return retryRes.json();
-                    }
-                }
+async function register() {
+    state.baseUrl = document.getElementById('baseUrl').value;
+    localStorage.setItem('linkflow_base_url', state.baseUrl);
+    
+    const res = await api('POST', '/api/v1/auth/register', {
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value,
+        first_name: document.getElementById('regFirstName').value,
+        last_name: document.getElementById('regLastName').value
+    }, false);
+    
+    if (res.status === 201 && res.data.access_token) {
+        state.accessToken = res.data.access_token;
+        state.refreshToken = res.data.refresh_token;
+        state.user = res.data.user;
+        localStorage.setItem('linkflow_token', state.accessToken);
+        localStorage.setItem('linkflow_refresh', state.refreshToken);
+        initApp();
+        toast('Account created!', 'success');
+    } else {
+        toast(res.error || 'Registration failed', 'error');
+    }
+}
 
-                return { status: res.status, data: data.data || data, error: data.error || data.message };
-            } catch (err) {
-                logApi(method, path, 0, Date.now() - startTime, { error: err.message });
-                return { status: 0, error: err.message };
-            }
+async function refreshToken() {
+    const res = await api('POST', '/api/v1/auth/refresh', { refresh_token: state.refreshToken }, false);
+    if (res.status === 200 && res.data.access_token) {
+        state.accessToken = res.data.access_token;
+        state.refreshToken = res.data.refresh_token;
+        localStorage.setItem('linkflow_token', state.accessToken);
+        localStorage.setItem('linkflow_refresh', state.refreshToken);
+        return true;
+    }
+    return false;
+}
+
+function logout() {
+    api('POST', '/api/v1/auth/logout');
+    state.accessToken = null;
+    state.refreshToken = null;
+    localStorage.removeItem('linkflow_token');
+    localStorage.removeItem('linkflow_refresh');
+    disconnectWebSocket();
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+}
+
+// ============ APP INIT ============
+async function initApp() {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    
+    const userRes = await api('GET', '/api/v1/users/me');
+    if (userRes.status === 200) {
+        state.user = userRes.data;
+        document.getElementById('userAvatar').textContent = (state.user.first_name || state.user.email)[0].toUpperCase();
+    }
+    
+    await loadWorkspaces();
+    checkHealth();
+}
+
+async function loadWorkspaces() {
+    const res = await api('GET', '/api/v1/workspaces');
+    if (res.status === 200) {
+        state.workspaces = res.data || [];
+        const select = document.getElementById('workspaceSelect');
+        select.innerHTML = '<option value="">Select Workspace</option>' + 
+            state.workspaces.map(ws => `<option value="${ws.id}">${ws.name}</option>`).join('');
+        
+        if (state.workspaces.length > 0) {
+            selectWorkspace(state.workspaces[0].id);
         }
+    }
+}
 
-        function logApi(method, path, status, duration, data) {
-            const logsEl = document.getElementById('apiLogs');
-            const time = new Date().toLocaleTimeString();
-            const statusClass = status >= 200 && status < 300 ? 'success' : status >= 400 ? 'error' : 'info';
+async function selectWorkspace(id) {
+    if (!id) return;
+    state.currentWorkspace = state.workspaces.find(ws => ws.id === id);
+    document.getElementById('workspaceSelect').value = id;
+    
+    connectWebSocket();
+    loadDashboardData();
+}
 
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `
-                <span class="log-time">${time}</span>
-                <span class="log-type ${statusClass}">${status || 'ERR'}</span>
-                <strong>${method}</strong> ${path}
-                <span style="color: var(--text-muted);">(${duration}ms)</span>
-                <div style="margin-top: 5px; font-size: 0.8rem; color: var(--text-muted); max-height: 100px; overflow: hidden;">
-                    ${JSON.stringify(data).substring(0, 200)}${JSON.stringify(data).length > 200 ? '...' : ''}
+async function loadDashboardData() {
+    if (!state.currentWorkspace) return;
+    
+    loadRecentExecutions();
+    loadExecutionStats();
+    loadWorkflows();
+}
+
+// ============ HEALTH ============
+async function checkHealth() {
+    const res = await api('GET', '/api/v1/health', null, false);
+    if (res.status === 200) {
+        const h = res.data;
+        updateHealthBadge('healthOverall', h.status === 'healthy');
+        updateHealthBadge('healthDB', h.components?.database === 'healthy');
+        updateHealthBadge('healthRedis', h.components?.redis === 'healthy');
+    }
+}
+
+function updateHealthBadge(id, healthy) {
+    const el = document.getElementById(id);
+    el.className = `badge ${healthy ? 'badge-success' : 'badge-danger'}`;
+    el.innerHTML = `<span class="badge-dot ${healthy ? 'success' : 'danger'}"></span> ${healthy ? 'Healthy' : 'Unhealthy'}`;
+}
+
+// ============ STATS ============
+async function loadExecutionStats() {
+    if (!state.currentWorkspace) return;
+    const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/stats?period=24h`);
+    if (res.status === 200) {
+        document.getElementById('statCompleted').textContent = res.data.completed || 0;
+        document.getElementById('statFailed').textContent = res.data.failed || 0;
+        document.getElementById('statAvgTime').textContent = `${res.data.average_duration_ms || 0}ms`;
+    }
+    
+    const wfRes = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`);
+    if (wfRes.status === 200) {
+        document.getElementById('statWorkflows').textContent = (wfRes.data || []).length;
+    }
+}
+
+// ============ WORKFLOWS ============
+async function loadWorkflows() {
+    if (!state.currentWorkspace) return;
+    const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`);
+    if (res.status === 200) {
+        state.workflows = res.data || [];
+        renderWorkflows(state.workflows);
+    }
+}
+
+function renderWorkflows(workflows) {
+    const el = document.getElementById('workflowsList');
+    if (!workflows.length) {
+        el.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚡</div>
+                <div class="empty-state-title">No Workflows Yet</div>
+                <div class="empty-state-text">Create your first workflow to get started</div>
+                <button class="btn btn-primary" onclick="openModal('createWorkflowModal')">Create Workflow</button>
+            </div>
+        `;
+        return;
+    }
+    
+    el.innerHTML = workflows.map(wf => `
+        <div class="list-item">
+            <div class="list-item-icon" style="background: var(--primary-light); color: var(--primary);">⚡</div>
+            <div class="list-item-content">
+                <div class="list-item-title">${wf.name}</div>
+                <div class="list-item-subtitle">${wf.description || 'No description'} • ${wf.nodes?.length || 0} nodes</div>
+            </div>
+            <span class="badge ${wf.status === 'active' ? 'badge-success' : 'badge-warning'}">
+                <span class="badge-dot ${wf.status === 'active' ? 'success' : 'warning'}"></span>
+                ${wf.status}
+            </span>
+            <div class="list-item-actions">
+                <button class="btn btn-primary btn-sm" onclick="executeWorkflow('${wf.id}')">▶ Run</button>
+                <button class="btn btn-outline btn-sm" onclick="toggleWorkflow('${wf.id}', '${wf.status}')">${wf.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteWorkflow('${wf.id}')">🗑</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterWorkflows() {
+    const search = document.getElementById('workflowSearch').value.toLowerCase();
+    const filtered = state.workflows.filter(wf => 
+        wf.name.toLowerCase().includes(search) || 
+        (wf.description || '').toLowerCase().includes(search)
+    );
+    renderWorkflows(filtered);
+}
+
+async function executeWorkflow(id) {
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/execute`, {
+        input_data: { triggered_from: 'dashboard', timestamp: new Date().toISOString() }
+    });
+    if (res.status === 202) {
+        toast('Workflow started!', 'success');
+        document.getElementById('wsExecutionId').value = res.data.execution_id;
+        loadRecentExecutions();
+    } else {
+        toast(res.error || 'Failed to execute', 'error');
+    }
+}
+
+async function toggleWorkflow(id, status) {
+    const action = status === 'active' ? 'deactivate' : 'activate';
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/${action}`);
+    if (res.status === 200) {
+        toast(`Workflow ${action}d`, 'success');
+        loadWorkflows();
+    }
+}
+
+async function deleteWorkflow(id) {
+    if (!confirm('Delete this workflow?')) return;
+    const res = await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}`);
+    if (res.status === 200 || res.status === 204) {
+        toast('Workflow deleted', 'success');
+        loadWorkflows();
+    }
+}
+
+function updateWorkflowTemplate() {
+    const template = document.getElementById('wfTemplate').value;
+    document.getElementById('wfDefinition').value = JSON.stringify(workflowTemplates[template], null, 2);
+}
+
+async function createWorkflow() {
+    let definition;
+    try { definition = JSON.parse(document.getElementById('wfDefinition').value); }
+    catch { toast('Invalid JSON', 'error'); return; }
+    
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`, {
+        name: document.getElementById('wfName').value || 'New Workflow',
+        description: document.getElementById('wfDescription').value,
+        ...definition
+    });
+    if (res.status === 201) {
+        toast('Workflow created!', 'success');
+        closeModal('createWorkflowModal');
+        loadWorkflows();
+    } else {
+        toast(res.error || 'Failed to create', 'error');
+    }
+}
+
+// ============ EXECUTIONS ============
+async function loadRecentExecutions() {
+    if (!state.currentWorkspace) return;
+    const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=5`);
+    if (res.status === 200) {
+        renderExecutions(res.data || [], 'recentExecutions');
+        updateRunningCount(res.data);
+    }
+}
+
+async function loadExecutions() {
+    if (!state.currentWorkspace) return;
+    const status = document.getElementById('execStatusFilter').value;
+    let url = `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=20`;
+    if (status) url += `&status=${status}`;
+    
+    const res = await api('GET', url);
+    if (res.status === 200) {
+        renderExecutions(res.data || [], 'executionsList');
+    }
+}
+
+function renderExecutions(executions, containerId) {
+    const el = document.getElementById(containerId);
+    if (!executions.length) {
+        el.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">▶️</div>
+                <div class="empty-state-title">No Executions Yet</div>
+                <div class="empty-state-text">Execute a workflow to see results here</div>
+            </div>
+        `;
+        return;
+    }
+    
+    el.innerHTML = executions.map(exec => `
+        <div class="list-item">
+            <div class="list-item-icon" style="background: ${getStatusColor(exec.status)}20; color: ${getStatusColor(exec.status)};">
+                ${getStatusIcon(exec.status)}
+            </div>
+            <div class="list-item-content">
+                <div class="list-item-title">${exec.workflow_name || exec.workflow_id.slice(0, 8)}</div>
+                <div class="list-item-subtitle">${exec.trigger_type} • ${formatTime(exec.created_at)} • ${exec.duration_ms || 0}ms</div>
+            </div>
+            <span class="badge badge-${getStatusBadge(exec.status)}">${exec.status}</span>
+            <div class="list-item-actions">
+                <button class="btn btn-ghost btn-sm" onclick="viewExecution('${exec.id}')">View</button>
+                ${exec.status === 'running' ? `<button class="btn btn-danger btn-sm" onclick="cancelExecution('${exec.id}')">Cancel</button>` : ''}
+                ${exec.status === 'failed' ? `<button class="btn btn-warning btn-sm" onclick="retryExecution('${exec.id}')">Retry</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    const colors = { completed: '#10b981', failed: '#ef4444', running: '#f59e0b', queued: '#3b82f6', cancelled: '#6b7280' };
+    return colors[status] || '#6b7280';
+}
+
+function getStatusIcon(status) {
+    const icons = { completed: '✓', failed: '✗', running: '◐', queued: '◷', cancelled: '⊘' };
+    return icons[status] || '?';
+}
+
+function getStatusBadge(status) {
+    const badges = { completed: 'success', failed: 'danger', running: 'warning', queued: 'info', cancelled: 'danger' };
+    return badges[status] || 'info';
+}
+
+function formatTime(dateStr) {
+    return new Date(dateStr).toLocaleString();
+}
+
+function updateRunningCount(executions) {
+    const running = (executions || []).filter(e => e.status === 'running').length;
+    const badge = document.getElementById('runningCount');
+    if (running > 0) {
+        badge.textContent = running;
+        badge.style.display = 'block';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+async function viewExecution(id) {
+    openModal('executionDetailModal');
+    document.getElementById('executionDetail').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    
+    const [execRes, nodesRes] = await Promise.all([
+        api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}`),
+        api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/nodes`)
+    ]);
+    
+    if (execRes.status === 200) {
+        const exec = execRes.data;
+        const nodes = nodesRes.data || [];
+        
+        document.getElementById('executionDetail').innerHTML = `
+            <div class="grid grid-4 mb-4">
+                <div class="stat-card">
+                    <div class="stat-label">Status</div>
+                    <span class="badge badge-${getStatusBadge(exec.status)}">${exec.status}</span>
                 </div>
-            `;
-            logsEl.insertBefore(entry, logsEl.firstChild);
-        }
-
-        function clearLogs() {
-            document.getElementById('apiLogs').innerHTML = '';
-        }
-
-        // Auth
-        function showLogin() {
-            document.getElementById('loginTab').classList.remove('hidden');
-            document.getElementById('registerTab').classList.add('hidden');
-        }
-
-        function showRegister() {
-            document.getElementById('loginTab').classList.add('hidden');
-            document.getElementById('registerTab').classList.remove('hidden');
-        }
-
-        async function login() {
-            state.baseUrl = document.getElementById('baseUrl').value;
-            localStorage.setItem('linkflow_base_url', state.baseUrl);
-
-            const res = await api('POST', '/api/v1/auth/login', {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            }, false);
-
-            if (res.status === 200 && res.data.access_token) {
-                state.accessToken = res.data.access_token;
-                state.refreshToken = res.data.refresh_token;
-                state.user = res.data.user;
-                localStorage.setItem('linkflow_token', state.accessToken);
-                localStorage.setItem('linkflow_refresh', state.refreshToken);
-                initApp();
-            } else {
-                showError(res.error || 'Login failed');
-            }
-        }
-
-        async function register() {
-            state.baseUrl = document.getElementById('baseUrl').value;
-            localStorage.setItem('linkflow_base_url', state.baseUrl);
-
-            const res = await api('POST', '/api/v1/auth/register', {
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value,
-                first_name: document.getElementById('regFirstName').value,
-                last_name: document.getElementById('regLastName').value
-            }, false);
-
-            if (res.status === 201 && res.data.access_token) {
-                state.accessToken = res.data.access_token;
-                state.refreshToken = res.data.refresh_token;
-                state.user = res.data.user;
-                localStorage.setItem('linkflow_token', state.accessToken);
-                localStorage.setItem('linkflow_refresh', state.refreshToken);
-                initApp();
-            } else {
-                showError(res.error || 'Registration failed');
-            }
-        }
-
-        async function refreshToken() {
-            const res = await api('POST', '/api/v1/auth/refresh', { refresh_token: state.refreshToken }, false);
-            if (res.status === 200 && res.data.access_token) {
-                state.accessToken = res.data.access_token;
-                state.refreshToken = res.data.refresh_token;
-                localStorage.setItem('linkflow_token', state.accessToken);
-                localStorage.setItem('linkflow_refresh', state.refreshToken);
-                return true;
-            }
-            return false;
-        }
-
-        function logout() {
-            api('POST', '/api/v1/auth/logout');
-            state.accessToken = null;
-            state.refreshToken = null;
-            state.user = null;
-            localStorage.removeItem('linkflow_token');
-            localStorage.removeItem('linkflow_refresh');
-            disconnectWebSocket();
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('mainApp').classList.add('hidden');
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('loginError');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
-
-        // App Init
-        async function initApp() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('mainApp').classList.remove('hidden');
-
-            // Get user info
-            const userRes = await api('GET', '/api/v1/users/me');
-            if (userRes.status === 200) {
-                state.user = userRes.data;
-                document.getElementById('userEmail').textContent = state.user.email;
-            }
-
-            // Load workspaces
-            await loadWorkspaces();
-
-            // Check health
-            checkHealth();
-        }
-
-        async function loadWorkspaces() {
-            const res = await api('GET', '/api/v1/workspaces');
-            if (res.status === 200) {
-                state.workspaces = res.data || [];
-                const select = document.getElementById('workspaceSelect');
-                select.innerHTML = '<option value="">Select Workspace</option>';
-                state.workspaces.forEach(ws => {
-                    select.innerHTML += `<option value="${ws.id}">${ws.name}</option>`;
-                });
-
-                if (state.workspaces.length > 0) {
-                    selectWorkspace(state.workspaces[0].id);
-                }
-            }
-        }
-
-        function selectWorkspace(id) {
-            state.currentWorkspace = state.workspaces.find(ws => ws.id === id);
-            document.getElementById('workspaceSelect').value = id;
-
-            if (state.currentWorkspace) {
-                connectWebSocket();
-                loadRecentExecutions();
-                loadExecutionStats();
-            }
-        }
-
-        // Health Check
-        async function checkHealth() {
-            const res = await api('GET', '/api/v1/health', null, false);
-            if (res.status === 200) {
-                document.getElementById('healthOverall').textContent = res.data.status === 'healthy' ? '✓' : '✗';
-                document.getElementById('healthOverall').style.color = res.data.status === 'healthy' ? 'var(--success)' : 'var(--danger)';
-
-                if (res.data.components) {
-                    document.getElementById('healthDB').textContent = res.data.components.database === 'healthy' ? '✓' : '✗';
-                    document.getElementById('healthDB').style.color = res.data.components.database === 'healthy' ? 'var(--success)' : 'var(--danger)';
-                    document.getElementById('healthRedis').textContent = res.data.components.redis === 'healthy' ? '✓' : '✗';
-                    document.getElementById('healthRedis').style.color = res.data.components.redis === 'healthy' ? 'var(--success)' : 'var(--danger)';
-                }
-            }
-        }
-
-        // Execution Stats
-        async function loadExecutionStats() {
-            if (!state.currentWorkspace) return;
-            const period = document.getElementById('statsPeriod').value;
-            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/stats?period=${period}`);
-            if (res.status === 200) {
-                document.getElementById('statsTotal').textContent = res.data.total || 0;
-                document.getElementById('statsCompleted').textContent = res.data.completed || 0;
-                document.getElementById('statsFailed').textContent = res.data.failed || 0;
-                document.getElementById('statsAvgDuration').textContent = `${res.data.average_duration_ms || 0}ms`;
-            }
-        }
-
-        // Recent Executions
-        async function loadRecentExecutions() {
-            if (!state.currentWorkspace) {
-                document.getElementById('recentExecutions').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
-                return;
-            }
-            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=5`);
-            if (res.status === 200) {
-                renderExecutionsList(res.data || [], 'recentExecutions');
-            }
-        }
-
-        // Workflows
-        async function loadWorkflows() {
-            if (!state.currentWorkspace) {
-                document.getElementById('workflowsList').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
-                return;
-            }
-            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`);
-            if (res.status === 200) {
-                state.workflows = res.data || [];
-                renderWorkflowsList(state.workflows);
-            }
-        }
-
-        function renderWorkflowsList(workflows) {
-            const el = document.getElementById('workflowsList');
-            if (!workflows.length) {
-                el.innerHTML = '<p style="color: var(--text-muted);">No workflows yet. Create one!</p>';
-                return;
-            }
-            el.innerHTML = workflows.map(wf => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-title">${wf.name}</div>
-                        <div class="list-item-meta">
-                            ${wf.description || 'No description'} • 
-                            <span class="badge ${wf.status === 'active' ? 'badge-success' : 'badge-warning'}">${wf.status}</span>
-                        </div>
-                    </div>
-                    <div class="list-item-actions">
-                        <button class="btn-primary btn-sm" onclick="executeWorkflow('${wf.id}')">Execute</button>
-                        <button class="btn-outline btn-sm" onclick="toggleWorkflow('${wf.id}', '${wf.status}')">${wf.status === 'active' ? 'Deactivate' : 'Activate'}</button>
-                        <button class="btn-danger btn-sm" onclick="deleteWorkflow('${wf.id}')">Delete</button>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-label">Duration</div>
+                    <div class="stat-value" style="font-size: 1.5rem;">${exec.duration_ms || 0}ms</div>
                 </div>
-            `).join('');
-        }
-
-        async function executeWorkflow(id) {
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/execute`, {
-                input_data: { triggered_from: 'test_dashboard', timestamp: new Date().toISOString() }
-            });
-            if (res.status === 202) {
-                addWsEvent('info', `Execution started: ${res.data.execution_id}`);
-                document.getElementById('wsSubscribeExecution').value = res.data.execution_id;
-                loadRecentExecutions();
-            } else {
-                alert('Failed to execute: ' + (res.error || 'Unknown error'));
-            }
-        }
-
-        async function toggleWorkflow(id, currentStatus) {
-            const action = currentStatus === 'active' ? 'deactivate' : 'activate';
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/${action}`);
-            if (res.status === 200) {
-                loadWorkflows();
-            }
-        }
-
-        async function deleteWorkflow(id) {
-            if (!confirm('Are you sure you want to delete this workflow?')) return;
-            const res = await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}`);
-            if (res.status === 200 || res.status === 204) {
-                loadWorkflows();
-            }
-        }
-
-        function updateWorkflowTemplate() {
-            const template = document.getElementById('wfTemplate').value;
-            document.getElementById('wfDefinition').value = JSON.stringify(workflowTemplates[template], null, 2);
-        }
-
-        async function createWorkflow() {
-            const definition = JSON.parse(document.getElementById('wfDefinition').value);
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`, {
-                name: document.getElementById('wfName').value || 'New Workflow',
-                description: document.getElementById('wfDescription').value,
-                ...definition
-            });
-            if (res.status === 201) {
-                closeModal('createWorkflowModal');
-                loadWorkflows();
-            } else {
-                alert('Failed: ' + (res.error || 'Unknown error'));
-            }
-        }
-
-        // Executions
-        async function loadExecutions() {
-            if (!state.currentWorkspace) {
-                document.getElementById('executionsList').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
-                return;
-            }
-            const status = document.getElementById('execStatusFilter').value;
-            let url = `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=20`;
-            if (status) url += `&status=${status}`;
-
-            const res = await api('GET', url);
-            if (res.status === 200) {
-                renderExecutionsList(res.data || [], 'executionsList');
-            }
-        }
-
-        function renderExecutionsList(executions, containerId) {
-            const el = document.getElementById(containerId);
-            if (!executions.length) {
-                el.innerHTML = '<p style="color: var(--text-muted);">No executions found</p>';
-                return;
-            }
-            el.innerHTML = executions.map(exec => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-title">${exec.workflow_name || exec.workflow_id}</div>
-                        <div class="list-item-meta">
-                            ${exec.trigger_type} • ${new Date(exec.created_at).toLocaleString()} • 
-                            ${exec.duration_ms ? exec.duration_ms + 'ms' : '-'}
-                        </div>
-                    </div>
-                    <div class="list-item-actions">
-                        <span class="badge ${getStatusBadge(exec.status)}">${exec.status}</span>
-                        <button class="btn-outline btn-sm" onclick="viewExecution('${exec.id}')">View</button>
-                        ${exec.status === 'running' ? `<button class="btn-danger btn-sm" onclick="cancelExecution('${exec.id}')">Cancel</button>` : ''}
-                        ${exec.status === 'failed' ? `<button class="btn-warning btn-sm" onclick="retryExecution('${exec.id}')">Retry</button>` : ''}
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trigger</div>
+                    <div>${exec.trigger_type}</div>
                 </div>
-            `).join('');
-        }
-
-        function getStatusBadge(status) {
-            const map = { completed: 'badge-success', failed: 'badge-danger', running: 'badge-warning', queued: 'badge-info', cancelled: 'badge-danger' };
-            return map[status] || 'badge-info';
-        }
-
-        async function viewExecution(id) {
-            openModal('executionDetailModal');
-            document.getElementById('executionDetail').innerHTML = 'Loading...';
-
-            const [execRes, nodesRes] = await Promise.all([
-                api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}`),
-                api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/nodes`)
-            ]);
-
-            if (execRes.status === 200) {
-                const exec = execRes.data;
-                const nodes = nodesRes.data || [];
-
-                document.getElementById('executionDetail').innerHTML = `
-                    <div class="stats-grid mb-10">
-                        <div class="stat-card">
-                            <div class="stat-label">Status</div>
-                            <span class="badge ${getStatusBadge(exec.status)}" style="font-size: 1rem;">${exec.status}</span>
+                <div class="stat-card">
+                    <div class="stat-label">Started</div>
+                    <div class="text-sm">${formatTime(exec.created_at)}</div>
+                </div>
+            </div>
+            
+            <h4 class="mb-2">Node Executions</h4>
+            <div class="timeline mb-4">
+                ${nodes.map(n => `
+                    <div class="timeline-item ${n.status}">
+                        <div class="flex justify-between items-center">
+                            <strong>${n.node_name || n.node_id}</strong>
+                            <span class="badge badge-${getStatusBadge(n.status)}">${n.status}</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Duration</div>
-                            <div class="stat-value" style="font-size: 1.2rem;">${exec.duration_ms || 0}ms</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Trigger</div>
-                            <div style="font-size: 1rem;">${exec.trigger_type}</div>
-                        </div>
+                        <div class="text-sm text-muted">${n.node_type} • ${n.duration_ms || 0}ms</div>
+                        ${n.error ? `<div class="text-danger text-sm mt-2">${n.error}</div>` : ''}
                     </div>
-                    
-                    <h4 style="margin: 20px 0 10px;">Node Executions</h4>
-                    <div class="execution-timeline">
-                        ${nodes.map(n => `
-                            <div class="timeline-item ${n.status}">
-                                <strong>${n.node_name || n.node_id}</strong> (${n.node_type})
-                                <div style="font-size: 0.85rem; color: var(--text-muted);">
-                                    ${n.status} • ${n.duration_ms || 0}ms
-                                </div>
-                                ${n.error ? `<div style="color: var(--danger); font-size: 0.85rem; margin-top: 5px;">${n.error}</div>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                    
-                    <h4 style="margin: 20px 0 10px;">Input Data</h4>
-                    <div class="json-view">${JSON.stringify(exec.input_data, null, 2)}</div>
-                    
-                    <h4 style="margin: 20px 0 10px;">Output Data</h4>
-                    <div class="json-view">${JSON.stringify(exec.output_data, null, 2)}</div>
-                    
-                    ${exec.error ? `<h4 style="margin: 20px 0 10px; color: var(--danger);">Error</h4><div class="json-view" style="color: var(--danger);">${exec.error}</div>` : ''}
-                `;
-            }
+                `).join('')}
+            </div>
+            
+            <h4 class="mb-2">Input Data</h4>
+            <div class="code-block mb-4">${syntaxHighlight(exec.input_data)}</div>
+            
+            <h4 class="mb-2">Output Data</h4>
+            <div class="code-block">${syntaxHighlight(exec.output_data)}</div>
+            
+            ${exec.error ? `<h4 class="mb-2 text-danger">Error</h4><div class="code-block text-danger">${exec.error}</div>` : ''}
+        `;
+    }
+}
+
+async function cancelExecution(id) {
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/cancel`);
+    if (res.status === 200) { toast('Execution cancelled', 'success'); loadExecutions(); loadRecentExecutions(); }
+}
+
+async function retryExecution(id) {
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/retry`);
+    if (res.status === 202) { toast('Retry started', 'success'); loadExecutions(); }
+}
+
+// ============ CREDENTIALS ============
+async function loadCredentials() {
+    if (!state.currentWorkspace) return;
+    const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`);
+    if (res.status === 200) {
+        const creds = res.data || [];
+        const el = document.getElementById('credentialsList');
+        if (!creds.length) {
+            el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔑</div><div class="empty-state-title">No Credentials</div></div>`;
+            return;
         }
+        el.innerHTML = creds.map(c => `
+            <div class="list-item">
+                <div class="list-item-icon" style="background: var(--warning-light); color: var(--warning);">🔑</div>
+                <div class="list-item-content">
+                    <div class="list-item-title">${c.name}</div>
+                    <div class="list-item-subtitle">${c.type} • ${c.description || ''}</div>
+                </div>
+                <div class="list-item-actions">
+                    <button class="btn btn-outline btn-sm" onclick="testCredential('${c.id}')">Test</button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteCredential('${c.id}')">🗑</button>
+                </div>
+            </div>
+        `).join('');
+    }
+}
 
-        async function cancelExecution(id) {
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/cancel`);
-            if (res.status === 200) {
-                loadExecutions();
-                loadRecentExecutions();
-            }
+async function createCredential() {
+    let data;
+    try { data = JSON.parse(document.getElementById('credData').value || '{}'); }
+    catch { toast('Invalid JSON', 'error'); return; }
+    
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`, {
+        name: document.getElementById('credName').value,
+        type: document.getElementById('credType').value,
+        description: document.getElementById('credDescription').value,
+        data
+    });
+    if (res.status === 201) { toast('Credential added', 'success'); closeModal('createCredentialModal'); loadCredentials(); }
+}
+
+async function testCredential(id) {
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}/test`);
+    toast(res.status === 200 ? 'Credential is valid!' : 'Test failed', res.status === 200 ? 'success' : 'error');
+}
+
+async function deleteCredential(id) {
+    if (!confirm('Delete this credential?')) return;
+    await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}`);
+    loadCredentials();
+}
+
+// ============ SCHEDULES ============
+async function loadSchedules() {
+    if (!state.currentWorkspace) return;
+    const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`);
+    if (res.status === 200) {
+        const schedules = res.data || [];
+        const el = document.getElementById('schedulesList');
+        if (!schedules.length) {
+            el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⏰</div><div class="empty-state-title">No Schedules</div></div>`;
+            return;
         }
+        el.innerHTML = schedules.map(s => `
+            <div class="list-item">
+                <div class="list-item-icon" style="background: var(--info-light); color: var(--info);">⏰</div>
+                <div class="list-item-content">
+                    <div class="list-item-title">${s.name}</div>
+                    <div class="list-item-subtitle">${s.cron_expression} (${s.timezone})</div>
+                </div>
+                <span class="badge ${s.enabled ? 'badge-success' : 'badge-warning'}">${s.enabled ? 'Active' : 'Paused'}</span>
+                <div class="list-item-actions">
+                    <button class="btn btn-outline btn-sm" onclick="toggleSchedule('${s.id}', ${s.enabled})">${s.enabled ? 'Pause' : 'Resume'}</button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteSchedule('${s.id}')">🗑</button>
+                </div>
+            </div>
+        `).join('');
+    }
+}
 
-        async function retryExecution(id) {
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/retry`);
-            if (res.status === 202) {
-                addWsEvent('info', `Retry started: ${res.data.execution_id}`);
-                loadExecutions();
-            }
-        }
+async function createSchedule() {
+    const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`, {
+        workflow_id: document.getElementById('schedWorkflow').value,
+        name: document.getElementById('schedName').value,
+        cron_expression: document.getElementById('schedCron').value,
+        timezone: document.getElementById('schedTimezone').value,
+        enabled: true
+    });
+    if (res.status === 201) { toast('Schedule created', 'success'); closeModal('createScheduleModal'); loadSchedules(); }
+}
 
-        // Credentials
-        async function loadCredentials() {
-            if (!state.currentWorkspace) return;
-            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`);
-            if (res.status === 200) {
-                const creds = res.data || [];
-                const el = document.getElementById('credentialsList');
-                if (!creds.length) {
-                    el.innerHTML = '<p style="color: var(--text-muted);">No credentials yet</p>';
-                    return;
-                }
-                el.innerHTML = creds.map(c => `
-                    <div class="list-item">
-                        <div class="list-item-info">
-                            <div class="list-item-title">${c.name}</div>
-                            <div class="list-item-meta">${c.type} • ${c.description || ''}</div>
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn-outline btn-sm" onclick="testCredential('${c.id}')">Test</button>
-                            <button class="btn-danger btn-sm" onclick="deleteCredential('${c.id}')">Delete</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
+async function toggleSchedule(id, enabled) {
+    await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}/${enabled ? 'pause' : 'resume'}`);
+    loadSchedules();
+}
 
-        async function createCredential() {
-            let data;
-            try {
-                data = JSON.parse(document.getElementById('credData').value);
-            } catch {
-                alert('Invalid JSON in credential data');
-                return;
-            }
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`, {
-                name: document.getElementById('credName').value,
-                type: document.getElementById('credType').value,
-                description: document.getElementById('credDescription').value,
-                data: data
-            });
-            if (res.status === 201) {
-                closeModal('createCredentialModal');
-                loadCredentials();
-            }
-        }
+async function deleteSchedule(id) {
+    if (!confirm('Delete this schedule?')) return;
+    await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}`);
+    loadSchedules();
+}
 
-        async function testCredential(id) {
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}/test`);
-            alert(res.status === 200 ? 'Credential is valid!' : 'Credential test failed: ' + (res.error || 'Unknown error'));
-        }
+// ============ WEBHOOKS ============
+async function triggerWebhook() {
+    const endpointId = document.getElementById('webhookEndpointId').value;
+    if (!endpointId) { toast('Enter endpoint ID', 'warning'); return; }
+    
+    const method = document.getElementById('webhookMethod').value;
+    let payload, headers;
+    try { 
+        payload = JSON.parse(document.getElementById('webhookPayload').value || '{}');
+        headers = JSON.parse(document.getElementById('webhookHeaders').value || '{}');
+    } catch { toast('Invalid JSON', 'error'); return; }
+    
+    const start = Date.now();
+    try {
+        const res = await fetch(`${state.baseUrl}/webhooks/${endpointId}`, {
+            method,
+            headers: { 'Content-Type': document.getElementById('webhookContentType').value, ...headers },
+            body: method === 'POST' ? JSON.stringify(payload) : undefined
+        });
+        const duration = Date.now() - start;
+        const data = await res.json().catch(() => res.text());
+        
+        document.getElementById('webhookStatus').value = res.status;
+        document.getElementById('webhookTime').value = `${duration}ms`;
+        document.getElementById('webhookResponse').innerHTML = syntaxHighlight(data);
+        document.getElementById('webhookStatusBadge').className = `badge badge-${res.ok ? 'success' : 'danger'}`;
+        document.getElementById('webhookStatusBadge').textContent = res.status;
+    } catch (err) {
+        document.getElementById('webhookResponse').textContent = err.message;
+        document.getElementById('webhookStatusBadge').className = 'badge badge-danger';
+        document.getElementById('webhookStatusBadge').textContent = 'Error';
+    }
+}
 
-        async function deleteCredential(id) {
-            if (!confirm('Delete this credential?')) return;
-            await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}`);
-            loadCredentials();
-        }
+// ============ NODE TYPES ============
+async function loadNodeTypes() {
+    const res = await api('GET', '/api/v1/node-types');
+    if (res.status === 200) {
+        state.nodeTypes = res.data || [];
+        filterNodes('');
+    }
+}
 
-        // Schedules
-        async function loadSchedules() {
-            if (!state.currentWorkspace) return;
-            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`);
-            if (res.status === 200) {
-                const schedules = res.data || [];
-                const el = document.getElementById('schedulesList');
-                if (!schedules.length) {
-                    el.innerHTML = '<p style="color: var(--text-muted);">No schedules yet</p>';
-                    return;
-                }
-                el.innerHTML = schedules.map(s => `
-                    <div class="list-item">
-                        <div class="list-item-info">
-                            <div class="list-item-title">${s.name}</div>
-                            <div class="list-item-meta">
-                                ${s.cron_expression} (${s.timezone}) • 
-                                <span class="badge ${s.enabled ? 'badge-success' : 'badge-warning'}">${s.enabled ? 'Active' : 'Paused'}</span>
-                            </div>
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn-outline btn-sm" onclick="toggleSchedule('${s.id}', ${s.enabled})">${s.enabled ? 'Pause' : 'Resume'}</button>
-                            <button class="btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">Delete</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        function openCreateScheduleModal() {
-            openModal('createScheduleModal');
-            const select = document.getElementById('schedWorkflow');
-            select.innerHTML = state.workflows.map(wf => `<option value="${wf.id}">${wf.name}</option>`).join('');
-        }
-
-        async function createSchedule() {
-            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`, {
-                workflow_id: document.getElementById('schedWorkflow').value,
-                name: document.getElementById('schedName').value,
-                cron_expression: document.getElementById('schedCron').value,
-                timezone: document.getElementById('schedTimezone').value,
-                enabled: true
-            });
-            if (res.status === 201) {
-                closeModal('createScheduleModal');
-                loadSchedules();
-            }
-        }
-
-        async function toggleSchedule(id, enabled) {
-            const action = enabled ? 'pause' : 'resume';
-            await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}/${action}`);
-            loadSchedules();
-        }
-
-        async function deleteSchedule(id) {
-            if (!confirm('Delete this schedule?')) return;
-            await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}`);
-            loadSchedules();
-        }
-
-        // Webhooks
-        async function triggerWebhook() {
-            const endpointId = document.getElementById('webhookEndpointId').value;
-            if (!endpointId) {
-                alert('Enter webhook endpoint ID');
-                return;
-            }
-
-            const method = document.getElementById('webhookMethod').value;
-            let payload;
-            try {
-                payload = JSON.parse(document.getElementById('webhookPayload').value);
-            } catch {
-                alert('Invalid JSON payload');
-                return;
-            }
-
-            const url = `${state.baseUrl}/webhooks/${endpointId}`;
-            const startTime = Date.now();
-
-            try {
-                const res = await fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: method === 'POST' ? JSON.stringify(payload) : undefined
-                });
-                const data = await res.json().catch(() => res.text());
-                const duration = Date.now() - startTime;
-
-                document.getElementById('webhookResponse').textContent = JSON.stringify({
-                    status: res.status,
-                    duration: `${duration}ms`,
-                    response: data
-                }, null, 2);
-            } catch (err) {
-                document.getElementById('webhookResponse').textContent = JSON.stringify({ error: err.message }, null, 2);
-            }
-        }
-
-        // Node Types
-        async function loadNodeTypes() {
-            const res = await api('GET', '/api/v1/node-types');
-            if (res.status === 200) {
-                state.nodeTypes = res.data || [];
-                filterNodes();
-            }
-        }
-
-        function filterNodes() {
-            const category = document.getElementById('nodeCategory').value;
-            const filtered = category ? state.nodeTypes.filter(n => n.category === category) : state.nodeTypes;
-
-            const el = document.getElementById('nodeTypesList');
-            const icons = { trigger: '⚡', action: '🔧', logic: '🔀', integration: '🔌' };
-
-            el.innerHTML = filtered.map(n => `
-                <div class="node-card" onclick="viewNodeType('${n.type}')">
-                    <div class="node-icon">${icons[n.category] || '📦'}</div>
+function filterNodes(category) {
+    const filtered = category ? state.nodeTypes.filter(n => n.category === category) : state.nodeTypes;
+    const el = document.getElementById('nodeTypesList');
+    const icons = { trigger: '⚡', action: '🔧', logic: '🔀', integration: '🔌' };
+    const colors = { trigger: 'var(--warning)', action: 'var(--success)', logic: 'var(--info)', integration: 'var(--primary)' };
+    
+    el.innerHTML = filtered.map(n => `
+        <div class="node-card" onclick="viewNodeType('${n.type}')">
+            <div class="node-header">
+                <span class="node-icon">${icons[n.category] || '📦'}</span>
+                <div>
                     <div class="node-name">${n.name}</div>
-                    <div class="node-type">${n.type}</div>
+                    <div class="node-category" style="color: ${colors[n.category]}">${n.category}</div>
                 </div>
-            `).join('');
-        }
+            </div>
+            <div class="node-type">${n.type}</div>
+        </div>
+    `).join('');
+}
 
-        async function viewNodeType(type) {
-            openModal('nodeDetailModal');
-            const node = state.nodeTypes.find(n => n.type === type);
-            document.getElementById('nodeDetailTitle').textContent = node.name;
+async function viewNodeType(type) {
+    openModal('nodeDetailModal');
+    const node = state.nodeTypes.find(n => n.type === type);
+    document.getElementById('nodeDetailTitle').textContent = node?.name || type;
+    document.getElementById('nodeDetail').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+    
+    const res = await api('GET', `/api/v1/node-types/${type}`);
+    if (res.status === 200) {
+        const n = res.data;
+        document.getElementById('nodeDetail').innerHTML = `
+            <p class="mb-4">${n.description || 'No description'}</p>
+            <div class="grid grid-3 mb-4">
+                <div><strong>Type:</strong> ${n.type}</div>
+                <div><strong>Category:</strong> ${n.category}</div>
+                <div><strong>Version:</strong> ${n.version || '1.0.0'}</div>
+            </div>
+            <h4 class="mb-2">Parameters</h4>
+            <div class="code-block mb-4">${syntaxHighlight(n.parameters || [])}</div>
+            <h4 class="mb-2">Inputs</h4>
+            <div class="code-block mb-4">${syntaxHighlight(n.inputs || [])}</div>
+            <h4 class="mb-2">Outputs</h4>
+            <div class="code-block">${syntaxHighlight(n.outputs || [])}</div>
+        `;
+    }
+}
 
-            const res = await api('GET', `/api/v1/node-types/${type}`);
-            if (res.status === 200) {
-                const n = res.data;
-                document.getElementById('nodeDetail').innerHTML = `
-                    <p style="margin-bottom: 15px;">${n.description || 'No description'}</p>
-                    <div class="grid grid-2 mb-10">
-                        <div><strong>Type:</strong> ${n.type}</div>
-                        <div><strong>Category:</strong> ${n.category}</div>
-                        <div><strong>Version:</strong> ${n.version || '1.0.0'}</div>
-                    </div>
-                    
-                    <h4 style="margin: 15px 0 10px;">Parameters</h4>
-                    <div class="json-view">${JSON.stringify(n.parameters || [], null, 2)}</div>
-                    
-                    <h4 style="margin: 15px 0 10px;">Inputs</h4>
-                    <div class="json-view">${JSON.stringify(n.inputs || [], null, 2)}</div>
-                    
-                    <h4 style="margin: 15px 0 10px;">Outputs</h4>
-                    <div class="json-view">${JSON.stringify(n.outputs || [], null, 2)}</div>
-                `;
-            }
-        }
-
-        // WebSocket
-        function connectWebSocket() {
-            if (state.ws && state.ws.readyState === WebSocket.OPEN) return;
-            if (!state.currentWorkspace) return;
-
-            const wsUrl = state.baseUrl.replace('http', 'ws') + `/ws?token=${state.accessToken}&workspace_id=${state.currentWorkspace.id}`;
-
+// ============ WEBSOCKET ============
+function connectWebSocket() {
+    if (state.ws?.readyState === WebSocket.OPEN) return;
+    if (!state.currentWorkspace) { toast('Select a workspace first', 'warning'); return; }
+    
+    const wsUrl = state.baseUrl.replace('http', 'ws') + `/ws?token=${state.accessToken}&workspace_id=${state.currentWorkspace.id}`;
+    updateWsStatus('connecting');
+    
+    try {
+        state.ws = new WebSocket(wsUrl);
+        
+        state.ws.onopen = () => {
+            updateWsStatus('connected');
+            addWsEvent('Connected to WebSocket', 'success');
+            state.wsReconnectAttempts = 0;
+        };
+        
+        state.ws.onmessage = (e) => {
             try {
-                state.ws = new WebSocket(wsUrl);
-
-                state.ws.onopen = () => {
-                    updateWsStatus(true);
-                    addWsEvent('success', 'Connected to WebSocket');
-                };
-
-                state.ws.onmessage = (e) => {
-                    try {
-                        const event = JSON.parse(e.data);
-                        addWsEvent('event', `${event.type}: ${JSON.stringify(event.data).substring(0, 100)}`);
-
-                        // Auto-refresh on execution events
-                        if (event.type.startsWith('execution.')) {
-                            loadRecentExecutions();
-                            loadExecutionStats();
-                        }
-                    } catch {
-                        addWsEvent('info', e.data);
-                    }
-                };
-
-                state.ws.onclose = () => {
-                    updateWsStatus(false);
-                    addWsEvent('error', 'WebSocket disconnected');
-                };
-
-                state.ws.onerror = (err) => {
-                    addWsEvent('error', 'WebSocket error');
-                };
-            } catch (err) {
-                addWsEvent('error', `Failed to connect: ${err.message}`);
+                const event = JSON.parse(e.data);
+                addWsEvent(`${event.type}: ${JSON.stringify(event.data).slice(0, 100)}...`, 'event');
+                if (event.type?.startsWith('execution.')) { loadRecentExecutions(); }
+            } catch { addWsEvent(e.data, 'info'); }
+        };
+        
+        state.ws.onclose = () => {
+            updateWsStatus('disconnected');
+            addWsEvent('Disconnected', 'error');
+            if (state.wsReconnectAttempts < state.maxReconnectAttempts) {
+                state.wsReconnectAttempts++;
+                setTimeout(connectWebSocket, 3000 * state.wsReconnectAttempts);
             }
+        };
+        
+        state.ws.onerror = () => addWsEvent('Connection error', 'error');
+    } catch (err) {
+        addWsEvent(`Error: ${err.message}`, 'error');
+    }
+}
+
+function disconnectWebSocket() {
+    if (state.ws) { state.ws.close(); state.ws = null; }
+    updateWsStatus('disconnected');
+}
+
+function updateWsStatus(status) {
+    const dot = document.getElementById('wsDot');
+    const text = document.getElementById('wsStatusText');
+    const badge = document.getElementById('wsConnectionBadge');
+    const healthWs = document.getElementById('healthWS');
+    
+    dot.className = `connection-dot ${status}`;
+    text.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    badge.className = `badge badge-${status === 'connected' ? 'success' : status === 'connecting' ? 'warning' : 'danger'}`;
+    badge.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+    healthWs.className = `badge badge-${status === 'connected' ? 'success' : 'danger'}`;
+    healthWs.innerHTML = `<span class="badge-dot ${status === 'connected' ? 'success' : 'danger'}"></span> ${status === 'connected' ? 'Connected' : 'Disconnected'}`;
+}
+
+function addWsEvent(message, type = 'info') {
+    const el = document.getElementById('wsEvents');
+    if (el.querySelector('.empty-state')) el.innerHTML = '';
+    
+    const colors = { success: 'var(--success)', error: 'var(--danger)', event: 'var(--warning)', info: 'var(--info)' };
+    const entry = document.createElement('div');
+    entry.className = 'list-item';
+    entry.innerHTML = `
+        <div class="list-item-icon" style="background: ${colors[type]}20; color: ${colors[type]}; width: 32px; height: 32px; font-size: 0.8rem;">
+            ${type === 'success' ? '✓' : type === 'error' ? '✗' : type === 'event' ? '⚡' : 'ℹ'}
+        </div>
+        <div class="list-item-content">
+            <div class="list-item-subtitle">${new Date().toLocaleTimeString()}</div>
+            <div class="text-sm">${message}</div>
+        </div>
+    `;
+    el.insertBefore(entry, el.firstChild);
+}
+
+function clearWsEvents() {
+    document.getElementById('wsEvents').innerHTML = `
+        <div class="empty-state">
+            <div class="empty-state-icon">📡</div>
+            <div class="empty-state-title">No Events Yet</div>
+            <div class="empty-state-text">Connect to WebSocket to receive events</div>
+        </div>
+    `;
+}
+
+function wsSubscribe(type) {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) { toast('Not connected', 'warning'); return; }
+    const payload = type === 'workflow' 
+        ? { workflow_id: document.getElementById('wsWorkflowId').value }
+        : { execution_id: document.getElementById('wsExecutionId').value };
+    state.ws.send(JSON.stringify({ type: 'subscribe', payload }));
+    addWsEvent(`Subscribed to ${type}`, 'info');
+}
+
+function sendWsPing() {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) { toast('Not connected', 'warning'); return; }
+    state.ws.send(JSON.stringify({ type: 'ping' }));
+}
+
+function sendWsCustom() {
+    if (!state.ws || state.ws.readyState !== WebSocket.OPEN) { toast('Not connected', 'warning'); return; }
+    try {
+        const msg = JSON.parse(document.getElementById('wsCustomMessage').value);
+        state.ws.send(JSON.stringify(msg));
+        addWsEvent('Sent: ' + JSON.stringify(msg), 'info');
+    } catch { toast('Invalid JSON', 'error'); }
+}
+
+// ============ WORKSPACE ============
+async function createWorkspace() {
+    const res = await api('POST', '/api/v1/workspaces', {
+        name: document.getElementById('wsName').value,
+        slug: document.getElementById('wsSlug').value,
+        description: document.getElementById('wsDescription').value
+    });
+    if (res.status === 201) {
+        toast('Workspace created!', 'success');
+        closeModal('createWorkspaceModal');
+        await loadWorkspaces();
+        selectWorkspace(res.data.id);
+    }
+}
+
+// ============ MODALS ============
+function openModal(id) {
+    document.getElementById(id).classList.add('active');
+    if (id === 'createScheduleModal') {
+        const select = document.getElementById('schedWorkflow');
+        select.innerHTML = state.workflows.map(wf => `<option value="${wf.id}">${wf.name}</option>`).join('');
+    }
+    if (id === 'createWorkflowModal') {
+        document.getElementById('wfName').value = 'Workflow ' + Date.now().toString(36);
+        updateWorkflowTemplate();
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+// ============ TOAST ============
+function toast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const icons = { success: '✓', error: '✗', warning: '⚠', info: 'ℹ' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <span class="toast-icon">${icons[type]}</span>
+        <div class="toast-content">
+            <div class="toast-message">${message}</div>
+        </div>
+    `;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
+}
+
+// ============ UTILS ============
+function syntaxHighlight(obj) {
+    if (typeof obj !== 'string') obj = JSON.stringify(obj, null, 2) || '';
+    return obj.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = 'number';
+        if (/^"/.test(match)) {
+            cls = /:$/.test(match) ? 'key' : 'string';
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
         }
-
-        function disconnectWebSocket() {
-            if (state.ws) {
-                state.ws.close();
-                state.ws = null;
-            }
-        }
-
-        function updateWsStatus(connected) {
-            document.getElementById('wsDot').classList.toggle('connected', connected);
-            document.getElementById('wsStatus').textContent = connected ? 'Connected' : 'Disconnected';
-            document.getElementById('wsStatusBadge').textContent = connected ? 'Connected' : 'Disconnected';
-            document.getElementById('wsStatusBadge').className = `badge ${connected ? 'badge-success' : 'badge-danger'}`;
-        }
-
-        function addWsEvent(type, message) {
-            const el = document.getElementById('wsEvents');
-            const time = new Date().toLocaleTimeString();
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `
-                <span class="log-time">${time}</span>
-                <span class="log-type ${type}">${type.toUpperCase()}</span>
-                <span>${message}</span>
-            `;
-            el.insertBefore(entry, el.firstChild);
-        }
-
-        function clearWsEvents() {
-            document.getElementById('wsEvents').innerHTML = '';
-        }
-
-        function wsSubscribe(type) {
-            if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
-                alert('WebSocket not connected');
-                return;
-            }
-
-            const payload = {};
-            if (type === 'workflow') {
-                payload.workflow_id = document.getElementById('wsSubscribeWorkflow').value;
-            } else {
-                payload.execution_id = document.getElementById('wsSubscribeExecution').value;
-            }
-
-            state.ws.send(JSON.stringify({ type: 'subscribe', payload }));
-            addWsEvent('info', `Subscribed to ${type}: ${JSON.stringify(payload)}`);
-        }
-
-        // Modals
-        function openModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        function openCreateWorkspaceModal() {
-            openModal('createWorkspaceModal');
-        }
-
-        function openCreateWorkflowModal() {
-            if (!state.currentWorkspace) {
-                alert('Select a workspace first');
-                return;
-            }
-            document.getElementById('wfName').value = 'Test Workflow ' + Date.now();
-            updateWorkflowTemplate();
-            openModal('createWorkflowModal');
-        }
-
-        function openCreateCredentialModal() {
-            if (!state.currentWorkspace) {
-                alert('Select a workspace first');
-                return;
-            }
-            openModal('createCredentialModal');
-        }
-
-        async function createWorkspace() {
-            const res = await api('POST', '/api/v1/workspaces', {
-                name: document.getElementById('wsName').value,
-                slug: document.getElementById('wsSlug').value,
-                description: document.getElementById('wsDescription').value
-            });
-            if (res.status === 201) {
-                closeModal('createWorkspaceModal');
-                await loadWorkspaces();
-                selectWorkspace(res.data.id);
-            }
-        }
-
-        // Close modals on overlay click
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    overlay.classList.remove('active');
-                }
-            });
-        });
-    </script>
+        return `<span class="${cls}">${match}</span>`;
+    });
+}
+</script>
 </body>
-
 </html>
