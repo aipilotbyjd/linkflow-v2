@@ -108,6 +108,25 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate workflow structure (nodes, connections, graph)
+	if validationResult, err := validator.ParseAndValidateWorkflow(req.Nodes, req.Connections); err != nil {
+		dto.BadRequest(w, "failed to parse workflow structure: "+err.Error())
+		return
+	} else if !validationResult.Valid {
+		// Convert to DTO format
+		errors := make([]dto.WorkflowValidationError, len(validationResult.Errors))
+		for i, e := range validationResult.Errors {
+			errors[i] = dto.WorkflowValidationError{
+				Field:   e.Field,
+				NodeID:  e.NodeID,
+				Code:    e.Code,
+				Message: e.Message,
+			}
+		}
+		dto.WorkflowValidationErrorResponse(w, errors)
+		return
+	}
+
 	workflow, err := h.workflowSvc.Create(r.Context(), services.CreateWorkflowInput{
 		WorkspaceID: wsCtx.WorkspaceID,
 		CreatedBy:   claims.UserID,
@@ -215,6 +234,34 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate workflow structure if nodes or connections are being updated
+	nodesToValidate := req.Nodes
+	connectionsToValidate := req.Connections
+	if nodesToValidate == nil {
+		nodesToValidate = existing.Nodes
+	}
+	if connectionsToValidate == nil {
+		connectionsToValidate = existing.Connections
+	}
+	if req.Nodes != nil || req.Connections != nil {
+		if validationResult, err := validator.ParseAndValidateWorkflow(nodesToValidate, connectionsToValidate); err != nil {
+			dto.BadRequest(w, "failed to parse workflow structure: "+err.Error())
+			return
+		} else if !validationResult.Valid {
+			errors := make([]dto.WorkflowValidationError, len(validationResult.Errors))
+			for i, e := range validationResult.Errors {
+				errors[i] = dto.WorkflowValidationError{
+					Field:   e.Field,
+					NodeID:  e.NodeID,
+					Code:    e.Code,
+					Message: e.Message,
+				}
+			}
+			dto.WorkflowValidationErrorResponse(w, errors)
+			return
+		}
+	}
+
 	workflow, err := h.workflowSvc.Update(r.Context(), workflowID, services.UpdateWorkflowInput{
 		Name:        req.Name,
 		Description: req.Description,
@@ -287,10 +334,17 @@ func (h *WorkflowHandler) Execute(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: Validate ownership before execution
 	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		dto.NotFound(w, "Workflow")
 		return
 	}
 	if !ValidateWorkspaceOwnership(w, r, existing) {
+		return
+	}
+
+	// Business rule: Check if workflow can be executed
+	hasNodes := len(existing.Nodes) > 0
+	if err := validator.CanExecuteWorkflow(existing.Status, hasNodes); err != nil {
+		dto.BadRequest(w, err.Error())
 		return
 	}
 
@@ -378,52 +432,81 @@ func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
 	workflowIDStr := chi.URLParam(r, "workflowID")
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		dto.BadRequest(w, "invalid workflow ID")
 		return
 	}
 
 	// SECURITY: Validate ownership before activation
 	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		dto.NotFound(w, "Workflow")
 		return
 	}
 	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
-	if err := h.workflowSvc.Activate(r.Context(), workflowID); err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to activate workflow")
+	// Business rule: Check if workflow can be activated
+	hasTrigger := hasTriggerNode(existing.Nodes)
+	if err := validator.CanActivateWorkflow(existing.Status, hasTrigger); err != nil {
+		dto.BadRequest(w, err.Error())
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]string{"status": "active"})
+	if err := h.workflowSvc.Activate(r.Context(), workflowID); err != nil {
+		dto.InternalServerError(w, "failed to activate workflow")
+		return
+	}
+
+	dto.OK(w, map[string]string{"status": "active"})
 }
 
 func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	workflowIDStr := chi.URLParam(r, "workflowID")
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+		dto.BadRequest(w, "invalid workflow ID")
 		return
 	}
 
 	// SECURITY: Validate ownership before deactivation
 	existing, err := h.workflowSvc.GetByID(r.Context(), workflowID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusNotFound, "workflow not found")
+		dto.NotFound(w, "Workflow")
 		return
 	}
 	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
-	if err := h.workflowSvc.Deactivate(r.Context(), workflowID); err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to deactivate workflow")
+	// Business rule: Check if workflow can be deactivated
+	// TODO: Check for active schedules from schedule service
+	hasActiveSchedules := false
+	if err := validator.CanDeactivateWorkflow(existing.Status, hasActiveSchedules); err != nil {
+		dto.BadRequest(w, err.Error())
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]string{"status": "inactive"})
+	if err := h.workflowSvc.Deactivate(r.Context(), workflowID); err != nil {
+		dto.InternalServerError(w, "failed to deactivate workflow")
+		return
+	}
+
+	dto.OK(w, map[string]string{"status": "inactive"})
+}
+
+// hasTriggerNode checks if workflow has a trigger node
+func hasTriggerNode(nodes models.JSONArray) bool {
+	for _, node := range nodes {
+		if nodeMap, ok := node.(map[string]interface{}); ok {
+			if nodeType, ok := nodeMap["type"].(string); ok {
+				if strings.HasPrefix(nodeType, "trigger.") {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {

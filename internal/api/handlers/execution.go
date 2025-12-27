@@ -13,6 +13,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
+	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
 
 type ExecutionHandler struct {
@@ -192,59 +193,71 @@ func (h *ExecutionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	executionIDStr := chi.URLParam(r, "executionID")
 	executionID, err := uuid.Parse(executionIDStr)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid execution ID")
+		dto.BadRequest(w, "invalid execution ID")
 		return
 	}
 
 	// SECURITY: Validate ownership before cancellation
 	existing, err := h.executionSvc.GetByID(r.Context(), executionID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusNotFound, "execution not found")
+		dto.NotFound(w, "Execution")
 		return
 	}
 	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
-	if err := h.executionSvc.Cancel(r.Context(), executionID); err != nil {
-		if err == services.ErrExecutionNotRunning {
-			dto.ErrorResponse(w, http.StatusBadRequest, "execution is not running")
-			return
-		}
-		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to cancel execution")
+	// Business rule: Check if execution can be cancelled
+	if err := validator.CanCancelExecution(existing.Status); err != nil {
+		dto.BadRequest(w, err.Error())
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]string{"status": "cancelled"})
+	if err := h.executionSvc.Cancel(r.Context(), executionID); err != nil {
+		if err == services.ErrExecutionNotRunning {
+			dto.BadRequest(w, "execution is not running")
+			return
+		}
+		dto.InternalServerError(w, "failed to cancel execution")
+		return
+	}
+
+	dto.OK(w, map[string]string{"status": "cancelled"})
 }
 
 func (h *ExecutionHandler) Retry(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.GetUserFromContext(r.Context())
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		dto.Unauthorized(w, "unauthorized")
 		return
 	}
 
 	executionIDStr := chi.URLParam(r, "executionID")
 	executionID, err := uuid.Parse(executionIDStr)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid execution ID")
+		dto.BadRequest(w, "invalid execution ID")
 		return
 	}
 
 	// SECURITY: Validate ownership before retry
 	existing, err := h.executionSvc.GetByID(r.Context(), executionID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusNotFound, "execution not found")
+		dto.NotFound(w, "Execution")
 		return
 	}
 	if !ValidateWorkspaceOwnership(w, r, existing) {
 		return
 	}
 
+	// Business rule: Check if execution can be retried
+	if err := validator.CanRetryExecution(existing.Status); err != nil {
+		dto.BadRequest(w, err.Error())
+		return
+	}
+
 	execution, err := h.executionSvc.Retry(r.Context(), executionID, &claims.UserID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to retry execution")
+		dto.InternalServerError(w, "failed to retry execution")
 		return
 	}
 

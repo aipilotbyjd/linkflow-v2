@@ -132,6 +132,46 @@ func ValidationErrorResponse(w http.ResponseWriter, err error) {
 	_ = json.NewEncoder(w).Encode(response)
 }
 
+// WorkflowValidationError represents a workflow-specific validation error
+type WorkflowValidationError struct {
+	Field   string `json:"field"`
+	NodeID  string `json:"node_id,omitempty"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+// WorkflowValidationErrorResponse returns a workflow validation error response
+func WorkflowValidationErrorResponse(w http.ResponseWriter, errors []WorkflowValidationError) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+
+	// Convert to validation error format
+	details := make([]validator.ValidationError, len(errors))
+	for i, e := range errors {
+		field := e.Field
+		if e.NodeID != "" {
+			field = "node:" + e.NodeID + "." + e.Field
+		}
+		details[i] = validator.ValidationError{
+			Field:   field,
+			Message: e.Message,
+		}
+	}
+
+	response := Response{
+		Success:   false,
+		RequestID: getRequestID(w),
+		Timestamp: time.Now().Unix(),
+		Error: &ErrorData{
+			Code:    "WORKFLOW_VALIDATION_ERROR",
+			Message: "Workflow validation failed",
+			Details: details,
+		},
+	}
+
+	_ = json.NewEncoder(w).Encode(response)
+}
+
 // Convenience helpers (Laravel-style trait methods)
 
 func OK(w http.ResponseWriter, data interface{}) {
