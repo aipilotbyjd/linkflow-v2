@@ -51,7 +51,7 @@ services:
 
   api:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile
       target: api
     container_name: linkflow-api
@@ -69,7 +69,7 @@ services:
 
   worker:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile
       target: worker
     environment:
@@ -84,7 +84,7 @@ services:
 
   scheduler:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile
       target: scheduler
     container_name: linkflow-scheduler

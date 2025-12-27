@@ -3,7 +3,7 @@ version: '3.8'
 services:
   api:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile.api
     container_name: linkflow-api
     ports:
@@ -35,7 +35,7 @@ services:
 
   worker:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile.worker
     container_name: linkflow-worker
     environment:
@@ -56,7 +56,7 @@ services:
 
   scheduler:
     build:
-      context: ../..
+      context: .
       dockerfile: deploy/docker/Dockerfile.scheduler
     container_name: linkflow-scheduler
     environment:
