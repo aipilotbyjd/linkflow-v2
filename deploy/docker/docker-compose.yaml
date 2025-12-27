@@ -58,8 +58,22 @@ services:
     ports:
       - "8090:8090"
     environment:
-      - DATABASE_HOST=postgres
-      - REDIS_HOST=redis
+      - APP_ENVIRONMENT=${APP_ENVIRONMENT:-development}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - APP_URL=${APP_URL:-http://localhost:8090}
+      - APP_FRONTEND_URL=${APP_FRONTEND_URL:-http://localhost:3000}
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres}
+      - DATABASE_NAME=${DATABASE_NAME:-linkflow}
+      - DATABASE_SSLMODE=${DATABASE_SSLMODE:-disable}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_TLS=${REDIS_TLS:-false}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+      - PORT=8090
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,9 +86,21 @@ services:
       context: .
       dockerfile: deploy/docker/Dockerfile
       target: worker
+    container_name: linkflow-worker
     environment:
-      - DATABASE_HOST=postgres
-      - REDIS_HOST=redis
+      - APP_ENVIRONMENT=${APP_ENVIRONMENT:-development}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres}
+      - DATABASE_NAME=${DATABASE_NAME:-linkflow}
+      - DATABASE_SSLMODE=${DATABASE_SSLMODE:-disable}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_TLS=${REDIS_TLS:-false}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,8 +115,19 @@ services:
       target: scheduler
     container_name: linkflow-scheduler
     environment:
-      - DATABASE_HOST=postgres
-      - REDIS_HOST=redis
+      - APP_ENVIRONMENT=${APP_ENVIRONMENT:-development}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - DATABASE_HOST=${DATABASE_HOST:-postgres}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - DATABASE_USER=${DATABASE_USER:-postgres}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres}
+      - DATABASE_NAME=${DATABASE_NAME:-linkflow}
+      - DATABASE_SSLMODE=${DATABASE_SSLMODE:-disable}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - REDIS_TLS=${REDIS_TLS:-false}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
     depends_on:
       postgres:
         condition: service_healthy
