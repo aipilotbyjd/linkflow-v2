@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkFlow Test Dashboard</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info span {
+            color: var(--text-muted);
+        }
+
+        .ws-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+        }
+
+        .ws-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+        }
+
+        .ws-dot.connected {
+            background: var(--success);
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-input);
+        }
+
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 0.95rem;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            padding: 15px 20px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .tab:hover {
+            background: var(--bg-input);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .panel {
+            display: none;
+            padding: 20px;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-input);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .list-item:hover {
+            background: #3d4f66;
+        }
+
+        .list-item-info {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 500;
+        }
+
+        .list-item-meta {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .badge-info {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+        }
+
+        .log-panel {
+            background: #0d1117;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .log-time {
+            color: #7d8590;
+        }
+
+        .log-type {
+            font-weight: 500;
+        }
+
+        .log-type.info {
+            color: #58a6ff;
+        }
+
+        .log-type.success {
+            color: #3fb950;
+        }
+
+        .log-type.error {
+            color: #f85149;
+        }
+
+        .log-type.event {
+            color: #d29922;
+        }
+
+        .json-view {
+            background: #0d1117;
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .node-card {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .node-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .node-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .node-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .node-type {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .execution-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .execution-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: var(--bg-input);
+            border-radius: 6px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+
+        .timeline-item.completed::before {
+            background: var(--success);
+        }
+
+        .timeline-item.running::before {
+            background: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        .timeline-item.failed::before {
+            background: var(--danger);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .gap-10 {
+            gap: 10px;
+        }
+
+        .flex-1 {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen">
+        <div class="container" style="max-width: 400px; margin-top: 100px;">
+            <div class="card">
+                <h2 class="text-center mb-10" style="color: var(--primary);">LinkFlow</h2>
+                <p class="text-center" style="color: var(--text-muted); margin-bottom: 25px;">Test Dashboard</p>
+
+                <div id="loginTab">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="loginEmail" placeholder="user@example.com" value="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" placeholder="Password" value="SecurePass123!">
+                    </div>
+                    <button class="btn-primary" style="width: 100%;" onclick="login()">Login</button>
+                    <p class="text-center mt-20" style="color: var(--text-muted);">
+                        Don't have an account? <a href="#" onclick="showRegister()"
+                            style="color: var(--primary);">Register</a>
+                    </p>
+                </div>
+
+                <div id="registerTab" class="hidden">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" placeholder="Password (min 8 chars)">
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" id="regFirstName" placeholder="John">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" id="regLastName" placeholder="Doe">
+                        </div>
+                    </div>
+                    <button class="btn-primary" style="width: 100%;" onclick="register()">Register</button>
+                    <p class="text-center mt-20" style="color: var(--text-muted);">
+                        Already have an account? <a href="#" onclick="showLogin()"
+                            style="color: var(--primary);">Login</a>
+                    </p>
+                </div>
+
+                <div id="loginError" class="hidden"
+                    style="margin-top: 15px; padding: 10px; background: rgba(239,68,68,0.2); border-radius: 6px; color: var(--danger);">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>API Base URL</label>
+                    <input type="text" id="baseUrl" value="http://localhost:8090">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden">
+        <header>
+            <div class="logo">LinkFlow</div>
+            <div class="user-info">
+                <div class="ws-status">
+                    <div class="ws-dot" id="wsDot"></div>
+                    <span id="wsStatus">Disconnected</span>
+                </div>
+                <span id="userEmail"></span>
+                <select id="workspaceSelect" onchange="selectWorkspace(this.value)"
+                    style="width: auto; padding: 6px 12px;">
+                    <option value="">Select Workspace</option>
+                </select>
+                <button class="btn-outline" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="dashboard">Dashboard</button>
+            <button class="tab" data-tab="workflows">Workflows</button>
+            <button class="tab" data-tab="executions">Executions</button>
+            <button class="tab" data-tab="credentials">Credentials</button>
+            <button class="tab" data-tab="schedules">Schedules</button>
+            <button class="tab" data-tab="webhooks">Webhooks</button>
+            <button class="tab" data-tab="nodes">Node Types</button>
+            <button class="tab" data-tab="websocket">WebSocket</button>
+            <button class="tab" data-tab="logs">API Logs</button>
+        </div>
+
+        <div class="container">
+            <!-- Dashboard Panel -->
+            <div id="panel-dashboard" class="panel active">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">System Health</span>
+                            <button class="btn-outline btn-sm" onclick="checkHealth()">Refresh</button>
+                        </div>
+                        <div id="healthStatus" class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="healthOverall">-</div>
+                                <div class="stat-label">Overall</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="healthDB">-</div>
+                                <div class="stat-label">Database</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="healthRedis">-</div>
+                                <div class="stat-label">Redis</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Execution Stats</span>
+                            <select id="statsPeriod" onchange="loadExecutionStats()"
+                                style="width: auto; padding: 4px 8px;">
+                                <option value="1h">Last Hour</option>
+                                <option value="24h" selected>Last 24h</option>
+                                <option value="7d">Last 7 Days</option>
+                                <option value="30d">Last 30 Days</option>
+                            </select>
+                        </div>
+                        <div id="execStats" class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="statsTotal">0</div>
+                                <div class="stat-label">Total</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statsCompleted" style="color: var(--success);">0</div>
+                                <div class="stat-label">Completed</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statsFailed" style="color: var(--danger);">0</div>
+                                <div class="stat-label">Failed</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="statsAvgDuration">0ms</div>
+                                <div class="stat-label">Avg Duration</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Quick Actions</span>
+                    </div>
+                    <div class="flex gap-10" style="flex-wrap: wrap;">
+                        <button class="btn-primary" onclick="openCreateWorkspaceModal()">Create Workspace</button>
+                        <button class="btn-primary" onclick="switchTab('workflows'); openCreateWorkflowModal();">Create
+                            Workflow</button>
+                        <button class="btn-outline" onclick="loadNodeTypes()">Browse Node Types</button>
+                        <button class="btn-outline" onclick="testWebhook()">Test Webhook</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Recent Executions</span>
+                        <button class="btn-outline btn-sm" onclick="loadRecentExecutions()">Refresh</button>
+                    </div>
+                    <div id="recentExecutions">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Workflows Panel -->
+            <div id="panel-workflows" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Workflows</span>
+                        <button class="btn-primary" onclick="openCreateWorkflowModal()">Create Workflow</button>
+                    </div>
+                    <div id="workflowsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Executions Panel -->
+            <div id="panel-executions" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Executions</span>
+                        <div class="flex gap-10">
+                            <select id="execStatusFilter" onchange="loadExecutions()"
+                                style="width: auto; padding: 6px 12px;">
+                                <option value="">All Status</option>
+                                <option value="queued">Queued</option>
+                                <option value="running">Running</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button class="btn-outline btn-sm" onclick="loadExecutions()">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="executionsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Credentials Panel -->
+            <div id="panel-credentials" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Credentials</span>
+                        <button class="btn-primary" onclick="openCreateCredentialModal()">Create Credential</button>
+                    </div>
+                    <div id="credentialsList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Schedules Panel -->
+            <div id="panel-schedules" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Schedules</span>
+                        <button class="btn-primary" onclick="openCreateScheduleModal()">Create Schedule</button>
+                    </div>
+                    <div id="schedulesList">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Webhooks Panel -->
+            <div id="panel-webhooks" class="panel">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Webhook Tester</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Endpoint ID</label>
+                            <input type="text" id="webhookEndpointId" placeholder="Enter webhook endpoint ID">
+                        </div>
+                        <div class="form-group">
+                            <label>Method</label>
+                            <select id="webhookMethod">
+                                <option value="POST">POST</option>
+                                <option value="GET">GET</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Payload (JSON)</label>
+                            <textarea id="webhookPayload" rows="6" placeholder='{"event": "test", "data": {}}'>{
+    "event": "order.created",
+    "data": {
+        "order_id": "12345",
+        "customer": "john@example.com",
+        "total": 99.99
+    }
+}</textarea>
+                        </div>
+                        <button class="btn-primary" onclick="triggerWebhook()">Send Webhook</button>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Response</span>
+                        </div>
+                        <div id="webhookResponse" class="json-view">Response will appear here...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Node Types Panel -->
+            <div id="panel-nodes" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Available Node Types</span>
+                        <select id="nodeCategory" onchange="filterNodes()" style="width: auto; padding: 6px 12px;">
+                            <option value="">All Categories</option>
+                            <option value="trigger">Triggers</option>
+                            <option value="action">Actions</option>
+                            <option value="logic">Logic</option>
+                            <option value="integration">Integrations</option>
+                        </select>
+                    </div>
+                    <div id="nodeTypesList" class="node-grid">Loading...</div>
+                </div>
+            </div>
+
+            <!-- WebSocket Panel -->
+            <div id="panel-websocket" class="panel">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">WebSocket Connection</span>
+                            <span class="badge" id="wsStatusBadge">Disconnected</span>
+                        </div>
+                        <p style="color: var(--text-muted); margin-bottom: 15px;">
+                            Real-time events from workflow executions. Connection is managed automatically when you
+                            select a workspace.
+                        </p>
+                        <div class="flex gap-10">
+                            <button class="btn-primary" onclick="connectWebSocket()">Connect</button>
+                            <button class="btn-danger" onclick="disconnectWebSocket()">Disconnect</button>
+                        </div>
+
+                        <div style="margin-top: 20px;">
+                            <div class="form-group">
+                                <label>Subscribe to Workflow</label>
+                                <div class="flex gap-10">
+                                    <input type="text" id="wsSubscribeWorkflow" placeholder="Workflow ID"
+                                        class="flex-1">
+                                    <button class="btn-outline" onclick="wsSubscribe('workflow')">Subscribe</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Subscribe to Execution</label>
+                                <div class="flex gap-10">
+                                    <input type="text" id="wsSubscribeExecution" placeholder="Execution ID"
+                                        class="flex-1">
+                                    <button class="btn-outline" onclick="wsSubscribe('execution')">Subscribe</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Live Events</span>
+                            <button class="btn-outline btn-sm" onclick="clearWsEvents()">Clear</button>
+                        </div>
+                        <div id="wsEvents" class="log-panel" style="max-height: 500px;">
+                            <div class="log-entry">
+                                <span class="log-time">--:--:--</span>
+                                <span class="log-type info">INFO</span>
+                                <span>Waiting for events...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Logs Panel -->
+            <div id="panel-logs" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">API Request Logs</span>
+                        <button class="btn-outline btn-sm" onclick="clearLogs()">Clear</button>
+                    </div>
+                    <div id="apiLogs" class="log-panel" style="max-height: 600px;">
+                        <div class="log-entry">
+                            <span class="log-time">--:--:--</span>
+                            <span class="log-type info">INFO</span>
+                            <span>API logs will appear here...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Workspace Modal -->
+    <div class="modal-overlay" id="createWorkspaceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create Workspace</h3>
+                <button class="modal-close" onclick="closeModal('createWorkspaceModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="wsName" placeholder="My Workspace">
+            </div>
+            <div class="form-group">
+                <label>Slug</label>
+                <input type="text" id="wsSlug" placeholder="my-workspace">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="wsDescription" rows="3" placeholder="Optional description"></textarea>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createWorkspace()">Create</button>
+        </div>
+    </div>
+
+    <!-- Create Workflow Modal -->
+    <div class="modal-overlay" id="createWorkflowModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create Workflow</h3>
+                <button class="modal-close" onclick="closeModal('createWorkflowModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="wfName" placeholder="My Workflow">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="wfDescription" rows="2" placeholder="Optional description"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Template</label>
+                <select id="wfTemplate" onchange="updateWorkflowTemplate()">
+                    <option value="http">HTTP Request (Default)</option>
+                    <option value="webhook">Webhook Triggered</option>
+                    <option value="conditional">Conditional Logic</option>
+                    <option value="loop">Loop Example</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Workflow Definition (JSON)</label>
+                <textarea id="wfDefinition" rows="12" style="font-family: monospace; font-size: 0.85rem;"></textarea>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createWorkflow()">Create</button>
+        </div>
+    </div>
+
+    <!-- Create Credential Modal -->
+    <div class="modal-overlay" id="createCredentialModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create Credential</h3>
+                <button class="modal-close" onclick="closeModal('createCredentialModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="credName" placeholder="My API Key">
+            </div>
+            <div class="form-group">
+                <label>Type</label>
+                <select id="credType">
+                    <option value="api_key">API Key</option>
+                    <option value="oauth2">OAuth2</option>
+                    <option value="basic_auth">Basic Auth</option>
+                    <option value="bearer">Bearer Token</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <input type="text" id="credDescription" placeholder="Optional description">
+            </div>
+            <div class="form-group">
+                <label>Credential Data (JSON)</label>
+                <textarea id="credData" rows="4" placeholder='{"api_key": "sk-xxx"}'></textarea>
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createCredential()">Create</button>
+        </div>
+    </div>
+
+    <!-- Create Schedule Modal -->
+    <div class="modal-overlay" id="createScheduleModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create Schedule</h3>
+                <button class="modal-close" onclick="closeModal('createScheduleModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Workflow</label>
+                <select id="schedWorkflow"></select>
+            </div>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="schedName" placeholder="Daily Report">
+            </div>
+            <div class="form-group">
+                <label>Cron Expression</label>
+                <input type="text" id="schedCron" placeholder="0 9 * * *" value="*/5 * * * *">
+                <small style="color: var(--text-muted);">Example: */5 * * * * (every 5 minutes)</small>
+            </div>
+            <div class="form-group">
+                <label>Timezone</label>
+                <input type="text" id="schedTimezone" value="UTC">
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="createSchedule()">Create</button>
+        </div>
+    </div>
+
+    <!-- Execution Detail Modal -->
+    <div class="modal-overlay" id="executionDetailModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Execution Details</h3>
+                <button class="modal-close" onclick="closeModal('executionDetailModal')">&times;</button>
+            </div>
+            <div id="executionDetail">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Node Detail Modal -->
+    <div class="modal-overlay" id="nodeDetailModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 id="nodeDetailTitle">Node Details</h3>
+                <button class="modal-close" onclick="closeModal('nodeDetailModal')">&times;</button>
+            </div>
+            <div id="nodeDetail">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            baseUrl: 'http://api.linkflow.icu',
+            accessToken: null,
+            refreshToken: null,
+            user: null,
+            workspaces: [],
+            currentWorkspace: null,
+            workflows: [],
+            nodeTypes: [],
+            ws: null
+        };
+
+        // Workflow Templates
+        const workflowTemplates = {
+            http: {
+                nodes: [
+                    { id: "trigger_1", type: "trigger.manual", name: "Manual Trigger", position: { x: 100, y: 100 }, parameters: {} },
+                    { id: "http_1", type: "action.http", name: "HTTP Request", position: { x: 300, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts/1", method: "GET" } }
+                ],
+                connections: [{ id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" }]
+            },
+            webhook: {
+                nodes: [
+                    { id: "trigger_1", type: "trigger.webhook", name: "Webhook Trigger", position: { x: 100, y: 100 }, parameters: { method: "POST" } },
+                    { id: "http_1", type: "action.http", name: "Process Data", position: { x: 300, y: 100 }, parameters: { url: "https://httpbin.org/post", method: "POST", body: "{{$input.json}}" } },
+                    { id: "respond_1", type: "action.respond", name: "Respond", position: { x: 500, y: 100 }, parameters: { status_code: 200, body: { success: true } } }
+                ],
+                connections: [
+                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
+                    { id: "conn_2", source_node_id: "http_1", target_node_id: "respond_1" }
+                ]
+            },
+            conditional: {
+                nodes: [
+                    { id: "trigger_1", type: "trigger.manual", name: "Start", position: { x: 100, y: 150 }, parameters: {} },
+                    { id: "http_1", type: "action.http", name: "Get User", position: { x: 300, y: 150 }, parameters: { url: "https://jsonplaceholder.typicode.com/users/1", method: "GET" } },
+                    { id: "if_1", type: "logic.if", name: "Check Status", position: { x: 500, y: 150 }, parameters: { condition: "{{$node.http_1.data.id}} == 1" } },
+                    { id: "set_true", type: "action.set", name: "Set True", position: { x: 700, y: 100 }, parameters: { values: { result: "User found" } } },
+                    { id: "set_false", type: "action.set", name: "Set False", position: { x: 700, y: 200 }, parameters: { values: { result: "User not found" } } }
+                ],
+                connections: [
+                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
+                    { id: "conn_2", source_node_id: "http_1", target_node_id: "if_1" },
+                    { id: "conn_3", source_node_id: "if_1", source_handle: "true", target_node_id: "set_true" },
+                    { id: "conn_4", source_node_id: "if_1", source_handle: "false", target_node_id: "set_false" }
+                ]
+            },
+            loop: {
+                nodes: [
+                    { id: "trigger_1", type: "trigger.manual", name: "Start", position: { x: 100, y: 100 }, parameters: {} },
+                    { id: "http_1", type: "action.http", name: "Get Posts", position: { x: 300, y: 100 }, parameters: { url: "https://jsonplaceholder.typicode.com/posts?_limit=3", method: "GET" } },
+                    { id: "loop_1", type: "logic.loop", name: "Loop Posts", position: { x: 500, y: 100 }, parameters: { items: "{{$node.http_1.data}}" } },
+                    { id: "set_1", type: "action.set", name: "Process Item", position: { x: 700, y: 100 }, parameters: { values: { title: "{{$item.title}}" } } }
+                ],
+                connections: [
+                    { id: "conn_1", source_node_id: "trigger_1", target_node_id: "http_1" },
+                    { id: "conn_2", source_node_id: "http_1", target_node_id: "loop_1" },
+                    { id: "conn_3", source_node_id: "loop_1", target_node_id: "set_1" }
+                ]
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            state.baseUrl = localStorage.getItem('linkflow_base_url') || 'http://localhost:8090';
+            document.getElementById('baseUrl').value = state.baseUrl;
+
+            const savedToken = localStorage.getItem('linkflow_token');
+            const savedRefresh = localStorage.getItem('linkflow_refresh');
+            if (savedToken && savedRefresh) {
+                state.accessToken = savedToken;
+                state.refreshToken = savedRefresh;
+                initApp();
+            }
+
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+
+            // Initialize workflow template
+            updateWorkflowTemplate();
+        });
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`panel-${tabId}`).classList.add('active');
+
+            // Load data for specific tabs
+            if (tabId === 'workflows') loadWorkflows();
+            if (tabId === 'executions') loadExecutions();
+            if (tabId === 'credentials') loadCredentials();
+            if (tabId === 'schedules') loadSchedules();
+            if (tabId === 'nodes') loadNodeTypes();
+        }
+
+        // API Helper
+        async function api(method, path, body = null, auth = true) {
+            const url = `${state.baseUrl}${path}`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (auth && state.accessToken) {
+                headers['Authorization'] = `Bearer ${state.accessToken}`;
+            }
+
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+
+            const startTime = Date.now();
+            try {
+                const res = await fetch(url, options);
+                const duration = Date.now() - startTime;
+                const data = await res.json().catch(() => ({}));
+
+                logApi(method, path, res.status, duration, data);
+
+                if (res.status === 401 && state.refreshToken) {
+                    const refreshed = await refreshToken();
+                    if (refreshed) {
+                        headers['Authorization'] = `Bearer ${state.accessToken}`;
+                        const retryRes = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+                        return retryRes.json();
+                    }
+                }
+
+                return { status: res.status, data: data.data || data, error: data.error || data.message };
+            } catch (err) {
+                logApi(method, path, 0, Date.now() - startTime, { error: err.message });
+                return { status: 0, error: err.message };
+            }
+        }
+
+        function logApi(method, path, status, duration, data) {
+            const logsEl = document.getElementById('apiLogs');
+            const time = new Date().toLocaleTimeString();
+            const statusClass = status >= 200 && status < 300 ? 'success' : status >= 400 ? 'error' : 'info';
+
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type ${statusClass}">${status || 'ERR'}</span>
+                <strong>${method}</strong> ${path}
+                <span style="color: var(--text-muted);">(${duration}ms)</span>
+                <div style="margin-top: 5px; font-size: 0.8rem; color: var(--text-muted); max-height: 100px; overflow: hidden;">
+                    ${JSON.stringify(data).substring(0, 200)}${JSON.stringify(data).length > 200 ? '...' : ''}
+                </div>
+            `;
+            logsEl.insertBefore(entry, logsEl.firstChild);
+        }
+
+        function clearLogs() {
+            document.getElementById('apiLogs').innerHTML = '';
+        }
+
+        // Auth
+        function showLogin() {
+            document.getElementById('loginTab').classList.remove('hidden');
+            document.getElementById('registerTab').classList.add('hidden');
+        }
+
+        function showRegister() {
+            document.getElementById('loginTab').classList.add('hidden');
+            document.getElementById('registerTab').classList.remove('hidden');
+        }
+
+        async function login() {
+            state.baseUrl = document.getElementById('baseUrl').value;
+            localStorage.setItem('linkflow_base_url', state.baseUrl);
+
+            const res = await api('POST', '/api/v1/auth/login', {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            }, false);
+
+            if (res.status === 200 && res.data.access_token) {
+                state.accessToken = res.data.access_token;
+                state.refreshToken = res.data.refresh_token;
+                state.user = res.data.user;
+                localStorage.setItem('linkflow_token', state.accessToken);
+                localStorage.setItem('linkflow_refresh', state.refreshToken);
+                initApp();
+            } else {
+                showError(res.error || 'Login failed');
+            }
+        }
+
+        async function register() {
+            state.baseUrl = document.getElementById('baseUrl').value;
+            localStorage.setItem('linkflow_base_url', state.baseUrl);
+
+            const res = await api('POST', '/api/v1/auth/register', {
+                email: document.getElementById('regEmail').value,
+                password: document.getElementById('regPassword').value,
+                first_name: document.getElementById('regFirstName').value,
+                last_name: document.getElementById('regLastName').value
+            }, false);
+
+            if (res.status === 201 && res.data.access_token) {
+                state.accessToken = res.data.access_token;
+                state.refreshToken = res.data.refresh_token;
+                state.user = res.data.user;
+                localStorage.setItem('linkflow_token', state.accessToken);
+                localStorage.setItem('linkflow_refresh', state.refreshToken);
+                initApp();
+            } else {
+                showError(res.error || 'Registration failed');
+            }
+        }
+
+        async function refreshToken() {
+            const res = await api('POST', '/api/v1/auth/refresh', { refresh_token: state.refreshToken }, false);
+            if (res.status === 200 && res.data.access_token) {
+                state.accessToken = res.data.access_token;
+                state.refreshToken = res.data.refresh_token;
+                localStorage.setItem('linkflow_token', state.accessToken);
+                localStorage.setItem('linkflow_refresh', state.refreshToken);
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            api('POST', '/api/v1/auth/logout');
+            state.accessToken = null;
+            state.refreshToken = null;
+            state.user = null;
+            localStorage.removeItem('linkflow_token');
+            localStorage.removeItem('linkflow_refresh');
+            disconnectWebSocket();
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('loginError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        // App Init
+        async function initApp() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+
+            // Get user info
+            const userRes = await api('GET', '/api/v1/users/me');
+            if (userRes.status === 200) {
+                state.user = userRes.data;
+                document.getElementById('userEmail').textContent = state.user.email;
+            }
+
+            // Load workspaces
+            await loadWorkspaces();
+
+            // Check health
+            checkHealth();
+        }
+
+        async function loadWorkspaces() {
+            const res = await api('GET', '/api/v1/workspaces');
+            if (res.status === 200) {
+                state.workspaces = res.data || [];
+                const select = document.getElementById('workspaceSelect');
+                select.innerHTML = '<option value="">Select Workspace</option>';
+                state.workspaces.forEach(ws => {
+                    select.innerHTML += `<option value="${ws.id}">${ws.name}</option>`;
+                });
+
+                if (state.workspaces.length > 0) {
+                    selectWorkspace(state.workspaces[0].id);
+                }
+            }
+        }
+
+        function selectWorkspace(id) {
+            state.currentWorkspace = state.workspaces.find(ws => ws.id === id);
+            document.getElementById('workspaceSelect').value = id;
+
+            if (state.currentWorkspace) {
+                connectWebSocket();
+                loadRecentExecutions();
+                loadExecutionStats();
+            }
+        }
+
+        // Health Check
+        async function checkHealth() {
+            const res = await api('GET', '/api/v1/health', null, false);
+            if (res.status === 200) {
+                document.getElementById('healthOverall').textContent = res.data.status === 'healthy' ? '✓' : '✗';
+                document.getElementById('healthOverall').style.color = res.data.status === 'healthy' ? 'var(--success)' : 'var(--danger)';
+
+                if (res.data.components) {
+                    document.getElementById('healthDB').textContent = res.data.components.database === 'healthy' ? '✓' : '✗';
+                    document.getElementById('healthDB').style.color = res.data.components.database === 'healthy' ? 'var(--success)' : 'var(--danger)';
+                    document.getElementById('healthRedis').textContent = res.data.components.redis === 'healthy' ? '✓' : '✗';
+                    document.getElementById('healthRedis').style.color = res.data.components.redis === 'healthy' ? 'var(--success)' : 'var(--danger)';
+                }
+            }
+        }
+
+        // Execution Stats
+        async function loadExecutionStats() {
+            if (!state.currentWorkspace) return;
+            const period = document.getElementById('statsPeriod').value;
+            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/stats?period=${period}`);
+            if (res.status === 200) {
+                document.getElementById('statsTotal').textContent = res.data.total || 0;
+                document.getElementById('statsCompleted').textContent = res.data.completed || 0;
+                document.getElementById('statsFailed').textContent = res.data.failed || 0;
+                document.getElementById('statsAvgDuration').textContent = `${res.data.average_duration_ms || 0}ms`;
+            }
+        }
+
+        // Recent Executions
+        async function loadRecentExecutions() {
+            if (!state.currentWorkspace) {
+                document.getElementById('recentExecutions').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
+                return;
+            }
+            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=5`);
+            if (res.status === 200) {
+                renderExecutionsList(res.data || [], 'recentExecutions');
+            }
+        }
+
+        // Workflows
+        async function loadWorkflows() {
+            if (!state.currentWorkspace) {
+                document.getElementById('workflowsList').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
+                return;
+            }
+            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`);
+            if (res.status === 200) {
+                state.workflows = res.data || [];
+                renderWorkflowsList(state.workflows);
+            }
+        }
+
+        function renderWorkflowsList(workflows) {
+            const el = document.getElementById('workflowsList');
+            if (!workflows.length) {
+                el.innerHTML = '<p style="color: var(--text-muted);">No workflows yet. Create one!</p>';
+                return;
+            }
+            el.innerHTML = workflows.map(wf => `
+                <div class="list-item">
+                    <div class="list-item-info">
+                        <div class="list-item-title">${wf.name}</div>
+                        <div class="list-item-meta">
+                            ${wf.description || 'No description'} • 
+                            <span class="badge ${wf.status === 'active' ? 'badge-success' : 'badge-warning'}">${wf.status}</span>
+                        </div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="btn-primary btn-sm" onclick="executeWorkflow('${wf.id}')">Execute</button>
+                        <button class="btn-outline btn-sm" onclick="toggleWorkflow('${wf.id}', '${wf.status}')">${wf.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+                        <button class="btn-danger btn-sm" onclick="deleteWorkflow('${wf.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function executeWorkflow(id) {
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/execute`, {
+                input_data: { triggered_from: 'test_dashboard', timestamp: new Date().toISOString() }
+            });
+            if (res.status === 202) {
+                addWsEvent('info', `Execution started: ${res.data.execution_id}`);
+                document.getElementById('wsSubscribeExecution').value = res.data.execution_id;
+                loadRecentExecutions();
+            } else {
+                alert('Failed to execute: ' + (res.error || 'Unknown error'));
+            }
+        }
+
+        async function toggleWorkflow(id, currentStatus) {
+            const action = currentStatus === 'active' ? 'deactivate' : 'activate';
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}/${action}`);
+            if (res.status === 200) {
+                loadWorkflows();
+            }
+        }
+
+        async function deleteWorkflow(id) {
+            if (!confirm('Are you sure you want to delete this workflow?')) return;
+            const res = await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows/${id}`);
+            if (res.status === 200 || res.status === 204) {
+                loadWorkflows();
+            }
+        }
+
+        function updateWorkflowTemplate() {
+            const template = document.getElementById('wfTemplate').value;
+            document.getElementById('wfDefinition').value = JSON.stringify(workflowTemplates[template], null, 2);
+        }
+
+        async function createWorkflow() {
+            const definition = JSON.parse(document.getElementById('wfDefinition').value);
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/workflows`, {
+                name: document.getElementById('wfName').value || 'New Workflow',
+                description: document.getElementById('wfDescription').value,
+                ...definition
+            });
+            if (res.status === 201) {
+                closeModal('createWorkflowModal');
+                loadWorkflows();
+            } else {
+                alert('Failed: ' + (res.error || 'Unknown error'));
+            }
+        }
+
+        // Executions
+        async function loadExecutions() {
+            if (!state.currentWorkspace) {
+                document.getElementById('executionsList').innerHTML = '<p style="color: var(--text-muted);">Select a workspace first</p>';
+                return;
+            }
+            const status = document.getElementById('execStatusFilter').value;
+            let url = `/api/v1/workspaces/${state.currentWorkspace.id}/executions?per_page=20`;
+            if (status) url += `&status=${status}`;
+
+            const res = await api('GET', url);
+            if (res.status === 200) {
+                renderExecutionsList(res.data || [], 'executionsList');
+            }
+        }
+
+        function renderExecutionsList(executions, containerId) {
+            const el = document.getElementById(containerId);
+            if (!executions.length) {
+                el.innerHTML = '<p style="color: var(--text-muted);">No executions found</p>';
+                return;
+            }
+            el.innerHTML = executions.map(exec => `
+                <div class="list-item">
+                    <div class="list-item-info">
+                        <div class="list-item-title">${exec.workflow_name || exec.workflow_id}</div>
+                        <div class="list-item-meta">
+                            ${exec.trigger_type} • ${new Date(exec.created_at).toLocaleString()} • 
+                            ${exec.duration_ms ? exec.duration_ms + 'ms' : '-'}
+                        </div>
+                    </div>
+                    <div class="list-item-actions">
+                        <span class="badge ${getStatusBadge(exec.status)}">${exec.status}</span>
+                        <button class="btn-outline btn-sm" onclick="viewExecution('${exec.id}')">View</button>
+                        ${exec.status === 'running' ? `<button class="btn-danger btn-sm" onclick="cancelExecution('${exec.id}')">Cancel</button>` : ''}
+                        ${exec.status === 'failed' ? `<button class="btn-warning btn-sm" onclick="retryExecution('${exec.id}')">Retry</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadge(status) {
+            const map = { completed: 'badge-success', failed: 'badge-danger', running: 'badge-warning', queued: 'badge-info', cancelled: 'badge-danger' };
+            return map[status] || 'badge-info';
+        }
+
+        async function viewExecution(id) {
+            openModal('executionDetailModal');
+            document.getElementById('executionDetail').innerHTML = 'Loading...';
+
+            const [execRes, nodesRes] = await Promise.all([
+                api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}`),
+                api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/nodes`)
+            ]);
+
+            if (execRes.status === 200) {
+                const exec = execRes.data;
+                const nodes = nodesRes.data || [];
+
+                document.getElementById('executionDetail').innerHTML = `
+                    <div class="stats-grid mb-10">
+                        <div class="stat-card">
+                            <div class="stat-label">Status</div>
+                            <span class="badge ${getStatusBadge(exec.status)}" style="font-size: 1rem;">${exec.status}</span>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Duration</div>
+                            <div class="stat-value" style="font-size: 1.2rem;">${exec.duration_ms || 0}ms</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Trigger</div>
+                            <div style="font-size: 1rem;">${exec.trigger_type}</div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px;">Node Executions</h4>
+                    <div class="execution-timeline">
+                        ${nodes.map(n => `
+                            <div class="timeline-item ${n.status}">
+                                <strong>${n.node_name || n.node_id}</strong> (${n.node_type})
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                    ${n.status} • ${n.duration_ms || 0}ms
+                                </div>
+                                ${n.error ? `<div style="color: var(--danger); font-size: 0.85rem; margin-top: 5px;">${n.error}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <h4 style="margin: 20px 0 10px;">Input Data</h4>
+                    <div class="json-view">${JSON.stringify(exec.input_data, null, 2)}</div>
+                    
+                    <h4 style="margin: 20px 0 10px;">Output Data</h4>
+                    <div class="json-view">${JSON.stringify(exec.output_data, null, 2)}</div>
+                    
+                    ${exec.error ? `<h4 style="margin: 20px 0 10px; color: var(--danger);">Error</h4><div class="json-view" style="color: var(--danger);">${exec.error}</div>` : ''}
+                `;
+            }
+        }
+
+        async function cancelExecution(id) {
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/cancel`);
+            if (res.status === 200) {
+                loadExecutions();
+                loadRecentExecutions();
+            }
+        }
+
+        async function retryExecution(id) {
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/executions/${id}/retry`);
+            if (res.status === 202) {
+                addWsEvent('info', `Retry started: ${res.data.execution_id}`);
+                loadExecutions();
+            }
+        }
+
+        // Credentials
+        async function loadCredentials() {
+            if (!state.currentWorkspace) return;
+            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`);
+            if (res.status === 200) {
+                const creds = res.data || [];
+                const el = document.getElementById('credentialsList');
+                if (!creds.length) {
+                    el.innerHTML = '<p style="color: var(--text-muted);">No credentials yet</p>';
+                    return;
+                }
+                el.innerHTML = creds.map(c => `
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-title">${c.name}</div>
+                            <div class="list-item-meta">${c.type} • ${c.description || ''}</div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-outline btn-sm" onclick="testCredential('${c.id}')">Test</button>
+                            <button class="btn-danger btn-sm" onclick="deleteCredential('${c.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        async function createCredential() {
+            let data;
+            try {
+                data = JSON.parse(document.getElementById('credData').value);
+            } catch {
+                alert('Invalid JSON in credential data');
+                return;
+            }
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials`, {
+                name: document.getElementById('credName').value,
+                type: document.getElementById('credType').value,
+                description: document.getElementById('credDescription').value,
+                data: data
+            });
+            if (res.status === 201) {
+                closeModal('createCredentialModal');
+                loadCredentials();
+            }
+        }
+
+        async function testCredential(id) {
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}/test`);
+            alert(res.status === 200 ? 'Credential is valid!' : 'Credential test failed: ' + (res.error || 'Unknown error'));
+        }
+
+        async function deleteCredential(id) {
+            if (!confirm('Delete this credential?')) return;
+            await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/credentials/${id}`);
+            loadCredentials();
+        }
+
+        // Schedules
+        async function loadSchedules() {
+            if (!state.currentWorkspace) return;
+            const res = await api('GET', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`);
+            if (res.status === 200) {
+                const schedules = res.data || [];
+                const el = document.getElementById('schedulesList');
+                if (!schedules.length) {
+                    el.innerHTML = '<p style="color: var(--text-muted);">No schedules yet</p>';
+                    return;
+                }
+                el.innerHTML = schedules.map(s => `
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-title">${s.name}</div>
+                            <div class="list-item-meta">
+                                ${s.cron_expression} (${s.timezone}) • 
+                                <span class="badge ${s.enabled ? 'badge-success' : 'badge-warning'}">${s.enabled ? 'Active' : 'Paused'}</span>
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-outline btn-sm" onclick="toggleSchedule('${s.id}', ${s.enabled})">${s.enabled ? 'Pause' : 'Resume'}</button>
+                            <button class="btn-danger btn-sm" onclick="deleteSchedule('${s.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function openCreateScheduleModal() {
+            openModal('createScheduleModal');
+            const select = document.getElementById('schedWorkflow');
+            select.innerHTML = state.workflows.map(wf => `<option value="${wf.id}">${wf.name}</option>`).join('');
+        }
+
+        async function createSchedule() {
+            const res = await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules`, {
+                workflow_id: document.getElementById('schedWorkflow').value,
+                name: document.getElementById('schedName').value,
+                cron_expression: document.getElementById('schedCron').value,
+                timezone: document.getElementById('schedTimezone').value,
+                enabled: true
+            });
+            if (res.status === 201) {
+                closeModal('createScheduleModal');
+                loadSchedules();
+            }
+        }
+
+        async function toggleSchedule(id, enabled) {
+            const action = enabled ? 'pause' : 'resume';
+            await api('POST', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}/${action}`);
+            loadSchedules();
+        }
+
+        async function deleteSchedule(id) {
+            if (!confirm('Delete this schedule?')) return;
+            await api('DELETE', `/api/v1/workspaces/${state.currentWorkspace.id}/schedules/${id}`);
+            loadSchedules();
+        }
+
+        // Webhooks
+        async function triggerWebhook() {
+            const endpointId = document.getElementById('webhookEndpointId').value;
+            if (!endpointId) {
+                alert('Enter webhook endpoint ID');
+                return;
+            }
+
+            const method = document.getElementById('webhookMethod').value;
+            let payload;
+            try {
+                payload = JSON.parse(document.getElementById('webhookPayload').value);
+            } catch {
+                alert('Invalid JSON payload');
+                return;
+            }
+
+            const url = `${state.baseUrl}/webhooks/${endpointId}`;
+            const startTime = Date.now();
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: method === 'POST' ? JSON.stringify(payload) : undefined
+                });
+                const data = await res.json().catch(() => res.text());
+                const duration = Date.now() - startTime;
+
+                document.getElementById('webhookResponse').textContent = JSON.stringify({
+                    status: res.status,
+                    duration: `${duration}ms`,
+                    response: data
+                }, null, 2);
+            } catch (err) {
+                document.getElementById('webhookResponse').textContent = JSON.stringify({ error: err.message }, null, 2);
+            }
+        }
+
+        // Node Types
+        async function loadNodeTypes() {
+            const res = await api('GET', '/api/v1/node-types');
+            if (res.status === 200) {
+                state.nodeTypes = res.data || [];
+                filterNodes();
+            }
+        }
+
+        function filterNodes() {
+            const category = document.getElementById('nodeCategory').value;
+            const filtered = category ? state.nodeTypes.filter(n => n.category === category) : state.nodeTypes;
+
+            const el = document.getElementById('nodeTypesList');
+            const icons = { trigger: '⚡', action: '🔧', logic: '🔀', integration: '🔌' };
+
+            el.innerHTML = filtered.map(n => `
+                <div class="node-card" onclick="viewNodeType('${n.type}')">
+                    <div class="node-icon">${icons[n.category] || '📦'}</div>
+                    <div class="node-name">${n.name}</div>
+                    <div class="node-type">${n.type}</div>
+                </div>
+            `).join('');
+        }
+
+        async function viewNodeType(type) {
+            openModal('nodeDetailModal');
+            const node = state.nodeTypes.find(n => n.type === type);
+            document.getElementById('nodeDetailTitle').textContent = node.name;
+
+            const res = await api('GET', `/api/v1/node-types/${type}`);
+            if (res.status === 200) {
+                const n = res.data;
+                document.getElementById('nodeDetail').innerHTML = `
+                    <p style="margin-bottom: 15px;">${n.description || 'No description'}</p>
+                    <div class="grid grid-2 mb-10">
+                        <div><strong>Type:</strong> ${n.type}</div>
+                        <div><strong>Category:</strong> ${n.category}</div>
+                        <div><strong>Version:</strong> ${n.version || '1.0.0'}</div>
+                    </div>
+                    
+                    <h4 style="margin: 15px 0 10px;">Parameters</h4>
+                    <div class="json-view">${JSON.stringify(n.parameters || [], null, 2)}</div>
+                    
+                    <h4 style="margin: 15px 0 10px;">Inputs</h4>
+                    <div class="json-view">${JSON.stringify(n.inputs || [], null, 2)}</div>
+                    
+                    <h4 style="margin: 15px 0 10px;">Outputs</h4>
+                    <div class="json-view">${JSON.stringify(n.outputs || [], null, 2)}</div>
+                `;
+            }
+        }
+
+        // WebSocket
+        function connectWebSocket() {
+            if (state.ws && state.ws.readyState === WebSocket.OPEN) return;
+            if (!state.currentWorkspace) return;
+
+            const wsUrl = state.baseUrl.replace('http', 'ws') + `/ws?token=${state.accessToken}&workspace_id=${state.currentWorkspace.id}`;
+
+            try {
+                state.ws = new WebSocket(wsUrl);
+
+                state.ws.onopen = () => {
+                    updateWsStatus(true);
+                    addWsEvent('success', 'Connected to WebSocket');
+                };
+
+                state.ws.onmessage = (e) => {
+                    try {
+                        const event = JSON.parse(e.data);
+                        addWsEvent('event', `${event.type}: ${JSON.stringify(event.data).substring(0, 100)}`);
+
+                        // Auto-refresh on execution events
+                        if (event.type.startsWith('execution.')) {
+                            loadRecentExecutions();
+                            loadExecutionStats();
+                        }
+                    } catch {
+                        addWsEvent('info', e.data);
+                    }
+                };
+
+                state.ws.onclose = () => {
+                    updateWsStatus(false);
+                    addWsEvent('error', 'WebSocket disconnected');
+                };
+
+                state.ws.onerror = (err) => {
+                    addWsEvent('error', 'WebSocket error');
+                };
+            } catch (err) {
+                addWsEvent('error', `Failed to connect: ${err.message}`);
+            }
+        }
+
+        function disconnectWebSocket() {
+            if (state.ws) {
+                state.ws.close();
+                state.ws = null;
+            }
+        }
+
+        function updateWsStatus(connected) {
+            document.getElementById('wsDot').classList.toggle('connected', connected);
+            document.getElementById('wsStatus').textContent = connected ? 'Connected' : 'Disconnected';
+            document.getElementById('wsStatusBadge').textContent = connected ? 'Connected' : 'Disconnected';
+            document.getElementById('wsStatusBadge').className = `badge ${connected ? 'badge-success' : 'badge-danger'}`;
+        }
+
+        function addWsEvent(type, message) {
+            const el = document.getElementById('wsEvents');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type ${type}">${type.toUpperCase()}</span>
+                <span>${message}</span>
+            `;
+            el.insertBefore(entry, el.firstChild);
+        }
+
+        function clearWsEvents() {
+            document.getElementById('wsEvents').innerHTML = '';
+        }
+
+        function wsSubscribe(type) {
+            if (!state.ws || state.ws.readyState !== WebSocket.OPEN) {
+                alert('WebSocket not connected');
+                return;
+            }
+
+            const payload = {};
+            if (type === 'workflow') {
+                payload.workflow_id = document.getElementById('wsSubscribeWorkflow').value;
+            } else {
+                payload.execution_id = document.getElementById('wsSubscribeExecution').value;
+            }
+
+            state.ws.send(JSON.stringify({ type: 'subscribe', payload }));
+            addWsEvent('info', `Subscribed to ${type}: ${JSON.stringify(payload)}`);
+        }
+
+        // Modals
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function openCreateWorkspaceModal() {
+            openModal('createWorkspaceModal');
+        }
+
+        function openCreateWorkflowModal() {
+            if (!state.currentWorkspace) {
+                alert('Select a workspace first');
+                return;
+            }
+            document.getElementById('wfName').value = 'Test Workflow ' + Date.now();
+            updateWorkflowTemplate();
+            openModal('createWorkflowModal');
+        }
+
+        function openCreateCredentialModal() {
+            if (!state.currentWorkspace) {
+                alert('Select a workspace first');
+                return;
+            }
+            openModal('createCredentialModal');
+        }
+
+        async function createWorkspace() {
+            const res = await api('POST', '/api/v1/workspaces', {
+                name: document.getElementById('wsName').value,
+                slug: document.getElementById('wsSlug').value,
+                description: document.getElementById('wsDescription').value
+            });
+            if (res.status === 201) {
+                closeModal('createWorkspaceModal');
+                await loadWorkspaces();
+                selectWorkspace(res.data.id);
+            }
+        }
+
+        // Close modals on overlay click
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

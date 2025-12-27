@@ -347,6 +347,11 @@ func NewServer(
 	// WebSocket
 	router.Get("/ws", wsHandler.HandleConnection)
 
+	// Test Dashboard (serve static HTML)
+	router.Get("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "web/test-dashboard.html")
+	})
+
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port),
 		Handler:      router,
