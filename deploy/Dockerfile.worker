@@ -1,0 +1,39 @@
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+ARG VERSION=dev
+ARG COMMIT=unknown
+
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w -X main.Version=${VERSION} -X main.Commit=${COMMIT}" \
+    -o /bin/worker ./cmd/worker
+
+# Runtime
+FROM alpine:3.19
+
+LABEL org.opencontainers.image.source="https://github.com/linkflow-ai/linkflow-v2"
+LABEL org.opencontainers.image.description="LinkFlow Worker Service"
+
+RUN apk add --no-cache ca-certificates tzdata \
+    && addgroup -g 1000 linkflow \
+    && adduser -u 1000 -G linkflow -s /bin/sh -D linkflow
+
+WORKDIR /app
+
+COPY --from=builder /bin/worker /bin/worker
+COPY --from=builder /app/configs ./configs
+
+RUN chown -R linkflow:linkflow /app
+
+USER linkflow
+
+ENTRYPOINT ["/bin/worker"]
