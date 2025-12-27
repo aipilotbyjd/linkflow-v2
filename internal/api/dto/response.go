@@ -427,11 +427,39 @@ type SubscriptionResponse struct {
 }
 
 type UsageResponse struct {
+	// Core counts
 	Executions   int   `json:"executions"`
 	Workflows    int   `json:"workflows"`
 	Members      int   `json:"members"`
 	Credentials  int   `json:"credentials"`
 	StorageBytes int64 `json:"storage_bytes"`
-	PeriodStart  int64 `json:"period_start"`
-	PeriodEnd    int64 `json:"period_end"`
+
+	// Credits (Make.com style)
+	CreditsUsed      int `json:"credits_used"`
+	CreditsIncluded  int `json:"credits_included"`
+	CreditsPurchased int `json:"credits_purchased"`
+	CreditsRemaining int `json:"credits_remaining"`
+
+	// Execution details
+	ExecutionsSuccess int `json:"executions_success"`
+	ExecutionsFailed  int `json:"executions_failed"`
+	Operations        int `json:"operations"`
+
+	// Webhooks & Schedules
+	WebhooksCalled     int `json:"webhooks_called"`
+	SchedulesTriggered int `json:"schedules_triggered"`
+	Schedules          int `json:"schedules"`
+	Webhooks           int `json:"webhooks"`
+
+	// Data transfer
+	DataTransferIn  int64 `json:"data_transfer_in"`
+	DataTransferOut int64 `json:"data_transfer_out"`
+
+	// Overage
+	OverageCredits int `json:"overage_credits"`
+	OverageCost    int `json:"overage_cost"`
+
+	// Period
+	PeriodStart int64 `json:"period_start"`
+	PeriodEnd   int64 `json:"period_end"`
 }

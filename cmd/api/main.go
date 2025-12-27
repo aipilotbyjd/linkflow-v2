@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/linkflow-ai/linkflow/internal/api"
+	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
@@ -85,6 +86,18 @@ func main() {
 	oauthStateRepo := repositories.NewOAuthStateRepository(db)
 	webhookEndpointRepo := repositories.NewWebhookEndpointRepository(db)
 
+	// Feature repositories (for new features)
+	auditLogRepo := repositories.NewBaseRepository[models.AuditLog](db)
+	alertRepo := repositories.NewBaseRepository[models.Alert](db)
+	alertLogRepo := repositories.NewBaseRepository[models.AlertLog](db)
+	commentRepo := repositories.NewBaseRepository[models.WorkflowComment](db)
+	execShareRepo := repositories.NewBaseRepository[models.ExecutionShare](db)
+	envVarRepo := repositories.NewBaseRepository[models.EnvironmentVariable](db)
+	workspaceAnalyticsRepo := repositories.NewBaseRepository[models.WorkspaceAnalytics](db)
+	workflowAnalyticsRepo := repositories.NewBaseRepository[models.WorkflowAnalytics](db)
+	workflowExportRepo := repositories.NewBaseRepository[models.WorkflowExport](db)
+	workflowImportRepo := repositories.NewBaseRepository[models.WorkflowImport](db)
+
 	// Initialize crypto
 	jwtManager := crypto.NewJWTManager(crypto.JWTConfig{
 		Secret:        cfg.JWT.Secret,
@@ -121,6 +134,15 @@ func main() {
 	webhookMgr := services.NewWebhookManager(webhookEndpointRepo, baseURL)
 	waitResumeMgr := services.NewWaitResumeManager(waitingExecRepo, baseURL)
 
+	// Feature services
+	auditLogSvc := services.NewAuditLogService(auditLogRepo)
+	alertSvc := services.NewAlertService(alertRepo, alertLogRepo)
+	commentSvc := services.NewWorkflowCommentService(commentRepo)
+	execShareSvc := services.NewExecutionShareService(execShareRepo)
+	envVarSvc := services.NewEnvironmentVariableService(envVarRepo, encryptor)
+	analyticsSvc := services.NewAnalyticsService(workspaceAnalyticsRepo, workflowAnalyticsRepo, executionRepo)
+	exportImportSvc := services.NewWorkflowExportService(workflowExportRepo, workflowImportRepo, workflowRepo)
+
 	// Create server
 	server := api.NewServer(
 		cfg,
@@ -137,6 +159,14 @@ func main() {
 			Template:      templateSvc,
 			WebhookMgr:    webhookMgr,
 			WaitResumeMgr: waitResumeMgr,
+			// Feature services
+			AuditLog:     auditLogSvc,
+			Alert:        alertSvc,
+			Comment:      commentSvc,
+			ExecShare:    execShareSvc,
+			EnvVar:       envVarSvc,
+			Analytics:    analyticsSvc,
+			ExportImport: exportImportSvc,
 		},
 		&api.Repositories{
 			PinnedData:      pinnedDataRepo,

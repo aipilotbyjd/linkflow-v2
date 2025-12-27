@@ -155,14 +155,48 @@ func (h *BillingHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Calculate remaining credits
+	creditsRemaining := usage.CreditsIncluded + usage.CreditsPurchased - usage.CreditsUsed
+	if creditsRemaining < 0 {
+		creditsRemaining = 0
+	}
+
 	dto.JSON(w, http.StatusOK, dto.UsageResponse{
+		// Core counts
 		Executions:   usage.Executions,
 		Workflows:    usage.Workflows,
 		Members:      usage.Members,
 		Credentials:  usage.Credentials,
 		StorageBytes: usage.StorageBytes,
-		PeriodStart:  usage.PeriodStart.Unix(),
-		PeriodEnd:    usage.PeriodEnd.Unix(),
+
+		// Credits
+		CreditsUsed:      usage.CreditsUsed,
+		CreditsIncluded:  usage.CreditsIncluded,
+		CreditsPurchased: usage.CreditsPurchased,
+		CreditsRemaining: creditsRemaining,
+
+		// Execution details
+		ExecutionsSuccess: usage.ExecutionsSuccess,
+		ExecutionsFailed:  usage.ExecutionsFailed,
+		Operations:        usage.Operations,
+
+		// Webhooks & Schedules
+		WebhooksCalled:     usage.WebhooksCalled,
+		SchedulesTriggered: usage.SchedulesTriggered,
+		Schedules:          usage.Schedules,
+		Webhooks:           usage.Webhooks,
+
+		// Data transfer
+		DataTransferIn:  usage.DataTransferIn,
+		DataTransferOut: usage.DataTransferOut,
+
+		// Overage
+		OverageCredits: usage.OverageCredits,
+		OverageCost:    usage.OverageCost,
+
+		// Period
+		PeriodStart: usage.PeriodStart.Unix(),
+		PeriodEnd:   usage.PeriodEnd.Unix(),
 	})
 }
 

@@ -216,14 +216,39 @@ func (r *UsageRepository) GetOrCreateCurrentPeriod(ctx context.Context, workspac
 
 	usage, err := r.FindByWorkspaceAndPeriod(ctx, workspaceID, periodStart, periodEnd)
 	if err == nil {
+		// If credits_included is 0, update from plan
+		if usage.CreditsIncluded == 0 {
+			var workspace models.Workspace
+			if err := r.DB().WithContext(ctx).First(&workspace, "id = ?", workspaceID).Error; err == nil {
+				var plan models.Plan
+				if err := r.DB().WithContext(ctx).First(&plan, "id = ?", workspace.PlanID).Error; err == nil {
+					usage.CreditsIncluded = plan.CreditsIncluded
+					r.DB().WithContext(ctx).Model(usage).Update("credits_included", plan.CreditsIncluded)
+				}
+			}
+		}
 		return usage, nil
 	}
 
 	if err == gorm.ErrRecordNotFound {
+		// Get workspace to find plan
+		var workspace models.Workspace
+		if err := r.DB().WithContext(ctx).First(&workspace, "id = ?", workspaceID).Error; err != nil {
+			return nil, err
+		}
+
+		// Get plan to find credits included
+		var plan models.Plan
+		creditsIncluded := 1000 // default
+		if err := r.DB().WithContext(ctx).First(&plan, "id = ?", workspace.PlanID).Error; err == nil {
+			creditsIncluded = plan.CreditsIncluded
+		}
+
 		usage = &models.Usage{
-			WorkspaceID: workspaceID,
-			PeriodStart: periodStart,
-			PeriodEnd:   periodEnd,
+			WorkspaceID:     workspaceID,
+			PeriodStart:     periodStart,
+			PeriodEnd:       periodEnd,
+			CreditsIncluded: creditsIncluded,
 		}
 		if err := r.Create(ctx, usage); err != nil {
 			return nil, err
