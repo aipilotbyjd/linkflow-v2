@@ -123,6 +123,7 @@ func main() {
 	credentialSvc := services.NewCredentialService(credentialRepo, encryptor)
 	scheduleSvc := services.NewScheduleService(scheduleRepo)
 	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
+	billingSvc.SetCountingRepos(workflowRepo, memberRepo, credentialRepo)
 
 	// New feature services
 	baseURL := cfg.App.URL

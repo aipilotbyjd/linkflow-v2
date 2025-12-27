@@ -31,6 +31,10 @@ type BillingService struct {
 	usageRepo        *repositories.UsageRepository
 	invoiceRepo      *repositories.InvoiceRepository
 	workspaceRepo    *repositories.WorkspaceRepository
+	// Optional repos for live counting
+	workflowRepo   *repositories.WorkflowRepository
+	memberRepo     *repositories.WorkspaceMemberRepository
+	credentialRepo *repositories.CredentialRepository
 }
 
 func NewBillingService(
@@ -47,6 +51,17 @@ func NewBillingService(
 		invoiceRepo:      invoiceRepo,
 		workspaceRepo:    workspaceRepo,
 	}
+}
+
+// SetCountingRepos sets optional repositories for live resource counting
+func (s *BillingService) SetCountingRepos(
+	workflowRepo *repositories.WorkflowRepository,
+	memberRepo *repositories.WorkspaceMemberRepository,
+	credentialRepo *repositories.CredentialRepository,
+) {
+	s.workflowRepo = workflowRepo
+	s.memberRepo = memberRepo
+	s.credentialRepo = credentialRepo
 }
 
 func (s *BillingService) GetPlans(ctx context.Context) ([]models.Plan, error) {
@@ -128,7 +143,29 @@ func (s *BillingService) CancelSubscription(ctx context.Context, workspaceID uui
 }
 
 func (s *BillingService) GetUsage(ctx context.Context, workspaceID uuid.UUID) (*models.Usage, error) {
-	return s.usageRepo.GetOrCreateCurrentPeriod(ctx, workspaceID)
+	usage, err := s.usageRepo.GetOrCreateCurrentPeriod(ctx, workspaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update live counts if repositories are available
+	if s.workflowRepo != nil {
+		if count, err := s.workflowRepo.CountByWorkspace(ctx, workspaceID); err == nil {
+			usage.Workflows = int(count)
+		}
+	}
+	if s.memberRepo != nil {
+		if count, err := s.memberRepo.CountMembers(ctx, workspaceID); err == nil {
+			usage.Members = int(count)
+		}
+	}
+	if s.credentialRepo != nil {
+		if count, err := s.credentialRepo.CountByWorkspace(ctx, workspaceID); err == nil {
+			usage.Credentials = int(count)
+		}
+	}
+
+	return usage, nil
 }
 
 func (s *BillingService) IncrementExecutions(ctx context.Context, workspaceID uuid.UUID) error {
