@@ -31,6 +31,7 @@ WORKDIR /app
 
 COPY --from=builder /bin/api /bin/api
 COPY --from=builder /app/configs ./configs
+COPY --from=builder /app/web ./web
 
 RUN chown -R linkflow:linkflow /app
 
