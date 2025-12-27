@@ -37,6 +37,11 @@ services:
       dockerfile: deploy/Dockerfile.api
     ports:
       - "8090:8090"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.linkflow.icu`)"
+      - "traefik.http.routers.api.entrypoints=http"
+      - "traefik.http.services.api.loadbalancer.server.port=8090"
     environment:
       # App
       APP_ENVIRONMENT: production
