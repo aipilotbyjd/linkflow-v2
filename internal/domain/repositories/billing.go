@@ -154,6 +154,54 @@ func (r *UsageRepository) UpdateCounts(ctx context.Context, usageID uuid.UUID, w
 		}).Error
 }
 
+// IncrementCredits increments the credits used
+func (r *UsageRepository) IncrementCredits(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time, credits int) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Update("credits_used", gorm.Expr("credits_used + ?", credits)).Error
+}
+
+// IncrementOperations increments the operations counter
+func (r *UsageRepository) IncrementOperations(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Update("operations", gorm.Expr("operations + 1")).Error
+}
+
+// IncrementExecutionSuccess increments success counter
+func (r *UsageRepository) IncrementExecutionSuccess(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Updates(map[string]interface{}{
+			"executions":         gorm.Expr("executions + 1"),
+			"executions_success": gorm.Expr("executions_success + 1"),
+		}).Error
+}
+
+// IncrementExecutionFailed increments failure counter
+func (r *UsageRepository) IncrementExecutionFailed(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Updates(map[string]interface{}{
+			"executions":        gorm.Expr("executions + 1"),
+			"executions_failed": gorm.Expr("executions_failed + 1"),
+		}).Error
+}
+
+// IncrementWebhookCalled increments webhook counter
+func (r *UsageRepository) IncrementWebhookCalled(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Update("webhooks_called", gorm.Expr("webhooks_called + 1")).Error
+}
+
+// IncrementScheduleTriggered increments schedule counter
+func (r *UsageRepository) IncrementScheduleTriggered(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Update("schedules_triggered", gorm.Expr("schedules_triggered + 1")).Error
+}
+
 func (r *UsageRepository) GetOrCreateCurrentPeriod(ctx context.Context, workspaceID uuid.UUID) (*models.Usage, error) {
 	now := time.Now()
 	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)

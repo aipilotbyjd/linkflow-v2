@@ -81,6 +81,7 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.Subscription{},
 		&models.Usage{},
 		&models.Invoice{},
+		&models.OperationLog{},
 
 		// Workflow Sharing & Marketplace
 		&models.WorkflowShare{},
@@ -105,64 +106,7 @@ func AutoMigrate(db *gorm.DB) error {
 }
 
 func SeedPlans(db *gorm.DB) error {
-	plans := []models.Plan{
-		{
-			ID:               "free",
-			Name:             "Free",
-			Description:      strPtr("Perfect for getting started"),
-			PriceMonthly:     0,
-			PriceYearly:      0,
-			ExecutionsLimit:  100,
-			WorkflowsLimit:   5,
-			MembersLimit:     1,
-			CredentialsLimit: 5,
-			RetentionDays:    7,
-			IsActive:         true,
-			SortOrder:        1,
-		},
-		{
-			ID:               "starter",
-			Name:             "Starter",
-			Description:      strPtr("For small teams"),
-			PriceMonthly:     1900, // $19
-			PriceYearly:      19000,
-			ExecutionsLimit:  1000,
-			WorkflowsLimit:   25,
-			MembersLimit:     5,
-			CredentialsLimit: 25,
-			RetentionDays:    30,
-			IsActive:         true,
-			SortOrder:        2,
-		},
-		{
-			ID:               "pro",
-			Name:             "Pro",
-			Description:      strPtr("For growing businesses"),
-			PriceMonthly:     4900, // $49
-			PriceYearly:      49000,
-			ExecutionsLimit:  10000,
-			WorkflowsLimit:   100,
-			MembersLimit:     20,
-			CredentialsLimit: 100,
-			RetentionDays:    90,
-			IsActive:         true,
-			SortOrder:        3,
-		},
-		{
-			ID:               "enterprise",
-			Name:             "Enterprise",
-			Description:      strPtr("For large organizations"),
-			PriceMonthly:     19900, // $199
-			PriceYearly:      199000,
-			ExecutionsLimit:  100000,
-			WorkflowsLimit:   -1, // unlimited
-			MembersLimit:     -1,
-			CredentialsLimit: -1,
-			RetentionDays:    365,
-			IsActive:         true,
-			SortOrder:        4,
-		},
-	}
+	plans := models.DefaultPlans()
 
 	for _, plan := range plans {
 		var existing models.Plan
@@ -173,12 +117,16 @@ func SeedPlans(db *gorm.DB) error {
 				return fmt.Errorf("failed to seed plan %s: %w", plan.ID, err)
 			}
 			log.Info().Str("plan", plan.ID).Msg("Created plan")
+		} else if err == nil {
+			// Update existing plan with new fields
+			plan.CreatedAt = existing.CreatedAt
+			plan.UpdatedAt = time.Now()
+			if err := db.Model(&existing).Updates(&plan).Error; err != nil {
+				return fmt.Errorf("failed to update plan %s: %w", plan.ID, err)
+			}
+			log.Info().Str("plan", plan.ID).Msg("Updated plan")
 		}
 	}
 
 	return nil
-}
-
-func strPtr(s string) *string {
-	return &s
 }
