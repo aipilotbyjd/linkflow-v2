@@ -49,6 +49,15 @@ type Services struct {
 	Template      *services.TemplateService
 	WebhookMgr    *services.WebhookManager
 	WaitResumeMgr *services.WaitResumeManager
+	// New feature services
+	AuditLog      *services.AuditLogService
+	Alert         *services.AlertService
+	Comment       *services.WorkflowCommentService
+	ExecShare     *services.ExecutionShareService
+	EnvVar        *services.EnvironmentVariableService
+	Analytics     *services.AnalyticsService
+	ExportImport  *services.WorkflowExportService
+	ExecReplay    *services.ExecutionReplayService
 }
 
 type Repositories struct {
@@ -146,6 +155,47 @@ func NewServer(
 	var waitResumeHandler *handlers.WaitResumeHandler
 	if svc.WaitResumeMgr != nil && repos != nil && repos.WaitingExec != nil {
 		waitResumeHandler = handlers.NewWaitResumeHandler(svc.WaitResumeMgr, repos.WaitingExec)
+	}
+
+	// New feature handlers
+	var auditLogHandler *handlers.AuditLogHandler
+	if svc.AuditLog != nil {
+		auditLogHandler = handlers.NewAuditLogHandler(svc.AuditLog)
+	}
+
+	var alertHandler *handlers.AlertHandler
+	if svc.Alert != nil {
+		alertHandler = handlers.NewAlertHandler(svc.Alert)
+	}
+
+	var commentHandler *handlers.WorkflowCommentHandler
+	if svc.Comment != nil {
+		commentHandler = handlers.NewWorkflowCommentHandler(svc.Comment)
+	}
+
+	var execShareHandler *handlers.ExecutionShareHandler
+	if svc.ExecShare != nil {
+		execShareHandler = handlers.NewExecutionShareHandler(svc.ExecShare, svc.Execution)
+	}
+
+	var envVarHandler *handlers.EnvironmentVariableHandler
+	if svc.EnvVar != nil {
+		envVarHandler = handlers.NewEnvironmentVariableHandler(svc.EnvVar)
+	}
+
+	var analyticsHandler *handlers.AnalyticsHandler
+	if svc.Analytics != nil {
+		analyticsHandler = handlers.NewAnalyticsHandler(svc.Analytics)
+	}
+
+	var exportHandler *handlers.WorkflowExportHandler
+	if svc.ExportImport != nil {
+		exportHandler = handlers.NewWorkflowExportHandler(svc.ExportImport)
+	}
+
+	var replayHandler *handlers.ExecutionReplayHandler
+	if svc.ExecReplay != nil {
+		replayHandler = handlers.NewExecutionReplayHandler(svc.ExecReplay)
 	}
 
 	// Auth middleware
@@ -322,6 +372,61 @@ func NewServer(
 					r.Get("/waiting-executions", waitResumeHandler.ListWaiting)
 					r.Get("/executions/{executionID}/waiting", waitResumeHandler.GetByExecution)
 				}
+
+				// Audit Logs
+				if auditLogHandler != nil {
+					r.Get("/audit-logs", auditLogHandler.List)
+					r.Get("/audit-logs/search", auditLogHandler.Search)
+				}
+
+				// Alerts
+				if alertHandler != nil {
+					r.Get("/alerts", alertHandler.List)
+					r.Post("/alerts", alertHandler.Create)
+					r.Put("/alerts/{alertId}", alertHandler.Update)
+					r.Delete("/alerts/{alertId}", alertHandler.Delete)
+				}
+
+				// Workflow Comments
+				if commentHandler != nil {
+					r.Get("/workflows/{workflowId}/comments", commentHandler.List)
+					r.Post("/workflows/{workflowId}/comments", commentHandler.Create)
+					r.Put("/comments/{commentId}", commentHandler.Update)
+					r.Delete("/comments/{commentId}", commentHandler.Delete)
+					r.Post("/comments/{commentId}/resolve", commentHandler.Resolve)
+				}
+
+				// Execution Sharing
+				if execShareHandler != nil {
+					r.Post("/executions/{executionId}/share", execShareHandler.Create)
+					r.Delete("/shares/{shareId}", execShareHandler.Delete)
+				}
+
+				// Environment Variables
+				if envVarHandler != nil {
+					r.Get("/env-vars", envVarHandler.List)
+					r.Post("/env-vars", envVarHandler.Create)
+					r.Put("/env-vars/{varId}", envVarHandler.Update)
+					r.Delete("/env-vars/{varId}", envVarHandler.Delete)
+				}
+
+				// Analytics
+				if analyticsHandler != nil {
+					r.Get("/analytics", analyticsHandler.GetWorkspaceAnalytics)
+					r.Get("/workflows/{workflowId}/analytics", analyticsHandler.GetWorkflowAnalytics)
+				}
+
+				// Workflow Export/Import
+				if exportHandler != nil {
+					r.Get("/workflows/{workflowId}/export", exportHandler.Export)
+					r.Post("/workflows/import", exportHandler.Import)
+				}
+
+				// Execution Replay
+				if replayHandler != nil {
+					r.Post("/executions/{executionId}/replay", replayHandler.Replay)
+					r.Post("/executions/{executionId}/replay-from-node", replayHandler.ReplayFromNode)
+				}
 			})
 		})
 	})
@@ -332,6 +437,11 @@ func NewServer(
 		r.Get("/{endpointID}", webhookHandler.Handle)
 		r.Post("/stripe", billingHandler.HandleStripeWebhook)
 	})
+
+	// Public shared execution view
+	if execShareHandler != nil {
+		router.Get("/shared/executions/{token}", execShareHandler.GetShared)
+	}
 
 	// Admin routes (protected)
 	router.Route("/api/v1/admin", func(r chi.Router) {

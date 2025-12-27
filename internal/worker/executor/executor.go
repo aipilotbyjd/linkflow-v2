@@ -23,6 +23,7 @@ type Executor struct {
 	executionSvc  *services.ExecutionService
 	credentialSvc *services.CredentialService
 	workflowSvc   *services.WorkflowService
+	billingSvc    *services.BillingService
 	publisher     *events.Publisher
 	cancellation  *processor.CancellationManager
 	credCache     *cache.CredentialCache
@@ -53,6 +54,7 @@ func New(
 	executionSvc *services.ExecutionService,
 	credentialSvc *services.CredentialService,
 	workflowSvc *services.WorkflowService,
+	billingSvc *services.BillingService,
 	publisher *events.Publisher,
 	cancellation *processor.CancellationManager,
 	credCache *cache.CredentialCache,
@@ -63,6 +65,7 @@ func New(
 		executionSvc:  executionSvc,
 		credentialSvc: credentialSvc,
 		workflowSvc:   workflowSvc,
+		billingSvc:    billingSvc,
 		publisher:     publisher,
 		cancellation:  cancellation,
 		credCache:     credCache,
@@ -189,6 +192,9 @@ func (e *Executor) ExecuteWithOptions(ctx context.Context, payload queue.Workflo
 		return err
 	}
 
+	// Track billing/usage
+	e.trackUsage(ctx, payload.WorkspaceID, execution.ID, payload.WorkflowID, result, true)
+
 	e.publishExecutionCompleted(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, result.Duration.Milliseconds(), result.NodesExecuted)
 
 	// Handle sub-workflow result publishing
@@ -263,6 +269,55 @@ func (e *Executor) handleExecutionError(ctx context.Context, execution *models.E
 
 	_ = e.executionSvc.Fail(ctx, execution.ID, errMsg, nodeID)
 	e.publishExecutionFailed(ctx, payload.WorkspaceID, payload.WorkflowID, execution.ID, errMsg, nodeID)
+
+	// Track failed execution usage
+	e.trackUsage(ctx, payload.WorkspaceID, execution.ID, payload.WorkflowID, result, false)
+}
+
+// trackUsage updates billing usage after execution
+func (e *Executor) trackUsage(ctx context.Context, workspaceID, executionID, workflowID uuid.UUID, result *processor.Result, success bool) {
+	if e.billingSvc == nil {
+		return
+	}
+
+	// Calculate credits based on nodes executed
+	creditsUsed := 1 // Base credit for execution
+	if result != nil {
+		creditsUsed += result.NodesExecuted // 1 credit per node
+	}
+
+	// Consume credits
+	if err := e.billingSvc.ConsumeCredits(ctx, workspaceID, creditsUsed); err != nil {
+		log.Warn().Err(err).
+			Str("workspace_id", workspaceID.String()).
+			Int("credits", creditsUsed).
+			Msg("Failed to consume credits")
+	}
+
+	// Increment execution count
+	if success {
+		if err := e.billingSvc.IncrementExecutionSuccess(ctx, workspaceID); err != nil {
+			log.Warn().Err(err).Msg("Failed to increment success count")
+		}
+	} else {
+		if err := e.billingSvc.IncrementExecutionFailed(ctx, workspaceID); err != nil {
+			log.Warn().Err(err).Msg("Failed to increment failed count")
+		}
+	}
+
+	// Record operations
+	if result != nil {
+		if err := e.billingSvc.IncrementOperations(ctx, workspaceID, result.NodesExecuted); err != nil {
+			log.Warn().Err(err).Msg("Failed to increment operations")
+		}
+	}
+
+	log.Debug().
+		Str("workspace_id", workspaceID.String()).
+		Str("execution_id", executionID.String()).
+		Int("credits_used", creditsUsed).
+		Bool("success", success).
+		Msg("Usage tracked")
 }
 
 func (e *Executor) publishSubWorkflowResult(ctx context.Context, payload queue.WorkflowExecutionPayload, result *processor.Result) {

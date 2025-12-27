@@ -70,6 +70,11 @@ func main() {
 	executionRepo := repositories.NewExecutionRepository(db)
 	nodeExecutionRepo := repositories.NewNodeExecutionRepository(db)
 	credentialRepo := repositories.NewCredentialRepository(db)
+	workspaceRepo := repositories.NewWorkspaceRepository(db)
+	planRepo := repositories.NewPlanRepository(db)
+	subscriptionRepo := repositories.NewSubscriptionRepository(db)
+	usageRepo := repositories.NewUsageRepository(db)
+	invoiceRepo := repositories.NewInvoiceRepository(db)
 
 	// Initialize crypto
 	encryptor, err := crypto.NewEncryptor(cfg.JWT.Secret[:32])
@@ -81,6 +86,7 @@ func main() {
 	workflowSvc := services.NewWorkflowService(workflowRepo, versionRepo)
 	executionSvc := services.NewExecutionService(executionRepo, nodeExecutionRepo, workflowRepo)
 	credentialSvc := services.NewCredentialService(credentialRepo, encryptor)
+	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
 
 	// Initialize email service
 	emailCfg := &email.Config{
@@ -128,7 +134,7 @@ func main() {
 	}
 
 	// Create worker
-	w := worker.New(cfg, executionSvc, credentialSvc, workflowSvc, redisClient.Client, emailSvc)
+	w := worker.New(cfg, executionSvc, credentialSvc, workflowSvc, billingSvc, redisClient.Client, emailSvc)
 
 	// Handle shutdown
 	go func() {

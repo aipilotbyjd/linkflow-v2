@@ -52,6 +52,7 @@ func New(
 	executionSvc *services.ExecutionService,
 	credentialSvc *services.CredentialService,
 	workflowSvc *services.WorkflowService,
+	billingSvc *services.BillingService,
 	redisClient *redis.Client,
 	emailSvc *email.Service,
 ) *Worker {
@@ -118,6 +119,7 @@ func New(
 		executionSvc,
 		credentialSvc,
 		workflowSvc,
+		billingSvc,
 		publisher,
 		cancellation,
 		credCache,

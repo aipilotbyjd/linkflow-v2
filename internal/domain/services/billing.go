@@ -502,12 +502,32 @@ type RecordOperationInput struct {
 	DurationMs  int
 }
 
-// IncrementOperations increments the operation counter
-func (s *BillingService) IncrementOperations(ctx context.Context, workspaceID uuid.UUID) error {
+// IncrementOperations increments the operation counter by a given count
+func (s *BillingService) IncrementOperations(ctx context.Context, workspaceID uuid.UUID, count int) error {
 	usage, err := s.usageRepo.GetOrCreateCurrentPeriod(ctx, workspaceID)
 	if err != nil {
 		return err
 	}
 
-	return s.usageRepo.IncrementOperations(ctx, workspaceID, usage.PeriodStart, usage.PeriodEnd)
+	return s.usageRepo.IncrementOperationsBy(ctx, workspaceID, usage.PeriodStart, usage.PeriodEnd, count)
+}
+
+// IncrementExecutionSuccess increments successful execution counter
+func (s *BillingService) IncrementExecutionSuccess(ctx context.Context, workspaceID uuid.UUID) error {
+	usage, err := s.usageRepo.GetOrCreateCurrentPeriod(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
+	return s.usageRepo.IncrementExecutionSuccess(ctx, workspaceID, usage.PeriodStart, usage.PeriodEnd)
+}
+
+// IncrementExecutionFailed increments failed execution counter
+func (s *BillingService) IncrementExecutionFailed(ctx context.Context, workspaceID uuid.UUID) error {
+	usage, err := s.usageRepo.GetOrCreateCurrentPeriod(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
+	return s.usageRepo.IncrementExecutionFailed(ctx, workspaceID, usage.PeriodStart, usage.PeriodEnd)
 }

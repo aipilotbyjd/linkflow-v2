@@ -168,6 +168,13 @@ func (r *UsageRepository) IncrementOperations(ctx context.Context, workspaceID u
 		Update("operations", gorm.Expr("operations + 1")).Error
 }
 
+// IncrementOperationsBy increments the operations counter by a given count
+func (r *UsageRepository) IncrementOperationsBy(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time, count int) error {
+	return r.DB().WithContext(ctx).Model(&models.Usage{}).
+		Where("workspace_id = ? AND period_start = ? AND period_end = ?", workspaceID, periodStart, periodEnd).
+		Update("operations", gorm.Expr("operations + ?", count)).Error
+}
+
 // IncrementExecutionSuccess increments success counter
 func (r *UsageRepository) IncrementExecutionSuccess(ctx context.Context, workspaceID uuid.UUID, periodStart, periodEnd time.Time) error {
 	return r.DB().WithContext(ctx).Model(&models.Usage{}).

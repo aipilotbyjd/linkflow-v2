@@ -845,3 +845,65 @@ func (h *ExecutionReplayHandler) ReplayFromNode(w http.ResponseWriter, r *http.R
 		"message":   "partial execution replay started",
 	})
 }
+
+// =============================================================================
+// VERSION DIFF HANDLER
+// =============================================================================
+
+type VersionDiffHandler struct {
+	diffSvc *services.VersionDiffService
+}
+
+func NewVersionDiffHandler(diffSvc *services.VersionDiffService) *VersionDiffHandler {
+	return &VersionDiffHandler{diffSvc: diffSvc}
+}
+
+func (h *VersionDiffHandler) Compare(w http.ResponseWriter, r *http.Request) {
+	workflowID, err := uuid.Parse(chi.URLParam(r, "workflowId"))
+	if err != nil {
+		dto.BadRequest(w, "invalid workflow ID")
+		return
+	}
+
+	fromVersion, err := strconv.Atoi(r.URL.Query().Get("from"))
+	if err != nil {
+		dto.BadRequest(w, "invalid from version")
+		return
+	}
+
+	toVersion, err := strconv.Atoi(r.URL.Query().Get("to"))
+	if err != nil {
+		dto.BadRequest(w, "invalid to version")
+		return
+	}
+
+	diff, err := h.diffSvc.Compare(r.Context(), workflowID, fromVersion, toVersion)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to compare versions")
+		return
+	}
+
+	dto.OK(w, diff)
+}
+
+func (h *VersionDiffHandler) CompareWithCurrent(w http.ResponseWriter, r *http.Request) {
+	workflowID, err := uuid.Parse(chi.URLParam(r, "workflowId"))
+	if err != nil {
+		dto.BadRequest(w, "invalid workflow ID")
+		return
+	}
+
+	version, err := strconv.Atoi(chi.URLParam(r, "version"))
+	if err != nil {
+		dto.BadRequest(w, "invalid version")
+		return
+	}
+
+	diff, err := h.diffSvc.CompareWithCurrent(r.Context(), workflowID, version)
+	if err != nil {
+		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to compare with current")
+		return
+	}
+
+	dto.OK(w, diff)
+}
