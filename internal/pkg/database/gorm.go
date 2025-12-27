@@ -95,6 +95,37 @@ func AutoMigrate(db *gorm.DB) error {
 		&models.PinnedData{},
 		&models.BinaryData{},
 		&models.OAuthState{},
+
+		// Execution Features
+		&models.ExecutionQueue{},
+		&models.ExecutionShare{},
+		&models.SubWorkflowExecution{},
+
+		// Alerts & Monitoring
+		&models.Alert{},
+		&models.AlertLog{},
+		&models.WorkspaceAnalytics{},
+		&models.WorkflowAnalytics{},
+
+		// Team & Collaboration
+		&models.WorkflowComment{},
+		&models.AuditLog{},
+		&models.Permission{},
+		&models.Role{},
+		&models.RolePermission{},
+
+		// Environment Variables
+		&models.EnvironmentVariable{},
+
+		// Webhook Features
+		&models.WebhookSignatureConfig{},
+
+		// Rate Limiting
+		&models.CredentialRateLimit{},
+
+		// Import/Export
+		&models.WorkflowExport{},
+		&models.WorkflowImport{},
 	)
 
 	if err != nil {
@@ -128,5 +159,58 @@ func SeedPlans(db *gorm.DB) error {
 		}
 	}
 
+	return nil
+}
+
+// SeedPermissions seeds default permissions
+func SeedPermissions(db *gorm.DB) error {
+	perms := models.DefaultPermissions()
+
+	for _, perm := range perms {
+		var existing models.Permission
+		if err := db.First(&existing, "name = ?", perm.Name).Error; err == gorm.ErrRecordNotFound {
+			perm.CreatedAt = time.Now()
+			if err := db.Create(&perm).Error; err != nil {
+				return fmt.Errorf("failed to seed permission %s: %w", perm.Name, err)
+			}
+			log.Debug().Str("permission", perm.Name).Msg("Created permission")
+		}
+	}
+
+	log.Info().Int("count", len(perms)).Msg("Permissions seeded")
+	return nil
+}
+
+// SeedRoles seeds default system roles
+func SeedRoles(db *gorm.DB) error {
+	roles := models.DefaultRoles()
+
+	for _, role := range roles {
+		var existing models.Role
+		if err := db.First(&existing, "name = ? AND workspace_id IS NULL", role.Name).Error; err == gorm.ErrRecordNotFound {
+			role.CreatedAt = time.Now()
+			role.UpdatedAt = time.Now()
+			if err := db.Create(&role).Error; err != nil {
+				return fmt.Errorf("failed to seed role %s: %w", role.Name, err)
+			}
+			log.Debug().Str("role", role.Name).Msg("Created role")
+		}
+	}
+
+	log.Info().Int("count", len(roles)).Msg("Roles seeded")
+	return nil
+}
+
+// SeedAll runs all seed functions
+func SeedAll(db *gorm.DB) error {
+	if err := SeedPlans(db); err != nil {
+		return err
+	}
+	if err := SeedPermissions(db); err != nil {
+		return err
+	}
+	if err := SeedRoles(db); err != nil {
+		return err
+	}
 	return nil
 }
