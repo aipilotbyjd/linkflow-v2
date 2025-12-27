@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -82,9 +83,13 @@ func NewServer(
 	router.Use(middleware.Recoverer())
 	router.Use(chimiddleware.Timeout(60 * time.Second))
 
-	// CORS
+	// CORS - support multiple origins (comma-separated in config)
+	allowedOrigins := strings.Split(cfg.App.FrontendURL, ",")
+	for i := range allowedOrigins {
+		allowedOrigins[i] = strings.TrimSpace(allowedOrigins[i])
+	}
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{cfg.App.FrontendURL},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID", "X-Workspace-ID"},
 		ExposedHeaders:   []string{"X-Request-ID"},
