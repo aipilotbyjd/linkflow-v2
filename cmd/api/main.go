@@ -1,18 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/linkflow-ai/linkflow/internal/api"
-	"github.com/linkflow-ai/linkflow/internal/domain/models"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
-	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
-	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
-	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/rs/zerolog/log"
 
 	// Import node packages to register them via init()
@@ -23,161 +13,29 @@ import (
 )
 
 func main() {
-	// Load configuration
-	cfg, err := config.Load()
+	// Initialize app with all dependencies (wire-generated)
+	app, err := InitializeApp()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load configuration")
+		log.Fatal().Err(err).Msg("Failed to initialize application")
 	}
 
 	// Initialize logger
-	logger.Init(cfg.App.Environment, cfg.App.Debug)
+	logger.Init(app.Config.App.Environment, app.Config.App.Debug)
 
 	log.Info().
-		Str("app", cfg.App.Name).
-		Str("env", cfg.App.Environment).
+		Str("app", app.Config.App.Name).
+		Str("env", app.Config.App.Environment).
 		Msg("Starting API server")
 
-	// Connect to database
-	db, err := database.NewGormDB(&cfg.Database)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
-	}
-
-	// Run migrations
-	if err := database.AutoMigrate(db); err != nil {
-		log.Fatal().Err(err).Msg("Failed to run migrations")
-	}
-
-	// Seed plans
-	if err := database.SeedPlans(db); err != nil {
-		log.Fatal().Err(err).Msg("Failed to seed plans")
-	}
-
-	// Connect to Redis
-	redisClient, err := pkgredis.NewClient(&cfg.Redis)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to Redis")
-	}
-
-	// Initialize queue client
-	queueClient := queue.NewClient(&cfg.Redis)
-
-	// Initialize repositories
-	userRepo := repositories.NewUserRepository(db)
-	sessionRepo := repositories.NewSessionRepository(db)
-	workspaceRepo := repositories.NewWorkspaceRepository(db)
-	memberRepo := repositories.NewWorkspaceMemberRepository(db)
-	invitationRepo := repositories.NewWorkspaceInvitationRepository(db)
-	workflowRepo := repositories.NewWorkflowRepository(db)
-	versionRepo := repositories.NewWorkflowVersionRepository(db)
-	executionRepo := repositories.NewExecutionRepository(db)
-	nodeExecutionRepo := repositories.NewNodeExecutionRepository(db)
-	credentialRepo := repositories.NewCredentialRepository(db)
-	scheduleRepo := repositories.NewScheduleRepository(db)
-	planRepo := repositories.NewPlanRepository(db)
-	subscriptionRepo := repositories.NewSubscriptionRepository(db)
-	usageRepo := repositories.NewUsageRepository(db)
-	invoiceRepo := repositories.NewInvoiceRepository(db)
-
-	// New feature repositories
-	pinnedDataRepo := repositories.NewPinnedDataRepository(db)
-	waitingExecRepo := repositories.NewWaitingExecutionRepository(db)
-	templateRepo := repositories.NewTemplateRepository(db)
-	oauthStateRepo := repositories.NewOAuthStateRepository(db)
-	webhookEndpointRepo := repositories.NewWebhookEndpointRepository(db)
-
-	// Feature repositories (for new features)
-	auditLogRepo := repositories.NewBaseRepository[models.AuditLog](db)
-	alertRepo := repositories.NewBaseRepository[models.Alert](db)
-	alertLogRepo := repositories.NewBaseRepository[models.AlertLog](db)
-	commentRepo := repositories.NewBaseRepository[models.WorkflowComment](db)
-	execShareRepo := repositories.NewBaseRepository[models.ExecutionShare](db)
-	envVarRepo := repositories.NewBaseRepository[models.EnvironmentVariable](db)
-	workspaceAnalyticsRepo := repositories.NewBaseRepository[models.WorkspaceAnalytics](db)
-	workflowAnalyticsRepo := repositories.NewBaseRepository[models.WorkflowAnalytics](db)
-	workflowExportRepo := repositories.NewBaseRepository[models.WorkflowExport](db)
-	workflowImportRepo := repositories.NewBaseRepository[models.WorkflowImport](db)
-
-	// Initialize crypto
-	jwtManager := crypto.NewJWTManager(crypto.JWTConfig{
-		Secret:        cfg.JWT.Secret,
-		AccessExpiry:  cfg.JWT.AccessExpiry,
-		RefreshExpiry: cfg.JWT.RefreshExpiry,
-		Issuer:        cfg.JWT.Issuer,
-	})
-
-	encryptor, err := crypto.NewEncryptor(cfg.JWT.Secret[:32])
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create encryptor")
-	}
-
-	otpManager := crypto.NewOTPManager(cfg.App.Name)
-
-	// Initialize services
-	authSvc := services.NewAuthService(userRepo, sessionRepo, jwtManager, otpManager, encryptor)
-	userSvc := services.NewUserService(userRepo)
-	workspaceSvc := services.NewWorkspaceService(workspaceRepo, memberRepo, invitationRepo)
-	workflowSvc := services.NewWorkflowService(workflowRepo, versionRepo)
-	workflowSvc.SetWebhookEndpointRepo(webhookEndpointRepo) // Enable webhook endpoint lookup
-	executionSvc := services.NewExecutionService(executionRepo, nodeExecutionRepo, workflowRepo)
-	credentialSvc := services.NewCredentialService(credentialRepo, encryptor)
-	scheduleSvc := services.NewScheduleService(scheduleRepo)
-	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
-	billingSvc.SetCountingRepos(workflowRepo, memberRepo, credentialRepo)
-
-	// New feature services
-	baseURL := cfg.App.URL
-	if baseURL == "" {
-		baseURL = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
-	}
-	oauthSvc := services.NewOAuthService(oauthStateRepo, credentialRepo, baseURL)
-	templateSvc := services.NewTemplateService(templateRepo, workflowRepo)
-	webhookMgr := services.NewWebhookManager(webhookEndpointRepo, baseURL)
-	waitResumeMgr := services.NewWaitResumeManager(waitingExecRepo, baseURL)
-
-	// Feature services
-	auditLogSvc := services.NewAuditLogService(auditLogRepo)
-	alertSvc := services.NewAlertService(alertRepo, alertLogRepo)
-	commentSvc := services.NewWorkflowCommentService(commentRepo)
-	execShareSvc := services.NewExecutionShareService(execShareRepo)
-	envVarSvc := services.NewEnvironmentVariableService(envVarRepo, encryptor)
-	analyticsSvc := services.NewAnalyticsService(workspaceAnalyticsRepo, workflowAnalyticsRepo, executionRepo)
-	exportImportSvc := services.NewWorkflowExportService(workflowExportRepo, workflowImportRepo, workflowRepo)
-
-	// Create server
+	// Create server with all dependencies
 	server := api.NewServer(
-		cfg,
-		&api.Services{
-			Auth:          authSvc,
-			User:          userSvc,
-			Workspace:     workspaceSvc,
-			Workflow:      workflowSvc,
-			Execution:     executionSvc,
-			Credential:    credentialSvc,
-			Schedule:      scheduleSvc,
-			Billing:       billingSvc,
-			OAuth:         oauthSvc,
-			Template:      templateSvc,
-			WebhookMgr:    webhookMgr,
-			WaitResumeMgr: waitResumeMgr,
-			// Feature services
-			AuditLog:     auditLogSvc,
-			Alert:        alertSvc,
-			Comment:      commentSvc,
-			ExecShare:    execShareSvc,
-			EnvVar:       envVarSvc,
-			Analytics:    analyticsSvc,
-			ExportImport: exportImportSvc,
-		},
-		&api.Repositories{
-			PinnedData:      pinnedDataRepo,
-			WaitingExec:     waitingExecRepo,
-			WebhookEndpoint: webhookEndpointRepo,
-		},
-		jwtManager,
-		redisClient,
-		queueClient,
-		db,
+		app.Config,
+		app.Services,
+		app.Repos,
+		app.JWTManager,
+		app.Redis,
+		app.Queue,
+		app.DB,
 	)
 
 	// Start server

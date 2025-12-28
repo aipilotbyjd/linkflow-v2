@@ -5,53 +5,34 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
-	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/scheduler"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	// Load configuration
-	cfg, err := config.Load()
+	// Initialize app with all dependencies (wire-generated)
+	app, err := InitializeSchedulerApp()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load configuration")
+		log.Fatal().Err(err).Msg("Failed to initialize scheduler application")
 	}
 
 	// Initialize logger
-	logger.Init(cfg.App.Environment, cfg.App.Debug)
+	logger.Init(app.Config.App.Environment, app.Config.App.Debug)
 
 	log.Info().
-		Str("app", cfg.App.Name).
+		Str("app", app.Config.App.Name).
 		Str("service", "scheduler").
 		Msg("Starting scheduler service")
-
-	// Connect to database
-	db, err := database.NewGormDB(&cfg.Database)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
-	}
-
-	// Connect to Redis
-	redisClient, err := pkgredis.NewClient(&cfg.Redis)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to Redis")
-	}
-
-	// Initialize queue client
-	queueClient := queue.NewClient(&cfg.Redis)
 
 	// Create scheduler config
 	schedulerCfg := scheduler.DefaultConfig()
 
 	// Create scheduler
 	s := scheduler.New(schedulerCfg, &scheduler.Dependencies{
-		DB:    db,
-		Redis: redisClient,
-		Queue: queueClient,
+		DB:    app.DB,
+		Redis: app.Redis,
+		Queue: app.Queue,
 	})
 
 	// Start scheduler

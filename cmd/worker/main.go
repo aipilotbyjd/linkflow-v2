@@ -9,54 +9,35 @@ import (
 	"syscall"
 
 	"github.com/hibiken/asynq"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
-	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
-	"github.com/linkflow-ai/linkflow/internal/pkg/database"
 	"github.com/linkflow-ai/linkflow/internal/pkg/email"
 	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
-	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
 	"github.com/linkflow-ai/linkflow/internal/worker"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	// Load configuration
-	cfg, err := config.Load()
+	// Initialize app with all dependencies (wire-generated)
+	app, err := InitializeWorkerApp()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load configuration")
+		log.Fatal().Err(err).Msg("Failed to initialize worker application")
 	}
 
 	// Initialize logger
-	logger.Init(cfg.App.Environment, cfg.App.Debug)
+	logger.Init(app.Config.App.Environment, app.Config.App.Debug)
 
 	log.Info().
-		Str("app", cfg.App.Name).
+		Str("app", app.Config.App.Name).
 		Str("service", "worker").
 		Msg("Starting worker service")
 
-	// Connect to database
-	db, err := database.NewGormDB(&cfg.Database)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
-	}
-
-	// Connect to Redis
-	redisClient, err := pkgredis.NewClient(&cfg.Redis)
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to Redis")
-	}
-
 	// Initialize Asynq client for email queue
 	asynqOpts := asynq.RedisClientOpt{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Redis.Host, cfg.Redis.Port),
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
+		Addr:     fmt.Sprintf("%s:%d", app.Config.Redis.Host, app.Config.Redis.Port),
+		Password: app.Config.Redis.Password,
+		DB:       app.Config.Redis.DB,
 	}
-	if cfg.Redis.TLS {
+	if app.Config.Redis.TLS {
 		asynqOpts.TLSConfig = &tls.Config{
 			MinVersion: tls.VersionTLS12,
 		}
@@ -64,62 +45,36 @@ func main() {
 	asynqClient := asynq.NewClient(asynqOpts)
 	defer asynqClient.Close()
 
-	// Initialize repositories
-	workflowRepo := repositories.NewWorkflowRepository(db)
-	versionRepo := repositories.NewWorkflowVersionRepository(db)
-	executionRepo := repositories.NewExecutionRepository(db)
-	nodeExecutionRepo := repositories.NewNodeExecutionRepository(db)
-	credentialRepo := repositories.NewCredentialRepository(db)
-	workspaceRepo := repositories.NewWorkspaceRepository(db)
-	planRepo := repositories.NewPlanRepository(db)
-	subscriptionRepo := repositories.NewSubscriptionRepository(db)
-	usageRepo := repositories.NewUsageRepository(db)
-	invoiceRepo := repositories.NewInvoiceRepository(db)
-
-	// Initialize crypto
-	encryptor, err := crypto.NewEncryptor(cfg.JWT.Secret[:32])
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to create encryptor")
-	}
-
-	// Initialize services
-	workflowSvc := services.NewWorkflowService(workflowRepo, versionRepo)
-	executionSvc := services.NewExecutionService(executionRepo, nodeExecutionRepo, workflowRepo)
-	credentialSvc := services.NewCredentialService(credentialRepo, encryptor)
-	billingSvc := services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
-
 	// Initialize email service
 	emailCfg := &email.Config{
-		SMTPHost:     cfg.SMTP.Host,
-		SMTPPort:     cfg.SMTP.Port,
-		SMTPUser:     cfg.SMTP.Username,
-		SMTPPassword: cfg.SMTP.Password,
-		FromEmail:    cfg.SMTP.From,
-		FromName:     cfg.SMTP.FromName,
+		SMTPHost:     app.Config.SMTP.Host,
+		SMTPPort:     app.Config.SMTP.Port,
+		SMTPUser:     app.Config.SMTP.Username,
+		SMTPPassword: app.Config.SMTP.Password,
+		FromEmail:    app.Config.SMTP.From,
+		FromName:     app.Config.SMTP.FromName,
 		QueueEnabled: true,
 	}
 	emailSvc := email.NewService(emailCfg, asynqClient)
 
-	// Initialize queue client for webhook consumer
-	queueClient := queue.NewClient(&cfg.Redis)
-	defer queueClient.Close()
+	defer app.Queue.Close()
 
 	// Initialize webhook stream consumers if enabled
 	var webhookConsumers []*streams.WebhookConsumer
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if cfg.Features.WebhookStream.Enabled {
-		webhookStream := streams.NewWebhookStream(redisClient.Client)
+	if app.Config.Features.WebhookStream.Enabled {
+		webhookStream := streams.NewWebhookStream(app.Redis.Client)
 
 		// Start multiple consumers based on config
-		consumerCount := cfg.Features.WebhookStream.ConsumerCount
+		consumerCount := app.Config.Features.WebhookStream.ConsumerCount
 		if consumerCount < 1 {
 			consumerCount = 2
 		}
 
 		for i := 0; i < consumerCount; i++ {
 			consumerName := fmt.Sprintf("worker-%d-consumer-%d", os.Getpid(), i)
-			consumer := streams.NewWebhookConsumer(webhookStream, workflowSvc, queueClient, consumerName)
+			consumer := streams.NewWebhookConsumer(webhookStream, app.WorkflowSvc, app.Queue, consumerName)
 
 			if err := consumer.Start(ctx); err != nil {
 				log.Error().Err(err).Int("consumer", i).Msg("Failed to start webhook consumer")
@@ -134,7 +89,7 @@ func main() {
 	}
 
 	// Create worker
-	w := worker.New(cfg, executionSvc, credentialSvc, workflowSvc, billingSvc, redisClient.Client, emailSvc)
+	w := worker.New(app.Config, app.ExecutionSvc, app.CredentialSvc, app.WorkflowSvc, app.BillingSvc, app.Redis.Client, emailSvc)
 
 	// Handle shutdown
 	go func() {
