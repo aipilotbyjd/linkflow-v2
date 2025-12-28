@@ -13,7 +13,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -38,17 +37,13 @@ func NewWorkflowHandler(
 }
 
 func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
-
-	workflows, total, err := h.workflowSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, opts)
+	pg := dto.ParsePagination(r)
+	workflows, total, err := h.workflowSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list workflows")
 		return
@@ -76,24 +71,12 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
@@ -158,10 +141,8 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -200,16 +181,13 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -291,10 +269,8 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -317,17 +293,13 @@ func (h *WorkflowHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Execute(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -382,16 +354,13 @@ func (h *WorkflowHandler) Execute(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Clone(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -429,10 +398,8 @@ func (h *WorkflowHandler) Clone(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.BadRequest(w, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -462,10 +429,8 @@ func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.BadRequest(w, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -510,10 +475,8 @@ func hasTriggerNode(nodes models.JSONArray) bool {
 }
 
 func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -540,10 +503,8 @@ func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -573,10 +534,8 @@ func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
 
 // Export exports a workflow as JSON
 func (h *WorkflowHandler) Export(w http.ResponseWriter, r *http.Request) {
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 
@@ -606,10 +565,8 @@ func (h *WorkflowHandler) Export(w http.ResponseWriter, r *http.Request) {
 
 // Import imports a workflow from JSON
 func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
@@ -667,16 +624,13 @@ func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
 
 // RollbackVersion restores workflow to a previous version
 func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 

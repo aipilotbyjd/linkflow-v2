@@ -13,7 +13,6 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
@@ -58,9 +57,8 @@ func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
@@ -88,9 +86,8 @@ func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *BillingHandler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
@@ -126,9 +123,8 @@ func (h *BillingHandler) CreateSubscription(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *BillingHandler) CancelSubscription(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
@@ -143,9 +139,8 @@ func (h *BillingHandler) CancelSubscription(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *BillingHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
@@ -201,17 +196,13 @@ func (h *BillingHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *BillingHandler) GetInvoices(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
-
-	invoices, total, err := h.billingSvc.GetInvoices(r.Context(), wsCtx.WorkspaceID, opts)
+	pg := dto.ParsePagination(r)
+	invoices, total, err := h.billingSvc.GetInvoices(r.Context(), wsCtx.WorkspaceID, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to get invoices")
 		return
@@ -231,17 +222,7 @@ func (h *BillingHandler) GetInvoices(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 func (h *BillingHandler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {
