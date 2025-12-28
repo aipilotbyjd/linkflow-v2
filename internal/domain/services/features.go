@@ -2,9 +2,7 @@ package services
 
 import (
 	"context"
-	"crypto/hmac"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -21,16 +19,14 @@ import (
 // =============================================================================
 
 var (
-	ErrAlertNotFound           = errors.New("alert not found")
-	ErrCommentNotFound         = errors.New("comment not found")
-	ErrShareNotFound           = errors.New("share not found")
-	ErrShareExpired            = errors.New("share link has expired")
-	ErrShareMaxViews           = errors.New("share link has reached maximum views")
-	ErrInvalidPassword         = errors.New("invalid password")
-	ErrEnvVarNotFound          = errors.New("environment variable not found")
-	ErrQueueNotFound           = errors.New("execution queue not found")
-	ErrRateLimitExceeded       = errors.New("rate limit exceeded")
-	ErrWebhookSignatureInvalid = errors.New("webhook signature invalid")
+	ErrAlertNotFound   = errors.New("alert not found")
+	ErrCommentNotFound = errors.New("comment not found")
+	ErrShareNotFound   = errors.New("share not found")
+	ErrShareExpired    = errors.New("share link has expired")
+	ErrShareMaxViews   = errors.New("share link has reached maximum views")
+	ErrInvalidPassword = errors.New("invalid password")
+	ErrEnvVarNotFound  = errors.New("environment variable not found")
+	ErrQueueNotFound   = errors.New("execution queue not found")
 )
 
 // =============================================================================
@@ -518,166 +514,6 @@ func (s *EnvironmentVariableService) Update(ctx context.Context, id uuid.UUID, v
 
 func (s *EnvironmentVariableService) Delete(ctx context.Context, id uuid.UUID) error {
 	return s.repo.DB().WithContext(ctx).Delete(&models.EnvironmentVariable{}, "id = ?", id).Error
-}
-
-// =============================================================================
-// WEBHOOK SIGNATURE SERVICE
-// =============================================================================
-
-type WebhookSignatureService struct {
-	repo      *repositories.BaseRepository[models.WebhookSignatureConfig]
-	encryptor Encryptor
-}
-
-func NewWebhookSignatureService(repo *repositories.BaseRepository[models.WebhookSignatureConfig], encryptor Encryptor) *WebhookSignatureService {
-	return &WebhookSignatureService{repo: repo, encryptor: encryptor}
-}
-
-func (s *WebhookSignatureService) Create(ctx context.Context, webhookID uuid.UUID, algorithm, headerName string, signaturePrefix *string) (*models.WebhookSignatureConfig, error) {
-	secret := generateToken(32)
-	encrypted, err := s.encryptor.Encrypt(secret)
-	if err != nil {
-		return nil, err
-	}
-
-	config := &models.WebhookSignatureConfig{
-		WebhookID:       webhookID,
-		Algorithm:       algorithm,
-		Secret:          encrypted,
-		HeaderName:      headerName,
-		SignaturePrefix: signaturePrefix,
-		IsActive:        true,
-		FailOnInvalid:   true,
-	}
-
-	if err := s.repo.Create(ctx, config); err != nil {
-		return nil, err
-	}
-	return config, nil
-}
-
-func (s *WebhookSignatureService) GetByWebhook(ctx context.Context, webhookID uuid.UUID) (*models.WebhookSignatureConfig, error) {
-	var config models.WebhookSignatureConfig
-	err := s.repo.DB().WithContext(ctx).Where("webhook_id = ?", webhookID).First(&config).Error
-	if err != nil {
-		return nil, err
-	}
-	return &config, nil
-}
-
-func (s *WebhookSignatureService) Verify(ctx context.Context, webhookID uuid.UUID, payload []byte, signature string) error {
-	config, err := s.GetByWebhook(ctx, webhookID)
-	if err != nil {
-		return nil // No signature config = pass
-	}
-	if !config.IsActive {
-		return nil
-	}
-
-	secret, err := s.encryptor.Decrypt(config.Secret)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt secret: %w", err)
-	}
-
-	// Remove prefix if present
-	sig := signature
-	if config.SignaturePrefix != nil && len(signature) > len(*config.SignaturePrefix) {
-		sig = signature[len(*config.SignaturePrefix):]
-	}
-
-	// Calculate expected signature
-	var expected string
-	switch config.Algorithm {
-	case models.WebhookSigHMACSHA256:
-		mac := hmac.New(sha256.New, []byte(secret))
-		mac.Write(payload)
-		expected = hex.EncodeToString(mac.Sum(nil))
-	default:
-		return fmt.Errorf("unsupported algorithm: %s", config.Algorithm)
-	}
-
-	if !hmac.Equal([]byte(sig), []byte(expected)) {
-		if config.FailOnInvalid {
-			return ErrWebhookSignatureInvalid
-		}
-	}
-	return nil
-}
-
-// =============================================================================
-// CREDENTIAL RATE LIMIT SERVICE
-// =============================================================================
-
-type CredentialRateLimitService struct {
-	repo *repositories.BaseRepository[models.CredentialRateLimit]
-}
-
-func NewCredentialRateLimitService(repo *repositories.BaseRepository[models.CredentialRateLimit]) *CredentialRateLimitService {
-	return &CredentialRateLimitService{repo: repo}
-}
-
-func (s *CredentialRateLimitService) Create(ctx context.Context, credentialID uuid.UUID, reqPerMin, reqPerHour, reqPerDay, burst int) (*models.CredentialRateLimit, error) {
-	limit := &models.CredentialRateLimit{
-		CredentialID:    credentialID,
-		RequestsPerMin:  reqPerMin,
-		RequestsPerHour: reqPerHour,
-		RequestsPerDay:  reqPerDay,
-		BurstLimit:      burst,
-		IsActive:        true,
-		LastResetMin:    time.Now(),
-		LastResetHour:   time.Now(),
-		LastResetDay:    time.Now(),
-	}
-
-	if err := s.repo.Create(ctx, limit); err != nil {
-		return nil, err
-	}
-	return limit, nil
-}
-
-func (s *CredentialRateLimitService) Check(ctx context.Context, credentialID uuid.UUID) error {
-	var limit models.CredentialRateLimit
-	err := s.repo.DB().WithContext(ctx).Where("credential_id = ?", credentialID).First(&limit).Error
-	if err != nil {
-		return nil // No rate limit configured
-	}
-	if !limit.IsActive {
-		return nil
-	}
-
-	now := time.Now()
-
-	// Reset counters if needed
-	if now.Sub(limit.LastResetMin) >= time.Minute {
-		limit.CurrentMinute = 0
-		limit.LastResetMin = now
-	}
-	if now.Sub(limit.LastResetHour) >= time.Hour {
-		limit.CurrentHour = 0
-		limit.LastResetHour = now
-	}
-	if now.Sub(limit.LastResetDay) >= 24*time.Hour {
-		limit.CurrentDay = 0
-		limit.LastResetDay = now
-	}
-
-	// Check limits
-	if limit.RequestsPerMin > 0 && limit.CurrentMinute >= limit.RequestsPerMin {
-		return ErrRateLimitExceeded
-	}
-	if limit.RequestsPerHour > 0 && limit.CurrentHour >= limit.RequestsPerHour {
-		return ErrRateLimitExceeded
-	}
-	if limit.RequestsPerDay > 0 && limit.CurrentDay >= limit.RequestsPerDay {
-		return ErrRateLimitExceeded
-	}
-
-	// Increment counters
-	limit.CurrentMinute++
-	limit.CurrentHour++
-	limit.CurrentDay++
-
-	return s.repo.DB().WithContext(ctx).Save(&limit).Error
 }
 
 // =============================================================================
