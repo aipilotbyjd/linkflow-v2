@@ -3,13 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
@@ -23,17 +20,13 @@ func NewScheduleHandler(scheduleSvc *services.ScheduleService) *ScheduleHandler 
 }
 
 func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
-
-	schedules, total, err := h.scheduleSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, opts)
+	pg := dto.ParsePagination(r)
+	schedules, total, err := h.scheduleSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list schedules")
 		return
@@ -67,24 +60,12 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 func (h *ScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
@@ -146,10 +127,8 @@ func (h *ScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
-	scheduleIDStr := chi.URLParam(r, "scheduleID")
-	scheduleID, err := uuid.Parse(scheduleIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+	scheduleID, ok := middleware.ParseUUID(w, r, "scheduleID")
+	if !ok {
 		return
 	}
 
@@ -190,10 +169,8 @@ func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
-	scheduleIDStr := chi.URLParam(r, "scheduleID")
-	scheduleID, err := uuid.Parse(scheduleIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+	scheduleID, ok := middleware.ParseUUID(w, r, "scheduleID")
+	if !ok {
 		return
 	}
 
@@ -261,10 +238,8 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	scheduleIDStr := chi.URLParam(r, "scheduleID")
-	scheduleID, err := uuid.Parse(scheduleIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+	scheduleID, ok := middleware.ParseUUID(w, r, "scheduleID")
+	if !ok {
 		return
 	}
 
@@ -287,10 +262,8 @@ func (h *ScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ScheduleHandler) Pause(w http.ResponseWriter, r *http.Request) {
-	scheduleIDStr := chi.URLParam(r, "scheduleID")
-	scheduleID, err := uuid.Parse(scheduleIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+	scheduleID, ok := middleware.ParseUUID(w, r, "scheduleID")
+	if !ok {
 		return
 	}
 
@@ -313,10 +286,8 @@ func (h *ScheduleHandler) Pause(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ScheduleHandler) Resume(w http.ResponseWriter, r *http.Request) {
-	scheduleIDStr := chi.URLParam(r, "scheduleID")
-	scheduleID, err := uuid.Parse(scheduleIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid schedule ID")
+	scheduleID, ok := middleware.ParseUUID(w, r, "scheduleID")
+	if !ok {
 		return
 	}
 

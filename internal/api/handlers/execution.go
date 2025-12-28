@@ -29,17 +29,13 @@ func NewExecutionHandler(executionSvc *services.ExecutionService, queueClient *q
 }
 
 func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
-
-	executions, total, err := h.executionSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, opts)
+	pg := dto.ParsePagination(r)
+	executions, total, err := h.executionSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list executions")
 		return
@@ -75,24 +71,12 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
-	executionIDStr := chi.URLParam(r, "executionID")
-	executionID, err := uuid.Parse(executionIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid execution ID")
+	executionID, ok := middleware.ParseUUID(w, r, "executionID")
+	if !ok {
 		return
 	}
 
