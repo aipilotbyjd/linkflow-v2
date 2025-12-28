@@ -89,7 +89,10 @@ func (s *ExecutionService) Create(ctx context.Context, input CreateExecutionInpu
 func (s *ExecutionService) GetByID(ctx context.Context, id uuid.UUID) (*models.Execution, error) {
 	execution, err := s.executionRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrExecutionNotFound, id)
+		if IsNotFoundError(err) {
+			return nil, ErrExecutionNotFound
+		}
+		return nil, fmt.Errorf("failed to get execution: %w", err)
 	}
 	return execution, nil
 }
@@ -155,7 +158,10 @@ func (s *ExecutionService) Fail(ctx context.Context, executionID uuid.UUID, erro
 func (s *ExecutionService) Cancel(ctx context.Context, executionID uuid.UUID) error {
 	execution, err := s.executionRepo.FindByID(ctx, executionID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrExecutionNotFound, executionID)
+		if IsNotFoundError(err) {
+			return ErrExecutionNotFound
+		}
+		return fmt.Errorf("failed to get execution: %w", err)
 	}
 
 	if execution.Status != models.ExecutionStatusQueued && execution.Status != models.ExecutionStatusRunning {
@@ -237,7 +243,10 @@ func (s *ExecutionService) SkipNodeExecution(ctx context.Context, nodeExecutionI
 func (s *ExecutionService) Retry(ctx context.Context, executionID uuid.UUID, triggeredBy *uuid.UUID) (*models.Execution, error) {
 	original, err := s.executionRepo.FindByID(ctx, executionID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrExecutionNotFound, executionID)
+		if IsNotFoundError(err) {
+			return nil, ErrExecutionNotFound
+		}
+		return nil, fmt.Errorf("failed to get execution: %w", err)
 	}
 
 	newExec, err := s.Create(ctx, CreateExecutionInput{

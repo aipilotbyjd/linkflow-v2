@@ -13,7 +13,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 // Auth errors
@@ -144,7 +143,7 @@ func (s *AuthService) Register(ctx context.Context, input RegisterInput) (*AuthR
 func (s *AuthService) Login(ctx context.Context, input LoginInput) (*AuthResult, error) {
 	user, err := s.userRepo.FindByEmail(ctx, input.Email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if IsNotFoundError(err) {
 			return nil, ErrInvalidCredentials
 		}
 		return nil, fmt.Errorf("failed to find user: %w", err)

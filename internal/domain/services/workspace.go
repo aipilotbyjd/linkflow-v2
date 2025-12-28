@@ -12,7 +12,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/rs/zerolog/log"
-	"gorm.io/gorm"
 )
 
 // Workspace errors
@@ -82,7 +81,7 @@ func (s *WorkspaceService) Create(ctx context.Context, input CreateWorkspaceInpu
 		Name:        input.Name,
 		Slug:        slug,
 		Description: input.Description,
-		PlanID:      "free",
+		PlanID:      models.PlanFree,
 	}
 
 	if err := s.workspaceRepo.Create(ctx, workspace); err != nil {
@@ -111,7 +110,10 @@ func (s *WorkspaceService) Create(ctx context.Context, input CreateWorkspaceInpu
 func (s *WorkspaceService) GetByID(ctx context.Context, id uuid.UUID) (*models.Workspace, error) {
 	workspace, err := s.workspaceRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrWorkspaceNotFound, id)
+		if IsNotFoundError(err) {
+			return nil, ErrWorkspaceNotFound
+		}
+		return nil, fmt.Errorf("failed to get workspace: %w", err)
 	}
 	return workspace, nil
 }
@@ -120,7 +122,10 @@ func (s *WorkspaceService) GetByID(ctx context.Context, id uuid.UUID) (*models.W
 func (s *WorkspaceService) GetBySlug(ctx context.Context, slug string) (*models.Workspace, error) {
 	workspace, err := s.workspaceRepo.FindBySlug(ctx, slug)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrWorkspaceNotFound, slug)
+		if IsNotFoundError(err) {
+			return nil, ErrWorkspaceNotFound
+		}
+		return nil, fmt.Errorf("failed to get workspace: %w", err)
 	}
 	return workspace, nil
 }
@@ -146,7 +151,10 @@ type UpdateWorkspaceInput struct {
 func (s *WorkspaceService) Update(ctx context.Context, workspaceID uuid.UUID, input UpdateWorkspaceInput) (*models.Workspace, error) {
 	workspace, err := s.workspaceRepo.FindByID(ctx, workspaceID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrWorkspaceNotFound, workspaceID)
+		if IsNotFoundError(err) {
+			return nil, ErrWorkspaceNotFound
+		}
+		return nil, fmt.Errorf("failed to get workspace: %w", err)
 	}
 
 	if input.Name != nil {
@@ -211,7 +219,7 @@ func (s *WorkspaceService) GetMemberRole(ctx context.Context, workspaceID, userI
 func (s *WorkspaceService) HasPermission(ctx context.Context, workspaceID, userID uuid.UUID, requiredRole string) (bool, error) {
 	role, err := s.memberRepo.GetRole(ctx, workspaceID, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if IsNotFoundError(err) {
 			return false, nil
 		}
 		return false, fmt.Errorf("failed to get member role: %w", err)
@@ -268,7 +276,7 @@ func (s *WorkspaceService) InviteMember(ctx context.Context, input InviteMemberI
 func (s *WorkspaceService) AcceptInvitation(ctx context.Context, token string, userID uuid.UUID) error {
 	invitation, err := s.invitationRepo.FindByToken(ctx, token)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if IsNotFoundError(err) {
 			return ErrInvitationNotFound
 		}
 		return fmt.Errorf("failed to find invitation: %w", err)
@@ -306,7 +314,10 @@ func (s *WorkspaceService) AcceptInvitation(ctx context.Context, token string, u
 func (s *WorkspaceService) UpdateMemberRole(ctx context.Context, workspaceID, userID uuid.UUID, role string) error {
 	workspace, err := s.workspaceRepo.FindByID(ctx, workspaceID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrWorkspaceNotFound, workspaceID)
+		if IsNotFoundError(err) {
+			return ErrWorkspaceNotFound
+		}
+		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
 	if workspace.OwnerID == userID && role != models.RoleOwner {
@@ -330,7 +341,10 @@ func (s *WorkspaceService) UpdateMemberRole(ctx context.Context, workspaceID, us
 func (s *WorkspaceService) RemoveMember(ctx context.Context, workspaceID, userID uuid.UUID) error {
 	workspace, err := s.workspaceRepo.FindByID(ctx, workspaceID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrWorkspaceNotFound, workspaceID)
+		if IsNotFoundError(err) {
+			return ErrWorkspaceNotFound
+		}
+		return fmt.Errorf("failed to get workspace: %w", err)
 	}
 
 	if workspace.OwnerID == userID {

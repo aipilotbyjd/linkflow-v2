@@ -90,7 +90,10 @@ func (s *ScheduleService) Create(ctx context.Context, input CreateScheduleInput)
 func (s *ScheduleService) GetByID(ctx context.Context, id uuid.UUID) (*models.Schedule, error) {
 	schedule, err := s.scheduleRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrScheduleNotFound, id)
+		if IsNotFoundError(err) {
+			return nil, ErrScheduleNotFound
+		}
+		return nil, fmt.Errorf("failed to get schedule: %w", err)
 	}
 	return schedule, nil
 }
@@ -135,7 +138,10 @@ type UpdateScheduleInput struct {
 func (s *ScheduleService) Update(ctx context.Context, scheduleID uuid.UUID, input UpdateScheduleInput) (*models.Schedule, error) {
 	schedule, err := s.scheduleRepo.FindByID(ctx, scheduleID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrScheduleNotFound, scheduleID)
+		if IsNotFoundError(err) {
+			return nil, ErrScheduleNotFound
+		}
+		return nil, fmt.Errorf("failed to get schedule: %w", err)
 	}
 
 	if input.Name != nil {
@@ -193,7 +199,10 @@ func (s *ScheduleService) Pause(ctx context.Context, scheduleID uuid.UUID) error
 func (s *ScheduleService) Resume(ctx context.Context, scheduleID uuid.UUID) error {
 	schedule, err := s.scheduleRepo.FindByID(ctx, scheduleID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrScheduleNotFound, scheduleID)
+		if IsNotFoundError(err) {
+			return ErrScheduleNotFound
+		}
+		return fmt.Errorf("failed to get schedule: %w", err)
 	}
 
 	nextRun, err := s.calculateNextRun(schedule.CronExpression, schedule.Timezone)
@@ -218,7 +227,10 @@ func (s *ScheduleService) Resume(ctx context.Context, scheduleID uuid.UUID) erro
 func (s *ScheduleService) RecordRun(ctx context.Context, scheduleID, executionID uuid.UUID) error {
 	schedule, err := s.scheduleRepo.FindByID(ctx, scheduleID)
 	if err != nil {
-		return fmt.Errorf("%w: %s", ErrScheduleNotFound, scheduleID)
+		if IsNotFoundError(err) {
+			return ErrScheduleNotFound
+		}
+		return fmt.Errorf("failed to get schedule: %w", err)
 	}
 
 	nextRun, err := s.calculateNextRun(schedule.CronExpression, schedule.Timezone)

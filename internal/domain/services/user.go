@@ -27,7 +27,10 @@ func NewUserService(userRepo *repositories.UserRepository) *UserService {
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	user, err := s.userRepo.FindByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUserNotFound, id)
+		if IsNotFoundError(err) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return user, nil
 }
@@ -36,7 +39,10 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*models.User, 
 func (s *UserService) GetByEmail(ctx context.Context, email string) (*models.User, error) {
 	user, err := s.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUserNotFound, email)
+		if IsNotFoundError(err) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 	return user, nil
 }
@@ -53,7 +59,10 @@ type UpdateUserInput struct {
 func (s *UserService) Update(ctx context.Context, userID uuid.UUID, input UpdateUserInput) (*models.User, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrUserNotFound, userID)
+		if IsNotFoundError(err) {
+			return nil, ErrUserNotFound
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
 	if input.FirstName != nil {
