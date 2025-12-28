@@ -19,7 +19,7 @@ func NewVersionDiffHandler(diffSvc *services.VersionDiffService) *VersionDiffHan
 }
 
 func (h *VersionDiffHandler) Compare(w http.ResponseWriter, r *http.Request) {
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}
@@ -46,7 +46,7 @@ func (h *VersionDiffHandler) Compare(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *VersionDiffHandler) CompareWithCurrent(w http.ResponseWriter, r *http.Request) {
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}
