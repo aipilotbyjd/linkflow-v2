@@ -66,12 +66,15 @@ func ProvideOTPManager(cfg *config.Config) *crypto.OTPManager {
 	return crypto.NewOTPManager(cfg.App.Name)
 }
 
+// BaseURL is a type alias for dependency injection
+type BaseURL string
+
 // ProvideBaseURL returns the base URL for the application
-func ProvideBaseURL(cfg *config.Config) string {
+func ProvideBaseURL(cfg *config.Config) BaseURL {
 	if cfg.App.URL != "" {
-		return cfg.App.URL
+		return BaseURL(cfg.App.URL)
 	}
-	return fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
+	return BaseURL(fmt.Sprintf("http://localhost:%d", cfg.Server.Port))
 }
 
 // InfraSet provides infrastructure dependencies
@@ -80,6 +83,7 @@ var InfraSet = wire.NewSet(
 	ProvideDB,
 	ProvideRedis,
 	ProvideQueue,
+	ProvideBaseURL,
 )
 
 // CryptoSet provides crypto dependencies
@@ -218,37 +222,25 @@ func ProvideBillingService(
 func ProvideOAuthService(
 	stateRepo *repositories.OAuthStateRepository,
 	credentialRepo *repositories.CredentialRepository,
-	cfg *config.Config,
+	baseURL BaseURL,
 ) *services.OAuthService {
-	baseURL := cfg.App.URL
-	if baseURL == "" {
-		baseURL = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
-	}
-	return services.NewOAuthService(stateRepo, credentialRepo, baseURL)
+	return services.NewOAuthService(stateRepo, credentialRepo, string(baseURL))
 }
 
 // ProvideWebhookManager creates the webhook manager with base URL
 func ProvideWebhookManager(
 	webhookRepo *repositories.WebhookEndpointRepository,
-	cfg *config.Config,
+	baseURL BaseURL,
 ) *services.WebhookManager {
-	baseURL := cfg.App.URL
-	if baseURL == "" {
-		baseURL = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
-	}
-	return services.NewWebhookManager(webhookRepo, baseURL)
+	return services.NewWebhookManager(webhookRepo, string(baseURL))
 }
 
 // ProvideWaitResumeManager creates the wait/resume manager with base URL
 func ProvideWaitResumeManager(
 	waitingRepo *repositories.WaitingExecutionRepository,
-	cfg *config.Config,
+	baseURL BaseURL,
 ) *services.WaitResumeManager {
-	baseURL := cfg.App.URL
-	if baseURL == "" {
-		baseURL = fmt.Sprintf("http://localhost:%d", cfg.Server.Port)
-	}
-	return services.NewWaitResumeManager(waitingRepo, baseURL)
+	return services.NewWaitResumeManager(waitingRepo, string(baseURL))
 }
 
 // ProvideEnvVarService creates the environment variable service

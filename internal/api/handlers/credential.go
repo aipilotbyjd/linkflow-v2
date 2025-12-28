@@ -3,13 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
-	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
@@ -23,17 +19,13 @@ func NewCredentialHandler(credentialSvc *services.CredentialService) *Credential
 }
 
 func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
-
-	credentials, total, err := h.credentialSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, opts)
+	pg := dto.ParsePagination(r)
+	credentials, total, err := h.credentialSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list credentials")
 		return
@@ -57,24 +49,12 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
@@ -112,10 +92,8 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
-	credentialIDStr := chi.URLParam(r, "credentialID")
-	credentialID, err := uuid.Parse(credentialIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+	credentialID, ok := middleware.ParseUUID(w, r, "credentialID")
+	if !ok {
 		return
 	}
 
@@ -147,10 +125,8 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
-	credentialIDStr := chi.URLParam(r, "credentialID")
-	credentialID, err := uuid.Parse(credentialIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+	credentialID, ok := middleware.ParseUUID(w, r, "credentialID")
+	if !ok {
 		return
 	}
 
@@ -195,10 +171,8 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	credentialIDStr := chi.URLParam(r, "credentialID")
-	credentialID, err := uuid.Parse(credentialIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+	credentialID, ok := middleware.ParseUUID(w, r, "credentialID")
+	if !ok {
 		return
 	}
 
@@ -221,10 +195,8 @@ func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CredentialHandler) Test(w http.ResponseWriter, r *http.Request) {
-	credentialIDStr := chi.URLParam(r, "credentialID")
-	credentialID, err := uuid.Parse(credentialIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid credential ID")
+	credentialID, ok := middleware.ParseUUID(w, r, "credentialID")
+	if !ok {
 		return
 	}
 
