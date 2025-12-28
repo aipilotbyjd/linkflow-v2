@@ -33,16 +33,6 @@ func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager
 	}
 }
 
-func NewAuthHandlerWithOAuth(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client, oauthManager *oauth.Manager, frontendURL string) *AuthHandler {
-	return &AuthHandler{
-		authSvc:      authSvc,
-		jwtManager:   jwtManager,
-		redisClient:  redisClient,
-		oauthManager: oauthManager,
-		frontendURL:  frontendURL,
-	}
-}
-
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -189,6 +189,8 @@ var ServiceSet = wire.NewSet(
 	ProvideEnvVarService,
 	ProvideAnalyticsService,
 	ProvideExportImportService,
+	ProvideExecutionReplayService,
+	ProvideVersionDiffService,
 )
 
 // ProvideWorkflowService creates the workflow service with webhook repo
@@ -269,6 +271,22 @@ func ProvideExportImportService(
 	return services.NewWorkflowExportService(exportRepo, importRepo, workflowRepo)
 }
 
+// ProvideExecutionReplayService creates the execution replay service
+func ProvideExecutionReplayService(
+	execService *services.ExecutionService,
+	execRepo *repositories.ExecutionRepository,
+) *services.ExecutionReplayService {
+	return services.NewExecutionReplayService(execService, execRepo)
+}
+
+// ProvideVersionDiffService creates the version diff service
+func ProvideVersionDiffService(
+	workflowRepo *repositories.WorkflowRepository,
+	versionRepo *repositories.WorkflowVersionRepository,
+) *services.VersionDiffService {
+	return services.NewVersionDiffService(workflowRepo, versionRepo)
+}
+
 // Services aggregates all services for the API server
 type Services struct {
 	Auth          *services.AuthService
@@ -290,6 +308,8 @@ type Services struct {
 	EnvVar        *services.EnvironmentVariableService
 	Analytics     *services.AnalyticsService
 	ExportImport  *services.WorkflowExportService
+	ExecReplay    *services.ExecutionReplayService
+	VersionDiff   *services.VersionDiffService
 }
 
 // ProvideServices aggregates all services
@@ -313,6 +333,8 @@ func ProvideServices(
 	envVar *services.EnvironmentVariableService,
 	analytics *services.AnalyticsService,
 	exportImport *services.WorkflowExportService,
+	execReplay *services.ExecutionReplayService,
+	versionDiff *services.VersionDiffService,
 ) *Services {
 	return &Services{
 		Auth:          auth,
@@ -334,6 +356,8 @@ func ProvideServices(
 		EnvVar:        envVar,
 		Analytics:     analytics,
 		ExportImport:  exportImport,
+		ExecReplay:    execReplay,
+		VersionDiff:   versionDiff,
 	}
 }
 
@@ -379,6 +403,8 @@ func ProvideAPIServices(s *Services) *api.Services {
 		EnvVar:        s.EnvVar,
 		Analytics:     s.Analytics,
 		ExportImport:  s.ExportImport,
+		ExecReplay:    s.ExecReplay,
+		VersionDiff:   s.VersionDiff,
 	}
 }
 

@@ -15,11 +15,7 @@ type HealthHandler struct {
 	redis *redis.Client
 }
 
-func NewHealthHandler() *HealthHandler {
-	return &HealthHandler{}
-}
-
-func NewHealthHandlerWithDeps(db *gorm.DB, redis *redis.Client) *HealthHandler {
+func NewHealthHandler(db *gorm.DB, redis *redis.Client) *HealthHandler {
 	return &HealthHandler{db: db, redis: redis}
 }
 

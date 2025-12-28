@@ -26,10 +26,6 @@ func NewBillingHandler(billingSvc *services.BillingService) *BillingHandler {
 	return &BillingHandler{billingSvc: billingSvc}
 }
 
-func NewBillingHandlerWithWebhookSecret(billingSvc *services.BillingService, webhookSecret string) *BillingHandler {
-	return &BillingHandler{billingSvc: billingSvc, stripeWebhookSecret: webhookSecret}
-}
-
 func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
 	plans, err := h.billingSvc.GetPlans(r.Context())
 	if err != nil {

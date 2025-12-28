@@ -51,15 +51,6 @@ func (p Pagination) NewMeta(total int64) *Meta {
 	}
 }
 
-// ParseInt parses an integer from query parameter with default value
-func ParseInt(r *http.Request, param string, defaultVal int) int {
-	val, err := strconv.Atoi(r.URL.Query().Get(param))
-	if err != nil || val < 0 {
-		return defaultVal
-	}
-	return val
-}
-
 // ParseBool parses a boolean from query parameter
 func ParseBool(r *http.Request, param string) bool {
 	val := r.URL.Query().Get(param)

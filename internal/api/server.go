@@ -58,6 +58,7 @@ type Services struct {
 	Analytics     *services.AnalyticsService
 	ExportImport  *services.WorkflowExportService
 	ExecReplay    *services.ExecutionReplayService
+	VersionDiff   *services.VersionDiffService
 }
 
 type Repositories struct {
@@ -116,7 +117,7 @@ func NewServer(
 	credentialHandler := handlers.NewCredentialHandler(svc.Credential)
 	scheduleHandler := handlers.NewScheduleHandler(svc.Schedule)
 	billingHandler := handlers.NewBillingHandler(svc.Billing)
-	healthHandler := handlers.NewHealthHandlerWithDeps(db, redisClient.Client)
+	healthHandler := handlers.NewHealthHandler(db, redisClient.Client)
 	webhookHandler := handlers.NewWebhookHandler(svc.Workflow, svc.Execution, queueClient)
 	wsHandler := handlers.NewWebSocketHandler(wsHub, jwtManager)
 	nodeTypeHandler := handlers.NewNodeTypeHandler(svc.Workflow, svc.Execution)
@@ -196,6 +197,11 @@ func NewServer(
 	var replayHandler *handlers.ExecutionReplayHandler
 	if svc.ExecReplay != nil {
 		replayHandler = handlers.NewExecutionReplayHandler(svc.ExecReplay)
+	}
+
+	var versionDiffHandler *handlers.VersionDiffHandler
+	if svc.VersionDiff != nil {
+		versionDiffHandler = handlers.NewVersionDiffHandler(svc.VersionDiff)
 	}
 
 	// Auth middleware
@@ -297,6 +303,13 @@ func NewServer(
 				r.Get("/workflows/{workflowID}/versions", workflowHandler.GetVersions)
 				r.Get("/workflows/{workflowID}/versions/{version}", workflowHandler.GetVersion)
 				r.Post("/workflows/{workflowID}/versions/{version}/rollback", workflowHandler.RollbackVersion)
+
+				// Version Diff
+				if versionDiffHandler != nil {
+					r.Get("/workflows/{workflowID}/versions/diff", versionDiffHandler.Compare)
+					r.Get("/workflows/{workflowID}/versions/{version}/diff", versionDiffHandler.CompareWithCurrent)
+				}
+
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
 				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
 				r.Post("/workflows/import", workflowHandler.Import)

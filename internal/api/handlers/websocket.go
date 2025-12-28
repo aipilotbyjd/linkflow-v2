@@ -34,20 +34,6 @@ func NewWebSocketHandler(hub *ws.Hub, jwtManager *crypto.JWTManager) *WebSocketH
 	return h
 }
 
-func NewWebSocketHandlerWithOrigins(hub *ws.Hub, jwtManager *crypto.JWTManager, allowedOrigins []string) *WebSocketHandler {
-	h := &WebSocketHandler{
-		hub:            hub,
-		jwtManager:     jwtManager,
-		allowedOrigins: allowedOrigins,
-	}
-	h.upgrader = websocket.Upgrader{
-		ReadBufferSize:  1024,
-		WriteBufferSize: 1024,
-		CheckOrigin:     h.checkOrigin,
-	}
-	return h
-}
-
 func (h *WebSocketHandler) checkOrigin(r *http.Request) bool {
 	// If no origins configured, allow all (dev mode)
 	if len(h.allowedOrigins) == 0 {

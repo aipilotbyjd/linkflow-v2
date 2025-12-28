@@ -36,13 +36,6 @@ func ValidateWorkspaceOwnership(w http.ResponseWriter, r *http.Request, resource
 	return true
 }
 
-// RequireWorkspaceContext ensures workspace context exists.
-// Returns the workspace context or nil if not available (writes error response).
-// Deprecated: Use middleware.MustWorkspace instead.
-func RequireWorkspaceContext(w http.ResponseWriter, r *http.Request) *middleware.WorkspaceContext {
-	return middleware.MustWorkspace(w, r)
-}
-
 // SQL Identifier Validation
 var (
 	// validSQLIdentifier matches valid SQL identifiers (table/column names)
