@@ -303,11 +303,10 @@ func NewServer(
 				r.Get("/workflows/{workflowID}/versions", workflowHandler.GetVersions)
 				r.Get("/workflows/{workflowID}/versions/{version}", workflowHandler.GetVersion)
 				r.Post("/workflows/{workflowID}/versions/{version}/rollback", workflowHandler.RollbackVersion)
-
-				// Version Diff
+				// Version Diff (using /compare to avoid conflict with {version} param)
 				if versionDiffHandler != nil {
-					r.Get("/workflows/{workflowID}/versions/diff", versionDiffHandler.Compare)
-					r.Get("/workflows/{workflowID}/versions/{version}/diff", versionDiffHandler.CompareWithCurrent)
+					r.Get("/workflows/{workflowID}/compare-versions", versionDiffHandler.Compare)
+					r.Get("/workflows/{workflowID}/versions/{version}/compare", versionDiffHandler.CompareWithCurrent)
 				}
 
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
