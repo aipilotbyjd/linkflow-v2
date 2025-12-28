@@ -23,9 +23,8 @@ func NewWorkspaceHandler(workspaceSvc *services.WorkspaceService, billingSvc *se
 }
 
 func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -52,9 +51,8 @@ func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *WorkspaceHandler) Create(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 

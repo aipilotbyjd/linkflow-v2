@@ -46,15 +46,8 @@ func (h *OAuthHandler) Authorize(w http.ResponseWriter, r *http.Request) {
 		provider = req.Provider
 	}
 
-	userCtx := middleware.GetUserFromContext(r.Context())
+	userCtx, wsCtx := middleware.MustUserAndWorkspace(w, r)
 	if userCtx == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "workspace required")
 		return
 	}
 

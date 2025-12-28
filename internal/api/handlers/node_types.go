@@ -178,10 +178,8 @@ func (h *NodeTypeHandler) ValidateWorkflow(w http.ResponseWriter, r *http.Reques
 
 // TestNode executes a single node for testing in the editor
 func (h *NodeTypeHandler) TestNode(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 

@@ -146,9 +146,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -258,9 +257,8 @@ func (h *AuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
 	var userID uuid.UUID
 	var workspaceID uuid.UUID
 	if purpose == "connect" {
-		claims := middleware.GetUserFromContext(r.Context())
+		claims := middleware.MustUser(w, r)
 		if claims == nil {
-			dto.ErrorResponse(w, http.StatusUnauthorized, "authentication required")
 			return
 		}
 		userID = claims.UserID
@@ -359,9 +357,8 @@ func (h *AuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) SetupMFA(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -378,9 +375,8 @@ func (h *AuthHandler) SetupMFA(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) VerifyMFA(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -405,9 +401,8 @@ func (h *AuthHandler) VerifyMFA(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) DisableMFA(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 

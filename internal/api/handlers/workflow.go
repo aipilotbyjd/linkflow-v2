@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
@@ -664,17 +663,13 @@ func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request
 
 // Duplicate creates a copy of a workflow with optional variable substitution
 func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if claims == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "unauthorized")
+	claims, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if claims == nil {
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	workflowID, err := uuid.Parse(workflowIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid workflow ID")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
+	if !ok {
 		return
 	}
 

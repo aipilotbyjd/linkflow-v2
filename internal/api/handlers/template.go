@@ -155,10 +155,8 @@ func (h *TemplateHandler) UseTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtx := middleware.GetUserFromContext(r.Context())
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if userCtx == nil || wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+	userCtx, wsCtx := middleware.MustUserAndWorkspace(w, r)
+	if userCtx == nil {
 		return
 	}
 

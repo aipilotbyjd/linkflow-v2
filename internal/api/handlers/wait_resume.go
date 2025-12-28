@@ -30,9 +30,8 @@ func NewWaitResumeHandler(
 
 // ListWaiting returns waiting executions for a workspace
 func (h *WaitResumeHandler) ListWaiting(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "workspace required")
 		return
 	}
 

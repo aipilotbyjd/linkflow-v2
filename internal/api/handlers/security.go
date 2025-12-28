@@ -22,9 +22,8 @@ type WorkspaceOwned interface {
 // Returns true if ownership is valid, false otherwise.
 // If invalid, it writes an error response and the caller should return immediately.
 func ValidateWorkspaceOwnership(w http.ResponseWriter, r *http.Request, resource WorkspaceOwned) bool {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return false
 	}
 
@@ -39,13 +38,9 @@ func ValidateWorkspaceOwnership(w http.ResponseWriter, r *http.Request, resource
 
 // RequireWorkspaceContext ensures workspace context exists.
 // Returns the workspace context or nil if not available (writes error response).
+// Deprecated: Use middleware.MustWorkspace instead.
 func RequireWorkspaceContext(w http.ResponseWriter, r *http.Request) *middleware.WorkspaceContext {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
-	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
-		return nil
-	}
-	return wsCtx
+	return middleware.MustWorkspace(w, r)
 }
 
 // SQL Identifier Validation

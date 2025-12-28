@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -210,16 +209,13 @@ func (h *ExecutionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ExecutionHandler) Retry(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.Unauthorized(w, "unauthorized")
 		return
 	}
 
-	executionIDStr := chi.URLParam(r, "executionID")
-	executionID, err := uuid.Parse(executionIDStr)
-	if err != nil {
-		dto.BadRequest(w, "invalid execution ID")
+	executionID, ok := middleware.ParseUUID(w, r, "executionID")
+	if !ok {
 		return
 	}
 
@@ -253,16 +249,12 @@ func (h *ExecutionHandler) Retry(w http.ResponseWriter, r *http.Request) {
 
 // Search searches executions with filters
 func (h *ExecutionHandler) Search(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
-	// Parse query parameters
-	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
-	opts := repositories.NewListOptions(page, perPage)
+	pg := dto.ParsePagination(r)
 
 	// Build filter
 	filter := repositories.ExecutionFilter{
@@ -303,7 +295,7 @@ func (h *ExecutionHandler) Search(w http.ResponseWriter, r *http.Request) {
 		filter.SearchQuery = &q
 	}
 
-	executions, total, err := h.executionSvc.Search(r.Context(), filter, opts)
+	executions, total, err := h.executionSvc.Search(r.Context(), filter, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to search executions")
 		return
@@ -339,24 +331,13 @@ func (h *ExecutionHandler) Search(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	totalPages := int(total) / opts.Limit
-	if int(total)%opts.Limit > 0 {
-		totalPages++
-	}
-
-	dto.JSONWithMeta(w, http.StatusOK, response, &dto.Meta{
-		Page:       page,
-		PerPage:    perPage,
-		Total:      total,
-		TotalPages: totalPages,
-	})
+	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
 }
 
 // BulkDelete deletes multiple executions
 func (h *ExecutionHandler) BulkDelete(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 
@@ -408,9 +389,8 @@ func (h *ExecutionHandler) BulkDelete(w http.ResponseWriter, r *http.Request) {
 
 // Stats returns execution statistics
 func (h *ExecutionHandler) Stats(w http.ResponseWriter, r *http.Request) {
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusForbidden, "workspace context required")
 		return
 	}
 

@@ -19,9 +19,8 @@ func NewUserHandler(userSvc *services.UserService) *UserHandler {
 }
 
 func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
@@ -45,9 +44,8 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
-	claims := middleware.GetUserFromContext(r.Context())
+	claims := middleware.MustUser(w, r)
 	if claims == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 

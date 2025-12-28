@@ -92,9 +92,8 @@ func (h *PinnedDataHandler) Set(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userCtx := middleware.GetUserFromContext(r.Context())
+	userCtx := middleware.MustUser(w, r)
 	if userCtx == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 

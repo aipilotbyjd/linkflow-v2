@@ -46,9 +46,8 @@ func (h *WebhookManagementHandler) Generate(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
-		dto.ErrorResponse(w, http.StatusUnauthorized, "workspace required")
 		return
 	}
 

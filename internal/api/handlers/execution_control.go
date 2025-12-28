@@ -57,7 +57,7 @@ func (h *ExecutionControlHandler) CancelExecution(w http.ResponseWriter, r *http
 		req.Reason = "Cancelled by user"
 	}
 
-	// Get user from context
+	// Get workspace from context for tracking (optional)
 	requestedBy := "unknown"
 	if wsCtx := middleware.GetWorkspaceFromContext(r.Context()); wsCtx != nil {
 		requestedBy = wsCtx.WorkspaceID.String()
