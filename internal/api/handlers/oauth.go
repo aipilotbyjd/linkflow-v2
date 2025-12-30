@@ -22,9 +22,7 @@ func NewOAuthHandler(oauthSvc *services.OAuthService) *OAuthHandler {
 // GetProviders returns list of supported OAuth providers
 func (h *OAuthHandler) GetProviders(w http.ResponseWriter, r *http.Request) {
 	providers := h.oauthSvc.GetSupportedProviders()
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"providers": providers,
-	})
+	dto.OK(w, providers)
 }
 
 // AuthorizeRequest represents OAuth authorization request
