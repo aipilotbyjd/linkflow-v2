@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -12,6 +13,11 @@ type ListOptions struct {
 	Limit   int
 	OrderBy string
 	Order   string // asc or desc
+
+	// Cursor-based pagination
+	CursorID   *uuid.UUID
+	CursorTime *time.Time
+	UseCursor  bool
 }
 
 func NewListOptions(page, perPage int) *ListOptions {
@@ -29,6 +35,24 @@ func NewListOptions(page, perPage int) *ListOptions {
 		Limit:   perPage,
 		OrderBy: "created_at",
 		Order:   "desc",
+	}
+}
+
+// NewCursorListOptions creates list options for cursor-based pagination
+func NewCursorListOptions(limit int, cursorID *uuid.UUID, cursorTime *time.Time) *ListOptions {
+	if limit < 1 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	return &ListOptions{
+		Limit:      limit + 1, // Fetch one extra to determine hasMore
+		OrderBy:    "created_at",
+		Order:      "desc",
+		CursorID:   cursorID,
+		CursorTime: cursorTime,
+		UseCursor:  true,
 	}
 }
 
@@ -74,10 +98,25 @@ func (r *BaseRepository[T]) FindAll(ctx context.Context, opts *ListOptions) ([]T
 	query.Count(&total)
 
 	if opts != nil {
+		// Apply cursor-based pagination
+		if opts.UseCursor && opts.CursorTime != nil && opts.CursorID != nil {
+			if opts.Order == "desc" {
+				query = query.Where("(created_at < ? OR (created_at = ? AND id < ?))",
+					*opts.CursorTime, *opts.CursorTime, *opts.CursorID)
+			} else {
+				query = query.Where("(created_at > ? OR (created_at = ? AND id > ?))",
+					*opts.CursorTime, *opts.CursorTime, *opts.CursorID)
+			}
+		}
+
 		if opts.OrderBy != "" {
 			query = query.Order(opts.OrderBy + " " + opts.Order)
 		}
-		query = query.Offset(opts.Offset).Limit(opts.Limit)
+
+		if !opts.UseCursor {
+			query = query.Offset(opts.Offset)
+		}
+		query = query.Limit(opts.Limit)
 	}
 
 	err := query.Find(&entities).Error
