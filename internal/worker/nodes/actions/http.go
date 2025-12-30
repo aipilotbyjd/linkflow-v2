@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
+	"github.com/rs/zerolog/log"
 )
 
 // SSRF Protection: blocked IP ranges (private networks, localhost, metadata endpoints)
@@ -153,6 +154,11 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, execCtx *core.ExecutionCo
 	timeout := getIntHTTP(config, "timeout", 30)
 	followRedirects := getBoolHTTP(config, "followRedirects", true)
 	ignoreSsl := getBoolHTTP(config, "ignoreSsl", false)
+	if ignoreSsl {
+		log.Warn().
+			Str("url", urlStr).
+			Msg("SECURITY WARNING: TLS certificate verification disabled (ignoreSsl=true)")
+	}
 	authType := getStringHTTP(config, "authType", "none")
 
 	// Build URL with query params

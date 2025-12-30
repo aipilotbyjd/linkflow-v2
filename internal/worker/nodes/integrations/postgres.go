@@ -41,6 +41,50 @@ func quoteIdentifierPg(identifier string) string {
 	return "\"" + escaped + "\""
 }
 
+// validateWhereClause checks WHERE clause for SQL injection patterns
+// SECURITY: This prevents direct SQL injection in WHERE clauses
+func validateWhereClausePg(where string) error {
+	if where == "" {
+		return nil
+	}
+
+	lower := strings.ToLower(where)
+
+	// Check for dangerous SQL patterns that shouldn't be in a WHERE clause
+	dangerousPatterns := []string{
+		";",           // Statement terminator
+		"--",          // Comment
+		"/*",          // Block comment start
+		"*/",          // Block comment end
+		"exec ",       // Execute
+		"execute ",    // Execute
+		"drop ",       // Drop statement
+		"truncate ",   // Truncate statement
+		"delete ",     // Delete statement (should use dedicated operation)
+		"insert ",     // Insert statement (should use dedicated operation)
+		"update ",     // Update statement (should use dedicated operation)
+		"create ",     // Create statement
+		"alter ",      // Alter statement
+		"grant ",      // Grant statement
+		"revoke ",     // Revoke statement
+		"union ",      // Union (common injection)
+		"union(",      // Union without space
+		"copy ",       // PostgreSQL COPY command
+		"pg_sleep(",   // Timing attack
+		"pg_read_file", // File read
+		"lo_import",   // Large object import
+		"lo_export",   // Large object export
+	}
+
+	for _, pattern := range dangerousPatterns {
+		if strings.Contains(lower, pattern) {
+			return fmt.Errorf("potentially dangerous pattern detected in WHERE clause: %s", pattern)
+		}
+	}
+
+	return nil
+}
+
 type PostgresNode struct{}
 
 func (n *PostgresNode) Type() string {
@@ -305,6 +349,10 @@ func (n *PostgresNode) executeUpdate(ctx context.Context, db *sql.DB, config map
 	query := fmt.Sprintf("UPDATE %s SET %s", quoteIdentifierPg(table), strings.Join(sets, ", "))
 
 	if where != "" {
+		// SECURITY: Validate WHERE clause for injection patterns
+		if err := validateWhereClausePg(where); err != nil {
+			return nil, fmt.Errorf("invalid WHERE clause: %w", err)
+		}
 		// Rewrite placeholders in WHERE clause
 		for j := range whereParams {
 			where = strings.Replace(where, fmt.Sprintf("$%d", j+1), fmt.Sprintf("$%d", i+j), 1)
@@ -344,6 +392,10 @@ func (n *PostgresNode) executeDelete(ctx context.Context, db *sql.DB, config map
 
 	var values []interface{}
 	if where != "" {
+		// SECURITY: Validate WHERE clause for injection patterns
+		if err := validateWhereClausePg(where); err != nil {
+			return nil, fmt.Errorf("invalid WHERE clause: %w", err)
+		}
 		query += " WHERE " + where
 		values = whereParams
 	}

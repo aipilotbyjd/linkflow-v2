@@ -93,10 +93,14 @@ func (n *EmailNode) sendEmail(ctx context.Context, execCtx *core.ExecutionContex
 	addr := fmt.Sprintf("%s:%s", host, port)
 	auth := smtp.PlainAuth("", username, password, host)
 
+	// SECURITY: InsecureSkipVerify should be false by default
+	// Only set to true if explicitly configured (for self-signed certs in dev)
+	insecureSkipVerify := getBool(config, "insecureSkipVerify", false)
+
 	var sendErr error
 	if port == "465" {
 		// SSL
-		sendErr = sendMailSSL(addr, auth, from, recipients, msg)
+		sendErr = sendMailSSL(addr, auth, from, recipients, msg, insecureSkipVerify)
 	} else {
 		// TLS (STARTTLS)
 		sendErr = sendMailTLS(addr, auth, from, recipients, msg, host)
@@ -171,9 +175,12 @@ func (n *EmailNode) sendHTMLEmail(ctx context.Context, execCtx *core.ExecutionCo
 	addr := fmt.Sprintf("%s:%s", host, port)
 	auth := smtp.PlainAuth("", username, password, host)
 
+	// SECURITY: InsecureSkipVerify should be false by default
+	insecureSkipVerify := getBool(config, "insecureSkipVerify", false)
+
 	var sendErr error
 	if port == "465" {
-		sendErr = sendMailSSL(addr, auth, from, recipients, msg)
+		sendErr = sendMailSSL(addr, auth, from, recipients, msg, insecureSkipVerify)
 	} else {
 		sendErr = sendMailTLS(addr, auth, from, recipients, msg, host)
 	}
@@ -303,8 +310,8 @@ func sendMailTLS(addr string, auth smtp.Auth, from string, to []string, msg []by
 	return conn.Quit()
 }
 
-func sendMailSSL(addr string, auth smtp.Auth, from string, to []string, msg []byte) error {
-	tlsConfig := &tls.Config{InsecureSkipVerify: true}
+func sendMailSSL(addr string, auth smtp.Auth, from string, to []string, msg []byte, insecureSkipVerify bool) error {
+	tlsConfig := &tls.Config{InsecureSkipVerify: insecureSkipVerify}
 	conn, err := tls.Dial("tcp", addr, tlsConfig)
 	if err != nil {
 		return err

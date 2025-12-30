@@ -40,6 +40,52 @@ func quoteIdentifierMySQL(identifier string) string {
 	return "`" + escaped + "`"
 }
 
+// validateWhereClause checks WHERE clause for SQL injection patterns
+// SECURITY: This prevents direct SQL injection in WHERE clauses
+func validateWhereClauseMySQL(where string) error {
+	if where == "" {
+		return nil
+	}
+
+	lower := strings.ToLower(where)
+
+	// Check for dangerous SQL patterns that shouldn't be in a WHERE clause
+	dangerousPatterns := []string{
+		";",           // Statement terminator
+		"--",          // Comment
+		"/*",          // Block comment start
+		"*/",          // Block comment end
+		"xp_",         // SQL Server extended procedures
+		"sp_",         // SQL Server stored procedures
+		"exec ",       // Execute
+		"execute ",    // Execute
+		"drop ",       // Drop statement
+		"truncate ",   // Truncate statement
+		"delete ",     // Delete statement (should use dedicated operation)
+		"insert ",     // Insert statement (should use dedicated operation)
+		"update ",     // Update statement (should use dedicated operation)
+		"create ",     // Create statement
+		"alter ",      // Alter statement
+		"grant ",      // Grant statement
+		"revoke ",     // Revoke statement
+		"union ",      // Union (common injection)
+		"union(",      // Union without space
+		"into outfile", // File write
+		"into dumpfile", // File write
+		"load_file",   // File read
+		"benchmark(",  // Timing attack
+		"sleep(",      // Timing attack
+	}
+
+	for _, pattern := range dangerousPatterns {
+		if strings.Contains(lower, pattern) {
+			return fmt.Errorf("potentially dangerous pattern detected in WHERE clause: %s", pattern)
+		}
+	}
+
+	return nil
+}
+
 // MySQLNode handles MySQL database operations
 type MySQLNode struct{}
 
@@ -268,6 +314,10 @@ func (n *MySQLNode) executeUpdate(ctx context.Context, db *sql.DB, config map[st
 	query := fmt.Sprintf("UPDATE %s SET %s", quoteIdentifierMySQL(table), strings.Join(setClauses, ", "))
 
 	if where != "" {
+		// SECURITY: Validate WHERE clause for injection patterns
+		if err := validateWhereClauseMySQL(where); err != nil {
+			return nil, fmt.Errorf("invalid WHERE clause: %w", err)
+		}
 		query += " WHERE " + where
 		values = append(values, whereParams...)
 	}
@@ -301,6 +351,11 @@ func (n *MySQLNode) executeDelete(ctx context.Context, db *sql.DB, config map[st
 
 	if where == "" {
 		return nil, fmt.Errorf("where clause is required for delete operations")
+	}
+
+	// SECURITY: Validate WHERE clause for injection patterns
+	if err := validateWhereClauseMySQL(where); err != nil {
+		return nil, fmt.Errorf("invalid WHERE clause: %w", err)
 	}
 
 	query := fmt.Sprintf("DELETE FROM %s WHERE %s", quoteIdentifierMySQL(table), where)

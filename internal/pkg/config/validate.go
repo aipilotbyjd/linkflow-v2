@@ -215,8 +215,26 @@ func (c *Config) validateJWT() []error {
 		errs = append(errs, errors.New("jwt.secret must be at least 32 characters"))
 	}
 
-	if c.JWT.Secret == "change-me-in-production" && c.IsProduction() {
-		errs = append(errs, errors.New("jwt.secret must be changed from default in production"))
+	// Check for weak/default secrets
+	weakSecrets := []string{
+		"change-me-in-production",
+		"change-this-to-a-32-character-key",
+		"your-secret-key",
+		"your-32-character-secret-key-here",
+		"secret",
+		"changeme",
+		"password",
+	}
+	secretLower := strings.ToLower(c.JWT.Secret)
+	for _, weak := range weakSecrets {
+		if strings.Contains(secretLower, weak) {
+			if c.IsProduction() {
+				errs = append(errs, errors.New("jwt.secret contains a weak/default value - must be changed in production"))
+			} else {
+				// Warning in non-production (logged elsewhere)
+			}
+			break
+		}
 	}
 
 	if c.JWT.AccessExpiry <= 0 {
