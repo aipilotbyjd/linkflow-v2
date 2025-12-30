@@ -621,14 +621,14 @@ func (s *WorkflowExportService) Export(ctx context.Context, workflowID uuid.UUID
 	}
 
 	// Convert JSONArray to []map[string]interface{}
-	var nodes []map[string]interface{}
+	nodes := make([]map[string]interface{}, 0)
 	for _, n := range workflow.Nodes {
 		if m, ok := n.(map[string]interface{}); ok {
 			nodes = append(nodes, m)
 		}
 	}
 
-	var connections []map[string]interface{}
+	connections := make([]map[string]interface{}, 0)
 	for _, c := range workflow.Connections {
 		if m, ok := c.(map[string]interface{}); ok {
 			connections = append(connections, m)
@@ -672,12 +672,12 @@ func (s *WorkflowExportService) Export(ctx context.Context, workflowID uuid.UUID
 
 func (s *WorkflowExportService) Import(ctx context.Context, workspaceID, importedBy uuid.UUID, data *WorkflowExportData) (*models.Workflow, error) {
 	// Convert []map[string]interface{} to JSONArray
-	var nodes models.JSONArray
+	nodes := make(models.JSONArray, 0)
 	for _, n := range data.Nodes {
 		nodes = append(nodes, n)
 	}
 
-	var connections models.JSONArray
+	connections := make(models.JSONArray, 0)
 	for _, c := range data.Connections {
 		connections = append(connections, c)
 	}
