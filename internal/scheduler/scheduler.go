@@ -46,7 +46,9 @@ func New(cfg *Config, deps *Dependencies) *Scheduler {
 	if cfg == nil {
 		cfg = DefaultConfig()
 	}
-	_ = cfg.Validate()
+	if err := cfg.Validate(); err != nil {
+		log.Warn().Err(err).Msg("scheduler config validation failed, using defaults where applicable")
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 

@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -254,7 +255,10 @@ func (h *WebhookHandler) waitForExecution(ctx context.Context, workflow *models.
 		TriggerType: "webhook",
 		InputData:   triggerData,
 	}
-	_, _ = h.queueClient.EnqueueWorkflowExecution(ctx, payload)
+	if _, err := h.queueClient.EnqueueWorkflowExecution(ctx, payload); err != nil {
+		log.Error().Err(err).Str("execution_id", execution.ID.String()).Msg("failed to enqueue webhook execution")
+		return nil, fmt.Errorf("failed to queue workflow execution: %w", err)
+	}
 
 	// Poll for completion
 	ticker := NewPollTicker(100, timeout*1000)
