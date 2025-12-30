@@ -99,11 +99,9 @@ func InitializeApp() (*App, error) {
 	workflowExportService := wire.ProvideExportImportService(baseRepository8, baseRepository9, workflowRepository)
 	executionReplayService := wire.ProvideExecutionReplayService(executionService, executionRepository)
 	versionDiffService := wire.ProvideVersionDiffService(workflowRepository, workflowVersionRepository)
-	wireServices := wire.ProvideServices(authService, userService, workspaceService, workflowService, executionService, credentialService, scheduleService, billingService, oAuthService, templateService, webhookManager, waitResumeManager, auditLogService, alertService, workflowCommentService, executionShareService, environmentVariableService, analyticsService, workflowExportService, executionReplayService, versionDiffService)
-	apiServices := wire.ProvideAPIServices(wireServices)
+	apiServices := wire.ProvideServices(authService, userService, workspaceService, workflowService, executionService, credentialService, scheduleService, billingService, oAuthService, templateService, webhookManager, waitResumeManager, auditLogService, alertService, workflowCommentService, executionShareService, environmentVariableService, analyticsService, workflowExportService, executionReplayService, versionDiffService)
 	pinnedDataRepository := repositories.NewPinnedDataRepository(db)
-	wireRepositories := wire.ProvideRepositories(pinnedDataRepository, waitingExecutionRepository, webhookEndpointRepository)
-	apiRepositories := wire.ProvideAPIRepositories(wireRepositories)
+	apiRepositories := wire.ProvideRepositories(pinnedDataRepository, waitingExecutionRepository, webhookEndpointRepository)
 	app := provideApp(config, db, client, queueClient, jwtManager, apiServices, apiRepositories)
 	return app, nil
 }
