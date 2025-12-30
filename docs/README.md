@@ -48,7 +48,7 @@ docs/
 ### Getting Started
 - [Quick Start](../README.md#quick-start) - Get up and running in 5 minutes
 - [Getting Started Guide](guides/getting-started.md) - Step-by-step tutorial
-- [Configuration](development/configuration.md) - Configure your environment
+- [**Configuration Guide**](configuration.md) - **Complete guide to environment variables, secrets, and deployment**
 
 ### For Developers
 - [Development Setup](development/README.md) - Set up your development environment
