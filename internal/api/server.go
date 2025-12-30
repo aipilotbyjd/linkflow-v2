@@ -194,15 +194,9 @@ func NewServer(
 		exportHandler = handlers.NewWorkflowExportHandler(svc.ExportImport)
 	}
 
-	var replayHandler *handlers.ExecutionReplayHandler
-	if svc.ExecReplay != nil {
-		replayHandler = handlers.NewExecutionReplayHandler(svc.ExecReplay)
-	}
+	replayHandler := handlers.NewExecutionReplayHandler(svc.ExecReplay)
 
-	var versionDiffHandler *handlers.VersionDiffHandler
-	if svc.VersionDiff != nil {
-		versionDiffHandler = handlers.NewVersionDiffHandler(svc.VersionDiff)
-	}
+	versionDiffHandler := handlers.NewVersionDiffHandler(svc.VersionDiff)
 
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager, redisClient)
@@ -303,11 +297,9 @@ func NewServer(
 				r.Get("/workflows/{workflowID}/versions", workflowHandler.GetVersions)
 				r.Get("/workflows/{workflowID}/versions/{version}", workflowHandler.GetVersion)
 				r.Post("/workflows/{workflowID}/versions/{version}/rollback", workflowHandler.RollbackVersion)
-				// Version Diff (using /compare to avoid conflict with {version} param)
-				if versionDiffHandler != nil {
-					r.Get("/workflows/{workflowID}/compare-versions", versionDiffHandler.Compare)
-					r.Get("/workflows/{workflowID}/versions/{version}/compare", versionDiffHandler.CompareWithCurrent)
-				}
+				// Version Diff
+				r.Get("/workflows/{workflowID}/compare-versions", versionDiffHandler.Compare)
+				r.Get("/workflows/{workflowID}/versions/{version}/compare", versionDiffHandler.CompareWithCurrent)
 
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
 				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
@@ -435,10 +427,8 @@ func NewServer(
 				}
 
 				// Execution Replay
-				if replayHandler != nil {
-					r.Post("/executions/{executionId}/replay", replayHandler.Replay)
-					r.Post("/executions/{executionId}/replay-from-node", replayHandler.ReplayFromNode)
-				}
+				r.Post("/executions/{executionId}/replay", replayHandler.Replay)
+				r.Post("/executions/{executionId}/replay-from-node", replayHandler.ReplayFromNode)
 			})
 		})
 	})
