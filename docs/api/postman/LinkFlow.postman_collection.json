@@ -793,6 +793,36 @@
 						},
 						"description": "Rollback workflow to a previous version. Creates a new version with the content from the specified historical version."
 					}
+				},
+				{
+					"name": "Compare Versions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/compare-versions?from=1&to=2",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "compare-versions"],
+							"query": [
+								{ "key": "from", "value": "1", "description": "Source version number" },
+								{ "key": "to", "value": "2", "description": "Target version number" }
+							]
+						},
+						"description": "Compare two workflow versions and get a detailed diff.\n\nReturns:\n- nodes.added - New nodes in target version\n- nodes.removed - Nodes removed from source\n- nodes.modified - Changed nodes with field-level diffs\n- connections.added/removed - Connection changes\n- settings.changes - Settings differences\n- summary - Change counts"
+					}
+				},
+				{
+					"name": "Compare Version with Current",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1/compare",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1", "compare"]
+						},
+						"description": "Compare a specific version with the current workflow state. Useful for seeing what changed since a particular version."
+					}
 				}
 			],
 			"description": "Workflow management and execution"
@@ -1775,13 +1805,19 @@
 					"name": "Replay from Node",
 					"request": {
 						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/replay/{{node_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "replay", "{{node_id}}"]
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"node_id\": \"{{node_id}}\"\n}"
 						},
-						"description": "Replay execution starting from a specific node using its original input"
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/replay-from-node",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "replay-from-node"]
+						},
+						"description": "Replay execution starting from a specific node using its original input. The execution will resume from the specified node, using the output data from the previous node execution."
 					}
 				},
 				{
@@ -2096,6 +2132,10 @@
 		},
 		{
 			"key": "webhook_id",
+			"value": ""
+		},
+		{
+			"key": "node_id",
 			"value": ""
 		}
 	]
