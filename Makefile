@@ -60,42 +60,57 @@ clean:
 	rm -f coverage.out coverage.html
 
 # Docker
-COMPOSE_FILE=deploy/docker/docker-compose.yaml
-COMPOSE_PROD_FILE=deploy/docker/docker-compose.prod.yml
+COMPOSE_DEV=deploy/docker-compose.dev.yml
+COMPOSE_PROD=deploy/docker-compose.yml
 
-docker-build:
-	docker-compose -f $(COMPOSE_FILE) build
+# Development Docker (simple setup)
+docker-dev-up:
+	docker compose -f $(COMPOSE_DEV) up -d
 
-docker-up:
-	docker-compose -f $(COMPOSE_FILE) up -d
+docker-dev-down:
+	docker compose -f $(COMPOSE_DEV) down
 
-docker-down:
-	docker-compose -f $(COMPOSE_FILE) down
+docker-dev-logs:
+	docker compose -f $(COMPOSE_DEV) logs -f
 
-docker-logs:
-	docker-compose -f $(COMPOSE_FILE) logs -f
+docker-dev-ps:
+	docker compose -f $(COMPOSE_DEV) ps
 
+# Production Docker
 docker-prod-build:
-	docker-compose -f $(COMPOSE_PROD_FILE) build
+	docker compose -f $(COMPOSE_PROD) build
 
 docker-prod-up:
-	docker-compose -f $(COMPOSE_PROD_FILE) up -d
+	docker compose -f $(COMPOSE_PROD) up -d
 
 docker-prod-down:
-	docker-compose -f $(COMPOSE_PROD_FILE) down
+	docker compose -f $(COMPOSE_PROD) down
 
-# Development
-dev-deps:
-	docker-compose -f $(COMPOSE_FILE) up -d postgres redis minio
+docker-prod-logs:
+	docker compose -f $(COMPOSE_PROD) logs -f
 
-dev-api: dev-deps
+# Development (infra only - run services locally)
+dev-infra:
+	docker compose -f $(COMPOSE_DEV) up -d postgres redis
+
+dev-api: dev-infra
 	$(GOCMD) run ./cmd/api
 
-dev-worker: dev-deps
+dev-worker: dev-infra
 	$(GOCMD) run ./cmd/worker
 
-dev-scheduler: dev-deps
+dev-scheduler: dev-infra
 	$(GOCMD) run ./cmd/scheduler
+
+dev-all: dev-infra
+	@echo "Starting all services..."
+	$(GOCMD) run ./cmd/api &
+	$(GOCMD) run ./cmd/worker &
+	$(GOCMD) run ./cmd/scheduler &
+
+dev-stop:
+	docker compose -f $(COMPOSE_DEV) down
+	pkill -f "go run ./cmd" || true
 
 # Database
 migrate:
@@ -111,22 +126,37 @@ generate:
 
 # Help
 help:
-	@echo "Available targets:"
-	@echo "  build          - Build all binaries"
-	@echo "  build-api      - Build API service"
-	@echo "  build-worker   - Build Worker service"
-	@echo "  build-scheduler- Build Scheduler service"
-	@echo "  run-api        - Run API service"
-	@echo "  run-worker     - Run Worker service"
-	@echo "  run-scheduler  - Run Scheduler service"
-	@echo "  test           - Run tests"
-	@echo "  test-coverage  - Run tests with coverage"
-	@echo "  deps           - Download dependencies"
-	@echo "  clean          - Clean build artifacts"
-	@echo "  docker-build   - Build Docker images (dev)"
-	@echo "  docker-up      - Start Docker containers (dev)"
-	@echo "  docker-down    - Stop Docker containers (dev)"
-	@echo "  docker-prod-*  - Production Docker commands"
-	@echo "  dev-deps       - Start development dependencies"
-	@echo "  dev-api        - Run API in development mode"
-	@echo "  lint           - Run linter"
+	@echo "LinkFlow Development Commands"
+	@echo "=============================="
+	@echo ""
+	@echo "Quick Start:"
+	@echo "  make dev-api        - Start Postgres/Redis + run API locally"
+	@echo "  make docker-dev-up  - Start full stack in Docker (dev mode)"
+	@echo ""
+	@echo "Build:"
+	@echo "  make build          - Build all binaries"
+	@echo "  make build-api      - Build API service only"
+	@echo "  make generate       - Generate wire dependencies"
+	@echo ""
+	@echo "Development (run locally, infra in Docker):"
+	@echo "  make dev-infra      - Start Postgres + Redis only"
+	@echo "  make dev-api        - Start infra + run API"
+	@echo "  make dev-worker     - Start infra + run Worker"
+	@echo "  make dev-scheduler  - Start infra + run Scheduler"
+	@echo "  make dev-stop       - Stop everything"
+	@echo ""
+	@echo "Docker Development:"
+	@echo "  make docker-dev-up   - Start full stack (dev)"
+	@echo "  make docker-dev-down - Stop full stack (dev)"
+	@echo "  make docker-dev-logs - View logs"
+	@echo "  make docker-dev-ps   - Show status"
+	@echo ""
+	@echo "Docker Production:"
+	@echo "  make docker-prod-build - Build images"
+	@echo "  make docker-prod-up    - Start stack"
+	@echo "  make docker-prod-down  - Stop stack"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test           - Run tests"
+	@echo "  make test-coverage  - Run with coverage"
+	@echo "  make lint           - Run linter"
