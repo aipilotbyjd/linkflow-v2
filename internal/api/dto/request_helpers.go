@@ -15,8 +15,7 @@ type Pagination struct {
 }
 
 // ParsePagination extracts pagination parameters from request query.
-// Returns sensible defaults if not provided.
-func ParsePagination(r *http.Request) Pagination {
+func ParsePagination(r *http.Request) *Pagination {
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
 	perPage, _ := strconv.Atoi(r.URL.Query().Get("per_page"))
 
@@ -30,7 +29,7 @@ func ParsePagination(r *http.Request) Pagination {
 		perPage = 100
 	}
 
-	return Pagination{
+	return &Pagination{
 		Page:    page,
 		PerPage: perPage,
 		Opts:    repositories.NewListOptions(page, perPage),
@@ -38,7 +37,7 @@ func ParsePagination(r *http.Request) Pagination {
 }
 
 // NewMeta creates a Meta response from pagination and total count
-func (p Pagination) NewMeta(total int64) *Meta {
+func (p *Pagination) NewMeta(total int64) *Meta {
 	totalPages := int(total) / p.PerPage
 	if int(total)%p.PerPage > 0 {
 		totalPages++
