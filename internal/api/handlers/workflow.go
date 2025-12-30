@@ -53,7 +53,17 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.WorkflowResponse{}
+	// Parse includes (e.g., ?include=schedules)
+	includes := dto.ParseIncludes(r)
+	includeBuilder := dto.NewIncludeBuilder()
+
+	// Build workflow responses with actions
+	type WorkflowWithActions struct {
+		dto.WorkflowResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []WorkflowWithActions{}
 	for _, wf := range workflows {
 		var lastExecutedAt *int64
 		if wf.LastExecutedAt != nil {
@@ -61,21 +71,80 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 			lastExecutedAt = &ts
 		}
 
-		response = append(response, dto.WorkflowResponse{
-			ID:             wf.ID.String(),
-			Name:           wf.Name,
-			Description:    wf.Description,
-			Status:         wf.Status,
-			Version:        wf.Version,
-			Tags:           wf.Tags,
-			ExecutionCount: wf.ExecutionCount,
-			LastExecutedAt: lastExecutedAt,
-			CreatedAt:      wf.CreatedAt.Unix(),
-			UpdatedAt:      wf.UpdatedAt.Unix(),
+		wsID := wsCtx.WorkspaceID.String()
+		wfID := wf.ID.String()
+
+		// Build actions based on workflow status
+		var actions []dto.Action
+		actions = append(actions, dto.ExecuteAction(wsID, wfID))
+		if wf.Status == "active" {
+			actions = append(actions, dto.DeactivateAction(wsID, wfID))
+		} else {
+			actions = append(actions, dto.ActivateAction(wsID, wfID))
+		}
+		actions = append(actions, dto.DeleteAction("/api/v1/workspaces/"+wsID+"/workflows/"+wfID))
+
+		response = append(response, WorkflowWithActions{
+			WorkflowResponse: dto.WorkflowResponse{
+				ID:             wfID,
+				Name:           wf.Name,
+				Description:    wf.Description,
+				Status:         wf.Status,
+				Version:        wf.Version,
+				Tags:           wf.Tags,
+				ExecutionCount: wf.ExecutionCount,
+				LastExecutedAt: lastExecutedAt,
+				CreatedAt:      wf.CreatedAt.Unix(),
+				UpdatedAt:      wf.UpdatedAt.Unix(),
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
+	// Include schedules if requested
+	if dto.HasInclude(includes, "schedules") {
+		schedules, _, _ := h.scheduleSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, nil)
+		if len(schedules) > 0 {
+			scheduleMap := make(map[string]interface{})
+			for _, s := range schedules {
+				scheduleMap[s.WorkflowID.String()] = map[string]interface{}{
+					"id":              s.ID.String(),
+					"cron_expression": s.CronExpression,
+					"is_active":       s.IsActive,
+					"next_run_at":     s.NextRunAt,
+				}
+			}
+			includeBuilder.Add("schedules", scheduleMap)
+		}
+	}
+
+	// Build links
+	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/workflows"
+	links := &dto.Links{
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+	}
+	meta := pg.NewMeta(total)
+	if pg.Page < meta.TotalPages {
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+	}
+	if pg.Page > 1 {
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+	}
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	if meta.TotalPages > 0 {
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+	}
+
+	// Apply field selection if requested (e.g., ?fields=id,name,status)
+	var data interface{} = response
+	data = dto.SelectFields(r, data)
+
+	// Send enhanced response
+	dto.NewResponse(data).
+		WithIncluded(includeBuilder.Build()).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
