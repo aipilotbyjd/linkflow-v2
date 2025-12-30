@@ -28,6 +28,7 @@ type WebhookHandler struct {
 	webhookStream *streams.WebhookStream // Redis Streams buffer
 }
 
+// NewWebhookHandler creates a new WebhookHandler for processing incoming webhooks.
 func NewWebhookHandler(
 	workflowSvc *services.WorkflowService,
 	executionSvc *services.ExecutionService,

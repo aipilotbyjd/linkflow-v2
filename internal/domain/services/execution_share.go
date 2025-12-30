@@ -23,6 +23,7 @@ type ExecutionShareService struct {
 	repo *repositories.BaseRepository[models.ExecutionShare]
 }
 
+// NewExecutionShareService creates a new ExecutionShareService for sharing execution results.
 func NewExecutionShareService(repo *repositories.BaseRepository[models.ExecutionShare]) *ExecutionShareService {
 	return &ExecutionShareService{repo: repo}
 }

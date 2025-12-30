@@ -25,6 +25,7 @@ type AuthHandler struct {
 	frontendURL  string
 }
 
+// NewAuthHandler creates a new AuthHandler for authentication endpoints.
 func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client) *AuthHandler {
 	return &AuthHandler{
 		authSvc:     authSvc,
@@ -33,6 +34,7 @@ func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager
 	}
 }
 
+// Register handles user registration.
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req dto.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

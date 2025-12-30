@@ -14,6 +14,7 @@ type TemplateService struct {
 	workflowRepo *repositories.WorkflowRepository
 }
 
+// NewTemplateService creates a new TemplateService for managing workflow templates.
 func NewTemplateService(
 	templateRepo *repositories.TemplateRepository,
 	workflowRepo *repositories.WorkflowRepository,

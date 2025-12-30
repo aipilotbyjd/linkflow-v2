@@ -14,6 +14,7 @@ type VersionDiffService struct {
 	versionRepo  *repositories.WorkflowVersionRepository
 }
 
+// NewVersionDiffService creates a new VersionDiffService for comparing workflow versions.
 func NewVersionDiffService(
 	workflowRepo *repositories.WorkflowRepository,
 	versionRepo *repositories.WorkflowVersionRepository,

@@ -16,6 +16,7 @@ type WorkflowCommentService struct {
 	repo *repositories.BaseRepository[models.WorkflowComment]
 }
 
+// NewWorkflowCommentService creates a new WorkflowCommentService for managing workflow comments.
 func NewWorkflowCommentService(repo *repositories.BaseRepository[models.WorkflowComment]) *WorkflowCommentService {
 	return &WorkflowCommentService{repo: repo}
 }

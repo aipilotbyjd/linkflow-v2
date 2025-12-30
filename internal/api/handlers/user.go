@@ -14,10 +14,12 @@ type UserHandler struct {
 	userSvc *services.UserService
 }
 
+// NewUserHandler creates a new UserHandler for user profile management.
 func NewUserHandler(userSvc *services.UserService) *UserHandler {
 	return &UserHandler{userSvc: userSvc}
 }
 
+// GetCurrentUser returns the authenticated user's profile.
 func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.MustUser(w, r)
 	if claims == nil {

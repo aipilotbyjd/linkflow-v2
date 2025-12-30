@@ -20,6 +20,7 @@ type ExecutionHandler struct {
 	queueClient  *queue.Client
 }
 
+// NewExecutionHandler creates a new ExecutionHandler for workflow execution management.
 func NewExecutionHandler(executionSvc *services.ExecutionService, queueClient *queue.Client) *ExecutionHandler {
 	return &ExecutionHandler{
 		executionSvc: executionSvc,
@@ -27,6 +28,7 @@ func NewExecutionHandler(executionSvc *services.ExecutionService, queueClient *q
 	}
 }
 
+// List returns paginated executions for a workspace.
 func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {

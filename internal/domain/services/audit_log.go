@@ -14,6 +14,7 @@ type AuditLogService struct {
 	repo *repositories.BaseRepository[models.AuditLog]
 }
 
+// NewAuditLogService creates a new AuditLogService for tracking user actions.
 func NewAuditLogService(repo *repositories.BaseRepository[models.AuditLog]) *AuditLogService {
 	return &AuditLogService{repo: repo}
 }

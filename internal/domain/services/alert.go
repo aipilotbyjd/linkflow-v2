@@ -17,6 +17,7 @@ type AlertService struct {
 	logRepo *repositories.BaseRepository[models.AlertLog]
 }
 
+// NewAlertService creates a new AlertService for managing workflow alerts and notifications.
 func NewAlertService(repo *repositories.BaseRepository[models.Alert], logRepo *repositories.BaseRepository[models.AlertLog]) *AlertService {
 	return &AlertService{repo: repo, logRepo: logRepo}
 }

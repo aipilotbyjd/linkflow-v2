@@ -15,10 +15,12 @@ type ScheduleHandler struct {
 	scheduleSvc *services.ScheduleService
 }
 
+// NewScheduleHandler creates a new ScheduleHandler for workflow scheduling.
 func NewScheduleHandler(scheduleSvc *services.ScheduleService) *ScheduleHandler {
 	return &ScheduleHandler{scheduleSvc: scheduleSvc}
 }
 
+// List returns all schedules for a workspace.
 func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {

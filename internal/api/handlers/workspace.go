@@ -15,6 +15,7 @@ type WorkspaceHandler struct {
 	billingSvc   *services.BillingService
 }
 
+// NewWorkspaceHandler creates a new WorkspaceHandler for workspace management.
 func NewWorkspaceHandler(workspaceSvc *services.WorkspaceService, billingSvc *services.BillingService) *WorkspaceHandler {
 	return &WorkspaceHandler{
 		workspaceSvc: workspaceSvc,
@@ -22,6 +23,7 @@ func NewWorkspaceHandler(workspaceSvc *services.WorkspaceService, billingSvc *se
 	}
 }
 
+// List returns all workspaces for the authenticated user.
 func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
 	claims := middleware.MustUser(w, r)
 	if claims == nil {

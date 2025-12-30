@@ -13,6 +13,7 @@ type ExecutionReplayService struct {
 	execRepo    *repositories.ExecutionRepository
 }
 
+// NewExecutionReplayService creates a new ExecutionReplayService for replaying workflow executions.
 func NewExecutionReplayService(execService *ExecutionService, execRepo *repositories.ExecutionRepository) *ExecutionReplayService {
 	return &ExecutionReplayService{execService: execService, execRepo: execRepo}
 }

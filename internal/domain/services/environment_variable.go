@@ -22,6 +22,7 @@ type Encryptor interface {
 	Decrypt(data string) (string, error)
 }
 
+// NewEnvironmentVariableService creates a new EnvironmentVariableService for managing encrypted env vars.
 func NewEnvironmentVariableService(repo *repositories.BaseRepository[models.EnvironmentVariable], encryptor Encryptor) *EnvironmentVariableService {
 	return &EnvironmentVariableService{repo: repo, encryptor: encryptor}
 }

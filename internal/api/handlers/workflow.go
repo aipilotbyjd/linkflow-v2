@@ -24,6 +24,7 @@ type WorkflowHandler struct {
 	queueClient *queue.Client
 }
 
+// NewWorkflowHandler creates a new WorkflowHandler for workflow CRUD operations.
 func NewWorkflowHandler(
 	workflowSvc *services.WorkflowService,
 	billingSvc *services.BillingService,
@@ -38,6 +39,7 @@ func NewWorkflowHandler(
 	}
 }
 
+// List returns paginated workflows for a workspace.
 func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {

@@ -15,6 +15,7 @@ type AnalyticsService struct {
 	execRepo      *repositories.ExecutionRepository
 }
 
+// NewAnalyticsService creates a new AnalyticsService for workspace and workflow metrics.
 func NewAnalyticsService(
 	workspaceRepo *repositories.BaseRepository[models.WorkspaceAnalytics],
 	workflowRepo *repositories.BaseRepository[models.WorkflowAnalytics],

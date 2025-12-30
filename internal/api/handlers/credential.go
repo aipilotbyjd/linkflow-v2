@@ -14,10 +14,12 @@ type CredentialHandler struct {
 	credentialSvc *services.CredentialService
 }
 
+// NewCredentialHandler creates a new CredentialHandler for credential management.
 func NewCredentialHandler(credentialSvc *services.CredentialService) *CredentialHandler {
 	return &CredentialHandler{credentialSvc: credentialSvc}
 }
 
+// List returns all credentials for a workspace.
 func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {

@@ -15,6 +15,7 @@ type WorkflowExportService struct {
 	workflowRepo *repositories.WorkflowRepository
 }
 
+// NewWorkflowExportService creates a new WorkflowExportService for exporting and importing workflows.
 func NewWorkflowExportService(
 	exportRepo *repositories.BaseRepository[models.WorkflowExport],
 	importRepo *repositories.BaseRepository[models.WorkflowImport],
