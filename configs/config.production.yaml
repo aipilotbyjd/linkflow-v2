@@ -1,0 +1,112 @@
+# =============================================================================
+# LinkFlow Production Configuration Overlay
+# =============================================================================
+# This file is automatically loaded when APP_ENVIRONMENT=production
+# It overrides values from config.yaml with production-safe defaults.
+#
+# IMPORTANT: All secrets must be set via environment variables in production.
+# =============================================================================
+
+app:
+  debug: false
+
+server:
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+  shutdown_timeout: 30s
+  max_header_bytes: 1048576
+
+database:
+  sslmode: require
+  max_open_conns: 50
+  max_idle_conns: 25
+  conn_max_lifetime: 30m
+  conn_max_idle_time: 5m
+  slow_query_threshold: 100ms
+  log_queries: false
+
+redis:
+  tls: true
+  pool_size: 20
+  min_idle_conns: 10
+  max_retries: 5
+  dial_timeout: 10s
+  read_timeout: 5s
+  write_timeout: 5s
+
+jwt:
+  refresh_token_rotation: true
+  refresh_token_reuse_limit: 0
+
+queue:
+  concurrency: 20
+  strict_priority: false
+  shutdown_timeout: 30s
+  retry_limit: 5
+  retention: 48h
+  queues:
+    critical: 6
+    default: 3
+    low: 1
+
+circuit_breaker:
+  enabled: true
+  threshold: 5
+  timeout: 60s
+  max_requests: 100
+
+retry:
+  max_attempts: 5
+  initial_interval: 200ms
+  max_interval: 30s
+
+rate_limit:
+  enabled: true
+  requests_per_second: 100
+  burst: 200
+  by_ip: true
+  by_user: true
+
+cors:
+  enabled: true
+  allow_credentials: true
+  max_age: 86400
+
+logging:
+  level: info
+  format: json
+  output: stdout
+  include_caller: false
+  redact_secrets: true
+
+metrics:
+  enabled: true
+  enable_runtime_metrics: true
+  enable_db_metrics: true
+  enable_http_metrics: true
+
+health:
+  detailed_response: false
+  include_db_check: true
+  include_redis_check: true
+  timeout: 5s
+
+features:
+  webhook_stream:
+    enabled: true
+    max_len: 500000
+    dlq_max_len: 50000
+    batch_size: 50
+    max_retries: 5
+    stale_timeout: 600
+    consumer_count: 4
+    processing_timeout: 60s
+
+  execution:
+    max_concurrent: 200
+    default_timeout: 300s
+    max_timeout: 3600s
+    retention_days: 30
+    cleanup_interval: 1h
+    max_payload_size: 10485760

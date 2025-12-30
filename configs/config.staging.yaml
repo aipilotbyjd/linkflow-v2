@@ -1,0 +1,71 @@
+# =============================================================================
+# LinkFlow Staging Configuration Overlay
+# =============================================================================
+# This file is automatically loaded when APP_ENVIRONMENT=staging
+# It overrides values from config.yaml with staging-appropriate settings.
+# =============================================================================
+
+app:
+  debug: false
+
+server:
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+  shutdown_timeout: 30s
+
+database:
+  sslmode: require
+  max_open_conns: 25
+  max_idle_conns: 10
+  conn_max_lifetime: 30m
+  log_queries: false
+
+redis:
+  tls: true
+  pool_size: 15
+  min_idle_conns: 5
+  max_retries: 3
+
+queue:
+  concurrency: 15
+  retry_limit: 3
+
+rate_limit:
+  enabled: true
+  requests_per_second: 100
+  burst: 200
+
+logging:
+  level: info
+  format: json
+  redact_secrets: true
+
+tracing:
+  enabled: true
+  sample_rate: 0.5
+
+metrics:
+  enabled: true
+  enable_runtime_metrics: true
+  enable_db_metrics: true
+  enable_http_metrics: true
+
+health:
+  detailed_response: true
+  include_db_check: true
+  include_redis_check: true
+
+features:
+  webhook_stream:
+    enabled: true
+    max_len: 200000
+    dlq_max_len: 20000
+    batch_size: 25
+    max_retries: 3
+    consumer_count: 2
+
+  execution:
+    max_concurrent: 100
+    default_timeout: 300s
+    max_timeout: 1800s

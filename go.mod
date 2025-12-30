@@ -43,6 +43,7 @@ require (
 	github.com/google/wire v0.7.0
 	github.com/jackc/pgx/v5 v5.5.5
 	github.com/jlaffaye/ftp v0.2.0
+	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.23.2
 	go.mongodb.org/mongo-driver v1.17.6
 	golang.org/x/time v0.5.0
