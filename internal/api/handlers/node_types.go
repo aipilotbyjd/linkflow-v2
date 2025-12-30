@@ -87,7 +87,11 @@ func (h *NodeTypeHandler) ListNodeTypes(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	data := dto.SelectFields(r, response)
+	dto.NewResponse(data).
+		WithLinks(&dto.Links{Self: "/api/v1/node-types"}).
+		WithMeta(&dto.Meta{Total: int64(len(response)), Page: 1, PerPage: len(response), TotalPages: 1}).
+		Send(w)
 }
 
 // GetNodeType returns details for a specific node type
@@ -111,7 +115,9 @@ func (h *NodeTypeHandler) GetNodeType(w http.ResponseWriter, r *http.Request) {
 		Schema:      getNodeSchema(meta.Type),
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: "/api/v1/node-types/" + nodeType}).
+		Send(w)
 }
 
 // GetNodeCategories returns available node categories
@@ -145,7 +151,9 @@ func (h *NodeTypeHandler) GetNodeCategories(w http.ResponseWriter, r *http.Reque
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, categories)
+	dto.NewResponse(categories).
+		WithLinks(&dto.Links{Self: "/api/v1/node-types/categories"}).
+		Send(w)
 }
 
 // ValidateWorkflow validates a workflow definition

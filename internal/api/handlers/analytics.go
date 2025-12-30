@@ -30,10 +30,18 @@ func (h *AnalyticsHandler) GetWorkspaceAnalytics(w http.ResponseWriter, r *http.
 		return
 	}
 
-	dto.OK(w, analytics)
+	wsID := wsCtx.WorkspaceID.String()
+	dto.NewResponse(analytics).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/analytics"}).
+		Send(w)
 }
 
 func (h *AnalyticsHandler) GetWorkflowAnalytics(w http.ResponseWriter, r *http.Request) {
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
 	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
 	if !ok {
 		return
@@ -46,7 +54,11 @@ func (h *AnalyticsHandler) GetWorkflowAnalytics(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	dto.OK(w, analytics)
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	dto.NewResponse(analytics).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/analytics"}).
+		Send(w)
 }
 
 func parseDateRange(r *http.Request) (time.Time, time.Time) {

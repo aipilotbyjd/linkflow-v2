@@ -32,10 +32,18 @@ func (h *StreamStatsHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	basePath := "/api/v1/admin/streams/webhooks"
+
+	dto.NewResponse(map[string]interface{}{
 		"enabled": true,
 		"stats":   stats,
-	})
+	}).
+		WithLinks(&dto.Links{Self: basePath + "/stats"}).
+		WithActions(
+			dto.Action{Name: "replay_dlq", Method: "POST", Href: basePath + "/replay", Label: "Replay Dead Letters"},
+			dto.Action{Name: "trim", Method: "POST", Href: basePath + "/trim", Label: "Trim Stream"},
+		).
+		Send(w)
 }
 
 // ReplayDLQ replays messages from the dead letter queue
@@ -59,10 +67,12 @@ func (h *StreamStatsHandler) ReplayDLQ(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	dto.NewResponse(map[string]interface{}{
 		"replayed": replayed,
 		"message":  "Messages replayed from dead letter queue",
-	})
+	}).
+		WithLinks(&dto.Links{Self: "/api/v1/admin/streams/webhooks/replay"}).
+		Send(w)
 }
 
 // Trim removes old messages from the stream
@@ -86,8 +96,10 @@ func (h *StreamStatsHandler) Trim(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	dto.NewResponse(map[string]interface{}{
 		"trimmed": trimmed,
 		"maxLen":  maxLen,
-	})
+	}).
+		WithLinks(&dto.Links{Self: "/api/v1/admin/streams/webhooks/trim"}).
+		Send(w)
 }

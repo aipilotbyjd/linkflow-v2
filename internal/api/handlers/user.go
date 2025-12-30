@@ -32,17 +32,38 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.UserResponse{
-		ID:            user.ID.String(),
-		Email:         user.Email,
-		Username:      user.Username,
-		FirstName:     user.FirstName,
-		LastName:      user.LastName,
-		AvatarURL:     user.AvatarURL,
-		EmailVerified: user.EmailVerified,
-		MFAEnabled:    user.MFAEnabled,
-		CreatedAt:     user.CreatedAt.Unix(),
-	})
+	basePath := "/api/v1/users/me"
+	actions := []dto.Action{
+		{Name: "update", Method: "PUT", Href: basePath, Label: "Update Profile"},
+		{Name: "change_password", Method: "POST", Href: basePath + "/password", Label: "Change Password"},
+	}
+	if !user.MFAEnabled {
+		actions = append(actions, dto.Action{Name: "setup_mfa", Method: "POST", Href: "/api/v1/auth/mfa/setup", Label: "Setup MFA"})
+	} else {
+		actions = append(actions, dto.Action{Name: "disable_mfa", Method: "DELETE", Href: "/api/v1/auth/mfa", Label: "Disable MFA"})
+	}
+
+	response := struct {
+		dto.UserResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		UserResponse: dto.UserResponse{
+			ID:            user.ID.String(),
+			Email:         user.Email,
+			Username:      user.Username,
+			FirstName:     user.FirstName,
+			LastName:      user.LastName,
+			AvatarURL:     user.AvatarURL,
+			EmailVerified: user.EmailVerified,
+			MFAEnabled:    user.MFAEnabled,
+			CreatedAt:     user.CreatedAt.Unix(),
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
@@ -73,7 +94,7 @@ func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.UserResponse{
+	response := dto.UserResponse{
 		ID:            user.ID.String(),
 		Email:         user.Email,
 		Username:      user.Username,
@@ -83,5 +104,9 @@ func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 		EmailVerified: user.EmailVerified,
 		MFAEnabled:    user.MFAEnabled,
 		CreatedAt:     user.CreatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: "/api/v1/users/me"}).
+		Send(w)
 }

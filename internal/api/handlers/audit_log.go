@@ -30,7 +30,17 @@ func (h *AuditLogHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, logs, pg.NewMeta(total))
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/audit-logs"
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath, pg, meta)
+
+	data := dto.SelectFields(r, logs)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *AuditLogHandler) Search(w http.ResponseWriter, r *http.Request) {
@@ -65,5 +75,15 @@ func (h *AuditLogHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, logs, pg.NewMeta(total))
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/audit-logs/search"
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath, pg, meta)
+
+	data := dto.SelectFields(r, logs)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }

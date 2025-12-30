@@ -35,23 +35,54 @@ func (h *EnvironmentVariableHandler) List(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	response := make([]map[string]interface{}, len(vars))
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/variables"
+
+	type EnvVarWithActions struct {
+		ID          string       `json:"id"`
+		Name        string       `json:"name"`
+		Value       string       `json:"value,omitempty"`
+		IsSecret    bool         `json:"is_secret"`
+		Environment *string      `json:"environment,omitempty"`
+		Description *string      `json:"description,omitempty"`
+		CreatedAt   int64        `json:"created_at"`
+		UpdatedAt   int64        `json:"updated_at"`
+		Actions     []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]EnvVarWithActions, len(vars))
 	for i, v := range vars {
-		response[i] = map[string]interface{}{
-			"id":          v.ID,
-			"name":        v.Name,
-			"is_secret":   v.IsSecret,
-			"environment": v.Environment,
-			"description": v.Description,
-			"created_at":  v.CreatedAt,
-			"updated_at":  v.UpdatedAt,
+		varID := v.ID.String()
+		varPath := basePath + "/" + varID
+
+		actions := []dto.Action{
+			{Name: "edit", Method: "PUT", Href: varPath, Label: "Edit Variable"},
+			{Name: "delete", Method: "DELETE", Href: varPath, Label: "Delete"},
 		}
+
+		var value string
 		if !v.IsSecret {
-			response[i]["value"] = "[REDACTED]"
+			value = "[REDACTED]"
+		}
+
+		response[i] = EnvVarWithActions{
+			ID:          varID,
+			Name:        v.Name,
+			Value:       value,
+			IsSecret:    v.IsSecret,
+			Environment: v.Environment,
+			Description: v.Description,
+			CreatedAt:   v.CreatedAt.Unix(),
+			UpdatedAt:   v.UpdatedAt.Unix(),
+			Actions:     actions,
 		}
 	}
 
-	dto.OK(w, response)
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *EnvironmentVariableHandler) Create(w http.ResponseWriter, r *http.Request) {

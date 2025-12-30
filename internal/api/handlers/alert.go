@@ -30,7 +30,63 @@ func (h *AlertHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.OK(w, alerts)
+	// Build response with actions
+	type AlertWithActions struct {
+		ID           string      `json:"id"`
+		Name         string      `json:"name"`
+		Type         string      `json:"type"`
+		Trigger      string      `json:"trigger"`
+		IsActive     bool        `json:"is_active"`
+		CooldownMins int         `json:"cooldown_mins"`
+		FireCount    int         `json:"fire_count"`
+		LastFiredAt  *int64      `json:"last_fired_at,omitempty"`
+		CreatedAt    int64       `json:"created_at"`
+		Actions      []dto.Action `json:"actions,omitempty"`
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	response := []AlertWithActions{}
+
+	for _, alert := range alerts {
+		alertID := alert.ID.String()
+		basePath := "/api/v1/workspaces/" + wsID + "/alerts/" + alertID
+
+		var lastFiredAt *int64
+		if alert.LastFiredAt != nil {
+			ts := alert.LastFiredAt.Unix()
+			lastFiredAt = &ts
+		}
+
+		var actions []dto.Action
+		if alert.IsActive {
+			actions = append(actions, dto.Action{Name: "disable", Method: "POST", Href: basePath + "/disable", Label: "Disable Alert"})
+		} else {
+			actions = append(actions, dto.Action{Name: "enable", Method: "POST", Href: basePath + "/enable", Label: "Enable Alert"})
+		}
+		actions = append(actions, dto.Action{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Alert"})
+		actions = append(actions, dto.Action{Name: "test", Method: "POST", Href: basePath + "/test", Label: "Test Alert"})
+		actions = append(actions, dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"})
+
+		response = append(response, AlertWithActions{
+			ID:           alertID,
+			Name:         alert.Name,
+			Type:         alert.Type,
+			Trigger:      alert.Trigger,
+			IsActive:     alert.IsActive,
+			CooldownMins: alert.CooldownMins,
+			FireCount:    alert.FireCount,
+			LastFiredAt:  lastFiredAt,
+			CreatedAt:    alert.CreatedAt.Unix(),
+			Actions:      actions,
+		})
+	}
+
+	// Apply field selection
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/alerts"}).
+		Send(w)
 }
 
 func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {

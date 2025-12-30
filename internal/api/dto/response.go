@@ -2,6 +2,7 @@ package dto
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -238,6 +239,24 @@ func filterSliceFields(slice []map[string]interface{}, fields []string) []map[st
 		result[i] = filterMapFields(m, fields)
 	}
 	return result
+}
+
+// BuildPaginationLinks creates standard pagination links
+func BuildPaginationLinks(basePath string, pg *Pagination, meta *Meta) *Links {
+	links := &Links{
+		Self:  fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+		First: fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage),
+	}
+	if pg.Page < meta.TotalPages {
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+	}
+	if pg.Page > 1 {
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+	}
+	if meta.TotalPages > 0 {
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+	}
+	return links
 }
 
 // Expand/Include helpers

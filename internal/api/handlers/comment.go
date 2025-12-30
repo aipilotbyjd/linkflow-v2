@@ -19,6 +19,11 @@ func NewWorkflowCommentHandler(commentSvc *services.WorkflowCommentService) *Wor
 }
 
 func (h *WorkflowCommentHandler) List(w http.ResponseWriter, r *http.Request) {
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
 	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
 	if !ok {
 		return
@@ -39,7 +44,15 @@ func (h *WorkflowCommentHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.OK(w, comments)
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/comments"
+
+	data := dto.SelectFields(r, comments)
+
+	dto.NewResponse(data).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *WorkflowCommentHandler) Create(w http.ResponseWriter, r *http.Request) {

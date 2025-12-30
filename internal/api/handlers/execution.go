@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -42,7 +43,13 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.ExecutionResponse{}
+	// Build response with actions
+	type ExecutionWithActions struct {
+		dto.ExecutionResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []ExecutionWithActions{}
 	for _, exec := range executions {
 		var startedAt, completedAt *int64
 		if exec.StartedAt != nil {
@@ -54,25 +61,64 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 			completedAt = &ts
 		}
 
-		response = append(response, dto.ExecutionResponse{
-			ID:              exec.ID.String(),
-			WorkflowID:      exec.WorkflowID.String(),
-			WorkflowVersion: exec.WorkflowVersion,
-			Status:          exec.Status,
-			TriggerType:     exec.TriggerType,
-			InputData:       exec.InputData,
-			OutputData:      exec.OutputData,
-			ErrorMessage:    exec.ErrorMessage,
-			ErrorNodeID:     exec.ErrorNodeID,
-			NodesTotal:      exec.NodesTotal,
-			NodesCompleted:  exec.NodesCompleted,
-			QueuedAt:        exec.QueuedAt.Unix(),
-			StartedAt:       startedAt,
-			CompletedAt:     completedAt,
+		wsID := wsCtx.WorkspaceID.String()
+		execID := exec.ID.String()
+
+		// Build actions based on execution status
+		var actions []dto.Action
+		if exec.Status == "running" || exec.Status == "pending" {
+			actions = append(actions, dto.CancelAction(wsID, execID))
+		}
+		if exec.Status == "failed" || exec.Status == "cancelled" {
+			actions = append(actions, dto.RetryAction(wsID, execID))
+		}
+		actions = append(actions, dto.DeleteAction("/api/v1/workspaces/"+wsID+"/executions/"+execID))
+
+		response = append(response, ExecutionWithActions{
+			ExecutionResponse: dto.ExecutionResponse{
+				ID:              execID,
+				WorkflowID:      exec.WorkflowID.String(),
+				WorkflowVersion: exec.WorkflowVersion,
+				Status:          exec.Status,
+				TriggerType:     exec.TriggerType,
+				InputData:       exec.InputData,
+				OutputData:      exec.OutputData,
+				ErrorMessage:    exec.ErrorMessage,
+				ErrorNodeID:     exec.ErrorNodeID,
+				NodesTotal:      exec.NodesTotal,
+				NodesCompleted:  exec.NodesCompleted,
+				QueuedAt:        exec.QueuedAt.Unix(),
+				StartedAt:       startedAt,
+				CompletedAt:     completedAt,
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
+	// Build links
+	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/executions"
+	links := &dto.Links{
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+	}
+	meta := pg.NewMeta(total)
+	if pg.Page < meta.TotalPages {
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+	}
+	if pg.Page > 1 {
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+	}
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	if meta.TotalPages > 0 {
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+	}
+
+	// Apply field selection
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -102,22 +148,52 @@ func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		completedAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.ExecutionResponse{
-		ID:              execution.ID.String(),
-		WorkflowID:      execution.WorkflowID.String(),
-		WorkflowVersion: execution.WorkflowVersion,
-		Status:          execution.Status,
-		TriggerType:     execution.TriggerType,
-		InputData:       execution.InputData,
-		OutputData:      execution.OutputData,
-		ErrorMessage:    execution.ErrorMessage,
-		ErrorNodeID:     execution.ErrorNodeID,
-		NodesTotal:      execution.NodesTotal,
-		NodesCompleted:  execution.NodesCompleted,
-		QueuedAt:        execution.QueuedAt.Unix(),
-		StartedAt:       startedAt,
-		CompletedAt:     completedAt,
-	})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	execID := execution.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/executions/" + execID
+
+	actions := []dto.Action{
+		{Name: "nodes", Method: "GET", Href: basePath + "/nodes", Label: "View Nodes"},
+		{Name: "logs", Method: "GET", Href: basePath + "/logs", Label: "View Logs"},
+	}
+	if execution.Status == "running" {
+		actions = append(actions, dto.Action{Name: "cancel", Method: "POST", Href: basePath + "/cancel", Label: "Cancel"})
+	}
+	if execution.Status == "failed" {
+		actions = append(actions, dto.Action{Name: "retry", Method: "POST", Href: basePath + "/retry", Label: "Retry"})
+	}
+
+	response := struct {
+		dto.ExecutionResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		ExecutionResponse: dto.ExecutionResponse{
+			ID:              execID,
+			WorkflowID:      execution.WorkflowID.String(),
+			WorkflowVersion: execution.WorkflowVersion,
+			Status:          execution.Status,
+			TriggerType:     execution.TriggerType,
+			InputData:       execution.InputData,
+			OutputData:      execution.OutputData,
+			ErrorMessage:    execution.ErrorMessage,
+			ErrorNodeID:     execution.ErrorNodeID,
+			NodesTotal:      execution.NodesTotal,
+			NodesCompleted:  execution.NodesCompleted,
+			QueuedAt:        execution.QueuedAt.Unix(),
+			StartedAt:       startedAt,
+			CompletedAt:     completedAt,
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *ExecutionHandler) GetNodes(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +247,19 @@ func (h *ExecutionHandler) GetNodes(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	execID := executionID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/executions/" + execID + "/nodes"
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithMeta(&dto.Meta{Total: int64(len(response)), Page: 1, PerPage: len(response), TotalPages: 1}).
+		Send(w)
 }
 
 func (h *ExecutionHandler) Cancel(w http.ResponseWriter, r *http.Request) {
@@ -418,5 +506,9 @@ func (h *ExecutionHandler) Stats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, stats)
+	wsID := wsCtx.WorkspaceID.String()
+
+	dto.NewResponse(stats).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/executions/stats"}).
+		Send(w)
 }

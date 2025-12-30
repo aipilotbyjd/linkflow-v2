@@ -33,23 +33,37 @@ func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.PlanResponse{}
+	type PlanWithActions struct {
+		dto.PlanResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []PlanWithActions{}
 	for _, plan := range plans {
-		response = append(response, dto.PlanResponse{
-			ID:               plan.ID,
-			Name:             plan.Name,
-			Description:      plan.Description,
-			PriceMonthly:     plan.PriceMonthly,
-			PriceYearly:      plan.PriceYearly,
-			ExecutionsLimit:  plan.ExecutionsLimit,
-			WorkflowsLimit:   plan.WorkflowsLimit,
-			MembersLimit:     plan.MembersLimit,
-			CredentialsLimit: plan.CredentialsLimit,
-			Features:         plan.Features,
+		actions := []dto.Action{
+			{Name: "subscribe", Method: "POST", Href: "/api/v1/billing/subscription", Label: "Subscribe"},
+			{Name: "view", Method: "GET", Href: "/api/v1/billing/plans/" + plan.ID, Label: "View Details"},
+		}
+		response = append(response, PlanWithActions{
+			PlanResponse: dto.PlanResponse{
+				ID:               plan.ID,
+				Name:             plan.Name,
+				Description:      plan.Description,
+				PriceMonthly:     plan.PriceMonthly,
+				PriceYearly:      plan.PriceYearly,
+				ExecutionsLimit:  plan.ExecutionsLimit,
+				WorkflowsLimit:   plan.WorkflowsLimit,
+				MembersLimit:     plan.MembersLimit,
+				CredentialsLimit: plan.CredentialsLimit,
+				Features:         plan.Features,
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: "/api/v1/billing/plans"}).
+		Send(w)
 }
 
 func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request) {
@@ -70,15 +84,33 @@ func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request)
 		cancelAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.SubscriptionResponse{
-		ID:                 subscription.ID.String(),
-		PlanID:             subscription.PlanID,
-		Status:             subscription.Status,
-		BillingCycle:       subscription.BillingCycle,
-		CurrentPeriodStart: subscription.CurrentPeriodStart.Unix(),
-		CurrentPeriodEnd:   subscription.CurrentPeriodEnd.Unix(),
-		CancelAt:           cancelAt,
-	})
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/billing/subscription"
+
+	actions := []dto.Action{
+		{Name: "change_plan", Method: "PUT", Href: basePath, Label: "Change Plan"},
+		{Name: "cancel", Method: "DELETE", Href: basePath, Label: "Cancel Subscription"},
+	}
+
+	response := struct {
+		dto.SubscriptionResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		SubscriptionResponse: dto.SubscriptionResponse{
+			ID:                 subscription.ID.String(),
+			PlanID:             subscription.PlanID,
+			Status:             subscription.Status,
+			BillingCycle:       subscription.BillingCycle,
+			CurrentPeriodStart: subscription.CurrentPeriodStart.Unix(),
+			CurrentPeriodEnd:   subscription.CurrentPeriodEnd.Unix(),
+			CancelAt:           cancelAt,
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *BillingHandler) CreateSubscription(w http.ResponseWriter, r *http.Request) {
@@ -152,43 +184,35 @@ func (h *BillingHandler) GetUsage(w http.ResponseWriter, r *http.Request) {
 		creditsRemaining = 0
 	}
 
-	dto.JSON(w, http.StatusOK, dto.UsageResponse{
-		// Core counts
-		Executions:   usage.Executions,
-		Workflows:    usage.Workflows,
-		Members:      usage.Members,
-		Credentials:  usage.Credentials,
-		StorageBytes: usage.StorageBytes,
-
-		// Credits
-		CreditsUsed:      usage.CreditsUsed,
-		CreditsIncluded:  usage.CreditsIncluded,
-		CreditsPurchased: usage.CreditsPurchased,
-		CreditsRemaining: creditsRemaining,
-
-		// Execution details
-		ExecutionsSuccess: usage.ExecutionsSuccess,
-		ExecutionsFailed:  usage.ExecutionsFailed,
-		Operations:        usage.Operations,
-
-		// Webhooks & Schedules
+	wsID := wsCtx.WorkspaceID.String()
+	usageResponse := dto.UsageResponse{
+		Executions:         usage.Executions,
+		Workflows:          usage.Workflows,
+		Members:            usage.Members,
+		Credentials:        usage.Credentials,
+		StorageBytes:       usage.StorageBytes,
+		CreditsUsed:        usage.CreditsUsed,
+		CreditsIncluded:    usage.CreditsIncluded,
+		CreditsPurchased:   usage.CreditsPurchased,
+		CreditsRemaining:   creditsRemaining,
+		ExecutionsSuccess:  usage.ExecutionsSuccess,
+		ExecutionsFailed:   usage.ExecutionsFailed,
+		Operations:         usage.Operations,
 		WebhooksCalled:     usage.WebhooksCalled,
 		SchedulesTriggered: usage.SchedulesTriggered,
 		Schedules:          usage.Schedules,
 		Webhooks:           usage.Webhooks,
+		DataTransferIn:     usage.DataTransferIn,
+		DataTransferOut:    usage.DataTransferOut,
+		OverageCredits:     usage.OverageCredits,
+		OverageCost:        usage.OverageCost,
+		PeriodStart:        usage.PeriodStart.Unix(),
+		PeriodEnd:          usage.PeriodEnd.Unix(),
+	}
 
-		// Data transfer
-		DataTransferIn:  usage.DataTransferIn,
-		DataTransferOut: usage.DataTransferOut,
-
-		// Overage
-		OverageCredits: usage.OverageCredits,
-		OverageCost:    usage.OverageCost,
-
-		// Period
-		PeriodStart: usage.PeriodStart.Unix(),
-		PeriodEnd:   usage.PeriodEnd.Unix(),
-	})
+	dto.NewResponse(usageResponse).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/billing/usage"}).
+		Send(w)
 }
 
 func (h *BillingHandler) GetInvoices(w http.ResponseWriter, r *http.Request) {
@@ -204,21 +228,52 @@ func (h *BillingHandler) GetInvoices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []map[string]interface{}{}
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/billing/invoices"
+
+	type InvoiceWithActions struct {
+		ID         string       `json:"id"`
+		Number     string       `json:"number"`
+		Status     string       `json:"status"`
+		AmountDue  int          `json:"amount_due"`
+		AmountPaid int          `json:"amount_paid"`
+		Currency   string       `json:"currency"`
+		InvoiceURL *string      `json:"invoice_url,omitempty"`
+		CreatedAt  int64        `json:"created_at"`
+		Actions    []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []InvoiceWithActions{}
 	for _, inv := range invoices {
-		response = append(response, map[string]interface{}{
-			"id":          inv.ID.String(),
-			"number":      inv.Number,
-			"status":      inv.Status,
-			"amount_due":  inv.AmountDue,
-			"amount_paid": inv.AmountPaid,
-			"currency":    inv.Currency,
-			"invoice_url": inv.InvoiceURL,
-			"created_at":  inv.CreatedAt.Unix(),
+		invID := inv.ID.String()
+		actions := []dto.Action{
+			{Name: "view", Method: "GET", Href: basePath + "/" + invID, Label: "View Invoice"},
+		}
+		if inv.InvoiceURL != nil && *inv.InvoiceURL != "" {
+			actions = append(actions, dto.Action{Name: "download", Method: "GET", Href: *inv.InvoiceURL, Label: "Download PDF"})
+		}
+		response = append(response, InvoiceWithActions{
+			ID:         invID,
+			Number:     inv.Number,
+			Status:     inv.Status,
+			AmountDue:  inv.AmountDue,
+			AmountPaid: inv.AmountPaid,
+			Currency:   inv.Currency,
+			InvoiceURL: inv.InvoiceURL,
+			CreatedAt:  inv.CreatedAt.Unix(),
+			Actions:    actions,
 		})
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath, pg, meta)
+
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *BillingHandler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {

@@ -236,21 +236,52 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 		lastExecutedAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkflowResponse{
-		ID:             workflow.ID.String(),
-		Name:           workflow.Name,
-		Description:    workflow.Description,
-		Status:         workflow.Status,
-		Version:        workflow.Version,
-		Nodes:          workflow.Nodes,
-		Connections:    workflow.Connections,
-		Settings:       workflow.Settings,
-		Tags:           workflow.Tags,
-		ExecutionCount: workflow.ExecutionCount,
-		LastExecutedAt: lastExecutedAt,
-		CreatedAt:      workflow.CreatedAt.Unix(),
-		UpdatedAt:      workflow.UpdatedAt.Unix(),
-	})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflow.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	actions := []dto.Action{
+		{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Workflow"},
+		{Name: "versions", Method: "GET", Href: basePath + "/versions", Label: "View Versions"},
+	}
+	if workflow.Status == "active" {
+		actions = append(actions, dto.Action{Name: "execute", Method: "POST", Href: basePath + "/execute", Label: "Execute"})
+		actions = append(actions, dto.Action{Name: "deactivate", Method: "POST", Href: basePath + "/deactivate", Label: "Deactivate"})
+	} else {
+		actions = append(actions, dto.Action{Name: "activate", Method: "POST", Href: basePath + "/activate", Label: "Activate"})
+	}
+	actions = append(actions, dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"})
+
+	response := struct {
+		dto.WorkflowResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		WorkflowResponse: dto.WorkflowResponse{
+			ID:             wfID,
+			Name:           workflow.Name,
+			Description:    workflow.Description,
+			Status:         workflow.Status,
+			Version:        workflow.Version,
+			Nodes:          workflow.Nodes,
+			Connections:    workflow.Connections,
+			Settings:       workflow.Settings,
+			Tags:           workflow.Tags,
+			ExecutionCount: workflow.ExecutionCount,
+			LastExecutedAt: lastExecutedAt,
+			CreatedAt:      workflow.CreatedAt.Unix(),
+			UpdatedAt:      workflow.UpdatedAt.Unix(),
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -326,8 +357,17 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflow.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	response := dto.WorkflowResponse{
+		ID:          wfID,
 		Name:        workflow.Name,
 		Description: workflow.Description,
 		Status:      workflow.Status,
@@ -338,7 +378,11 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Tags:        workflow.Tags,
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *WorkflowHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -498,7 +542,22 @@ func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.OK(w, map[string]string{"status": "active"})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	dto.NewResponse(map[string]string{"status": "active"}).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(
+			dto.Action{Name: "execute", Method: "POST", Href: basePath + "/execute", Label: "Execute"},
+			dto.Action{Name: "deactivate", Method: "POST", Href: basePath + "/deactivate", Label: "Deactivate"},
+		).
+		Send(w)
 }
 
 func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
@@ -540,7 +599,21 @@ func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.OK(w, map[string]string{"status": "inactive"})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	dto.NewResponse(map[string]string{"status": "inactive"}).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(
+			dto.Action{Name: "activate", Method: "POST", Href: basePath + "/activate", Label: "Activate"},
+		).
+		Send(w)
 }
 
 // hasTriggerNode checks if workflow has a trigger node
@@ -569,20 +642,47 @@ func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.WorkflowVersionResponse{}
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/versions"
+
+	type VersionWithActions struct {
+		dto.WorkflowVersionResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []VersionWithActions{}
 	for _, v := range versions {
-		response = append(response, dto.WorkflowVersionResponse{
-			ID:            v.ID.String(),
-			Version:       v.Version,
-			Nodes:         v.Nodes,
-			Connections:   v.Connections,
-			Settings:      v.Settings,
-			ChangeMessage: v.ChangeMessage,
-			CreatedAt:     v.CreatedAt.Unix(),
+		vNum := strconv.Itoa(v.Version)
+		actions := []dto.Action{
+			{Name: "view", Method: "GET", Href: basePath + "/" + vNum, Label: "View Version"},
+			{Name: "diff", Method: "GET", Href: basePath + "/" + vNum + "/diff", Label: "Compare with Current"},
+			{Name: "rollback", Method: "POST", Href: basePath + "/" + vNum + "/rollback", Label: "Rollback"},
+		}
+
+		response = append(response, VersionWithActions{
+			WorkflowVersionResponse: dto.WorkflowVersionResponse{
+				ID:            v.ID.String(),
+				Version:       v.Version,
+				Nodes:         v.Nodes,
+				Connections:   v.Connections,
+				Settings:      v.Settings,
+				ChangeMessage: v.ChangeMessage,
+				CreatedAt:     v.CreatedAt.Unix(),
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithMeta(&dto.Meta{Total: int64(len(response)), Page: 1, PerPage: len(response), TotalPages: 1}).
+		Send(w)
 }
 
 func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
@@ -604,15 +704,38 @@ func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkflowVersionResponse{
-		ID:            v.ID.String(),
-		Version:       v.Version,
-		Nodes:         v.Nodes,
-		Connections:   v.Connections,
-		Settings:      v.Settings,
-		ChangeMessage: v.ChangeMessage,
-		CreatedAt:     v.CreatedAt.Unix(),
-	})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	vNum := strconv.Itoa(version)
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/versions/" + vNum
+
+	response := struct {
+		dto.WorkflowVersionResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		WorkflowVersionResponse: dto.WorkflowVersionResponse{
+			ID:            v.ID.String(),
+			Version:       v.Version,
+			Nodes:         v.Nodes,
+			Connections:   v.Connections,
+			Settings:      v.Settings,
+			ChangeMessage: v.ChangeMessage,
+			CreatedAt:     v.CreatedAt.Unix(),
+		},
+		Actions: []dto.Action{
+			{Name: "diff", Method: "GET", Href: basePath + "/diff", Label: "Compare with Current"},
+			{Name: "rollback", Method: "POST", Href: basePath + "/rollback", Label: "Rollback to This Version"},
+		},
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 // Export exports a workflow as JSON
@@ -730,8 +853,17 @@ func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflow.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	response := dto.WorkflowResponse{
+		ID:          wfID,
 		Name:        workflow.Name,
 		Description: workflow.Description,
 		Status:      workflow.Status,
@@ -742,7 +874,11 @@ func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request
 		Tags:        workflow.Tags,
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 // Duplicate creates a copy of a workflow with optional variable substitution

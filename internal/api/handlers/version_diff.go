@@ -19,6 +19,11 @@ func NewVersionDiffHandler(diffSvc *services.VersionDiffService) *VersionDiffHan
 }
 
 func (h *VersionDiffHandler) Compare(w http.ResponseWriter, r *http.Request) {
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
 	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
@@ -42,10 +47,20 @@ func (h *VersionDiffHandler) Compare(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.OK(w, diff)
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+
+	dto.NewResponse(diff).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/versions/compare"}).
+		Send(w)
 }
 
 func (h *VersionDiffHandler) CompareWithCurrent(w http.ResponseWriter, r *http.Request) {
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
 	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
@@ -63,5 +78,10 @@ func (h *VersionDiffHandler) CompareWithCurrent(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	dto.OK(w, diff)
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+
+	dto.NewResponse(diff).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/versions/" + strconv.Itoa(version) + "/diff"}).
+		Send(w)
 }

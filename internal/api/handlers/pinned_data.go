@@ -35,10 +35,21 @@ func (h *PinnedDataHandler) GetByWorkflow(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/pinned-data"
+
+	dto.NewResponse(map[string]interface{}{
 		"pinned_data": pinnedList,
 		"count":       len(pinnedList),
-	})
+	}).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 // GetByNode returns pinned data for a specific node
@@ -62,7 +73,22 @@ func (h *PinnedDataHandler) GetByNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, pinned)
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/pinned-data/" + nodeID
+
+	dto.NewResponse(pinned).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(
+			dto.Action{Name: "update", Method: "PUT", Href: basePath, Label: "Update"},
+			dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"},
+		).
+		Send(w)
 }
 
 // SetPinnedDataRequest represents a request to set pinned data
@@ -110,10 +136,24 @@ func (h *PinnedDataHandler) Set(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/pinned-data/" + req.NodeID
+
+	dto.NewResponse(map[string]interface{}{
 		"message":     "Pinned data saved",
 		"pinned_data": pinned,
-	})
+	}).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(
+			dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"},
+		).
+		Send(w)
 }
 
 // Delete removes pinned data for a node
@@ -136,7 +176,18 @@ func (h *PinnedDataHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflowID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID + "/pinned-data"
+
+	dto.NewResponse(map[string]interface{}{
 		"message": "Pinned data deleted",
-	})
+	}).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }

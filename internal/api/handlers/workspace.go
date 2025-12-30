@@ -36,20 +36,44 @@ func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.WorkspaceResponse{}
+	// Build response with actions
+	type WorkspaceWithActions struct {
+		dto.WorkspaceResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []WorkspaceWithActions{}
 	for _, ws := range workspaces {
-		response = append(response, dto.WorkspaceResponse{
-			ID:          ws.ID.String(),
-			Name:        ws.Name,
-			Slug:        ws.Slug,
-			Description: ws.Description,
-			LogoURL:     ws.LogoURL,
-			PlanID:      ws.PlanID,
-			CreatedAt:   ws.CreatedAt.Unix(),
+		wsID := ws.ID.String()
+		basePath := "/api/v1/workspaces/" + wsID
+
+		actions := []dto.Action{
+			{Name: "view", Method: "GET", Href: basePath, Label: "View Workspace"},
+			{Name: "settings", Method: "GET", Href: basePath + "/settings", Label: "Settings"},
+			{Name: "members", Method: "GET", Href: basePath + "/members", Label: "Members"},
+			{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"},
+		}
+
+		response = append(response, WorkspaceWithActions{
+			WorkspaceResponse: dto.WorkspaceResponse{
+				ID:          wsID,
+				Name:        ws.Name,
+				Slug:        ws.Slug,
+				Description: ws.Description,
+				LogoURL:     ws.LogoURL,
+				PlanID:      ws.PlanID,
+				CreatedAt:   ws.CreatedAt.Unix(),
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	// Apply field selection
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(&dto.Links{Self: "/api/v1/workspaces"}).
+		Send(w)
 }
 
 func (h *WorkspaceHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -106,15 +130,35 @@ func (h *WorkspaceHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkspaceResponse{
-		ID:          workspace.ID.String(),
-		Name:        workspace.Name,
-		Slug:        workspace.Slug,
-		Description: workspace.Description,
-		LogoURL:     workspace.LogoURL,
-		PlanID:      workspace.PlanID,
-		CreatedAt:   workspace.CreatedAt.Unix(),
-	})
+	wsID := workspace.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID
+
+	actions := []dto.Action{
+		{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Workspace"},
+		{Name: "members", Method: "GET", Href: basePath + "/members", Label: "View Members"},
+		{Name: "billing", Method: "GET", Href: basePath + "/billing", Label: "View Billing"},
+		{Name: "settings", Method: "GET", Href: basePath + "/settings", Label: "Settings"},
+	}
+
+	response := struct {
+		dto.WorkspaceResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		WorkspaceResponse: dto.WorkspaceResponse{
+			ID:          wsID,
+			Name:        workspace.Name,
+			Slug:        workspace.Slug,
+			Description: workspace.Description,
+			LogoURL:     workspace.LogoURL,
+			PlanID:      workspace.PlanID,
+			CreatedAt:   workspace.CreatedAt.Unix(),
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *WorkspaceHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -145,15 +189,22 @@ func (h *WorkspaceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.WorkspaceResponse{
-		ID:          workspace.ID.String(),
+	wsID := workspace.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID
+
+	response := dto.WorkspaceResponse{
+		ID:          wsID,
 		Name:        workspace.Name,
 		Slug:        workspace.Slug,
 		Description: workspace.Description,
 		LogoURL:     workspace.LogoURL,
 		PlanID:      workspace.PlanID,
 		CreatedAt:   workspace.CreatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *WorkspaceHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -182,7 +233,15 @@ func (h *WorkspaceHandler) GetMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.WorkspaceMemberResponse{}
+	wsID := wsCtx.WorkspaceID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/members"
+
+	type MemberWithActions struct {
+		dto.WorkspaceMemberResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []MemberWithActions{}
 	for _, m := range members {
 		var joinedAt, invitedAt *int64
 		if m.JoinedAt != nil {
@@ -194,22 +253,36 @@ func (h *WorkspaceHandler) GetMembers(w http.ResponseWriter, r *http.Request) {
 			invitedAt = &ts
 		}
 
-		response = append(response, dto.WorkspaceMemberResponse{
-			ID: m.ID.String(),
-			User: dto.UserResponse{
-				ID:        m.User.ID.String(),
-				Email:     m.User.Email,
-				FirstName: m.User.FirstName,
-				LastName:  m.User.LastName,
-				AvatarURL: m.User.AvatarURL,
+		memberID := m.ID.String()
+		memberPath := basePath + "/" + memberID
+
+		actions := []dto.Action{
+			{Name: "change_role", Method: "PUT", Href: memberPath, Label: "Change Role"},
+			{Name: "remove", Method: "DELETE", Href: memberPath, Label: "Remove Member"},
+		}
+
+		response = append(response, MemberWithActions{
+			WorkspaceMemberResponse: dto.WorkspaceMemberResponse{
+				ID: memberID,
+				User: dto.UserResponse{
+					ID:        m.User.ID.String(),
+					Email:     m.User.Email,
+					FirstName: m.User.FirstName,
+					LastName:  m.User.LastName,
+					AvatarURL: m.User.AvatarURL,
+				},
+				Role:      m.Role,
+				JoinedAt:  joinedAt,
+				InvitedAt: invitedAt,
 			},
-			Role:      m.Role,
-			JoinedAt:  joinedAt,
-			InvitedAt: invitedAt,
+			Actions: actions,
 		})
 	}
 
-	dto.JSON(w, http.StatusOK, response)
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithMeta(&dto.Meta{Total: int64(len(response)), Page: 1, PerPage: len(response), TotalPages: 1}).
+		Send(w)
 }
 
 func (h *WorkspaceHandler) InviteMember(w http.ResponseWriter, r *http.Request) {

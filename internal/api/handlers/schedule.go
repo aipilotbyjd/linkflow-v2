@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -34,7 +35,15 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.ScheduleResponse{}
+	// Build response with actions
+	type ScheduleWithActions struct {
+		dto.ScheduleResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []ScheduleWithActions{}
+	wsID := wsCtx.WorkspaceID.String()
+
 	for _, sched := range schedules {
 		var nextRunAt, lastRunAt *int64
 		if sched.NextRunAt != nil {
@@ -46,23 +55,63 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 			lastRunAt = &ts
 		}
 
-		response = append(response, dto.ScheduleResponse{
-			ID:             sched.ID.String(),
-			WorkflowID:     sched.WorkflowID.String(),
-			Name:           sched.Name,
-			Description:    sched.Description,
-			CronExpression: sched.CronExpression,
-			Timezone:       sched.Timezone,
-			IsActive:       sched.IsActive,
-			InputData:      sched.InputData,
-			NextRunAt:      nextRunAt,
-			LastRunAt:      lastRunAt,
-			RunCount:       sched.RunCount,
-			CreatedAt:      sched.CreatedAt.Unix(),
+		schedID := sched.ID.String()
+		basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
+
+		// Build actions based on schedule status
+		var actions []dto.Action
+		if sched.IsActive {
+			actions = append(actions, dto.Action{Name: "pause", Method: "POST", Href: basePath + "/pause", Label: "Pause Schedule"})
+		} else {
+			actions = append(actions, dto.Action{Name: "resume", Method: "POST", Href: basePath + "/resume", Label: "Resume Schedule"})
+		}
+		actions = append(actions, dto.Action{Name: "trigger", Method: "POST", Href: basePath + "/trigger", Label: "Trigger Now"})
+		actions = append(actions, dto.Action{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Schedule"})
+		actions = append(actions, dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"})
+
+		response = append(response, ScheduleWithActions{
+			ScheduleResponse: dto.ScheduleResponse{
+				ID:             schedID,
+				WorkflowID:     sched.WorkflowID.String(),
+				Name:           sched.Name,
+				Description:    sched.Description,
+				CronExpression: sched.CronExpression,
+				Timezone:       sched.Timezone,
+				IsActive:       sched.IsActive,
+				InputData:      sched.InputData,
+				NextRunAt:      nextRunAt,
+				LastRunAt:      lastRunAt,
+				RunCount:       sched.RunCount,
+				CreatedAt:      sched.CreatedAt.Unix(),
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
+	// Build links
+	basePath := "/api/v1/workspaces/" + wsID + "/schedules"
+	links := &dto.Links{
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+	}
+	meta := pg.NewMeta(total)
+	if pg.Page < meta.TotalPages {
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+	}
+	if pg.Page > 1 {
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+	}
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	if meta.TotalPages > 0 {
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+	}
+
+	// Apply field selection
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *ScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -154,20 +203,50 @@ func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		lastRunAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.ScheduleResponse{
-		ID:             schedule.ID.String(),
-		WorkflowID:     schedule.WorkflowID.String(),
-		Name:           schedule.Name,
-		Description:    schedule.Description,
-		CronExpression: schedule.CronExpression,
-		Timezone:       schedule.Timezone,
-		IsActive:       schedule.IsActive,
-		InputData:      schedule.InputData,
-		NextRunAt:      nextRunAt,
-		LastRunAt:      lastRunAt,
-		RunCount:       schedule.RunCount,
-		CreatedAt:      schedule.CreatedAt.Unix(),
-	})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	schedID := schedule.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
+
+	actions := []dto.Action{
+		{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Schedule"},
+		{Name: "trigger", Method: "POST", Href: basePath + "/trigger", Label: "Trigger Now"},
+	}
+	if schedule.IsActive {
+		actions = append(actions, dto.Action{Name: "pause", Method: "POST", Href: basePath + "/pause", Label: "Pause"})
+	} else {
+		actions = append(actions, dto.Action{Name: "resume", Method: "POST", Href: basePath + "/resume", Label: "Resume"})
+	}
+	actions = append(actions, dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"})
+
+	response := struct {
+		dto.ScheduleResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		ScheduleResponse: dto.ScheduleResponse{
+			ID:             schedID,
+			WorkflowID:     schedule.WorkflowID.String(),
+			Name:           schedule.Name,
+			Description:    schedule.Description,
+			CronExpression: schedule.CronExpression,
+			Timezone:       schedule.Timezone,
+			IsActive:       schedule.IsActive,
+			InputData:      schedule.InputData,
+			NextRunAt:      nextRunAt,
+			LastRunAt:      lastRunAt,
+			RunCount:       schedule.RunCount,
+			CreatedAt:      schedule.CreatedAt.Unix(),
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -223,8 +302,17 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		lastRunAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.ScheduleResponse{
-		ID:             schedule.ID.String(),
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	schedID := schedule.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
+
+	response := dto.ScheduleResponse{
+		ID:             schedID,
 		WorkflowID:     schedule.WorkflowID.String(),
 		Name:           schedule.Name,
 		Description:    schedule.Description,
@@ -236,7 +324,11 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		LastRunAt:      lastRunAt,
 		RunCount:       schedule.RunCount,
 		CreatedAt:      schedule.CreatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *ScheduleHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -284,7 +376,19 @@ func (h *ScheduleHandler) Pause(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]bool{"is_active": false})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	schedID := scheduleID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
+
+	dto.NewResponse(map[string]bool{"is_active": false}).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(dto.Action{Name: "resume", Method: "POST", Href: basePath + "/resume", Label: "Resume"}).
+		Send(w)
 }
 
 func (h *ScheduleHandler) Resume(w http.ResponseWriter, r *http.Request) {
@@ -308,5 +412,17 @@ func (h *ScheduleHandler) Resume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]bool{"is_active": true})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	schedID := scheduleID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
+
+	dto.NewResponse(map[string]bool{"is_active": true}).
+		WithLinks(&dto.Links{Self: basePath}).
+		WithActions(dto.Action{Name: "pause", Method: "POST", Href: basePath + "/pause", Label: "Pause"}).
+		Send(w)
 }

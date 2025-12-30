@@ -31,12 +31,49 @@ func (h *TemplateHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"templates": templates,
-		"total":     total,
-		"page":      opts.Offset/opts.Limit + 1,
-		"limit":     opts.Limit,
-	})
+	basePath := "/api/v1/templates"
+	pg := dto.ParsePagination(r)
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath, pg, meta)
+
+	type TemplateWithActions struct {
+		ID          string       `json:"id"`
+		Name        string       `json:"name"`
+		Description *string      `json:"description,omitempty"`
+		Category    string       `json:"category"`
+		IsFeatured  bool         `json:"is_featured"`
+		UseCount    int          `json:"use_count"`
+		Actions     []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]TemplateWithActions, len(templates))
+	for i, t := range templates {
+		tID := t.ID.String()
+		tPath := basePath + "/" + tID
+
+		actions := []dto.Action{
+			{Name: "view", Method: "GET", Href: tPath, Label: "View Template"},
+			{Name: "use", Method: "POST", Href: tPath + "/use", Label: "Use Template"},
+			{Name: "preview", Method: "GET", Href: tPath + "/preview", Label: "Preview"},
+		}
+
+		response[i] = TemplateWithActions{
+			ID:          tID,
+			Name:        t.Name,
+			Description: t.Description,
+			Category:    t.Category,
+			IsFeatured:  t.IsFeatured,
+			UseCount:    t.UseCount,
+			Actions:     actions,
+		}
+	}
+
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 // GetFeatured returns featured templates
@@ -53,9 +90,39 @@ func (h *TemplateHandler) GetFeatured(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"templates": templates,
-	})
+	basePath := "/api/v1/templates"
+
+	type FeaturedTemplate struct {
+		ID          string       `json:"id"`
+		Name        string       `json:"name"`
+		Description *string      `json:"description,omitempty"`
+		Category    string       `json:"category"`
+		IsFeatured  bool         `json:"is_featured"`
+		UseCount    int          `json:"use_count"`
+		Actions     []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]FeaturedTemplate, len(templates))
+	for i, t := range templates {
+		tID := t.ID.String()
+		tPath := basePath + "/" + tID
+		response[i] = FeaturedTemplate{
+			ID:          tID,
+			Name:        t.Name,
+			Description: t.Description,
+			Category:    t.Category,
+			IsFeatured:  t.IsFeatured,
+			UseCount:    t.UseCount,
+			Actions: []dto.Action{
+				{Name: "view", Method: "GET", Href: tPath, Label: "View"},
+				{Name: "use", Method: "POST", Href: tPath + "/use", Label: "Use Template"},
+			},
+		}
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath + "/featured"}).
+		Send(w)
 }
 
 // GetCategories returns all template categories
@@ -66,9 +133,26 @@ func (h *TemplateHandler) GetCategories(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"categories": categories,
-	})
+	basePath := "/api/v1/templates/categories"
+
+	type CategoryWithActions struct {
+		Name    string       `json:"name"`
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]CategoryWithActions, len(categories))
+	for i, cat := range categories {
+		response[i] = CategoryWithActions{
+			Name: cat,
+			Actions: []dto.Action{
+				{Name: "view", Method: "GET", Href: "/api/v1/templates/categories/" + cat, Label: "View Templates"},
+			},
+		}
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 // GetByCategory returns templates in a category
@@ -82,11 +166,41 @@ func (h *TemplateHandler) GetByCategory(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"templates": templates,
-		"total":     total,
-		"category":  category,
-	})
+	basePath := "/api/v1/templates/categories/" + category
+	pg := dto.ParsePagination(r)
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath, pg, meta)
+
+	type TemplateWithActions struct {
+		ID          string       `json:"id"`
+		Name        string       `json:"name"`
+		Description *string      `json:"description,omitempty"`
+		Category    string       `json:"category"`
+		UseCount    int          `json:"use_count"`
+		Actions     []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]TemplateWithActions, len(templates))
+	for i, t := range templates {
+		tID := t.ID.String()
+		tPath := "/api/v1/templates/" + tID
+		response[i] = TemplateWithActions{
+			ID:          tID,
+			Name:        t.Name,
+			Description: t.Description,
+			Category:    t.Category,
+			UseCount:    t.UseCount,
+			Actions: []dto.Action{
+				{Name: "view", Method: "GET", Href: tPath, Label: "View"},
+				{Name: "use", Method: "POST", Href: tPath + "/use", Label: "Use Template"},
+			},
+		}
+	}
+
+	dto.NewResponse(response).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 // Search searches templates
@@ -104,11 +218,41 @@ func (h *TemplateHandler) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, map[string]interface{}{
-		"templates": templates,
-		"total":     total,
-		"query":     query,
-	})
+	basePath := "/api/v1/templates/search"
+	pg := dto.ParsePagination(r)
+	meta := pg.NewMeta(total)
+	links := dto.BuildPaginationLinks(basePath+"?q="+query, pg, meta)
+
+	type TemplateWithActions struct {
+		ID          string       `json:"id"`
+		Name        string       `json:"name"`
+		Description *string      `json:"description,omitempty"`
+		Category    string       `json:"category"`
+		UseCount    int          `json:"use_count"`
+		Actions     []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := make([]TemplateWithActions, len(templates))
+	for i, t := range templates {
+		tID := t.ID.String()
+		tPath := "/api/v1/templates/" + tID
+		response[i] = TemplateWithActions{
+			ID:          tID,
+			Name:        t.Name,
+			Description: t.Description,
+			Category:    t.Category,
+			UseCount:    t.UseCount,
+			Actions: []dto.Action{
+				{Name: "view", Method: "GET", Href: tPath, Label: "View"},
+				{Name: "use", Method: "POST", Href: tPath + "/use", Label: "Use Template"},
+			},
+		}
+	}
+
+	dto.NewResponse(response).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 // Get returns a template by ID
@@ -126,7 +270,25 @@ func (h *TemplateHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, template)
+	tID := templateID.String()
+	basePath := "/api/v1/templates/" + tID
+
+	actions := []dto.Action{
+		{Name: "use", Method: "POST", Href: basePath + "/use", Label: "Use Template"},
+		{Name: "preview", Method: "GET", Href: basePath + "/preview", Label: "Preview"},
+	}
+
+	response := struct {
+		*models.Template
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		Template: template,
+		Actions:  actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 // UseTemplateRequest represents a request to use a template
@@ -172,10 +334,21 @@ func (h *TemplateHandler) UseTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusCreated, map[string]interface{}{
+	wsID := wsCtx.WorkspaceID.String()
+	wfID := workflow.ID.String()
+	wfPath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
+
+	dto.NewResponse(map[string]interface{}{
 		"message":  "Workflow created from template",
 		"workflow": workflow,
-	})
+	}).
+		Status(http.StatusCreated).
+		WithLinks(&dto.Links{Self: wfPath}).
+		WithActions(
+			dto.Action{Name: "view", Method: "GET", Href: wfPath, Label: "View Workflow"},
+			dto.Action{Name: "execute", Method: "POST", Href: wfPath + "/execute", Label: "Execute"},
+		).
+		Send(w)
 }
 
 func parseListOptions(r *http.Request) *repositories.ListOptions {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
@@ -33,7 +34,15 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := []dto.CredentialResponse{}
+	// Build response with actions
+	type CredentialWithActions struct {
+		dto.CredentialResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}
+
+	response := []CredentialWithActions{}
+	wsID := wsCtx.WorkspaceID.String()
+
 	for _, cred := range credentials {
 		var lastUsedAt *int64
 		if cred.LastUsedAt != nil {
@@ -41,17 +50,52 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 			lastUsedAt = &ts
 		}
 
-		response = append(response, dto.CredentialResponse{
-			ID:          cred.ID.String(),
-			Name:        cred.Name,
-			Type:        cred.Type,
-			Description: cred.Description,
-			LastUsedAt:  lastUsedAt,
-			CreatedAt:   cred.CreatedAt.Unix(),
+		credID := cred.ID.String()
+		basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credID
+
+		actions := []dto.Action{
+			{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Credential"},
+			{Name: "test", Method: "POST", Href: basePath + "/test", Label: "Test Connection"},
+			{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"},
+		}
+
+		response = append(response, CredentialWithActions{
+			CredentialResponse: dto.CredentialResponse{
+				ID:          credID,
+				Name:        cred.Name,
+				Type:        cred.Type,
+				Description: cred.Description,
+				LastUsedAt:  lastUsedAt,
+				CreatedAt:   cred.CreatedAt.Unix(),
+			},
+			Actions: actions,
 		})
 	}
 
-	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
+	// Build links
+	basePath := "/api/v1/workspaces/" + wsID + "/credentials"
+	links := &dto.Links{
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+	}
+	meta := pg.NewMeta(total)
+	if pg.Page < meta.TotalPages {
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+	}
+	if pg.Page > 1 {
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+	}
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	if meta.TotalPages > 0 {
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+	}
+
+	// Apply field selection
+	data := dto.SelectFields(r, response)
+
+	dto.NewResponse(data).
+		WithLinks(links).
+		WithMeta(meta).
+		Send(w)
 }
 
 func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -116,14 +160,39 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 		lastUsedAt = &ts
 	}
 
-	dto.JSON(w, http.StatusOK, dto.CredentialResponse{
-		ID:          credential.ID.String(),
-		Name:        credential.Name,
-		Type:        credential.Type,
-		Description: credential.Description,
-		LastUsedAt:  lastUsedAt,
-		CreatedAt:   credential.CreatedAt.Unix(),
-	})
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	credID := credential.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credID
+
+	actions := []dto.Action{
+		{Name: "edit", Method: "PUT", Href: basePath, Label: "Edit Credential"},
+		{Name: "test", Method: "POST", Href: basePath + "/test", Label: "Test Connection"},
+		{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"},
+	}
+
+	response := struct {
+		dto.CredentialResponse
+		Actions []dto.Action `json:"actions,omitempty"`
+	}{
+		CredentialResponse: dto.CredentialResponse{
+			ID:          credID,
+			Name:        credential.Name,
+			Type:        credential.Type,
+			Description: credential.Description,
+			LastUsedAt:  lastUsedAt,
+			CreatedAt:   credential.CreatedAt.Unix(),
+		},
+		Actions: actions,
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -163,13 +232,26 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.JSON(w, http.StatusOK, dto.CredentialResponse{
-		ID:          credential.ID.String(),
+	wsCtx := middleware.MustWorkspace(w, r)
+	if wsCtx == nil {
+		return
+	}
+
+	wsID := wsCtx.WorkspaceID.String()
+	credID := credential.ID.String()
+	basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credID
+
+	response := dto.CredentialResponse{
+		ID:          credID,
 		Name:        credential.Name,
 		Type:        credential.Type,
 		Description: credential.Description,
 		CreatedAt:   credential.CreatedAt.Unix(),
-	})
+	}
+
+	dto.NewResponse(response).
+		WithLinks(&dto.Links{Self: basePath}).
+		Send(w)
 }
 
 func (h *CredentialHandler) Delete(w http.ResponseWriter, r *http.Request) {
