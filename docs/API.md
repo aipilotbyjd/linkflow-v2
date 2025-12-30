@@ -1170,7 +1170,7 @@ POST /workspaces/{workspaceID}/workflows/{workflowID}/versions/{version}/rollbac
 Compare two workflow versions.
 
 ```
-GET /workspaces/{workspaceID}/workflows/{workflowID}/compare-versions?v1=2&v2=3
+GET /workspaces/{workspaceID}/workflows/{workflowID}/compare-versions?from=2&to=3
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -1179,8 +1179,8 @@ GET /workspaces/{workspaceID}/workflows/{workflowID}/compare-versions?v1=2&v2=3
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| v1 | int | Yes | First version number |
-| v2 | int | Yes | Second version number |
+| from | int | Yes | First version number |
+| to | int | Yes | Second version number |
 
 **Response:** `200 OK`
 
