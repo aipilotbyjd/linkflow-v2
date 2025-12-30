@@ -12,6 +12,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/email"
 	"github.com/rs/zerolog/log"
 )
 
@@ -45,6 +46,7 @@ type AuthService struct {
 	jwtManager  *crypto.JWTManager
 	otpManager  *crypto.OTPManager
 	encryptor   *crypto.Encryptor
+	emailSvc    *email.Service
 }
 
 // NewAuthService creates a new AuthService with required dependencies.
@@ -65,6 +67,11 @@ func NewAuthService(
 		otpManager:  otpManager,
 		encryptor:   encryptor,
 	}
+}
+
+// SetEmailService sets the optional email service for sending password reset emails.
+func (s *AuthService) SetEmailService(emailSvc *email.Service) {
+	s.emailSvc = emailSvc
 }
 
 type RegisterInput struct {
@@ -370,7 +377,18 @@ func (s *AuthService) InitiatePasswordReset(ctx context.Context, email string) e
 		return fmt.Errorf("failed to create password reset token: %w", err)
 	}
 
-	// TODO: In production, send email with reset link here
+	// Send password reset email
+	if s.emailSvc != nil {
+		name := user.FirstName
+		if name == "" {
+			name = user.Email
+		}
+		if err := s.emailSvc.SendPasswordReset(ctx, user.Email, name, token); err != nil {
+			log.Error().Err(err).Str("email", email).Msg("Failed to send password reset email")
+			// Don't fail the request if email fails - token is still valid
+		}
+	}
+
 	log.Info().
 		Str("user_id", user.ID.String()).
 		Str("email", email).

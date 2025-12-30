@@ -112,7 +112,7 @@ func NewServer(
 	authHandler := handlers.NewAuthHandler(svc.Auth, jwtManager, redisClient)
 	userHandler := handlers.NewUserHandler(svc.User)
 	workspaceHandler := handlers.NewWorkspaceHandler(svc.Workspace, svc.Billing)
-	workflowHandler := handlers.NewWorkflowHandler(svc.Workflow, svc.Billing, queueClient)
+	workflowHandler := handlers.NewWorkflowHandler(svc.Workflow, svc.Billing, svc.Schedule, queueClient)
 	executionHandler := handlers.NewExecutionHandler(svc.Execution, queueClient)
 	credentialHandler := handlers.NewCredentialHandler(svc.Credential)
 	scheduleHandler := handlers.NewScheduleHandler(svc.Schedule)
@@ -446,9 +446,10 @@ func NewServer(
 	}
 
 	// Admin routes (protected)
+	rbacMiddleware := middleware.NewRBACMiddleware(db)
 	router.Route("/api/v1/admin", func(r chi.Router) {
 		r.Use(authMiddleware.Authenticate)
-		// TODO: Add admin role check middleware
+		r.Use(rbacMiddleware.RequireAdmin())
 
 		// Stream stats (webhook buffering)
 		if streamStatsHandler != nil {

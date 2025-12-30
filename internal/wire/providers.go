@@ -56,9 +56,18 @@ func ProvideJWTManager(cfg *config.Config) *crypto.JWTManager {
 	})
 }
 
-// ProvideEncryptor creates the AES encryptor
+// ProvideEncryptor creates the AES encryptor for credential storage
 func ProvideEncryptor(cfg *config.Config) (*crypto.Encryptor, error) {
-	return crypto.NewEncryptor(cfg.JWT.Secret[:32])
+	key := cfg.Encryption.Key
+	if key == "" {
+		// Fallback to JWT secret for backward compatibility
+		if len(cfg.JWT.Secret) >= 32 {
+			key = cfg.JWT.Secret[:32]
+		} else {
+			return nil, fmt.Errorf("encryption key is required (set ENCRYPTION_KEY or ensure JWT_SECRET is at least 32 chars)")
+		}
+	}
+	return crypto.NewEncryptor(key)
 }
 
 // ProvideOTPManager creates the OTP manager

@@ -20,17 +20,20 @@ import (
 type WorkflowHandler struct {
 	workflowSvc *services.WorkflowService
 	billingSvc  *services.BillingService
+	scheduleSvc *services.ScheduleService
 	queueClient *queue.Client
 }
 
 func NewWorkflowHandler(
 	workflowSvc *services.WorkflowService,
 	billingSvc *services.BillingService,
+	scheduleSvc *services.ScheduleService,
 	queueClient *queue.Client,
 ) *WorkflowHandler {
 	return &WorkflowHandler{
 		workflowSvc: workflowSvc,
 		billingSvc:  billingSvc,
+		scheduleSvc: scheduleSvc,
 		queueClient: queueClient,
 	}
 }
@@ -444,8 +447,18 @@ func (h *WorkflowHandler) Deactivate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Business rule: Check if workflow can be deactivated
-	// TODO: Check for active schedules from schedule service
 	hasActiveSchedules := false
+	if h.scheduleSvc != nil {
+		schedules, err := h.scheduleSvc.GetByWorkflow(r.Context(), workflowID)
+		if err == nil {
+			for _, s := range schedules {
+				if s.IsActive {
+					hasActiveSchedules = true
+					break
+				}
+			}
+		}
+	}
 	if err := validator.CanDeactivateWorkflow(existing.Status, hasActiveSchedules); err != nil {
 		dto.BadRequest(w, err.Error())
 		return

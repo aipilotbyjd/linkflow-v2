@@ -1,0 +1,48 @@
+# =============================================================================
+# LinkFlow Test Configuration Overlay
+# =============================================================================
+# This file is automatically loaded when APP_ENVIRONMENT=test
+# It overrides values from config.yaml with test-appropriate settings.
+# =============================================================================
+
+app:
+  debug: true
+
+database:
+  name: linkflow_test
+  sslmode: disable
+  max_open_conns: 5
+  max_idle_conns: 2
+
+redis:
+  db: 1  # Use different DB for tests
+  tls: false
+
+queue:
+  concurrency: 2
+
+rate_limit:
+  enabled: false
+
+logging:
+  level: debug
+  format: console
+  redact_secrets: false
+
+metrics:
+  enabled: false
+
+health:
+  detailed_response: true
+  include_db_check: false
+  include_redis_check: false
+
+features:
+  webhook_stream:
+    enabled: false
+    consumer_count: 1
+
+  execution:
+    max_concurrent: 10
+    default_timeout: 30s
+    max_timeout: 60s

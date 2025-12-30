@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -399,9 +400,16 @@ func compareValues(fieldValue interface{}, operator string, compareValue interfa
 		return fieldValue == nil || fmt.Sprintf("%v", fieldValue) == ""
 	case "isNotEmpty":
 		return fieldValue != nil && fmt.Sprintf("%v", fieldValue) != ""
-	case "regex":
-		// TODO: implement regex matching
-		return false
+	case "regex", "matches":
+		pattern, ok := compareValue.(string)
+		if !ok {
+			return false
+		}
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return false
+		}
+		return re.MatchString(fmt.Sprintf("%v", fieldValue))
 	default:
 		return false
 	}
