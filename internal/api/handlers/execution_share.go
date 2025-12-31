@@ -26,7 +26,7 @@ func (h *ExecutionShareHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	execID, ok := middleware.ParseUUID(w, r, "executionId")
+	execID, ok := middleware.ParseUUID(w, r, "executionID")
 	if !ok {
 		return
 	}
@@ -132,7 +132,7 @@ func (h *ExecutionShareHandler) GetShared(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ExecutionShareHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "shareId")
+	id, ok := middleware.ParseUUID(w, r, "shareID")
 	if !ok {
 		return
 	}

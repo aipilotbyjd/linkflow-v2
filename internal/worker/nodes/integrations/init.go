@@ -175,4 +175,49 @@ func init() {
 		Version:     "1.0.0",
 		Tags:        []string{"messaging", "email"},
 	})
+
+	core.Register(&MongoDBNode{}, core.NodeMeta{
+		Name:        "MongoDB",
+		Description: "MongoDB database operations",
+		Category:    "integrations",
+		Icon:        "database",
+		Version:     "1.0.0",
+		Tags:        []string{"database", "nosql"},
+	})
+
+	core.Register(&MySQLNode{}, core.NodeMeta{
+		Name:        "MySQL",
+		Description: "Execute MySQL queries",
+		Category:    "integrations",
+		Icon:        "database",
+		Version:     "1.0.0",
+		Tags:        []string{"database"},
+	})
+
+	core.Register(&StripeNode{}, core.NodeMeta{
+		Name:        "Stripe",
+		Description: "Stripe payment operations",
+		Category:    "integrations",
+		Icon:        "credit-card",
+		Version:     "1.0.0",
+		Tags:        []string{"payments", "finance"},
+	})
+
+	core.Register(&GoogleSheetsNode{}, core.NodeMeta{
+		Name:        "Google Sheets",
+		Description: "Google Sheets spreadsheet operations",
+		Category:    "integrations",
+		Icon:        "table",
+		Version:     "1.0.0",
+		Tags:        []string{"productivity", "spreadsheet"},
+	})
+
+	core.Register(&RedisNode{}, core.NodeMeta{
+		Name:        "Redis",
+		Description: "Redis cache and data structure operations",
+		Category:    "integrations",
+		Icon:        "database",
+		Version:     "1.0.0",
+		Tags:        []string{"database", "cache"},
+	})
 }

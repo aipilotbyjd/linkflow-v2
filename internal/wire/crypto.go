@@ -6,6 +6,8 @@ import (
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/oauth"
+	"gorm.io/gorm"
 )
 
 // ProvideJWTManager creates the JWT manager
@@ -37,9 +39,40 @@ func ProvideOTPManager(cfg *config.Config) *crypto.OTPManager {
 	return crypto.NewOTPManager(cfg.App.Name)
 }
 
+// ProvideOAuthManager creates the OAuth manager with configured providers
+func ProvideOAuthManager(cfg *config.Config, db *gorm.DB, encryptor *crypto.Encryptor) *oauth.Manager {
+	manager := oauth.NewManager(db, encryptor)
+
+	// Register configured providers
+	if cfg.HasOAuth("google") {
+		manager.RegisterProvider(oauth.NewGoogleProvider(
+			cfg.OAuth.Google.ClientID,
+			cfg.OAuth.Google.ClientSecret,
+		))
+	}
+
+	if cfg.HasOAuth("github") {
+		manager.RegisterProvider(oauth.NewGitHubProvider(
+			cfg.OAuth.GitHub.ClientID,
+			cfg.OAuth.GitHub.ClientSecret,
+		))
+	}
+
+	if cfg.HasOAuth("microsoft") {
+		manager.RegisterProvider(oauth.NewMicrosoftProvider(
+			cfg.OAuth.Microsoft.ClientID,
+			cfg.OAuth.Microsoft.ClientSecret,
+			"", // tenantID - uses "common" by default
+		))
+	}
+
+	return manager
+}
+
 // CryptoSet provides crypto dependencies
 var CryptoSet = wire.NewSet(
 	ProvideJWTManager,
 	ProvideEncryptor,
 	ProvideOTPManager,
+	ProvideOAuthManager,
 )

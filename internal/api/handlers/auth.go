@@ -26,11 +26,13 @@ type AuthHandler struct {
 }
 
 // NewAuthHandler creates a new AuthHandler for authentication endpoints.
-func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client) *AuthHandler {
+func NewAuthHandler(authSvc *services.AuthService, jwtManager *crypto.JWTManager, redisClient *pkgredis.Client, oauthManager *oauth.Manager, frontendURL string) *AuthHandler {
 	return &AuthHandler{
-		authSvc:     authSvc,
-		jwtManager:  jwtManager,
-		redisClient: redisClient,
+		authSvc:      authSvc,
+		jwtManager:   jwtManager,
+		redisClient:  redisClient,
+		oauthManager: oauthManager,
+		frontendURL:  frontendURL,
 	}
 }
 

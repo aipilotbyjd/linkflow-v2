@@ -42,7 +42,7 @@ func (h *AnalyticsHandler) GetWorkflowAnalytics(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}

@@ -23,7 +23,7 @@ func (h *ExecutionReplayHandler) Replay(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	execID, ok := middleware.ParseUUID(w, r, "executionId")
+	execID, ok := middleware.ParseUUID(w, r, "executionID")
 	if !ok {
 		return
 	}
@@ -47,7 +47,7 @@ func (h *ExecutionReplayHandler) ReplayFromNode(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	execID, ok := middleware.ParseUUID(w, r, "executionId")
+	execID, ok := middleware.ParseUUID(w, r, "executionID")
 	if !ok {
 		return
 	}

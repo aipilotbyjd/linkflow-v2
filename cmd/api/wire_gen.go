@@ -12,6 +12,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"github.com/linkflow-ai/linkflow/internal/pkg/oauth"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/wire"
@@ -43,13 +44,14 @@ func InitializeApp() (*App, error) {
 	}
 	queueClient := wire.ProvideQueue(config)
 	jwtManager := wire.ProvideJWTManager(config)
-	userRepository := repositories.NewUserRepository(db)
-	sessionRepository := repositories.NewSessionRepository(db)
-	otpManager := wire.ProvideOTPManager(config)
 	encryptor, err := wire.ProvideEncryptor(config)
 	if err != nil {
 		return nil, err
 	}
+	manager := wire.ProvideOAuthManager(config, db, encryptor)
+	userRepository := repositories.NewUserRepository(db)
+	sessionRepository := repositories.NewSessionRepository(db)
+	otpManager := wire.ProvideOTPManager(config)
 	authService := services.NewAuthService(userRepository, sessionRepository, jwtManager, otpManager, encryptor)
 	userService := services.NewUserService(userRepository)
 	workspaceRepository := repositories.NewWorkspaceRepository(db)
@@ -102,7 +104,7 @@ func InitializeApp() (*App, error) {
 	apiServices := wire.ProvideServices(authService, userService, workspaceService, workflowService, executionService, credentialService, scheduleService, billingService, oAuthService, templateService, webhookManager, waitResumeManager, auditLogService, alertService, workflowCommentService, executionShareService, environmentVariableService, analyticsService, workflowExportService, executionReplayService, versionDiffService)
 	pinnedDataRepository := repositories.NewPinnedDataRepository(db)
 	apiRepositories := wire.ProvideRepositories(pinnedDataRepository, waitingExecutionRepository, webhookEndpointRepository)
-	app := provideApp(config, db, client, queueClient, jwtManager, apiServices, apiRepositories)
+	app := provideApp(config, db, client, queueClient, jwtManager, manager, apiServices, apiRepositories)
 	return app, nil
 }
 
@@ -110,29 +112,32 @@ func InitializeApp() (*App, error) {
 
 // App holds all initialized dependencies
 type App struct {
-	Config     *config.Config
-	DB         *gorm.DB
-	Redis      *redis.Client
-	Queue      *queue.Client
-	JWTManager *crypto.JWTManager
-	Services   *api.Services
-	Repos      *api.Repositories
+	Config       *config.Config
+	DB           *gorm.DB
+	Redis        *redis.Client
+	Queue        *queue.Client
+	JWTManager   *crypto.JWTManager
+	OAuthManager *oauth.Manager
+	Services     *api.Services
+	Repos        *api.Repositories
 }
 
 // provideApp creates the App struct with all dependencies
 func provideApp(
 	cfg *config.Config,
 	db *gorm.DB, redis2 *redis.Client, queue2 *queue.Client,
-	jwt *crypto.JWTManager, services2 *api.Services,
+	jwt *crypto.JWTManager,
+	oauthMgr *oauth.Manager, services2 *api.Services,
 	repos *api.Repositories,
 ) *App {
 	return &App{
-		Config:     cfg,
-		DB:         db,
-		Redis:      redis2,
-		Queue:      queue2,
-		JWTManager: jwt,
-		Services:   services2,
-		Repos:      repos,
+		Config:       cfg,
+		DB:           db,
+		Redis:        redis2,
+		Queue:        queue2,
+		JWTManager:   jwt,
+		OAuthManager: oauthMgr,
+		Services:     services2,
+		Repos:        repos,
 	}
 }

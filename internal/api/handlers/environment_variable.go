@@ -127,7 +127,7 @@ func (h *EnvironmentVariableHandler) Create(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *EnvironmentVariableHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "varId")
+	id, ok := middleware.ParseUUID(w, r, "varID")
 	if !ok {
 		return
 	}
@@ -149,7 +149,7 @@ func (h *EnvironmentVariableHandler) Update(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *EnvironmentVariableHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "varId")
+	id, ok := middleware.ParseUUID(w, r, "varID")
 	if !ok {
 		return
 	}

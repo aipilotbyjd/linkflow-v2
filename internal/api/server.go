@@ -20,6 +20,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"github.com/linkflow-ai/linkflow/internal/pkg/metrics"
+	"github.com/linkflow-ai/linkflow/internal/pkg/oauth"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
 	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
@@ -75,6 +76,7 @@ func NewServer(
 	redisClient *pkgredis.Client,
 	queueClient *queue.Client,
 	db *gorm.DB,
+	oauthManager *oauth.Manager,
 ) *Server {
 	router := chi.NewRouter()
 
@@ -109,7 +111,7 @@ func NewServer(
 	router.Use(corsHandler.Handler)
 
 	// Initialize handlers
-	authHandler := handlers.NewAuthHandler(svc.Auth, jwtManager, redisClient)
+	authHandler := handlers.NewAuthHandler(svc.Auth, jwtManager, redisClient, oauthManager, cfg.App.FrontendURL)
 	userHandler := handlers.NewUserHandler(svc.User)
 	workspaceHandler := handlers.NewWorkspaceHandler(svc.Workspace, svc.Billing)
 	workflowHandler := handlers.NewWorkflowHandler(svc.Workflow, svc.Billing, svc.Schedule, queueClient)
@@ -187,11 +189,6 @@ func NewServer(
 	var analyticsHandler *handlers.AnalyticsHandler
 	if svc.Analytics != nil {
 		analyticsHandler = handlers.NewAnalyticsHandler(svc.Analytics)
-	}
-
-	var exportHandler *handlers.WorkflowExportHandler
-	if svc.ExportImport != nil {
-		exportHandler = handlers.NewWorkflowExportHandler(svc.ExportImport)
 	}
 
 	replayHandler := handlers.NewExecutionReplayHandler(svc.ExecReplay)
@@ -387,54 +384,52 @@ func NewServer(
 				if alertHandler != nil {
 					r.Get("/alerts", alertHandler.List)
 					r.Post("/alerts", alertHandler.Create)
-					r.Put("/alerts/{alertId}", alertHandler.Update)
-					r.Delete("/alerts/{alertId}", alertHandler.Delete)
+					r.Put("/alerts/{alertID}", alertHandler.Update)
+					r.Delete("/alerts/{alertID}", alertHandler.Delete)
 				}
 
 				// Workflow Comments
 				if commentHandler != nil {
-					r.Get("/workflows/{workflowId}/comments", commentHandler.List)
-					r.Post("/workflows/{workflowId}/comments", commentHandler.Create)
-					r.Put("/comments/{commentId}", commentHandler.Update)
-					r.Delete("/comments/{commentId}", commentHandler.Delete)
-					r.Post("/comments/{commentId}/resolve", commentHandler.Resolve)
+					r.Get("/workflows/{workflowID}/comments", commentHandler.List)
+					r.Post("/workflows/{workflowID}/comments", commentHandler.Create)
+					r.Put("/comments/{commentID}", commentHandler.Update)
+					r.Delete("/comments/{commentID}", commentHandler.Delete)
+					r.Post("/comments/{commentID}/resolve", commentHandler.Resolve)
 				}
 
 				// Execution Sharing
 				if execShareHandler != nil {
-					r.Post("/executions/{executionId}/share", execShareHandler.Create)
-					r.Delete("/shares/{shareId}", execShareHandler.Delete)
+					r.Post("/executions/{executionID}/share", execShareHandler.Create)
+					r.Delete("/shares/{shareID}", execShareHandler.Delete)
 				}
 
 				// Environment Variables
 				if envVarHandler != nil {
 					r.Get("/env-vars", envVarHandler.List)
 					r.Post("/env-vars", envVarHandler.Create)
-					r.Put("/env-vars/{varId}", envVarHandler.Update)
-					r.Delete("/env-vars/{varId}", envVarHandler.Delete)
+					r.Put("/env-vars/{varID}", envVarHandler.Update)
+					r.Delete("/env-vars/{varID}", envVarHandler.Delete)
 				}
 
 				// Analytics
 				if analyticsHandler != nil {
 					r.Get("/analytics", analyticsHandler.GetWorkspaceAnalytics)
-					r.Get("/workflows/{workflowId}/analytics", analyticsHandler.GetWorkflowAnalytics)
+					r.Get("/workflows/{workflowID}/analytics", analyticsHandler.GetWorkflowAnalytics)
 				}
 
-				// Workflow Export/Import
-				if exportHandler != nil {
-					r.Get("/workflows/{workflowId}/export", exportHandler.Export)
-					r.Post("/workflows/import", exportHandler.Import)
-				}
+
 
 				// Execution Replay
-				r.Post("/executions/{executionId}/replay", replayHandler.Replay)
-				r.Post("/executions/{executionId}/replay-from-node", replayHandler.ReplayFromNode)
+				r.Post("/executions/{executionID}/replay", replayHandler.Replay)
+				r.Post("/executions/{executionID}/replay-from-node", replayHandler.ReplayFromNode)
 			})
 		})
 	})
 
 	// Webhooks (separate from API)
 	router.Route("/webhooks", func(r chi.Router) {
+		// Rate limit webhook endpoints to prevent abuse (500 requests per minute per IP)
+		r.Use(rateLimiter.Limit(500, time.Minute))
 		r.Post("/{endpointID}", webhookHandler.Handle)
 		r.Get("/{endpointID}", webhookHandler.Handle)
 		r.Post("/stripe", billingHandler.HandleStripeWebhook)

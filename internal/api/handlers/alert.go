@@ -140,7 +140,7 @@ func (h *AlertHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AlertHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "alertId")
+	id, ok := middleware.ParseUUID(w, r, "alertID")
 	if !ok {
 		return
 	}
@@ -160,7 +160,7 @@ func (h *AlertHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AlertHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "alertId")
+	id, ok := middleware.ParseUUID(w, r, "alertID")
 	if !ok {
 		return
 	}

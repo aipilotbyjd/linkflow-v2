@@ -23,7 +23,7 @@ func (h *WorkflowExportHandler) Export(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}

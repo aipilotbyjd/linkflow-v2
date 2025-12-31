@@ -36,6 +36,7 @@ func main() {
 		app.Redis,
 		app.Queue,
 		app.DB,
+		app.OAuthManager,
 	)
 
 	// Start server

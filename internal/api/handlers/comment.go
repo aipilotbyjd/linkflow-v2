@@ -24,7 +24,7 @@ func (h *WorkflowCommentHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}
@@ -61,7 +61,7 @@ func (h *WorkflowCommentHandler) Create(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	workflowID, ok := middleware.ParseUUID(w, r, "workflowId")
+	workflowID, ok := middleware.ParseUUID(w, r, "workflowID")
 	if !ok {
 		return
 	}
@@ -104,7 +104,7 @@ func (h *WorkflowCommentHandler) Create(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *WorkflowCommentHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "commentId")
+	id, ok := middleware.ParseUUID(w, r, "commentID")
 	if !ok {
 		return
 	}
@@ -126,7 +126,7 @@ func (h *WorkflowCommentHandler) Update(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *WorkflowCommentHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := middleware.ParseUUID(w, r, "commentId")
+	id, ok := middleware.ParseUUID(w, r, "commentID")
 	if !ok {
 		return
 	}
@@ -145,7 +145,7 @@ func (h *WorkflowCommentHandler) Resolve(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	id, ok := middleware.ParseUUID(w, r, "commentId")
+	id, ok := middleware.ParseUUID(w, r, "commentID")
 	if !ok {
 		return
 	}
