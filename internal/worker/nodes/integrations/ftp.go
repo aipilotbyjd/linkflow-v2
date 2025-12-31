@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/jlaffaye/ftp"
 	"github.com/linkflow-ai/linkflow/internal/worker/core"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 // FTPNode handles FTP operations
