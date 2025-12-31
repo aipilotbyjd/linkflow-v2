@@ -63,6 +63,10 @@ type Services struct {
 	APIKey        *services.APIKeyService
 	WorkflowVar *services.WorkflowVariableService
 	Project     *services.ProjectService
+	WorkflowShare *services.WorkflowShareService
+	Marketplace   *services.MarketplaceService
+	TemplateRating *services.TemplateRatingService
+	BinaryData    *services.BinaryDataService
 }
 
 type Repositories struct {
@@ -215,6 +219,21 @@ func NewServer(
 		projectHandler = handlers.NewProjectHandler(svc.Project)
 	}
 
+	var workflowShareHandler *handlers.WorkflowShareHandler
+	if svc.WorkflowShare != nil {
+		workflowShareHandler = handlers.NewWorkflowShareHandler(svc.WorkflowShare)
+	}
+
+	var marketplaceHandler *handlers.MarketplaceHandler
+	if svc.Marketplace != nil && svc.TemplateRating != nil {
+		marketplaceHandler = handlers.NewMarketplaceHandler(svc.Marketplace, svc.TemplateRating)
+	}
+
+	var binaryDataHandler *handlers.BinaryDataHandler
+	if svc.BinaryData != nil {
+		binaryDataHandler = handlers.NewBinaryDataHandler(svc.BinaryData)
+	}
+
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager, redisClient)
 	tenantMiddleware := middleware.NewTenantMiddleware(svc.Workspace)
@@ -252,6 +271,17 @@ func NewServer(
 				r.Get("/templates/search", templateHandler.Search)
 				r.Get("/templates/{templateID}", templateHandler.Get)
 			}
+
+			// Marketplace (public)
+			if marketplaceHandler != nil {
+				r.Get("/marketplace", marketplaceHandler.ListPublic)
+				r.Get("/marketplace/featured", marketplaceHandler.ListFeatured)
+				r.Get("/marketplace/categories", marketplaceHandler.GetCategories)
+				r.Get("/marketplace/search", marketplaceHandler.Search)
+				r.Get("/marketplace/{templateID}", marketplaceHandler.Get)
+				r.Get("/marketplace/{templateID}/ratings", marketplaceHandler.ListRatings)
+				r.Get("/marketplace/{templateID}/ratings/stats", marketplaceHandler.GetRatingStats)
+			}
 		})
 
 		// Protected routes
@@ -277,6 +307,13 @@ func NewServer(
 				r.Get("/api-keys", apiKeyHandler.List)
 				r.Post("/api-keys", apiKeyHandler.Create)
 				r.Delete("/api-keys/{keyID}", apiKeyHandler.Revoke)
+			}
+
+			// Marketplace ratings (protected)
+			if marketplaceHandler != nil {
+				r.Post("/marketplace/{templateID}/ratings", marketplaceHandler.Rate)
+				r.Get("/marketplace/{templateID}/ratings/me", marketplaceHandler.GetMyRating)
+				r.Delete("/marketplace/{templateID}/ratings", marketplaceHandler.DeleteRating)
 			}
 
 			// Node Types (for workflow editor)
@@ -321,6 +358,27 @@ func NewServer(
 					r.Delete("/projects/{projectID}", projectHandler.Delete)
 				}
 
+				// Workflow Sharing
+				if workflowShareHandler != nil {
+					r.Post("/workflow-shares", workflowShareHandler.Share)
+					r.Get("/workflow-shares/shared-by-me", workflowShareHandler.ListSharedByMe)
+					r.Get("/workflow-shares/shared-with-me", workflowShareHandler.ListSharedWithMe)
+					r.Get("/workflow-shares/pending", workflowShareHandler.ListPending)
+					r.Post("/workflow-shares/{shareID}/accept", workflowShareHandler.Accept)
+					r.Put("/workflow-shares/{shareID}", workflowShareHandler.UpdatePermission)
+					r.Delete("/workflow-shares/{shareID}", workflowShareHandler.Revoke)
+				}
+
+				// Marketplace (workspace-scoped)
+				if marketplaceHandler != nil {
+					r.Post("/marketplace", marketplaceHandler.Publish)
+					r.Get("/marketplace/my-published", marketplaceHandler.ListMyPublished)
+					r.Put("/marketplace/{templateID}", marketplaceHandler.Update)
+					r.Post("/marketplace/{templateID}/sync", marketplaceHandler.Sync)
+					r.Delete("/marketplace/{templateID}", marketplaceHandler.Unpublish)
+					r.Post("/marketplace/{templateID}/use", marketplaceHandler.UseTemplate)
+				}
+
 				// Workflows
 				r.Get("/workflows", workflowHandler.List)
 				r.Post("/workflows", workflowHandler.Create)
@@ -361,6 +419,17 @@ func NewServer(
 				r.Post("/executions/{executionID}/cancel", executionHandler.Cancel)
 				r.Post("/executions/{executionID}/retry", executionHandler.Retry)
 				r.Get("/executions/{executionID}/nodes", executionHandler.GetNodes)
+
+				// Binary Data
+				if binaryDataHandler != nil {
+					r.Post("/executions/{executionID}/binary", binaryDataHandler.Upload)
+					r.Get("/executions/{executionID}/binary", binaryDataHandler.ListByExecution)
+					r.Delete("/executions/{executionID}/binary/cleanup", binaryDataHandler.CleanupByExecution)
+					r.Get("/binary/{binaryID}", binaryDataHandler.Get)
+					r.Get("/binary/{binaryID}/download", binaryDataHandler.Download)
+					r.Delete("/binary/{binaryID}", binaryDataHandler.Delete)
+					r.Get("/binary/stats", binaryDataHandler.GetStorageStats)
+				}
 
 				// Credentials
 				r.Get("/credentials", credentialHandler.List)

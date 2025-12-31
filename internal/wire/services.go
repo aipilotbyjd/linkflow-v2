@@ -6,6 +6,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
+	"gorm.io/gorm"
 )
 
 // ServiceSet provides all service dependencies
@@ -34,6 +35,10 @@ var ServiceSet = wire.NewSet(
 	services.NewAPIKeyService,
 	services.NewWorkflowVariableService,
 	services.NewProjectService,
+	services.NewWorkflowShareService,
+	services.NewMarketplaceService,
+	services.NewTemplateRatingService,
+	ProvideBinaryDataService,
 )
 
 // ProvideWorkflowService creates the workflow service with webhook repo
@@ -147,4 +152,9 @@ func ProvideWorkerBillingService(
 	workspaceRepo *repositories.WorkspaceRepository,
 ) *services.BillingService {
 	return services.NewBillingService(planRepo, subscriptionRepo, usageRepo, invoiceRepo, workspaceRepo)
+}
+
+// ProvideBinaryDataService creates the binary data service with storage path
+func ProvideBinaryDataService(db *gorm.DB) *services.BinaryDataService {
+	return services.NewBinaryDataService(db, "")
 }

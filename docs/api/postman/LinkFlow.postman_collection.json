@@ -2099,6 +2099,484 @@
 				}
 			],
 			"description": "Webhook URL generation and management"
+		},
+		{
+			"name": "🔄 Workflow Sharing",
+			"item": [
+				{
+					"name": "Share Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"workflow_id\": \"{{workflow_id}}\",\n    \"target_workspace_id\": \"{{target_workspace_id}}\",\n    \"permission\": \"read\",\n    \"expires_at\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares"]
+						},
+						"description": "Share a workflow with another workspace.\n\nPermissions:\n- `read` - View only\n- `execute` - Can execute\n- `edit` - Full access"
+					}
+				},
+				{
+					"name": "List Shared by Me",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/shared-by-me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "shared-by-me"]
+						},
+						"description": "List workflows I've shared with other workspaces"
+					}
+				},
+				{
+					"name": "List Shared with Me",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/shared-with-me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "shared-with-me"]
+						},
+						"description": "List workflows shared with my workspace"
+					}
+				},
+				{
+					"name": "List Pending Shares",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/pending",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "pending"]
+						},
+						"description": "List pending share invitations"
+					}
+				},
+				{
+					"name": "Accept Share",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}/accept",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}", "accept"]
+						},
+						"description": "Accept a pending share invitation"
+					}
+				},
+				{
+					"name": "Update Share Permission",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"permission\": \"execute\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}"]
+						},
+						"description": "Update permission level for a share"
+					}
+				},
+				{
+					"name": "Revoke Share",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}"]
+						},
+						"description": "Revoke a workflow share"
+					}
+				}
+			],
+			"description": "Share workflows between workspaces with permission levels"
+		},
+		{
+			"name": "🏪 Marketplace",
+			"item": [
+				{
+					"name": "Browse Public Templates",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace?category=&limit=20&offset=0",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace"],
+							"query": [
+								{ "key": "category", "value": "", "description": "Filter by category" },
+								{ "key": "limit", "value": "20" },
+								{ "key": "offset", "value": "0" }
+							]
+						},
+						"description": "Browse public workflow templates in the marketplace"
+					}
+				},
+				{
+					"name": "Get Featured Templates",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/featured?limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "featured"],
+							"query": [
+								{ "key": "limit", "value": "10" }
+							]
+						},
+						"description": "Get featured marketplace templates"
+					}
+				},
+				{
+					"name": "Get Categories",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "categories"]
+						},
+						"description": "Get all marketplace categories"
+					}
+				},
+				{
+					"name": "Search Templates",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/search?q=email&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "search"],
+							"query": [
+								{ "key": "q", "value": "email", "description": "Search query" },
+								{ "key": "limit", "value": "20" }
+							]
+						},
+						"description": "Search marketplace templates"
+					}
+				},
+				{
+					"name": "Get Template",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}"]
+						},
+						"description": "Get marketplace template details"
+					}
+				},
+				{
+					"name": "Use Template",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"My Workflow from Template\",\n    \"variables\": {}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}/use",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}", "use"]
+						},
+						"description": "Create a workflow from a marketplace template"
+					}
+				},
+				{
+					"name": "Publish to Marketplace",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"workflow_id\": \"{{workflow_id}}\",\n    \"name\": \"My Awesome Workflow\",\n    \"description\": \"A workflow that does amazing things\",\n    \"category\": \"marketing\",\n    \"tags\": [\"email\", \"automation\"],\n    \"icon\": \"mail\",\n    \"is_public\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace"]
+						},
+						"description": "Publish a workflow to the marketplace"
+					}
+				},
+				{
+					"name": "List My Published",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/my-published",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "my-published"]
+						},
+						"description": "List templates I've published"
+					}
+				},
+				{
+					"name": "Update Published Template",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Template Name\",\n    \"description\": \"Updated description\",\n    \"category\": \"sales\",\n    \"tags\": [\"crm\", \"automation\"],\n    \"is_public\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}"]
+						},
+						"description": "Update a published template"
+					}
+				},
+				{
+					"name": "Sync Template from Workflow",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}/sync",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}", "sync"]
+						},
+						"description": "Sync template with latest workflow changes"
+					}
+				},
+				{
+					"name": "Unpublish Template",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}"]
+						},
+						"description": "Remove template from marketplace"
+					}
+				},
+				{
+					"name": "Rate Template",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 5,\n    \"review\": \"Great template! Saved me hours of work.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"]
+						},
+						"description": "Rate a marketplace template (1-5 stars)"
+					}
+				},
+				{
+					"name": "Get My Rating",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings", "me"]
+						},
+						"description": "Get my rating for a template"
+					}
+				},
+				{
+					"name": "List Ratings",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings?limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"],
+							"query": [
+								{ "key": "limit", "value": "20" }
+							]
+						},
+						"description": "List all ratings for a template"
+					}
+				},
+				{
+					"name": "Get Rating Stats",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings", "stats"]
+						},
+						"description": "Get rating statistics (average, distribution)"
+					}
+				},
+				{
+					"name": "Delete My Rating",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"]
+						},
+						"description": "Delete my rating for a template"
+					}
+				}
+			],
+			"description": "Template marketplace - browse, publish, and rate workflow templates"
+		},
+		{
+			"name": "📁 Binary Data",
+			"item": [
+				{
+					"name": "Upload File",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "file", "type": "file", "src": "" },
+								{ "key": "node_id", "value": "", "description": "Optional node ID" },
+								{ "key": "expires_in_hours", "value": "24", "description": "Auto-delete after hours" },
+								{ "key": "metadata", "value": "", "description": "Custom metadata" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary"]
+						},
+						"description": "Upload a binary file for an execution (max 32MB)"
+					}
+				},
+				{
+					"name": "List Files by Execution",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary?node_id=",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary"],
+							"query": [
+								{ "key": "node_id", "value": "", "description": "Filter by node ID" }
+							]
+						},
+						"description": "List all binary files for an execution"
+					}
+				},
+				{
+					"name": "Get File Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}"]
+						},
+						"description": "Get binary file metadata"
+					}
+				},
+				{
+					"name": "Download File",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}/download",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}", "download"]
+						},
+						"description": "Download a binary file"
+					}
+				},
+				{
+					"name": "Delete File",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}"]
+						},
+						"description": "Delete a binary file"
+					}
+				},
+				{
+					"name": "Get Storage Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "stats"]
+						},
+						"description": "Get storage statistics for workspace"
+					}
+				},
+				{
+					"name": "Cleanup Execution Files",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary/cleanup",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary", "cleanup"]
+						},
+						"description": "Delete all binary files for an execution"
+					}
+				}
+			],
+			"description": "Binary file storage for workflow executions"
 		}
 	],
 	"variable": [
@@ -2136,6 +2614,22 @@
 		},
 		{
 			"key": "node_id",
+			"value": ""
+		},
+		{
+			"key": "share_id",
+			"value": ""
+		},
+		{
+			"key": "target_workspace_id",
+			"value": ""
+		},
+		{
+			"key": "marketplace_template_id",
+			"value": ""
+		},
+		{
+			"key": "binary_id",
 			"value": ""
 		}
 	]
