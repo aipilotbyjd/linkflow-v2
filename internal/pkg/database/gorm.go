@@ -59,7 +59,7 @@ func AutoMigrate(db *gorm.DB) error {
 		// Workflows
 		&models.Workflow{},
 		&models.WorkflowVersion{},
-		&models.WorkflowFolder{},
+		&models.Project{},
 
 		// Executions
 		&models.Execution{},

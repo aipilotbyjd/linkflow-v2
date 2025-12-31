@@ -33,7 +33,7 @@ var ServiceSet = wire.NewSet(
 	ProvideVersionDiffService,
 	services.NewAPIKeyService,
 	services.NewWorkflowVariableService,
-	services.NewWorkflowFolderService,
+	services.NewProjectService,
 )
 
 // ProvideWorkflowService creates the workflow service with webhook repo

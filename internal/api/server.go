@@ -61,8 +61,8 @@ type Services struct {
 	ExecReplay    *services.ExecutionReplayService
 	VersionDiff   *services.VersionDiffService
 	APIKey        *services.APIKeyService
-	WorkflowVar   *services.WorkflowVariableService
-	WorkflowFolder *services.WorkflowFolderService
+	WorkflowVar *services.WorkflowVariableService
+	Project     *services.ProjectService
 }
 
 type Repositories struct {
@@ -210,9 +210,9 @@ func NewServer(
 		workflowVarHandler = handlers.NewWorkflowVariableHandler(svc.WorkflowVar)
 	}
 
-	var workflowFolderHandler *handlers.WorkflowFolderHandler
-	if svc.WorkflowFolder != nil {
-		workflowFolderHandler = handlers.NewWorkflowFolderHandler(svc.WorkflowFolder)
+	var projectHandler *handlers.ProjectHandler
+	if svc.Project != nil {
+		projectHandler = handlers.NewProjectHandler(svc.Project)
 	}
 
 	// Auth middleware
@@ -311,13 +311,14 @@ func NewServer(
 				r.Put("/members/{userID}", workspaceHandler.UpdateMemberRole)
 				r.Delete("/members/{userID}", workspaceHandler.RemoveMember)
 
-				// Workflow Folders
-				if workflowFolderHandler != nil {
-					r.Get("/folders", workflowFolderHandler.List)
-					r.Get("/folders/tree", workflowFolderHandler.GetTree)
-					r.Post("/folders", workflowFolderHandler.Create)
-					r.Put("/folders/{folderID}", workflowFolderHandler.Update)
-					r.Delete("/folders/{folderID}", workflowFolderHandler.Delete)
+				// Projects
+				if projectHandler != nil {
+					r.Get("/projects", projectHandler.List)
+					r.Get("/projects/tree", projectHandler.GetTree)
+					r.Post("/projects", projectHandler.Create)
+					r.Get("/projects/{projectID}", projectHandler.Get)
+					r.Put("/projects/{projectID}", projectHandler.Update)
+					r.Delete("/projects/{projectID}", projectHandler.Delete)
 				}
 
 				// Workflows
