@@ -116,14 +116,14 @@ func (m *WebhookManager) GetWebhooksByWorkflow(ctx context.Context, workflowID u
 	return result, nil
 }
 
-// RegenerateSecret generates a new secret for a webhook
-func (m *WebhookManager) RegenerateSecret(ctx context.Context, endpointID uuid.UUID) (string, error) {
+// RegenerateSecret generates a new secret for a webhook with workspace validation
+func (m *WebhookManager) RegenerateSecret(ctx context.Context, endpointID, workspaceID uuid.UUID) (string, error) {
 	secret, err := generateSecret(32)
 	if err != nil {
 		return "", err
 	}
 
-	endpoint, err := m.webhookRepo.FindByID(ctx, endpointID)
+	endpoint, err := m.webhookRepo.FindByIDAndWorkspace(ctx, endpointID, workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -136,14 +136,14 @@ func (m *WebhookManager) RegenerateSecret(ctx context.Context, endpointID uuid.U
 	return secret, nil
 }
 
-// ActivateWebhook activates a webhook endpoint
-func (m *WebhookManager) ActivateWebhook(ctx context.Context, endpointID uuid.UUID) error {
-	return m.webhookRepo.SetActive(ctx, endpointID, true)
+// ActivateWebhook activates a webhook endpoint with workspace validation
+func (m *WebhookManager) ActivateWebhook(ctx context.Context, endpointID, workspaceID uuid.UUID) error {
+	return m.webhookRepo.SetActiveForWorkspace(ctx, endpointID, workspaceID, true)
 }
 
-// DeactivateWebhook deactivates a webhook endpoint
-func (m *WebhookManager) DeactivateWebhook(ctx context.Context, endpointID uuid.UUID) error {
-	return m.webhookRepo.SetActive(ctx, endpointID, false)
+// DeactivateWebhook deactivates a webhook endpoint with workspace validation
+func (m *WebhookManager) DeactivateWebhook(ctx context.Context, endpointID, workspaceID uuid.UUID) error {
+	return m.webhookRepo.SetActiveForWorkspace(ctx, endpointID, workspaceID, false)
 }
 
 // DeactivateAllForWorkflow deactivates all webhooks for a workflow

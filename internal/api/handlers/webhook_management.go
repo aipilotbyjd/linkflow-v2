@@ -153,21 +153,18 @@ func (h *WebhookManagementHandler) RegenerateSecret(w http.ResponseWriter, r *ht
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	webhookIDStr := chi.URLParam(r, "webhookID")
-	webhookID, err := uuid.Parse(webhookIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid webhook ID")
+	webhookID, ok := middleware.ParseUUID(w, r, "webhookID")
+	if !ok {
 		return
 	}
 
-	secret, err := h.webhookMgr.RegenerateSecret(r.Context(), webhookID)
+	secret, err := h.webhookMgr.RegenerateSecret(r.Context(), webhookID, wsCtx.WorkspaceID)
 	if err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		dto.ErrorResponse(w, http.StatusNotFound, "webhook not found")
 		return
 	}
 
-	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/workflows/" + workflowIDStr + "/webhooks/" + webhookIDStr
+	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/webhooks/" + webhookID.String()
 
 	dto.NewResponse(map[string]interface{}{
 		"message": "Secret regenerated",
@@ -184,27 +181,24 @@ func (h *WebhookManagementHandler) Activate(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	webhookIDStr := chi.URLParam(r, "webhookID")
-	webhookID, err := uuid.Parse(webhookIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid webhook ID")
+	webhookID, ok := middleware.ParseUUID(w, r, "webhookID")
+	if !ok {
 		return
 	}
 
-	if err := h.webhookMgr.ActivateWebhook(r.Context(), webhookID); err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+	if err := h.webhookMgr.ActivateWebhook(r.Context(), webhookID, wsCtx.WorkspaceID); err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "webhook not found")
 		return
 	}
 
-	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/workflows/" + workflowIDStr + "/webhooks/" + webhookIDStr
+	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/webhooks/" + webhookID.String()
 
 	dto.NewResponse(map[string]interface{}{
 		"message": "Webhook activated",
 	}).
 		WithLinks(&dto.Links{Self: basePath}).
 		WithActions(
-			dto.Action{Name: "disable", Method: "POST", Href: basePath + "/disable", Label: "Disable"},
+			dto.Action{Name: "disable", Method: "POST", Href: basePath + "/deactivate", Label: "Disable"},
 		).
 		Send(w)
 }
@@ -216,27 +210,24 @@ func (h *WebhookManagementHandler) Deactivate(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	workflowIDStr := chi.URLParam(r, "workflowID")
-	webhookIDStr := chi.URLParam(r, "webhookID")
-	webhookID, err := uuid.Parse(webhookIDStr)
-	if err != nil {
-		dto.ErrorResponse(w, http.StatusBadRequest, "invalid webhook ID")
+	webhookID, ok := middleware.ParseUUID(w, r, "webhookID")
+	if !ok {
 		return
 	}
 
-	if err := h.webhookMgr.DeactivateWebhook(r.Context(), webhookID); err != nil {
-		dto.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+	if err := h.webhookMgr.DeactivateWebhook(r.Context(), webhookID, wsCtx.WorkspaceID); err != nil {
+		dto.ErrorResponse(w, http.StatusNotFound, "webhook not found")
 		return
 	}
 
-	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/workflows/" + workflowIDStr + "/webhooks/" + webhookIDStr
+	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/webhooks/" + webhookID.String()
 
 	dto.NewResponse(map[string]interface{}{
 		"message": "Webhook deactivated",
 	}).
 		WithLinks(&dto.Links{Self: basePath}).
 		WithActions(
-			dto.Action{Name: "enable", Method: "POST", Href: basePath + "/enable", Label: "Enable"},
+			dto.Action{Name: "enable", Method: "POST", Href: basePath + "/activate", Label: "Enable"},
 		).
 		Send(w)
 }

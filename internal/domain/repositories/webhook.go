@@ -62,6 +62,27 @@ func (r *WebhookEndpointRepository) SetActive(ctx context.Context, endpointID uu
 		Update("is_active", isActive).Error
 }
 
+func (r *WebhookEndpointRepository) FindByIDAndWorkspace(ctx context.Context, endpointID, workspaceID uuid.UUID) (*models.WebhookEndpoint, error) {
+	var endpoint models.WebhookEndpoint
+	err := r.DB().WithContext(ctx).
+		Where("id = ? AND workspace_id = ?", endpointID, workspaceID).
+		First(&endpoint).Error
+	if err != nil {
+		return nil, err
+	}
+	return &endpoint, nil
+}
+
+func (r *WebhookEndpointRepository) SetActiveForWorkspace(ctx context.Context, endpointID, workspaceID uuid.UUID, isActive bool) error {
+	result := r.DB().WithContext(ctx).Model(&models.WebhookEndpoint{}).
+		Where("id = ? AND workspace_id = ?", endpointID, workspaceID).
+		Update("is_active", isActive)
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return result.Error
+}
+
 func (r *WebhookEndpointRepository) RecordCall(ctx context.Context, endpointID uuid.UUID) error {
 	return r.DB().WithContext(ctx).Model(&models.WebhookEndpoint{}).
 		Where("id = ?", endpointID).
