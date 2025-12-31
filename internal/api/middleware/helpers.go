@@ -71,3 +71,14 @@ func ParseUUIDQuery(w http.ResponseWriter, r *http.Request, param string) (*uuid
 	}
 	return &id, true
 }
+
+// ParseUUIDString parses a UUID from a string value.
+// Returns uuid.Nil and writes error response if invalid.
+func ParseUUIDString(w http.ResponseWriter, value, param string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(value)
+	if err != nil {
+		dto.BadRequest(w, "invalid "+param)
+		return uuid.Nil, false
+	}
+	return id, true
+}

@@ -28,6 +28,7 @@ type Executor struct {
 	cancellation  *processor.CancellationManager
 	credCache     *cache.CredentialCache
 	redis         *redis.Client
+	queueClient   *queue.Client
 }
 
 // ExecutorConfig configures the executor
@@ -59,6 +60,7 @@ func New(
 	cancellation *processor.CancellationManager,
 	credCache *cache.CredentialCache,
 	redisClient *redis.Client,
+	queueClient *queue.Client,
 ) *Executor {
 	return &Executor{
 		processor:     proc,
@@ -70,6 +72,7 @@ func New(
 		cancellation:  cancellation,
 		credCache:     credCache,
 		redis:         redisClient,
+		queueClient:   queueClient,
 	}
 }
 
@@ -272,6 +275,81 @@ func (e *Executor) handleExecutionError(ctx context.Context, execution *models.E
 
 	// Track failed execution usage
 	e.trackUsage(ctx, payload.WorkspaceID, execution.ID, payload.WorkflowID, result, false)
+
+	// Trigger error workflow if configured
+	e.triggerErrorWorkflow(ctx, payload, execution, errMsg, nodeID)
+}
+
+func (e *Executor) triggerErrorWorkflow(ctx context.Context, payload queue.WorkflowExecutionPayload, execution *models.Execution, errMsg string, nodeID *string) {
+	if e.queueClient == nil || e.workflowSvc == nil {
+		return
+	}
+
+	workflow, err := e.workflowSvc.GetByID(ctx, payload.WorkflowID)
+	if err != nil || workflow.ErrorWorkflowID == nil {
+		return
+	}
+
+	errorWorkflow, err := e.workflowSvc.GetByID(ctx, *workflow.ErrorWorkflowID)
+	if err != nil {
+		log.Warn().
+			Err(err).
+			Str("error_workflow_id", workflow.ErrorWorkflowID.String()).
+			Msg("Failed to get error workflow")
+		return
+	}
+
+	if errorWorkflow.Status != models.WorkflowStatusActive {
+		log.Debug().
+			Str("error_workflow_id", workflow.ErrorWorkflowID.String()).
+			Str("status", string(errorWorkflow.Status)).
+			Msg("Error workflow is not active, skipping")
+		return
+	}
+
+	errorData := map[string]interface{}{
+		"error": map[string]interface{}{
+			"message":       errMsg,
+			"workflow_id":   payload.WorkflowID.String(),
+			"workflow_name": workflow.Name,
+			"execution_id":  execution.ID.String(),
+			"node_id":       nodeID,
+			"timestamp":     time.Now().UTC().Format(time.RFC3339),
+		},
+		"execution": map[string]interface{}{
+			"id":           execution.ID.String(),
+			"workflow_id":  payload.WorkflowID.String(),
+			"workspace_id": payload.WorkspaceID.String(),
+			"trigger_type": execution.TriggerType,
+			"started_at":   execution.StartedAt,
+		},
+	}
+
+	if payload.TriggerData != nil {
+		errorData["original_trigger"] = payload.TriggerData
+	}
+
+	errorPayload := queue.WorkflowExecutionPayload{
+		WorkflowID:  *workflow.ErrorWorkflowID,
+		WorkspaceID: payload.WorkspaceID,
+		TriggerType: models.TriggerErrorWorkflow,
+		TriggerData: errorData,
+	}
+
+	_, err = e.queueClient.EnqueueWorkflowExecution(ctx, errorPayload)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("error_workflow_id", workflow.ErrorWorkflowID.String()).
+			Str("failed_execution_id", execution.ID.String()).
+			Msg("Failed to enqueue error workflow")
+		return
+	}
+
+	log.Info().
+		Str("error_workflow_id", workflow.ErrorWorkflowID.String()).
+		Str("failed_execution_id", execution.ID.String()).
+		Msg("Error workflow triggered")
 }
 
 // trackUsage updates billing usage after execution

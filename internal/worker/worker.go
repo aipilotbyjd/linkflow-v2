@@ -124,6 +124,7 @@ func New(
 		cancellation,
 		credCache,
 		redisClient,
+		queueClient,
 	)
 
 	w := &Worker{

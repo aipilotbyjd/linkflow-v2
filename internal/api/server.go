@@ -60,6 +60,9 @@ type Services struct {
 	ExportImport  *services.WorkflowExportService
 	ExecReplay    *services.ExecutionReplayService
 	VersionDiff   *services.VersionDiffService
+	APIKey        *services.APIKeyService
+	WorkflowVar   *services.WorkflowVariableService
+	WorkflowFolder *services.WorkflowFolderService
 }
 
 type Repositories struct {
@@ -195,6 +198,23 @@ func NewServer(
 
 	versionDiffHandler := handlers.NewVersionDiffHandler(svc.VersionDiff)
 
+	var apiKeyHandler *handlers.APIKeyHandler
+	var apiKeyMiddleware *middleware.APIKeyMiddleware
+	if svc.APIKey != nil {
+		apiKeyHandler = handlers.NewAPIKeyHandler(svc.APIKey)
+		apiKeyMiddleware = middleware.NewAPIKeyMiddleware(svc.APIKey)
+	}
+
+	var workflowVarHandler *handlers.WorkflowVariableHandler
+	if svc.WorkflowVar != nil {
+		workflowVarHandler = handlers.NewWorkflowVariableHandler(svc.WorkflowVar)
+	}
+
+	var workflowFolderHandler *handlers.WorkflowFolderHandler
+	if svc.WorkflowFolder != nil {
+		workflowFolderHandler = handlers.NewWorkflowFolderHandler(svc.WorkflowFolder)
+	}
+
 	// Auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(jwtManager, redisClient)
 	tenantMiddleware := middleware.NewTenantMiddleware(svc.Workspace)
@@ -236,6 +256,9 @@ func NewServer(
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
+			if apiKeyMiddleware != nil {
+				r.Use(apiKeyMiddleware.Authenticate)
+			}
 			r.Use(authMiddleware.Authenticate)
 			r.Use(rateLimiter.Limit(1000, time.Minute)) // 1000 requests per minute
 
@@ -248,6 +271,13 @@ func NewServer(
 			// User
 			r.Get("/users/me", userHandler.GetCurrentUser)
 			r.Put("/users/me", userHandler.UpdateCurrentUser)
+
+			// API Keys
+			if apiKeyHandler != nil {
+				r.Get("/api-keys", apiKeyHandler.List)
+				r.Post("/api-keys", apiKeyHandler.Create)
+				r.Delete("/api-keys/{keyID}", apiKeyHandler.Revoke)
+			}
 
 			// Node Types (for workflow editor)
 			r.Get("/node-types", nodeTypeHandler.ListNodeTypes)
@@ -281,6 +311,15 @@ func NewServer(
 				r.Put("/members/{userID}", workspaceHandler.UpdateMemberRole)
 				r.Delete("/members/{userID}", workspaceHandler.RemoveMember)
 
+				// Workflow Folders
+				if workflowFolderHandler != nil {
+					r.Get("/folders", workflowFolderHandler.List)
+					r.Get("/folders/tree", workflowFolderHandler.GetTree)
+					r.Post("/folders", workflowFolderHandler.Create)
+					r.Put("/folders/{folderID}", workflowFolderHandler.Update)
+					r.Delete("/folders/{folderID}", workflowFolderHandler.Delete)
+				}
+
 				// Workflows
 				r.Get("/workflows", workflowHandler.List)
 				r.Post("/workflows", workflowHandler.Create)
@@ -297,6 +336,14 @@ func NewServer(
 				// Version Diff
 				r.Get("/workflows/{workflowID}/compare-versions", versionDiffHandler.Compare)
 				r.Get("/workflows/{workflowID}/versions/{version}/compare", versionDiffHandler.CompareWithCurrent)
+
+				// Workflow Variables
+				if workflowVarHandler != nil {
+					r.Get("/workflows/{workflowID}/variables", workflowVarHandler.List)
+					r.Post("/workflows/{workflowID}/variables", workflowVarHandler.Create)
+					r.Put("/workflows/{workflowID}/variables/{variableID}", workflowVarHandler.Update)
+					r.Delete("/workflows/{workflowID}/variables/{variableID}", workflowVarHandler.Delete)
+				}
 
 				r.Get("/workflows/{workflowID}/export", workflowHandler.Export)
 				r.Post("/workflows/{workflowID}/duplicate", workflowHandler.Duplicate)
