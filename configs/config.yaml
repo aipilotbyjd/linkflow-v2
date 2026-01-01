@@ -21,7 +21,7 @@ app:
   environment: development            # development, staging, production, test
   debug: true                         # Enable debug mode (disable in production)
   url: http://localhost:8080          # Public URL of the API
-  frontend_url: http://localhost:3000 # Frontend application URL
+  frontend_url: http://localhost:3000,http://localhost:5173 # Frontend application URL (comma-separated for multiple origins)
   execution_retention_days: 30        # Days to keep execution history
   graceful_shutdown_delay: 5s         # Delay before shutdown to drain connections
 
@@ -231,6 +231,7 @@ cors:
   enabled: true
   allowed_origins:
     - http://localhost:3000
+    - http://localhost:5173
   allowed_methods:
     - GET
     - POST

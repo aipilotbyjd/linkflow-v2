@@ -309,6 +309,38 @@
 						},
 						"description": "Disable multi-factor authentication"
 					}
+				},
+				{
+					"name": "OAuth Login Redirect",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/oauth/{{provider}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "oauth", "{{provider}}"]
+						},
+						"description": "Redirect user to OAuth provider for login. Supported providers: google, github, etc."
+					}
+				},
+				{
+					"name": "OAuth Login Callback",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/auth/oauth/{{provider}}/callback?code={{oauth_code}}&state={{oauth_state}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "auth", "oauth", "{{provider}}", "callback"],
+							"query": [
+								{ "key": "code", "value": "{{oauth_code}}" },
+								{ "key": "state", "value": "{{oauth_state}}" }
+							]
+						},
+						"description": "OAuth callback endpoint for login. Creates or authenticates user and returns JWT tokens."
+					}
 				}
 			],
 			"description": "User authentication and account security"
@@ -350,6 +382,73 @@
 				}
 			],
 			"description": "User profile management"
+		},
+		{
+			"name": "🔑 API Keys",
+			"item": [
+				{
+					"name": "List API Keys",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/api-keys",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "api-keys"]
+						},
+						"description": "List all API keys for the current user"
+					}
+				},
+				{
+					"name": "Create API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('api_key_id', data.id);",
+									"    // Save the key - it's only shown once!",
+									"    pm.environment.set('api_key', data.key);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"CI/CD Pipeline Key\",\n    \"expires_at\": \"2025-12-31T23:59:59Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/api-keys",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "api-keys"]
+						},
+						"description": "Create a new API key. The key value is only returned once - save it securely!"
+					}
+				},
+				{
+					"name": "Revoke API Key",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/api-keys/{{api_key_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "api-keys", "{{api_key_id}}"]
+						},
+						"description": "Revoke an API key"
+					}
+				}
+			],
+			"description": "API key management for programmatic access"
 		},
 		{
 			"name": "🏢 Workspaces",
@@ -527,6 +626,116 @@
 				}
 			],
 			"description": "Workspace and team management"
+		},
+		{
+			"name": "📁 Projects",
+			"item": [
+				{
+					"name": "List Projects",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects"]
+						},
+						"description": "List all projects in workspace"
+					}
+				},
+				{
+					"name": "Get Project Tree",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/tree",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "tree"]
+						},
+						"description": "Get projects as a hierarchical tree structure with nested workflows"
+					}
+				},
+				{
+					"name": "Create Project",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('project_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Marketing Automations\",\n    \"description\": \"All marketing-related workflows\",\n    \"color\": \"#3B82F6\",\n    \"parent_id\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects"]
+						},
+						"description": "Create a new project (folder for workflows)"
+					}
+				},
+				{
+					"name": "Get Project",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+						},
+						"description": "Get project details"
+					}
+				},
+				{
+					"name": "Update Project",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Project Name\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+						},
+						"description": "Update project details"
+					}
+				},
+				{
+					"name": "Delete Project",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+						},
+						"description": "Delete a project. Workflows in the project will be moved to root."
+					}
+				}
+			],
+			"description": "Project management - organize workflows into folders"
 		},
 		{
 			"name": "⚡ Workflows",
