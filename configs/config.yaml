@@ -46,7 +46,7 @@ database:
   user: postgres
   # password: set via DATABASE_PASSWORD or DATABASE_URL
   name: linkflow
-  sslmode: disable                    # Use 'require' in production
+  sslmode: disable
   max_open_conns: 25
   max_idle_conns: 10
   conn_max_lifetime: 30m

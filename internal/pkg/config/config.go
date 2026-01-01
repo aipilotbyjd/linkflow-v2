@@ -375,6 +375,9 @@ func Load() (*Config, error) {
 
 	loadEnvOverlay()
 
+	// Ensure env vars override config file values
+	applyEnvOverrides()
+
 	cfg := buildConfig()
 
 	if err := cfg.Validate(); err != nil {
@@ -407,6 +410,31 @@ func loadEnvOverlay() {
 		viper.SetConfigName(fmt.Sprintf("config.%s", env))
 		if err := viper.MergeInConfig(); err == nil {
 			log.Info().Str("environment", env).Str("file", viper.ConfigFileUsed()).Msg("Merged environment-specific config")
+		}
+	}
+}
+
+// applyEnvOverrides ensures environment variables always override config file values
+func applyEnvOverrides() {
+	overrides := map[string]string{
+		"database.sslmode":  "DATABASE_SSLMODE",
+		"database.host":     "DATABASE_HOST",
+		"database.port":     "DATABASE_PORT",
+		"database.user":     "DATABASE_USER",
+		"database.password": "DATABASE_PASSWORD",
+		"database.name":     "DATABASE_NAME",
+		"redis.host":        "REDIS_HOST",
+		"redis.port":        "REDIS_PORT",
+		"redis.password":    "REDIS_PASSWORD",
+		"redis.tls":         "REDIS_TLS",
+		"encryption.key":    "ENCRYPTION_KEY",
+		"jwt.secret":        "JWT_SECRET",
+		"app.debug":         "APP_DEBUG",
+	}
+
+	for key, envVar := range overrides {
+		if val := os.Getenv(envVar); val != "" {
+			viper.Set(key, val)
 		}
 	}
 }
