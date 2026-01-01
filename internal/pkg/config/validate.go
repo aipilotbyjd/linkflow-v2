@@ -510,8 +510,10 @@ func (c *Config) validateProduction() []error {
 		errs = append(errs, errors.New("app.debug must be false in production"))
 	}
 
-	if c.Database.SSLMode == "disable" {
-		errs = append(errs, errors.New("database.sslmode must not be 'disable' in production"))
+	// Allow sslmode=disable for internal Docker network connections
+	// (when connecting to container hostnames like 'postgres', 'db', etc.)
+	if c.Database.SSLMode == "disable" && !isInternalDatabaseHost(c.Database.Host) {
+		errs = append(errs, errors.New("database.sslmode must not be 'disable' in production (unless connecting to internal Docker network)"))
 	}
 
 	if !c.Redis.TLS {
@@ -587,5 +589,45 @@ func contains(slice []string, item string) bool {
 			return true
 		}
 	}
+	return false
+}
+
+// isInternalDatabaseHost checks if the database host is an internal/private network address
+// where SSL is not required (e.g., Docker container names, localhost, private IPs)
+func isInternalDatabaseHost(host string) bool {
+	host = strings.ToLower(host)
+
+	// Common Docker/Kubernetes service names
+	internalHosts := []string{
+		"localhost",
+		"127.0.0.1",
+		"postgres",
+		"postgresql",
+		"db",
+		"database",
+		"pg",
+	}
+
+	for _, internal := range internalHosts {
+		if host == internal {
+			return true
+		}
+	}
+
+	// Check for private IP ranges (10.x.x.x, 172.16-31.x.x, 192.168.x.x)
+	if strings.HasPrefix(host, "10.") ||
+		strings.HasPrefix(host, "192.168.") ||
+		strings.HasPrefix(host, "172.") {
+		return true
+	}
+
+	// Check for .local or .internal domains (common in Docker/K8s)
+	if strings.HasSuffix(host, ".local") ||
+		strings.HasSuffix(host, ".internal") ||
+		strings.HasSuffix(host, ".svc") ||
+		strings.HasSuffix(host, ".svc.cluster.local") {
+		return true
+	}
+
 	return false
 }
