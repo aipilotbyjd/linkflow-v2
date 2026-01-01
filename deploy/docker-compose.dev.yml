@@ -37,7 +37,7 @@ services:
       APP_ENVIRONMENT: development
       APP_DEBUG: "true"
       APP_URL: http://localhost:8090
-      APP_FRONTEND_URL: http://localhost:3000
+      APP_FRONTEND_URL: http://localhost:3000,http://localhost:5173
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_USER: postgres
