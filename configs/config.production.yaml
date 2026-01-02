@@ -18,7 +18,7 @@ server:
   max_header_bytes: 1048576
 
 database:
-  sslmode: require
+  sslmode: disable
   max_open_conns: 50
   max_idle_conns: 25
   conn_max_lifetime: 30m
@@ -27,7 +27,7 @@ database:
   log_queries: false
 
 redis:
-  tls: true
+  tls: false
   pool_size: 20
   min_idle_conns: 10
   max_retries: 5
