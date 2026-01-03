@@ -15,6 +15,7 @@ type User struct {
 	FirstName    string         `gorm:"size:100" json:"first_name"`
 	LastName     string         `gorm:"size:100" json:"last_name"`
 	AvatarURL    *string        `gorm:"size:500" json:"avatar_url,omitempty"`
+	Timezone     string         `gorm:"size:50;default:UTC" json:"timezone"`
 	Status       string         `gorm:"size:20;default:active;index" json:"status"`
 	EmailVerified bool          `gorm:"default:false" json:"email_verified"`
 	MFAEnabled   bool           `gorm:"default:false" json:"mfa_enabled"`

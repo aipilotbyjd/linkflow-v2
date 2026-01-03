@@ -14,6 +14,7 @@ func UserToResponse(u *models.User) dto.UserResponse {
 		FirstName:     u.FirstName,
 		LastName:      u.LastName,
 		AvatarURL:     u.AvatarURL,
+		Timezone:      u.Timezone,
 		EmailVerified: u.EmailVerified,
 		MFAEnabled:    u.MFAEnabled,
 		CreatedAt:     u.CreatedAt.Unix(),

@@ -98,6 +98,7 @@ func (h *WorkspaceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Name,
 		Slug:        req.Slug,
 		Description: req.Description,
+		Timezone:    req.Timezone,
 	})
 	if err != nil {
 		if err == services.ErrSlugExists {
@@ -182,6 +183,7 @@ func (h *WorkspaceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Name:        req.Name,
 		Description: req.Description,
 		LogoURL:     req.LogoURL,
+		Timezone:    req.Timezone,
 		Settings:    req.Settings,
 	})
 	if err != nil {
@@ -198,6 +200,7 @@ func (h *WorkspaceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Slug:        workspace.Slug,
 		Description: workspace.Description,
 		LogoURL:     workspace.LogoURL,
+		Timezone:    workspace.Timezone,
 		PlanID:      workspace.PlanID,
 		CreatedAt:   workspace.CreatedAt.Unix(),
 	}

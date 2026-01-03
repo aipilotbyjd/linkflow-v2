@@ -7,6 +7,7 @@ type UpdateUserRequest struct {
 	LastName  *string `json:"last_name,omitempty" validate:"omitempty,min=1,max=100"`
 	Username  *string `json:"username,omitempty" validate:"omitempty,min=3,max=50"`
 	AvatarURL *string `json:"avatar_url,omitempty" validate:"omitempty,url"`
+	Timezone  *string `json:"timezone,omitempty" validate:"omitempty,max=50"`
 }
 
 // User responses
@@ -18,6 +19,7 @@ type UserResponse struct {
 	FirstName     string  `json:"first_name"`
 	LastName      string  `json:"last_name"`
 	AvatarURL     *string `json:"avatar_url,omitempty"`
+	Timezone      string  `json:"timezone"`
 	EmailVerified bool    `json:"email_verified"`
 	MFAEnabled    bool    `json:"mfa_enabled"`
 	CreatedAt     int64   `json:"created_at"`

@@ -14,6 +14,7 @@ type Workspace struct {
 	Slug             string         `gorm:"size:100;uniqueIndex;not null" json:"slug"`
 	Description      *string        `gorm:"type:text" json:"description,omitempty"`
 	LogoURL          *string        `gorm:"size:500" json:"logo_url,omitempty"`
+	Timezone         string         `gorm:"size:50;default:UTC" json:"timezone"`
 	Settings         JSON           `gorm:"type:jsonb;default:'{}'" json:"settings"`
 	PlanID           string         `gorm:"size:50;default:free" json:"plan_id"`
 	StripeCustomerID *string        `gorm:"size:255" json:"-"`

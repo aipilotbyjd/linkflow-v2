@@ -13,6 +13,7 @@ func WorkspaceToResponse(ws *models.Workspace) dto.WorkspaceResponse {
 		Slug:        ws.Slug,
 		Description: ws.Description,
 		LogoURL:     ws.LogoURL,
+		Timezone:    ws.Timezone,
 		PlanID:      ws.PlanID,
 		CreatedAt:   ws.CreatedAt.Unix(),
 	}

@@ -439,14 +439,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\"\n}"
+							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"timezone\": \"America/New_York\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/me",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "users", "me"]
 						},
-						"description": "Update current user profile"
+						"description": "Update current user profile. Timezone examples: UTC, America/New_York, Europe/London, Asia/Tokyo"
 					}
 				}
 			],
@@ -574,14 +574,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"My Workspace\",\n    \"slug\": \"my-workspace\",\n    \"description\": \"Main workspace for automation\"\n}"
+							"raw": "{\n    \"name\": \"My Workspace\",\n    \"slug\": \"my-workspace\",\n    \"description\": \"Main workspace for automation\",\n    \"timezone\": \"UTC\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces"]
 						},
-						"description": "Create a new workspace"
+						"description": "Create a new workspace. Timezone defaults to UTC if not specified."
 					}
 				},
 				{
@@ -606,14 +606,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Workspace Name\",\n    \"description\": \"Updated description\"\n}"
+							"raw": "{\n    \"name\": \"Updated Workspace Name\",\n    \"description\": \"Updated description\",\n    \"timezone\": \"America/Los_Angeles\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
 						},
-						"description": "Update workspace settings"
+						"description": "Update workspace settings. Timezone examples: UTC, America/New_York, Europe/London, Asia/Tokyo, America/Los_Angeles"
 					}
 				},
 				{

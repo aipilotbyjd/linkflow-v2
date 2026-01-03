@@ -53,6 +53,7 @@ type UpdateUserInput struct {
 	LastName  *string
 	Username  *string
 	AvatarURL *string
+	Timezone  *string
 }
 
 // Update updates a user's profile information.
@@ -76,6 +77,9 @@ func (s *UserService) Update(ctx context.Context, userID uuid.UUID, input Update
 	}
 	if input.AvatarURL != nil {
 		user.AvatarURL = input.AvatarURL
+	}
+	if input.Timezone != nil {
+		user.Timezone = *input.Timezone
 	}
 
 	if err := s.userRepo.Update(ctx, user); err != nil {

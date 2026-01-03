@@ -58,6 +58,7 @@ type CreateWorkspaceInput struct {
 	Name        string
 	Slug        string
 	Description *string
+	Timezone    *string
 }
 
 // Create creates a new workspace with the owner as the first member.
@@ -76,11 +77,17 @@ func (s *WorkspaceService) Create(ctx context.Context, input CreateWorkspaceInpu
 		return nil, ErrSlugExists
 	}
 
+	timezone := "UTC"
+	if input.Timezone != nil && *input.Timezone != "" {
+		timezone = *input.Timezone
+	}
+
 	workspace := &models.Workspace{
 		OwnerID:     input.OwnerID,
 		Name:        input.Name,
 		Slug:        slug,
 		Description: input.Description,
+		Timezone:    timezone,
 		PlanID:      models.PlanFree,
 	}
 
@@ -144,6 +151,7 @@ type UpdateWorkspaceInput struct {
 	Name        *string
 	Description *string
 	LogoURL     *string
+	Timezone    *string
 	Settings    models.JSON
 }
 
@@ -165,6 +173,9 @@ func (s *WorkspaceService) Update(ctx context.Context, workspaceID uuid.UUID, in
 	}
 	if input.LogoURL != nil {
 		workspace.LogoURL = input.LogoURL
+	}
+	if input.Timezone != nil {
+		workspace.Timezone = *input.Timezone
 	}
 	if input.Settings != nil {
 		workspace.Settings = input.Settings

@@ -54,6 +54,7 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 			FirstName:     user.FirstName,
 			LastName:      user.LastName,
 			AvatarURL:     user.AvatarURL,
+			Timezone:      user.Timezone,
 			EmailVerified: user.EmailVerified,
 			MFAEnabled:    user.MFAEnabled,
 			CreatedAt:     user.CreatedAt.Unix(),
@@ -88,6 +89,7 @@ func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 		LastName:  req.LastName,
 		Username:  req.Username,
 		AvatarURL: req.AvatarURL,
+		Timezone:  req.Timezone,
 	})
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to update user")
@@ -101,6 +103,7 @@ func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 		FirstName:     user.FirstName,
 		LastName:      user.LastName,
 		AvatarURL:     user.AvatarURL,
+		Timezone:      user.Timezone,
 		EmailVerified: user.EmailVerified,
 		MFAEnabled:    user.MFAEnabled,
 		CreatedAt:     user.CreatedAt.Unix(),
