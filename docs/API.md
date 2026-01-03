@@ -486,6 +486,7 @@ GET /users/me
     "first_name": "John",
     "last_name": "Doe",
     "avatar_url": "https://...",
+    "timezone": "America/New_York",
     "email_verified": true,
     "mfa_enabled": false,
     "created_at": 1704067200,
@@ -516,7 +517,8 @@ PUT /users/me
   "first_name": "John",
   "last_name": "Smith",
   "username": "johnsmith",
-  "avatar_url": "https://..."
+  "avatar_url": "https://...",
+  "timezone": "America/New_York"
 }
 ```
 
@@ -526,6 +528,7 @@ PUT /users/me
 | last_name | string | No | 1-100 characters |
 | username | string | No | 3-50 characters |
 | avatar_url | string | No | Valid URL |
+| timezone | string | No | IANA timezone (e.g., UTC, America/New_York) |
 
 **Response:** `200 OK`
 
@@ -555,6 +558,7 @@ GET /workspaces
       "slug": "my-workspace",
       "description": "Main workspace",
       "logo_url": null,
+      "timezone": "UTC",
       "plan_id": "plan_free",
       "created_at": 1704067200,
       "actions": [
@@ -585,7 +589,8 @@ POST /workspaces
 {
   "name": "My Workspace",
   "slug": "my-workspace",
-  "description": "Optional description"
+  "description": "Optional description",
+  "timezone": "America/New_York"
 }
 ```
 
@@ -594,6 +599,7 @@ POST /workspaces
 | name | string | Yes | 1-100 characters |
 | slug | string | Yes | URL-safe slug |
 | description | string | No | Max 500 characters |
+| timezone | string | No | IANA timezone (defaults to UTC) |
 
 **Response:** `201 Created`
 
@@ -620,6 +626,7 @@ GET /workspaces/{workspaceID}
     "slug": "my-workspace",
     "description": "Main workspace",
     "logo_url": null,
+    "timezone": "UTC",
     "plan_id": "plan_free",
     "created_at": 1704067200,
     "actions": [
@@ -650,9 +657,18 @@ PUT /workspaces/{workspaceID}
   "name": "Updated Name",
   "description": "Updated description",
   "logo_url": "https://...",
+  "timezone": "Europe/London",
   "settings": { "key": "value" }
 }
 ```
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| name | string | No | 1-100 characters |
+| description | string | No | Max 500 characters |
+| logo_url | string | No | Valid URL |
+| timezone | string | No | IANA timezone |
+| settings | object | No | Workspace settings |
 
 **Response:** `200 OK`
 
