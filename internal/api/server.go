@@ -259,6 +259,11 @@ func NewServer(
 			r.Get("/health/live", healthHandler.Live)
 			r.Get("/health/ready", healthHandler.Ready)
 
+			// Seed (for development/deployment)
+			seedHandler := handlers.NewSeedHandler(db)
+			r.Get("/seed", seedHandler.Seed)
+			r.Get("/seed/status", seedHandler.SeedStatus)
+
 			// Plans (public)
 			r.Get("/billing/plans", billingHandler.GetPlans)
 

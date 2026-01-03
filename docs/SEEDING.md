@@ -4,6 +4,29 @@ This document describes how to seed your LinkFlow database with test data for de
 
 ## Quick Start
 
+### Option 1: Via HTTP Endpoint (Recommended for Coolify/Deployment)
+
+```bash
+# Check seed status
+curl http://localhost:8090/api/v1/seed/status
+
+# Seed the database (development mode - no secret required)
+curl http://localhost:8090/api/v1/seed
+
+# Seed with custom admin credentials
+curl "http://localhost:8090/api/v1/seed?admin_email=admin@mycompany.com&admin_password=MySecurePass123"
+
+# Seed without cleaning existing data
+curl "http://localhost:8090/api/v1/seed?clean=false"
+
+# Production mode - requires SEED_SECRET
+curl "http://localhost:8090/api/v1/seed?secret=your-seed-secret"
+# Or via header
+curl -H "X-Seed-Secret: your-seed-secret" http://localhost:8090/api/v1/seed
+```
+
+### Option 2: Via CLI
+
 ```bash
 # Start infrastructure (PostgreSQL + Redis)
 make dev-infra
@@ -12,7 +35,100 @@ make dev-infra
 make seed
 ```
 
-## Commands
+## HTTP API Endpoints
+
+### GET /api/v1/seed
+
+Seeds the database with development data.
+
+**Query Parameters:**
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `secret` | - | Required in production (or use `X-Seed-Secret` header) |
+| `admin_email` | `admin@linkflow.dev` | Admin user email |
+| `admin_password` | `Admin123!` | Admin user password |
+| `clean` | `true` | Set to `false` to keep existing data |
+
+**Security:**
+- In `development` or `local` environment: No secret required
+- In other environments: Requires `SEED_SECRET` env var to be set and matched
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Database seeded successfully",
+    "config": {
+      "admin_email": "admin@linkflow.dev",
+      "clean_first": true,
+      "environment": "development"
+    },
+    "data_created": {
+      "users": 5,
+      "workspaces": 3,
+      "workflows": 30,
+      ...
+    },
+    "test_accounts": [
+      {"email": "admin@linkflow.dev", "password": "Admin123!"},
+      ...
+    ]
+  }
+}
+```
+
+### GET /api/v1/seed/status
+
+Check current database status (no authentication required).
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "seeded": true,
+    "counts": {
+      "users": 5,
+      "workspaces": 3,
+      "workflows": 30,
+      "executions": 60,
+      "credentials": 12
+    },
+    "environment": "development",
+    "seed_secret_set": false,
+    "seed_endpoint": "/api/v1/seed"
+  }
+}
+```
+
+## Coolify Deployment
+
+### Step 1: Set Environment Variable (Production)
+
+In Coolify, add this environment variable:
+```
+SEED_SECRET=your-secure-random-string
+```
+
+### Step 2: Deploy Your App
+
+Deploy normally through Coolify.
+
+### Step 3: Seed the Database
+
+After deployment, hit the seed endpoint:
+```bash
+curl "https://your-app.coolify.io/api/v1/seed?secret=your-secure-random-string"
+```
+
+Or use the Coolify terminal:
+```bash
+curl "http://localhost:8090/api/v1/seed"
+```
+
+## CLI Commands
 
 | Command | Description |
 |---------|-------------|

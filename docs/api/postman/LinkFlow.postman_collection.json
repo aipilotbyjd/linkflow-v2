@@ -97,6 +97,75 @@
 			"description": "Health check endpoints for monitoring and Kubernetes probes"
 		},
 		{
+			"name": "🌱 Seed",
+			"item": [
+				{
+					"name": "Seed Status",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/seed/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "seed", "status"]
+						},
+						"description": "Check current database seed status - shows record counts"
+					}
+				},
+				{
+					"name": "Seed Database",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/seed",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "seed"]
+						},
+						"description": "Seed database with development data (no auth needed in development mode)"
+					}
+				},
+				{
+					"name": "Seed Database (with options)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/seed?admin_email=admin@linkflow.dev&admin_password=Admin123!&clean=true",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "seed"],
+							"query": [
+								{ "key": "admin_email", "value": "admin@linkflow.dev", "description": "Admin user email" },
+								{ "key": "admin_password", "value": "Admin123!", "description": "Admin user password" },
+								{ "key": "clean", "value": "true", "description": "Clean existing data first (true/false)" }
+							]
+						},
+						"description": "Seed database with custom admin credentials"
+					}
+				},
+				{
+					"name": "Seed Database (Production)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [
+							{ "key": "X-Seed-Secret", "value": "{{seed_secret}}", "description": "Seed secret for production" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/seed",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "seed"]
+						},
+						"description": "Seed database in production mode (requires SEED_SECRET env var)"
+					}
+				}
+			],
+			"description": "Database seeding endpoints for development and deployment"
+		},
+		{
 			"name": "🔐 Authentication",
 			"item": [
 				{
