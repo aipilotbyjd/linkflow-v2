@@ -786,13 +786,26 @@ GET /workspaces/{workspaceID}/workflows
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| status | string | Filter by status: `draft`, `active`, `inactive` |
-| search | string | Search by name |
-| tags | string | Filter by tags (comma-separated) |
-| page | int | Page number |
-| per_page | int | Items per page |
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| status | string | Filter by status | `?status=active` |
+| search | string | Search in name/description | `?search=email` |
+| tags | string | Filter by tags (comma-separated) | `?tags=production,critical` |
+| created_after | string | Filter by creation date (RFC3339 or YYYY-MM-DD) | `?created_after=2024-01-01` |
+| created_before | string | Filter by creation date | `?created_before=2024-12-31` |
+| updated_after | string | Filter by update date | `?updated_after=2024-01-01` |
+| updated_before | string | Filter by update date | `?updated_before=2024-12-31` |
+| sort_by | string | Sort field: `name`, `created_at`, `updated_at`, `execution_count`, `last_executed_at` | `?sort_by=name` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=asc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Status Values:** `draft`, `active`, `inactive`, `archived`
+
+**Example Request:**
+```
+GET /workspaces/{id}/workflows?status=active&search=email&tags=production&sort_by=name&order=asc&page=1&per_page=20
+```
 
 **Response:** `200 OK`
 
@@ -1260,13 +1273,27 @@ GET /workspaces/{workspaceID}/executions
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| workflow_id | uuid | Filter by workflow |
-| status | string | `pending`, `running`, `success`, `failed`, `cancelled` |
-| trigger_type | string | `manual`, `webhook`, `schedule` |
-| start_date | timestamp | Filter by start date |
-| end_date | timestamp | Filter by end date |
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| workflow_id | uuid | Filter by workflow | `?workflow_id=uuid` |
+| status | string | Filter by status | `?status=failed` |
+| trigger_type | string | Filter by trigger type | `?trigger_type=webhook` |
+| start_date | string | Filter by start date (RFC3339 or YYYY-MM-DD) | `?start_date=2024-01-01` |
+| end_date | string | Filter by end date | `?end_date=2024-12-31` |
+| search | string | Search in error messages | `?search=timeout` |
+| sort_by | string | Sort field: `queued_at`, `started_at`, `completed_at`, `duration` | `?sort_by=started_at` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=asc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Status Values:** `queued`, `running`, `completed`, `failed`, `cancelled`, `timeout`
+
+**Trigger Types:** `manual`, `webhook`, `schedule`
+
+**Example Request:**
+```
+GET /workspaces/{id}/executions?status=failed&trigger_type=webhook&start_date=2024-01-01&sort_by=started_at&order=desc
+```
 
 **Response:** `200 OK`
 
@@ -1516,6 +1543,24 @@ GET /workspaces/{workspaceID}/credentials
 
 **Headers:** `Authorization: Bearer <token>`
 
+**Query Parameters:**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| type | string | Filter by credential type | `?type=api_key` |
+| search | string | Search in name/description | `?search=github` |
+| sort_by | string | Sort field: `name`, `created_at`, `type`, `last_used_at` | `?sort_by=name` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=asc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Credential Types:** `api_key`, `oauth2`, `basic`, `bearer`, `custom`
+
+**Example Request:**
+```
+GET /workspaces/{id}/credentials?type=api_key&search=github&sort_by=name&order=asc
+```
+
 **Response:** `200 OK`
 
 ```json
@@ -1681,6 +1726,23 @@ GET /workspaces/{workspaceID}/schedules
 ```
 
 **Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| is_active | boolean | Filter by active status | `?is_active=true` |
+| workflow_id | uuid | Filter by workflow | `?workflow_id=uuid` |
+| search | string | Search in name/description | `?search=daily` |
+| sort_by | string | Sort field: `created_at`, `next_run_at`, `last_run_at` | `?sort_by=next_run_at` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=asc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Example Request:**
+```
+GET /workspaces/{id}/schedules?is_active=true&workflow_id=uuid&sort_by=next_run_at&order=asc
+```
 
 **Response:** `200 OK`
 
@@ -1871,10 +1933,22 @@ GET /templates
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| page | int | Page number |
-| per_page | int | Items per page |
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| category | string | Filter by category | `?category=communication` |
+| search | string | Search in name/description | `?search=slack` |
+| is_featured | boolean | Filter featured templates | `?is_featured=true` |
+| sort_by | string | Sort field: `name`, `created_at`, `use_count` | `?sort_by=use_count` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=desc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Categories:** `communication`, `data`, `automation`, `integration`, `marketing`, `devops`
+
+**Example Request:**
+```
+GET /templates?category=communication&is_featured=true&sort_by=use_count&order=desc
+```
 
 **Response:** `200 OK`
 
@@ -2424,6 +2498,26 @@ GET /workspaces/{workspaceID}/alerts
 ```
 
 **Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| type | string | Filter by alert type | `?type=workflow_failed` |
+| is_active | boolean | Filter by active status | `?is_active=true` |
+| workflow_id | uuid | Filter by workflow | `?workflow_id=uuid` |
+| search | string | Search in name | `?search=error` |
+| sort_by | string | Sort field: `name`, `created_at`, `type` | `?sort_by=name` |
+| order | string | Sort order: `asc`, `desc` (default: desc) | `?order=asc` |
+| page | int | Page number (default: 1) | `?page=2` |
+| per_page | int | Items per page (default: 20, max: 100) | `?per_page=50` |
+
+**Alert Types:** `workflow_failed`, `execution_timeout`, `high_error_rate`, `schedule_missed`, `credential_expiring`, `usage_limit`
+
+**Example Request:**
+```
+GET /workspaces/{id}/alerts?type=workflow_failed&is_active=true&sort_by=created_at&order=desc
+```
 
 **Response:** `200 OK`
 

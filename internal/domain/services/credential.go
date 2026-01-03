@@ -109,6 +109,15 @@ func (s *CredentialService) GetByWorkspace(ctx context.Context, workspaceID uuid
 	return credentials, total, nil
 }
 
+// GetByWorkspaceWithFilters returns paginated credentials for a workspace with filters.
+func (s *CredentialService) GetByWorkspaceWithFilters(ctx context.Context, workspaceID uuid.UUID, filter *repositories.CredentialFilter, opts *repositories.ListOptions) ([]models.Credential, int64, error) {
+	credentials, total, err := s.credentialRepo.FindWithFilters(ctx, workspaceID, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get credentials: %w", err)
+	}
+	return credentials, total, nil
+}
+
 // GetDecrypted returns a credential with its decrypted data.
 func (s *CredentialService) GetDecrypted(ctx context.Context, id uuid.UUID) (*models.Credential, *models.CredentialData, error) {
 	credential, err := s.credentialRepo.FindByID(ctx, id)

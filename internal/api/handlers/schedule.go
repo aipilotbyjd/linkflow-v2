@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
+	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
@@ -29,7 +30,22 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := dto.ParsePagination(r)
-	schedules, total, err := h.scheduleSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
+	filters := dto.ParseScheduleFilters(r)
+
+	// Convert DTO filters to repository filters
+	repoFilter := &repositories.ScheduleFilter{
+		IsActive: filters.IsActive,
+		Search:   filters.Search,
+		SortBy:   filters.SortBy,
+		Order:    filters.Order,
+	}
+	if filters.WorkflowID != nil {
+		if wfID, err := uuid.Parse(*filters.WorkflowID); err == nil {
+			repoFilter.WorkflowID = &wfID
+		}
+	}
+
+	schedules, total, err := h.scheduleSvc.GetByWorkspaceWithFilters(r.Context(), wsCtx.WorkspaceID, repoFilter, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list schedules")
 		return
@@ -88,21 +104,22 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Build links
+	// Build links with filter query string preservation
 	basePath := "/api/v1/workspaces/" + wsID + "/schedules"
+	filterQS := filters.ToQueryString()
 	links := &dto.Links{
-		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page, pg.PerPage, filterQS),
 	}
 	meta := pg.NewMeta(total)
 	if pg.Page < meta.TotalPages {
-		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page+1, pg.PerPage, filterQS)
 	}
 	if pg.Page > 1 {
-		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page-1, pg.PerPage, filterQS)
 	}
-	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d%s", basePath, pg.PerPage, filterQS)
 	if meta.TotalPages > 0 {
-		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, meta.TotalPages, pg.PerPage, filterQS)
 	}
 
 	// Apply field selection

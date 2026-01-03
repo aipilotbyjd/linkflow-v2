@@ -116,6 +116,15 @@ func (s *ScheduleService) GetByWorkspace(ctx context.Context, workspaceID uuid.U
 	return schedules, total, nil
 }
 
+// GetByWorkspaceWithFilters returns paginated schedules for a workspace with filters.
+func (s *ScheduleService) GetByWorkspaceWithFilters(ctx context.Context, workspaceID uuid.UUID, filter *repositories.ScheduleFilter, opts *repositories.ListOptions) ([]models.Schedule, int64, error) {
+	schedules, total, err := s.scheduleRepo.FindWithFilters(ctx, workspaceID, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get schedules: %w", err)
+	}
+	return schedules, total, nil
+}
+
 // GetDue returns all schedules that are due to run.
 func (s *ScheduleService) GetDue(ctx context.Context) ([]models.Schedule, error) {
 	schedules, err := s.scheduleRepo.FindDue(ctx)

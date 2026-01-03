@@ -5,9 +5,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"gorm.io/gorm"
 )
+
+// WorkflowFilter contains filter parameters for workflow queries
+type WorkflowFilter struct {
+	Status        *string
+	Search        *string
+	Tags          []string
+	CreatedAfter  *time.Time
+	CreatedBefore *time.Time
+	UpdatedAfter  *time.Time
+	UpdatedBefore *time.Time
+	SortBy        string
+	Order         string
+}
 
 type WorkflowRepository struct {
 	*BaseRepository[models.Workflow]
@@ -111,6 +125,65 @@ func (r *WorkflowRepository) Search(ctx context.Context, workspaceID uuid.UUID, 
 	}
 
 	err := dbQuery.Find(&workflows).Error
+	return workflows, total, err
+}
+
+// FindWithFilters returns workflows matching the given filters
+func (r *WorkflowRepository) FindWithFilters(ctx context.Context, workspaceID uuid.UUID, filter *WorkflowFilter, opts *ListOptions) ([]models.Workflow, int64, error) {
+	var workflows []models.Workflow
+	var total int64
+
+	query := r.DB().WithContext(ctx).Where("workspace_id = ?", workspaceID)
+
+	// Apply filters
+	if filter != nil {
+		if filter.Status != nil {
+			query = query.Where("status = ?", *filter.Status)
+		}
+		if filter.Search != nil && *filter.Search != "" {
+			searchPattern := "%" + *filter.Search + "%"
+			query = query.Where("(name ILIKE ? OR description ILIKE ?)", searchPattern, searchPattern)
+		}
+		if len(filter.Tags) > 0 {
+			// PostgreSQL array overlap operator
+			query = query.Where("tags && ?", pq.Array(filter.Tags))
+		}
+		if filter.CreatedAfter != nil {
+			query = query.Where("created_at >= ?", *filter.CreatedAfter)
+		}
+		if filter.CreatedBefore != nil {
+			query = query.Where("created_at <= ?", *filter.CreatedBefore)
+		}
+		if filter.UpdatedAfter != nil {
+			query = query.Where("updated_at >= ?", *filter.UpdatedAfter)
+		}
+		if filter.UpdatedBefore != nil {
+			query = query.Where("updated_at <= ?", *filter.UpdatedBefore)
+		}
+	}
+
+	// Count total before pagination
+	query.Model(&models.Workflow{}).Count(&total)
+
+	// Apply sorting
+	sortBy := "created_at"
+	order := "desc"
+	if filter != nil {
+		if filter.SortBy != "" {
+			sortBy = filter.SortBy
+		}
+		if filter.Order != "" {
+			order = filter.Order
+		}
+	}
+	query = query.Order(sortBy + " " + order)
+
+	// Apply pagination
+	if opts != nil {
+		query = query.Offset(opts.Offset).Limit(opts.Limit)
+	}
+
+	err := query.Find(&workflows).Error
 	return workflows, total, err
 }
 

@@ -62,3 +62,54 @@ func (r *CredentialRepository) UpdateData(ctx context.Context, credentialID uuid
 		Where("id = ?", credentialID).
 		Update("data", encryptedData).Error
 }
+
+// CredentialFilter contains filter parameters for credential queries
+type CredentialFilter struct {
+	Type   *string
+	Search *string
+	SortBy string
+	Order  string
+}
+
+// FindWithFilters returns credentials matching the given filters
+func (r *CredentialRepository) FindWithFilters(ctx context.Context, workspaceID uuid.UUID, filter *CredentialFilter, opts *ListOptions) ([]models.Credential, int64, error) {
+	var credentials []models.Credential
+	var total int64
+
+	query := r.DB().WithContext(ctx).Where("workspace_id = ?", workspaceID)
+
+	// Apply filters
+	if filter != nil {
+		if filter.Type != nil && *filter.Type != "" {
+			query = query.Where("type = ?", *filter.Type)
+		}
+		if filter.Search != nil && *filter.Search != "" {
+			searchPattern := "%" + *filter.Search + "%"
+			query = query.Where("(name ILIKE ? OR description ILIKE ?)", searchPattern, searchPattern)
+		}
+	}
+
+	// Count total before pagination
+	query.Model(&models.Credential{}).Count(&total)
+
+	// Apply sorting
+	sortBy := "created_at"
+	order := "desc"
+	if filter != nil {
+		if filter.SortBy != "" {
+			sortBy = filter.SortBy
+		}
+		if filter.Order != "" {
+			order = filter.Order
+		}
+	}
+	query = query.Order(sortBy + " " + order)
+
+	// Apply pagination
+	if opts != nil {
+		query = query.Offset(opts.Offset).Limit(opts.Limit)
+	}
+
+	err := query.Find(&credentials).Error
+	return credentials, total, err
+}

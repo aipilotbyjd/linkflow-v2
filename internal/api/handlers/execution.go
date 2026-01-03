@@ -37,7 +37,34 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := dto.ParsePagination(r)
-	executions, total, err := h.executionSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
+	filters := dto.ParseExecutionFilters(r)
+
+	// Build filter for service
+	filter := repositories.ExecutionFilter{
+		WorkspaceID: &wsCtx.WorkspaceID,
+	}
+	if filters.Status != nil {
+		filter.Status = filters.Status
+	}
+	if filters.WorkflowID != nil {
+		if wfID, err := uuid.Parse(*filters.WorkflowID); err == nil {
+			filter.WorkflowID = &wfID
+		}
+	}
+	if filters.TriggerType != nil {
+		filter.TriggerType = filters.TriggerType
+	}
+	if filters.StartDate != nil {
+		filter.StartDate = filters.StartDate
+	}
+	if filters.EndDate != nil {
+		filter.EndDate = filters.EndDate
+	}
+	if filters.Search != nil {
+		filter.SearchQuery = filters.Search
+	}
+
+	executions, total, err := h.executionSvc.Search(r.Context(), filter, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list executions")
 		return
@@ -95,21 +122,22 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	// Build links
+	// Build links with filter query string preservation
 	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/executions"
+	filterQS := filters.ToQueryString()
 	links := &dto.Links{
-		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page, pg.PerPage, filterQS),
 	}
 	meta := pg.NewMeta(total)
 	if pg.Page < meta.TotalPages {
-		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page+1, pg.PerPage, filterQS)
 	}
 	if pg.Page > 1 {
-		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page-1, pg.PerPage, filterQS)
 	}
-	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d%s", basePath, pg.PerPage, filterQS)
 	if meta.TotalPages > 0 {
-		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, meta.TotalPages, pg.PerPage, filterQS)
 	}
 
 	// Apply field selection

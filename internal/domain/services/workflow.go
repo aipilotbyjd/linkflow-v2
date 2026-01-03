@@ -137,6 +137,15 @@ func (s *WorkflowService) Search(ctx context.Context, workspaceID uuid.UUID, que
 	return workflows, total, nil
 }
 
+// GetByWorkspaceWithFilters returns paginated workflows for a workspace with filters.
+func (s *WorkflowService) GetByWorkspaceWithFilters(ctx context.Context, workspaceID uuid.UUID, filter *repositories.WorkflowFilter, opts *repositories.ListOptions) ([]models.Workflow, int64, error) {
+	workflows, total, err := s.workflowRepo.FindWithFilters(ctx, workspaceID, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get workflows: %w", err)
+	}
+	return workflows, total, nil
+}
+
 type UpdateWorkflowInput struct {
 	Name        *string
 	Description *string

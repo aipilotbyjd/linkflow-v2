@@ -12,6 +12,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
+	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -47,7 +48,12 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pg := dto.ParsePagination(r)
-	workflows, total, err := h.workflowSvc.GetByWorkspace(r.Context(), wsCtx.WorkspaceID, pg.Opts)
+	filters := dto.ParseWorkflowFilters(r)
+
+	// Convert DTO filters to repository filters
+	repoFilter := filtersToWorkflowRepoFilter(filters)
+
+	workflows, total, err := h.workflowSvc.GetByWorkspaceWithFilters(r.Context(), wsCtx.WorkspaceID, repoFilter, pg.Opts)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to list workflows")
 		return
@@ -118,21 +124,22 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Build links
+	// Build links with filter query string preservation
 	basePath := "/api/v1/workspaces/" + wsCtx.WorkspaceID.String() + "/workflows"
+	filterQS := filters.ToQueryString()
 	links := &dto.Links{
-		Self: fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page, pg.PerPage),
+		Self: fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page, pg.PerPage, filterQS),
 	}
 	meta := pg.NewMeta(total)
 	if pg.Page < meta.TotalPages {
-		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page+1, pg.PerPage)
+		links.Next = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page+1, pg.PerPage, filterQS)
 	}
 	if pg.Page > 1 {
-		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, pg.Page-1, pg.PerPage)
+		links.Prev = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, pg.Page-1, pg.PerPage, filterQS)
 	}
-	links.First = fmt.Sprintf("%s?page=1&per_page=%d", basePath, pg.PerPage)
+	links.First = fmt.Sprintf("%s?page=1&per_page=%d%s", basePath, pg.PerPage, filterQS)
 	if meta.TotalPages > 0 {
-		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d", basePath, meta.TotalPages, pg.PerPage)
+		links.Last = fmt.Sprintf("%s?page=%d&per_page=%d%s", basePath, meta.TotalPages, pg.PerPage, filterQS)
 	}
 
 	// Apply field selection if requested (e.g., ?fields=id,name,status)
@@ -951,4 +958,22 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
+}
+
+// filtersToWorkflowRepoFilter converts DTO filters to repository filters
+func filtersToWorkflowRepoFilter(f *dto.WorkflowFilters) *repositories.WorkflowFilter {
+	if f == nil {
+		return nil
+	}
+	return &repositories.WorkflowFilter{
+		Status:        f.Status,
+		Search:        f.Search,
+		Tags:          f.Tags,
+		CreatedAfter:  f.CreatedAfter,
+		CreatedBefore: f.CreatedBefore,
+		UpdatedAfter:  f.UpdatedAfter,
+		UpdatedBefore: f.UpdatedBefore,
+		SortBy:        f.SortBy,
+		Order:         f.Order,
+	}
 }
