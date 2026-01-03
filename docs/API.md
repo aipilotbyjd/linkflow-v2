@@ -13,6 +13,7 @@
   - [Auth](#auth)
   - [Users](#users)
   - [Workspaces](#workspaces)
+  - [Folders](#folders)
   - [Workflows](#workflows)
   - [Executions](#executions)
   - [Credentials](#credentials)
@@ -769,6 +770,181 @@ DELETE /workspaces/{workspaceID}/members/{userID}
 **Headers:** `Authorization: Bearer <token>`
 
 **Response:** `204 No Content`
+
+---
+
+## Folders
+
+Folders allow you to organize workflows into hierarchical structures (like directories).
+
+### List Folders
+
+Get all folders in workspace.
+
+```
+GET /workspaces/{workspaceID}/folders
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `parent_id` | uuid | Filter by parent folder (optional). If not provided, returns root folders. |
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "folder-uuid",
+      "workspace_id": "workspace-uuid",
+      "parent_id": null,
+      "name": "Marketing Automations",
+      "description": "All marketing workflows",
+      "color": "#3B82F6",
+      "icon": "folder",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  ],
+  "meta": { "total": 1 }
+}
+```
+
+---
+
+### Get Folder Tree
+
+Get folders as a hierarchical tree structure.
+
+```
+GET /workspaces/{workspaceID}/folders/tree
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "folder-1",
+      "name": "Marketing",
+      "description": "Marketing workflows",
+      "color": "#3B82F6",
+      "icon": "folder",
+      "parent_id": null,
+      "children": [
+        {
+          "id": "folder-2",
+          "name": "Email Campaigns",
+          "parent_id": "folder-1",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Create Folder
+
+Create a new folder.
+
+```
+POST /workspaces/{workspaceID}/folders
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Marketing Automations",
+  "description": "All marketing workflows",
+  "color": "#3B82F6",
+  "icon": "folder",
+  "parent_id": null
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Folder name |
+| `description` | string | No | Folder description |
+| `color` | string | No | Hex color code |
+| `icon` | string | No | Icon name |
+| `parent_id` | uuid | No | Parent folder ID for nesting |
+
+**Response:** `201 Created`
+
+---
+
+### Get Folder
+
+Get folder details.
+
+```
+GET /workspaces/{workspaceID}/folders/{folderID}
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### Update Folder
+
+Update folder details.
+
+```
+PUT /workspaces/{workspaceID}/folders/{folderID}
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Updated Name",
+  "description": "Updated description",
+  "color": "#10B981"
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Delete Folder
+
+Delete a folder. The folder must be empty (no sub-folders or workflows).
+
+```
+DELETE /workspaces/{workspaceID}/folders/{folderID}
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": { "message": "Folder deleted" }
+}
+```
 
 ---
 

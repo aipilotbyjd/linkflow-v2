@@ -19,8 +19,8 @@ type Workflow struct {
 	Connections      JSONArray      `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
 	Settings         JSON           `gorm:"type:jsonb;default:'{}'" json:"settings"`
 	Tags             StringArray    `gorm:"type:text[]" json:"tags"`
-	ProjectID        *uuid.UUID     `gorm:"type:uuid" json:"project_id,omitempty"`
-	ErrorWorkflowID  *uuid.UUID     `gorm:"type:uuid" json:"error_workflow_id,omitempty"`  // Workflow to trigger on error
+	FolderID         *uuid.UUID     `gorm:"type:uuid;column:project_id" json:"folder_id,omitempty"`
+	ErrorWorkflowID  *uuid.UUID     `gorm:"type:uuid" json:"error_workflow_id,omitempty"` // Workflow to trigger on error
 	ErrorTrigger     *string        `gorm:"size:50" json:"error_trigger,omitempty"`        // on_failure, on_timeout, on_all
 	ExecutionCount   int            `gorm:"default:0" json:"execution_count"`
 	LastExecutedAt   *time.Time     `json:"last_executed_at,omitempty"`
@@ -67,7 +67,7 @@ func (WorkflowVersion) TableName() string {
 	return "workflow_versions"
 }
 
-type Project struct {
+type Folder struct {
 	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkspaceID uuid.UUID  `gorm:"type:uuid;index;not null" json:"workspace_id"`
 	ParentID    *uuid.UUID `gorm:"type:uuid;index" json:"parent_id,omitempty"`
@@ -79,11 +79,11 @@ type Project struct {
 	UpdatedAt   time.Time  `json:"updated_at"`
 
 	Workspace Workspace  `gorm:"foreignKey:WorkspaceID" json:"-"`
-	Parent    *Project   `gorm:"foreignKey:ParentID" json:"-"`
-	Children  []Project  `gorm:"foreignKey:ParentID" json:"-"`
-	Workflows []Workflow `gorm:"foreignKey:ProjectID" json:"-"`
+	Parent    *Folder    `gorm:"foreignKey:ParentID" json:"-"`
+	Children  []Folder   `gorm:"foreignKey:ParentID" json:"-"`
+	Workflows []Workflow `gorm:"foreignKey:FolderID" json:"-"`
 }
 
-func (Project) TableName() string {
-	return "projects"
+func (Folder) TableName() string {
+	return "projects" // Keep table name for backward compatibility
 }

@@ -628,36 +628,36 @@
 			"description": "Workspace and team management"
 		},
 		{
-			"name": "📁 Projects",
+			"name": "📁 Folders",
 			"item": [
 				{
-					"name": "List Projects",
+					"name": "List Folders",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders"]
 						},
-						"description": "List all projects in workspace"
+						"description": "List all folders in workspace"
 					}
 				},
 				{
-					"name": "Get Project Tree",
+					"name": "Get Folder Tree",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/tree",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/tree",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "tree"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "tree"]
 						},
-						"description": "Get projects as a hierarchical tree structure with nested workflows"
+						"description": "Get folders as a hierarchical tree structure with nested workflows"
 					}
 				},
 				{
-					"name": "Create Project",
+					"name": "Create Folder",
 					"event": [
 						{
 							"listen": "test",
@@ -666,7 +666,7 @@
 								"exec": [
 									"if (pm.response.code === 201) {",
 									"    const data = pm.response.json().data;",
-									"    pm.environment.set('project_id', data.id);",
+									"    pm.environment.set('folder_id', data.id);",
 									"}"
 								]
 							}
@@ -682,28 +682,28 @@
 							"raw": "{\n    \"name\": \"Marketing Automations\",\n    \"description\": \"All marketing-related workflows\",\n    \"color\": \"#3B82F6\",\n    \"parent_id\": null\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders"]
 						},
-						"description": "Create a new project (folder for workflows)"
+						"description": "Create a new folder for organizing workflows"
 					}
 				},
 				{
-					"name": "Get Project",
+					"name": "Get Folder",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
 						},
-						"description": "Get project details"
+						"description": "Get folder details"
 					}
 				},
 				{
-					"name": "Update Project",
+					"name": "Update Folder",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -711,31 +711,31 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Project Name\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}"
+							"raw": "{\n    \"name\": \"Updated Folder Name\",\n    \"description\": \"Updated description\",\n    \"color\": \"#10B981\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
 						},
-						"description": "Update project details"
+						"description": "Update folder details"
 					}
 				},
 				{
-					"name": "Delete Project",
+					"name": "Delete Folder",
 					"request": {
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/projects/{{project_id}}",
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "projects", "{{project_id}}"]
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
 						},
-						"description": "Delete a project. Workflows in the project will be moved to root."
+						"description": "Delete a folder. Must be empty (no sub-folders or workflows)."
 					}
 				}
 			],
-			"description": "Project management - organize workflows into folders"
+			"description": "Folder management - organize workflows into folders"
 		},
 		{
 			"name": "⚡ Workflows",

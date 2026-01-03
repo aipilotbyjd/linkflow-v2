@@ -61,8 +61,8 @@ type Services struct {
 	ExecReplay    *services.ExecutionReplayService
 	VersionDiff   *services.VersionDiffService
 	APIKey        *services.APIKeyService
-	WorkflowVar *services.WorkflowVariableService
-	Project     *services.ProjectService
+	WorkflowVar   *services.WorkflowVariableService
+	Folder        *services.FolderService
 	WorkflowShare *services.WorkflowShareService
 	Marketplace   *services.MarketplaceService
 	TemplateRating *services.TemplateRatingService
@@ -214,9 +214,9 @@ func NewServer(
 		workflowVarHandler = handlers.NewWorkflowVariableHandler(svc.WorkflowVar)
 	}
 
-	var projectHandler *handlers.ProjectHandler
-	if svc.Project != nil {
-		projectHandler = handlers.NewProjectHandler(svc.Project)
+	var folderHandler *handlers.FolderHandler
+	if svc.Folder != nil {
+		folderHandler = handlers.NewFolderHandler(svc.Folder)
 	}
 
 	var workflowShareHandler *handlers.WorkflowShareHandler
@@ -348,14 +348,14 @@ func NewServer(
 				r.Put("/members/{userID}", workspaceHandler.UpdateMemberRole)
 				r.Delete("/members/{userID}", workspaceHandler.RemoveMember)
 
-				// Projects
-				if projectHandler != nil {
-					r.Get("/projects", projectHandler.List)
-					r.Get("/projects/tree", projectHandler.GetTree)
-					r.Post("/projects", projectHandler.Create)
-					r.Get("/projects/{projectID}", projectHandler.Get)
-					r.Put("/projects/{projectID}", projectHandler.Update)
-					r.Delete("/projects/{projectID}", projectHandler.Delete)
+				// Folders
+				if folderHandler != nil {
+					r.Get("/folders", folderHandler.List)
+					r.Get("/folders/tree", folderHandler.GetTree)
+					r.Post("/folders", folderHandler.Create)
+					r.Get("/folders/{folderID}", folderHandler.Get)
+					r.Put("/folders/{folderID}", folderHandler.Update)
+					r.Delete("/folders/{folderID}", folderHandler.Delete)
 				}
 
 				// Workflow Sharing

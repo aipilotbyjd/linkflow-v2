@@ -10,15 +10,15 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 )
 
-type ProjectHandler struct {
-	projectSvc *services.ProjectService
+type FolderHandler struct {
+	folderSvc *services.FolderService
 }
 
-func NewProjectHandler(projectSvc *services.ProjectService) *ProjectHandler {
-	return &ProjectHandler{projectSvc: projectSvc}
+func NewFolderHandler(folderSvc *services.FolderService) *FolderHandler {
+	return &FolderHandler{folderSvc: folderSvc}
 }
 
-type CreateProjectRequest struct {
+type CreateFolderRequest struct {
 	Name        string  `json:"name" validate:"required"`
 	Description *string `json:"description,omitempty"`
 	Color       *string `json:"color,omitempty"`
@@ -26,7 +26,7 @@ type CreateProjectRequest struct {
 	ParentID    *string `json:"parent_id,omitempty"`
 }
 
-func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
@@ -42,39 +42,39 @@ func (h *ProjectHandler) List(w http.ResponseWriter, r *http.Request) {
 		parentID = &pid
 	}
 
-	projects, err := h.projectSvc.List(r.Context(), wsCtx.WorkspaceID, parentID)
+	folders, err := h.folderSvc.List(r.Context(), wsCtx.WorkspaceID, parentID)
 	if err != nil {
-		dto.InternalServerError(w, "failed to list projects")
+		dto.InternalServerError(w, "failed to list folders")
 		return
 	}
 
-	dto.NewResponse(projects).
-		WithMeta(&dto.Meta{Total: int64(len(projects))}).
+	dto.NewResponse(folders).
+		WithMeta(&dto.Meta{Total: int64(len(folders))}).
 		Send(w)
 }
 
-func (h *ProjectHandler) GetTree(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) GetTree(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
 	}
 
-	tree, err := h.projectSvc.GetTree(r.Context(), wsCtx.WorkspaceID)
+	tree, err := h.folderSvc.GetTree(r.Context(), wsCtx.WorkspaceID)
 	if err != nil {
-		dto.InternalServerError(w, "failed to get project tree")
+		dto.InternalServerError(w, "failed to get folder tree")
 		return
 	}
 
 	dto.NewResponse(tree).Send(w)
 }
 
-func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
 	}
 
-	var req CreateProjectRequest
+	var req CreateFolderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		dto.BadRequest(w, "invalid request body")
 		return
@@ -85,7 +85,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := services.CreateProjectInput{
+	input := services.CreateFolderInput{
 		WorkspaceID: wsCtx.WorkspaceID,
 		Name:        req.Name,
 		Description: req.Description,
@@ -102,51 +102,51 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 		input.ParentID = &pid
 	}
 
-	project, err := h.projectSvc.Create(r.Context(), input)
+	folder, err := h.folderSvc.Create(r.Context(), input)
 	if err != nil {
 		dto.BadRequest(w, err.Error())
 		return
 	}
 
-	dto.Created(w, project)
+	dto.Created(w, folder)
 }
 
-func (h *ProjectHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) Get(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
 	}
 
-	projectID, ok := middleware.ParseUUID(w, r, "projectID")
+	folderID, ok := middleware.ParseUUID(w, r, "folderID")
 	if !ok {
 		return
 	}
 
-	project, err := h.projectSvc.Get(r.Context(), projectID)
+	folder, err := h.folderSvc.Get(r.Context(), folderID)
 	if err != nil {
 		if err == services.ErrNotFound {
-			dto.NotFound(w, "project")
+			dto.NotFound(w, "folder")
 			return
 		}
-		dto.InternalServerError(w, "failed to get project")
+		dto.InternalServerError(w, "failed to get folder")
 		return
 	}
 
-	if project.WorkspaceID != wsCtx.WorkspaceID {
+	if folder.WorkspaceID != wsCtx.WorkspaceID {
 		dto.Forbidden(w, "access denied")
 		return
 	}
 
-	dto.NewResponse(project).Send(w)
+	dto.NewResponse(folder).Send(w)
 }
 
-func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) Update(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
 	}
 
-	projectID, ok := middleware.ParseUUID(w, r, "projectID")
+	folderID, ok := middleware.ParseUUID(w, r, "folderID")
 	if !ok {
 		return
 	}
@@ -163,7 +163,7 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	input := services.UpdateProjectInput{
+	input := services.UpdateFolderInput{
 		Name:        req.Name,
 		Description: req.Description,
 		Color:       req.Color,
@@ -179,10 +179,10 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		input.ParentID = &pid
 	}
 
-	project, err := h.projectSvc.Update(r.Context(), projectID, wsCtx.WorkspaceID, input)
+	folder, err := h.folderSvc.Update(r.Context(), folderID, wsCtx.WorkspaceID, input)
 	if err != nil {
 		if err == services.ErrNotFound {
-			dto.NotFound(w, "project")
+			dto.NotFound(w, "folder")
 			return
 		}
 		if err == services.ErrForbidden {
@@ -193,23 +193,23 @@ func (h *ProjectHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.NewResponse(project).Send(w)
+	dto.NewResponse(folder).Send(w)
 }
 
-func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *FolderHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
 	}
 
-	projectID, ok := middleware.ParseUUID(w, r, "projectID")
+	folderID, ok := middleware.ParseUUID(w, r, "folderID")
 	if !ok {
 		return
 	}
 
-	if err := h.projectSvc.Delete(r.Context(), projectID, wsCtx.WorkspaceID); err != nil {
+	if err := h.folderSvc.Delete(r.Context(), folderID, wsCtx.WorkspaceID); err != nil {
 		if err == services.ErrNotFound {
-			dto.NotFound(w, "project")
+			dto.NotFound(w, "folder")
 			return
 		}
 		if err == services.ErrForbidden {
@@ -220,5 +220,5 @@ func (h *ProjectHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.NewResponse(map[string]string{"message": "Project deleted"}).Send(w)
+	dto.NewResponse(map[string]string{"message": "Folder deleted"}).Send(w)
 }

@@ -34,7 +34,7 @@ var ServiceSet = wire.NewSet(
 	ProvideVersionDiffService,
 	services.NewAPIKeyService,
 	services.NewWorkflowVariableService,
-	services.NewProjectService,
+	services.NewFolderService,
 	services.NewWorkflowShareService,
 	services.NewMarketplaceService,
 	services.NewTemplateRatingService,
