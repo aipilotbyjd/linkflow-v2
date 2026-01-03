@@ -116,6 +116,16 @@ dev-stop:
 migrate:
 	$(GOCMD) run ./cmd/api migrate
 
+# Seeding
+seed:
+	$(GOCMD) run ./cmd/seed
+
+seed-clean:
+	$(GOCMD) run ./cmd/seed -clean=true
+
+seed-fresh: dev-infra
+	$(GOCMD) run ./cmd/seed -clean=true
+
 # Linting
 lint:
 	golangci-lint run ./...
@@ -160,3 +170,8 @@ help:
 	@echo "  make test           - Run tests"
 	@echo "  make test-coverage  - Run with coverage"
 	@echo "  make lint           - Run linter"
+	@echo ""
+	@echo "Seeding:"
+	@echo "  make seed           - Seed development data"
+	@echo "  make seed-clean     - Clean and re-seed dev data"
+	@echo "  make seed-fresh     - Start infra + clean seed"
