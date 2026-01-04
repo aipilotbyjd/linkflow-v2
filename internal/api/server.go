@@ -67,6 +67,7 @@ type Services struct {
 	Marketplace   *services.MarketplaceService
 	TemplateRating *services.TemplateRatingService
 	BinaryData    *services.BinaryDataService
+	Dashboard     *services.DashboardService
 }
 
 type Repositories struct {
@@ -196,6 +197,11 @@ func NewServer(
 	var analyticsHandler *handlers.AnalyticsHandler
 	if svc.Analytics != nil {
 		analyticsHandler = handlers.NewAnalyticsHandler(svc.Analytics)
+	}
+
+	var dashboardHandler *handlers.DashboardHandler
+	if svc.Dashboard != nil {
+		dashboardHandler = handlers.NewDashboardHandler(svc.Dashboard)
 	}
 
 	replayHandler := handlers.NewExecutionReplayHandler(svc.ExecReplay)
@@ -537,6 +543,12 @@ func NewServer(
 				if analyticsHandler != nil {
 					r.Get("/analytics", analyticsHandler.GetWorkspaceAnalytics)
 					r.Get("/workflows/{workflowID}/analytics", analyticsHandler.GetWorkflowAnalytics)
+				}
+
+				// Dashboard
+				if dashboardHandler != nil {
+					r.Get("/dashboard", dashboardHandler.GetDashboard)
+					r.Get("/stats", dashboardHandler.GetQuickStats)
 				}
 
 

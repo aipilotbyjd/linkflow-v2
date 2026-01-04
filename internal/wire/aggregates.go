@@ -37,6 +37,7 @@ func ProvideServices(
 	marketplace *services.MarketplaceService,
 	templateRating *services.TemplateRatingService,
 	binaryData *services.BinaryDataService,
+	dashboard *services.DashboardService,
 ) *api.Services {
 	return &api.Services{
 		Auth:           auth,
@@ -67,6 +68,7 @@ func ProvideServices(
 		Marketplace:    marketplace,
 		TemplateRating: templateRating,
 		BinaryData:     binaryData,
+		Dashboard:      dashboard,
 	}
 }
 

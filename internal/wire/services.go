@@ -39,6 +39,7 @@ var ServiceSet = wire.NewSet(
 	services.NewMarketplaceService,
 	services.NewTemplateRatingService,
 	ProvideBinaryDataService,
+	ProvideDashboardService,
 )
 
 // ProvideWorkflowService creates the workflow service with webhook repo
@@ -157,4 +158,15 @@ func ProvideWorkerBillingService(
 // ProvideBinaryDataService creates the binary data service with storage path
 func ProvideBinaryDataService(db *gorm.DB) *services.BinaryDataService {
 	return services.NewBinaryDataService(db, "")
+}
+
+// ProvideDashboardService creates the dashboard service
+func ProvideDashboardService(
+	db *gorm.DB,
+	workflowRepo *repositories.WorkflowRepository,
+	executionRepo *repositories.ExecutionRepository,
+	credentialRepo *repositories.CredentialRepository,
+	scheduleRepo *repositories.ScheduleRepository,
+) *services.DashboardService {
+	return services.NewDashboardService(db, workflowRepo, executionRepo, credentialRepo, scheduleRepo)
 }

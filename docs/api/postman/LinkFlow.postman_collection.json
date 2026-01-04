@@ -1258,6 +1258,83 @@
 			"description": "Execution monitoring and control"
 		},
 		{
+			"name": "📈 Dashboard",
+			"item": [
+				{
+					"name": "Get Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=7d",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"query": [
+								{
+									"key": "period",
+									"value": "7d",
+									"description": "Chart data period: 7d (default), 30d, or 90d"
+								}
+							]
+						},
+						"description": "Get comprehensive dashboard data including:\n- **Summary**: Total workflows, executions (today/week/month), success rate, avg duration\n- **Recent Executions**: Last 10 executions with status and duration\n- **Top Workflows**: Top 5 workflows by execution count with stats\n- **Recent Failures**: Last 10 failed executions with error details\n- **Executions by Day**: Daily execution counts for charting\n- **Executions by Hour**: 24-hour activity distribution\n- **Upcoming Schedules**: Next 5 scheduled workflow runs\n- **Status Distribution**: Execution counts by status (pie chart data)\n- **Trigger Type Stats**: Execution counts by trigger type"
+					}
+				},
+				{
+					"name": "Get Dashboard (30 days)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=30d",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"query": [
+								{
+									"key": "period",
+									"value": "30d"
+								}
+							]
+						},
+						"description": "Get dashboard data for the last 30 days"
+					}
+				},
+				{
+					"name": "Get Dashboard (90 days)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=90d",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"query": [
+								{
+									"key": "period",
+									"value": "90d"
+								}
+							]
+						},
+						"description": "Get dashboard data for the last 90 days"
+					}
+				},
+				{
+					"name": "Get Quick Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "stats"]
+						},
+						"description": "Get lightweight quick stats for sidebar or header display.\n\nReturns:\n- **Workflows**: total, active count\n- **Executions**: running, queued, today count\n- **Credentials**: total, expiring soon\n- **Schedules**: total, active count\n\nUse this endpoint for frequent polling (every 30 seconds) instead of the full dashboard endpoint."
+					}
+				}
+			],
+			"description": "Dashboard and statistics endpoints for workspace overview"
+		},
+		{
 			"name": "🔑 Credentials",
 			"item": [
 				{

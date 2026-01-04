@@ -1753,6 +1753,167 @@ DELETE /workspaces/{workspaceID}/executions/bulk
 
 ---
 
+## Dashboard
+
+The Dashboard API provides aggregated statistics and metrics for workspace monitoring and visualization.
+
+### Get Dashboard
+
+Get comprehensive dashboard data with all metrics, charts, and activity.
+
+```
+GET /workspaces/{workspaceID}/dashboard
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| period | string | "7d" | Chart data period: "7d", "30d", "90d" |
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total_workflows": 45,
+      "active_workflows": 32,
+      "inactive_workflows": 10,
+      "draft_workflows": 3,
+      "total_executions_today": 156,
+      "total_executions_week": 1089,
+      "total_executions_month": 4523,
+      "success_rate": 94.5,
+      "avg_duration_ms": 2340,
+      "total_credentials": 12,
+      "total_schedules": 8,
+      "active_schedules": 6,
+      "running_executions": 3,
+      "queued_executions": 5
+    },
+    "recent_executions": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "workflow_id": "660e8400-e29b-41d4-a716-446655440001",
+        "workflow_name": "Daily Report Generator",
+        "status": "completed",
+        "trigger_type": "schedule",
+        "duration_ms": 1523,
+        "started_at": 1704326400,
+        "completed_at": 1704326401,
+        "created_at": 1704326400
+      }
+    ],
+    "top_workflows": [
+      {
+        "id": "660e8400-e29b-41d4-a716-446655440001",
+        "name": "Daily Report Generator",
+        "status": "active",
+        "execution_count": 245,
+        "success_count": 240,
+        "failed_count": 5,
+        "success_rate": 97.96,
+        "avg_duration_ms": 1850,
+        "last_executed_at": 1704326400
+      }
+    ],
+    "recent_failures": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440002",
+        "workflow_id": "660e8400-e29b-41d4-a716-446655440003",
+        "workflow_name": "Email Sender",
+        "error_message": "SMTP connection timeout",
+        "error_node_id": "node_5",
+        "failed_at": 1704320000
+      }
+    ],
+    "executions_by_day": [
+      {
+        "date": "2024-01-01",
+        "total": 180,
+        "success": 172,
+        "failed": 8
+      }
+    ],
+    "executions_by_hour": [
+      {"hour": 0, "count": 5},
+      {"hour": 1, "count": 3}
+    ],
+    "upcoming_schedules": [
+      {
+        "id": "770e8400-e29b-41d4-a716-446655440000",
+        "workflow_id": "660e8400-e29b-41d4-a716-446655440001",
+        "workflow_name": "Daily Report Generator",
+        "cron_expression": "0 9 * * *",
+        "timezone": "America/New_York",
+        "next_run_at": 1704369600,
+        "is_active": true
+      }
+    ],
+    "executions_by_status": [
+      {"status": "completed", "count": 4200},
+      {"status": "failed", "count": 200}
+    ],
+    "trigger_type_stats": [
+      {"trigger_type": "schedule", "count": 2500},
+      {"trigger_type": "webhook", "count": 1500},
+      {"trigger_type": "manual", "count": 423}
+    ]
+  },
+  "links": {
+    "self": "/api/v1/workspaces/{workspaceID}/dashboard"
+  }
+}
+```
+
+---
+
+### Get Quick Stats
+
+Get lightweight stats for sidebar or header display. Optimized for frequent polling.
+
+```
+GET /workspaces/{workspaceID}/stats
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "workflows": {
+      "total": 45,
+      "active": 32
+    },
+    "executions": {
+      "running": 3,
+      "queued": 5,
+      "today": 156
+    },
+    "credentials": {
+      "total": 12,
+      "expiring_soon": 2
+    },
+    "schedules": {
+      "total": 8,
+      "active": 6
+    }
+  },
+  "links": {
+    "self": "/api/v1/workspaces/{workspaceID}/stats"
+  }
+}
+```
+
+---
+
 ## Credentials
 
 ### List Credentials
