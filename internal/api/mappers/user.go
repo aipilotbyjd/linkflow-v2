@@ -8,16 +8,25 @@ import (
 // UserToResponse converts a User model to UserResponse DTO
 func UserToResponse(u *models.User) dto.UserResponse {
 	return dto.UserResponse{
-		ID:            u.ID.String(),
-		Email:         u.Email,
-		Username:      u.Username,
-		FirstName:     u.FirstName,
-		LastName:      u.LastName,
-		AvatarURL:     u.AvatarURL,
-		Timezone:      u.Timezone,
-		EmailVerified: u.EmailVerified,
-		MFAEnabled:    u.MFAEnabled,
-		CreatedAt:     u.CreatedAt.Unix(),
+		ID:                      u.ID.String(),
+		Email:                   u.Email,
+		Username:                u.Username,
+		FirstName:               u.FirstName,
+		LastName:                u.LastName,
+		AvatarURL:               u.AvatarURL,
+		Phone:                   u.Phone,
+		Bio:                     u.Bio,
+		JobTitle:                u.JobTitle,
+		Company:                 u.Company,
+		Timezone:                u.Timezone,
+		Language:                u.Language,
+		DateFormat:              u.DateFormat,
+		TimeFormat:              u.TimeFormat,
+		Theme:                   u.Theme,
+		NotificationPreferences: u.NotificationPreferences,
+		EmailVerified:           u.EmailVerified,
+		MFAEnabled:              u.MFAEnabled,
+		CreatedAt:               u.CreatedAt.Unix(),
 	}
 }
 

@@ -8,14 +8,21 @@ import (
 // WorkspaceToResponse converts a Workspace model to WorkspaceResponse DTO
 func WorkspaceToResponse(ws *models.Workspace) dto.WorkspaceResponse {
 	return dto.WorkspaceResponse{
-		ID:          ws.ID.String(),
-		Name:        ws.Name,
-		Slug:        ws.Slug,
-		Description: ws.Description,
-		LogoURL:     ws.LogoURL,
-		Timezone:    ws.Timezone,
-		PlanID:      ws.PlanID,
-		CreatedAt:   ws.CreatedAt.Unix(),
+		ID:           ws.ID.String(),
+		Name:         ws.Name,
+		Slug:         ws.Slug,
+		Description:  ws.Description,
+		LogoURL:      ws.LogoURL,
+		Website:      ws.Website,
+		Timezone:     ws.Timezone,
+		Language:     ws.Language,
+		Currency:     ws.Currency,
+		Country:      ws.Country,
+		Industry:     ws.Industry,
+		CompanySize:  ws.CompanySize,
+		BillingEmail: ws.BillingEmail,
+		PlanID:       ws.PlanID,
+		CreatedAt:    ws.CreatedAt.Unix(),
 	}
 }
 

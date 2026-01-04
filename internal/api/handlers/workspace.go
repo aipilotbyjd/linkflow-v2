@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
+	"github.com/linkflow-ai/linkflow/internal/api/mappers"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -94,11 +95,18 @@ func (h *WorkspaceHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	workspace, err := h.workspaceSvc.Create(r.Context(), services.CreateWorkspaceInput{
-		OwnerID:     claims.UserID,
-		Name:        req.Name,
-		Slug:        req.Slug,
-		Description: req.Description,
-		Timezone:    req.Timezone,
+		OwnerID:      claims.UserID,
+		Name:         req.Name,
+		Slug:         req.Slug,
+		Description:  req.Description,
+		Timezone:     req.Timezone,
+		Language:     req.Language,
+		Currency:     req.Currency,
+		Country:      req.Country,
+		Industry:     req.Industry,
+		CompanySize:  req.CompanySize,
+		Website:      req.Website,
+		BillingEmail: req.BillingEmail,
 	})
 	if err != nil {
 		if err == services.ErrSlugExists {
@@ -109,14 +117,7 @@ func (h *WorkspaceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.WorkspaceResponse{
-		ID:          workspace.ID.String(),
-		Name:        workspace.Name,
-		Slug:        workspace.Slug,
-		Description: workspace.Description,
-		PlanID:      workspace.PlanID,
-		CreatedAt:   workspace.CreatedAt.Unix(),
-	})
+	dto.Created(w, mappers.WorkspaceToResponse(workspace))
 }
 
 func (h *WorkspaceHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -180,32 +181,27 @@ func (h *WorkspaceHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	workspace, err := h.workspaceSvc.Update(r.Context(), wsCtx.WorkspaceID, services.UpdateWorkspaceInput{
-		Name:        req.Name,
-		Description: req.Description,
-		LogoURL:     req.LogoURL,
-		Timezone:    req.Timezone,
-		Settings:    req.Settings,
+		Name:         req.Name,
+		Description:  req.Description,
+		LogoURL:      req.LogoURL,
+		Timezone:     req.Timezone,
+		Language:     req.Language,
+		Currency:     req.Currency,
+		Country:      req.Country,
+		Industry:     req.Industry,
+		CompanySize:  req.CompanySize,
+		Website:      req.Website,
+		BillingEmail: req.BillingEmail,
+		Settings:     req.Settings,
 	})
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to update workspace")
 		return
 	}
 
-	wsID := workspace.ID.String()
-	basePath := "/api/v1/workspaces/" + wsID
+	basePath := "/api/v1/workspaces/" + workspace.ID.String()
 
-	response := dto.WorkspaceResponse{
-		ID:          wsID,
-		Name:        workspace.Name,
-		Slug:        workspace.Slug,
-		Description: workspace.Description,
-		LogoURL:     workspace.LogoURL,
-		Timezone:    workspace.Timezone,
-		PlanID:      workspace.PlanID,
-		CreatedAt:   workspace.CreatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(mappers.WorkspaceToResponse(workspace)).
 		WithLinks(&dto.Links{Self: basePath}).
 		Send(w)
 }

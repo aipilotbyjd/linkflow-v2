@@ -199,6 +199,9 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Connections: req.Connections,
 		Settings:    req.Settings,
 		Tags:        req.Tags,
+		Color:       req.Color,
+		Icon:        req.Icon,
+		Category:    req.Category,
 	})
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to create workflow")
@@ -358,6 +361,10 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Connections: req.Connections,
 		Settings:    req.Settings,
 		Tags:        req.Tags,
+		Color:       req.Color,
+		Icon:        req.Icon,
+		Category:    req.Category,
+		IsFavorite:  req.IsFavorite,
 	}, claims.UserID)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to update workflow")

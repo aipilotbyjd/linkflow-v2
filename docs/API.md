@@ -518,7 +518,15 @@ PUT /users/me
   "last_name": "Smith",
   "username": "johnsmith",
   "avatar_url": "https://...",
-  "timezone": "America/New_York"
+  "phone": "+1234567890",
+  "bio": "Software Engineer",
+  "job_title": "Senior Developer",
+  "company": "TechCorp",
+  "timezone": "America/New_York",
+  "language": "en",
+  "date_format": "MM/DD/YYYY",
+  "time_format": "12h",
+  "theme": "dark"
 }
 ```
 
@@ -528,7 +536,15 @@ PUT /users/me
 | last_name | string | No | 1-100 characters |
 | username | string | No | 3-50 characters |
 | avatar_url | string | No | Valid URL |
+| phone | string | No | Max 20 characters |
+| bio | string | No | Max 500 characters |
+| job_title | string | No | Max 100 characters |
+| company | string | No | Max 100 characters |
 | timezone | string | No | IANA timezone (e.g., UTC, America/New_York) |
+| language | string | No | Language code (en, es, fr) |
+| date_format | string | No | MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD |
+| time_format | string | No | 12h or 24h |
+| theme | string | No | light, dark, system |
 
 **Response:** `200 OK`
 
@@ -590,7 +606,14 @@ POST /workspaces
   "name": "My Workspace",
   "slug": "my-workspace",
   "description": "Optional description",
-  "timezone": "America/New_York"
+  "timezone": "America/New_York",
+  "language": "en",
+  "currency": "USD",
+  "country": "US",
+  "industry": "Technology",
+  "company_size": "11-50",
+  "website": "https://example.com",
+  "billing_email": "billing@example.com"
 }
 ```
 
@@ -600,6 +623,13 @@ POST /workspaces
 | slug | string | Yes | URL-safe slug |
 | description | string | No | Max 500 characters |
 | timezone | string | No | IANA timezone (defaults to UTC) |
+| language | string | No | Language code (defaults to en) |
+| currency | string | No | 3-letter currency code (defaults to USD) |
+| country | string | No | 2-letter ISO country code |
+| industry | string | No | Industry name (max 50) |
+| company_size | string | No | 1-10, 11-50, 51-200, 201-500, 501-1000, 1000+ |
+| website | string | No | Valid URL |
+| billing_email | string | No | Valid email |
 
 **Response:** `201 Created`
 

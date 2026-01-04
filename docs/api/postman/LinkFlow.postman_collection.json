@@ -439,14 +439,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"timezone\": \"America/New_York\"\n}"
+							"raw": "{\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"avatar_url\": \"https://example.com/avatar.jpg\",\n    \"phone\": \"+1234567890\",\n    \"bio\": \"Software Engineer\",\n    \"job_title\": \"Senior Developer\",\n    \"company\": \"TechCorp\",\n    \"timezone\": \"America/New_York\",\n    \"language\": \"en\",\n    \"date_format\": \"MM/DD/YYYY\",\n    \"time_format\": \"12h\",\n    \"theme\": \"dark\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/me",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "users", "me"]
 						},
-						"description": "Update current user profile. Timezone examples: UTC, America/New_York, Europe/London, Asia/Tokyo"
+						"description": "Update current user profile. Fields: phone, bio, job_title, company, timezone (IANA), language (en/es/fr), date_format (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD), time_format (12h/24h), theme (light/dark/system)"
 					}
 				}
 			],
@@ -574,14 +574,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"My Workspace\",\n    \"slug\": \"my-workspace\",\n    \"description\": \"Main workspace for automation\",\n    \"timezone\": \"UTC\"\n}"
+							"raw": "{\n    \"name\": \"My Workspace\",\n    \"slug\": \"my-workspace\",\n    \"description\": \"Main workspace for automation\",\n    \"timezone\": \"UTC\",\n    \"language\": \"en\",\n    \"currency\": \"USD\",\n    \"country\": \"US\",\n    \"industry\": \"Technology\",\n    \"company_size\": \"11-50\",\n    \"website\": \"https://example.com\",\n    \"billing_email\": \"billing@example.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces"]
 						},
-						"description": "Create a new workspace. Timezone defaults to UTC if not specified."
+						"description": "Create a new workspace. Fields: timezone (IANA), language (en/es/fr), currency (USD/EUR/GBP), country (2-letter ISO), industry, company_size (1-10, 11-50, 51-200, 201-500, 501-1000, 1000+), website, billing_email"
 					}
 				},
 				{
@@ -606,14 +606,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Workspace Name\",\n    \"description\": \"Updated description\",\n    \"timezone\": \"America/Los_Angeles\"\n}"
+							"raw": "{\n    \"name\": \"Updated Workspace Name\",\n    \"description\": \"Updated description\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"language\": \"en\",\n    \"currency\": \"EUR\",\n    \"country\": \"GB\",\n    \"industry\": \"Finance\",\n    \"company_size\": \"51-200\",\n    \"website\": \"https://updated-example.com\",\n    \"billing_email\": \"newemail@example.com\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
 						},
-						"description": "Update workspace settings. Timezone examples: UTC, America/New_York, Europe/London, Asia/Tokyo, America/Los_Angeles"
+						"description": "Update workspace settings. Fields: timezone, language, currency, country, industry, company_size, website, billing_email"
 					}
 				},
 				{
@@ -849,14 +849,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"My HTTP Workflow\",\n    \"description\": \"Fetches data from an API\",\n    \"nodes\": [\n        {\n            \"id\": \"trigger_1\",\n            \"type\": \"trigger.manual\",\n            \"name\": \"Manual Trigger\",\n            \"position\": { \"x\": 100, \"y\": 100 },\n            \"parameters\": {}\n        },\n        {\n            \"id\": \"http_1\",\n            \"type\": \"action.http\",\n            \"name\": \"HTTP Request\",\n            \"position\": { \"x\": 300, \"y\": 100 },\n            \"parameters\": {\n                \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n                \"method\": \"GET\"\n            }\n        }\n    ],\n    \"connections\": [\n        {\n            \"id\": \"conn_1\",\n            \"source_node_id\": \"trigger_1\",\n            \"target_node_id\": \"http_1\"\n        }\n    ],\n    \"tags\": [\"api\", \"http\"]\n}"
+							"raw": "{\n    \"name\": \"My HTTP Workflow\",\n    \"description\": \"Fetches data from an API\",\n    \"nodes\": [\n        {\n            \"id\": \"trigger_1\",\n            \"type\": \"trigger.manual\",\n            \"name\": \"Manual Trigger\",\n            \"position\": { \"x\": 100, \"y\": 100 },\n            \"parameters\": {}\n        },\n        {\n            \"id\": \"http_1\",\n            \"type\": \"action.http\",\n            \"name\": \"HTTP Request\",\n            \"position\": { \"x\": 300, \"y\": 100 },\n            \"parameters\": {\n                \"url\": \"https://jsonplaceholder.typicode.com/posts/1\",\n                \"method\": \"GET\"\n            }\n        }\n    ],\n    \"connections\": [\n        {\n            \"id\": \"conn_1\",\n            \"source_node_id\": \"trigger_1\",\n            \"target_node_id\": \"http_1\"\n        }\n    ],\n    \"tags\": [\"api\", \"http\"],\n    \"color\": \"#3B82F6\",\n    \"icon\": \"globe\",\n    \"category\": \"API\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows"]
 						},
-						"description": "Create a new workflow"
+						"description": "Create a new workflow. Optional fields: color (hex), icon (string), category (string), tags (array)"
 					}
 				},
 				{
@@ -881,14 +881,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Updated Workflow Name\",\n    \"description\": \"Updated description\",\n    \"tags\": [\"updated\", \"api\"]\n}"
+							"raw": "{\n    \"name\": \"Updated Workflow Name\",\n    \"description\": \"Updated description\",\n    \"tags\": [\"updated\", \"api\"],\n    \"color\": \"#10B981\",\n    \"icon\": \"star\",\n    \"category\": \"Marketing\",\n    \"is_favorite\": true\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
 							"host": ["{{base_url}}"],
 							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
 						},
-						"description": "Update workflow"
+						"description": "Update workflow. Optional fields: color (hex), icon (string), category (string), is_favorite (boolean), tags (array)"
 					}
 				},
 				{

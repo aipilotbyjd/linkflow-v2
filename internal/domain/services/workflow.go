@@ -59,6 +59,9 @@ type CreateWorkflowInput struct {
 	Connections models.JSONArray
 	Settings    models.JSON
 	Tags        []string
+	Color       *string
+	Icon        *string
+	Category    *string
 }
 
 // Create creates a new workflow with an initial version.
@@ -79,6 +82,9 @@ func (s *WorkflowService) Create(ctx context.Context, input CreateWorkflowInput)
 		Connections: input.Connections,
 		Settings:    input.Settings,
 		Tags:        input.Tags,
+		Color:       input.Color,
+		Icon:        input.Icon,
+		Category:    input.Category,
 	}
 
 	if err := s.workflowRepo.Create(ctx, workflow); err != nil {
@@ -153,6 +159,10 @@ type UpdateWorkflowInput struct {
 	Connections models.JSONArray
 	Settings    models.JSON
 	Tags        []string
+	Color       *string
+	Icon        *string
+	Category    *string
+	IsFavorite  *bool
 }
 
 // Update updates a workflow and creates a new version.
@@ -184,6 +194,18 @@ func (s *WorkflowService) Update(ctx context.Context, workflowID uuid.UUID, inpu
 	}
 	if input.Tags != nil {
 		workflow.Tags = input.Tags
+	}
+	if input.Color != nil {
+		workflow.Color = input.Color
+	}
+	if input.Icon != nil {
+		workflow.Icon = input.Icon
+	}
+	if input.Category != nil {
+		workflow.Category = input.Category
+	}
+	if input.IsFavorite != nil {
+		workflow.IsFavorite = *input.IsFavorite
 	}
 
 	workflow.Version++

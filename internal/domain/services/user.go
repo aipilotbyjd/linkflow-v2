@@ -49,11 +49,20 @@ func (s *UserService) GetByEmail(ctx context.Context, email string) (*models.Use
 
 // UpdateUserInput holds the fields that can be updated on a user.
 type UpdateUserInput struct {
-	FirstName *string
-	LastName  *string
-	Username  *string
-	AvatarURL *string
-	Timezone  *string
+	FirstName               *string
+	LastName                *string
+	Username                *string
+	AvatarURL               *string
+	Phone                   *string
+	Bio                     *string
+	JobTitle                *string
+	Company                 *string
+	Timezone                *string
+	Language                *string
+	DateFormat              *string
+	TimeFormat              *string
+	Theme                   *string
+	NotificationPreferences models.JSON
 }
 
 // Update updates a user's profile information.
@@ -78,8 +87,35 @@ func (s *UserService) Update(ctx context.Context, userID uuid.UUID, input Update
 	if input.AvatarURL != nil {
 		user.AvatarURL = input.AvatarURL
 	}
+	if input.Phone != nil {
+		user.Phone = input.Phone
+	}
+	if input.Bio != nil {
+		user.Bio = input.Bio
+	}
+	if input.JobTitle != nil {
+		user.JobTitle = input.JobTitle
+	}
+	if input.Company != nil {
+		user.Company = input.Company
+	}
 	if input.Timezone != nil {
 		user.Timezone = *input.Timezone
+	}
+	if input.Language != nil {
+		user.Language = *input.Language
+	}
+	if input.DateFormat != nil {
+		user.DateFormat = *input.DateFormat
+	}
+	if input.TimeFormat != nil {
+		user.TimeFormat = *input.TimeFormat
+	}
+	if input.Theme != nil {
+		user.Theme = *input.Theme
+	}
+	if input.NotificationPreferences != nil {
+		user.NotificationPreferences = input.NotificationPreferences
 	}
 
 	if err := s.userRepo.Update(ctx, user); err != nil {

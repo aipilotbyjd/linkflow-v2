@@ -18,6 +18,9 @@ type CreateWorkflowRequest struct {
 	Connections models.JSONArray `json:"connections" validate:"required"`
 	Settings    models.JSON      `json:"settings,omitempty"`
 	Tags        []string         `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
+	Color       *string          `json:"color,omitempty" validate:"omitempty,max=20"`
+	Icon        *string          `json:"icon,omitempty" validate:"omitempty,max=50"`
+	Category    *string          `json:"category,omitempty" validate:"omitempty,max=50"`
 }
 
 type UpdateWorkflowRequest struct {
@@ -27,6 +30,10 @@ type UpdateWorkflowRequest struct {
 	Connections models.JSONArray `json:"connections,omitempty"`
 	Settings    models.JSON      `json:"settings,omitempty"`
 	Tags        []string         `json:"tags,omitempty" validate:"omitempty,max=10,dive,max=50"`
+	Color       *string          `json:"color,omitempty" validate:"omitempty,max=20"`
+	Icon        *string          `json:"icon,omitempty" validate:"omitempty,max=50"`
+	Category    *string          `json:"category,omitempty" validate:"omitempty,max=50"`
+	IsFavorite  *bool            `json:"is_favorite,omitempty"`
 }
 
 type ExecuteWorkflowRequest struct {
@@ -49,6 +56,10 @@ type WorkflowResponse struct {
 	Connections    interface{} `json:"connections,omitempty"`
 	Settings       interface{} `json:"settings,omitempty"`
 	Tags           []string    `json:"tags,omitempty"`
+	Color          *string     `json:"color,omitempty"`
+	Icon           *string     `json:"icon,omitempty"`
+	Category       *string     `json:"category,omitempty"`
+	IsFavorite     bool        `json:"is_favorite"`
 	ExecutionCount int         `json:"execution_count"`
 	LastExecutedAt *int64      `json:"last_executed_at,omitempty"`
 	CreatedAt      int64       `json:"created_at"`

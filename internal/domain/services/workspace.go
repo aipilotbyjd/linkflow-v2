@@ -54,11 +54,18 @@ func NewWorkspaceService(
 
 // CreateWorkspaceInput holds the input for creating a workspace.
 type CreateWorkspaceInput struct {
-	OwnerID     uuid.UUID
-	Name        string
-	Slug        string
-	Description *string
-	Timezone    *string
+	OwnerID      uuid.UUID
+	Name         string
+	Slug         string
+	Description  *string
+	Timezone     *string
+	Language     *string
+	Currency     *string
+	Country      *string
+	Industry     *string
+	CompanySize  *string
+	Website      *string
+	BillingEmail *string
 }
 
 // Create creates a new workspace with the owner as the first member.
@@ -81,14 +88,29 @@ func (s *WorkspaceService) Create(ctx context.Context, input CreateWorkspaceInpu
 	if input.Timezone != nil && *input.Timezone != "" {
 		timezone = *input.Timezone
 	}
+	language := "en"
+	if input.Language != nil && *input.Language != "" {
+		language = *input.Language
+	}
+	currency := "USD"
+	if input.Currency != nil && *input.Currency != "" {
+		currency = *input.Currency
+	}
 
 	workspace := &models.Workspace{
-		OwnerID:     input.OwnerID,
-		Name:        input.Name,
-		Slug:        slug,
-		Description: input.Description,
-		Timezone:    timezone,
-		PlanID:      models.PlanFree,
+		OwnerID:      input.OwnerID,
+		Name:         input.Name,
+		Slug:         slug,
+		Description:  input.Description,
+		Timezone:     timezone,
+		Language:     language,
+		Currency:     currency,
+		Country:      input.Country,
+		Industry:     input.Industry,
+		CompanySize:  input.CompanySize,
+		Website:      input.Website,
+		BillingEmail: input.BillingEmail,
+		PlanID:       models.PlanFree,
 	}
 
 	if err := s.workspaceRepo.Create(ctx, workspace); err != nil {
@@ -148,11 +170,18 @@ func (s *WorkspaceService) GetUserWorkspaces(ctx context.Context, userID uuid.UU
 
 // UpdateWorkspaceInput holds the input for updating a workspace.
 type UpdateWorkspaceInput struct {
-	Name        *string
-	Description *string
-	LogoURL     *string
-	Timezone    *string
-	Settings    models.JSON
+	Name         *string
+	Description  *string
+	LogoURL      *string
+	Timezone     *string
+	Language     *string
+	Currency     *string
+	Country      *string
+	Industry     *string
+	CompanySize  *string
+	Website      *string
+	BillingEmail *string
+	Settings     models.JSON
 }
 
 // Update updates a workspace's details.
@@ -176,6 +205,27 @@ func (s *WorkspaceService) Update(ctx context.Context, workspaceID uuid.UUID, in
 	}
 	if input.Timezone != nil {
 		workspace.Timezone = *input.Timezone
+	}
+	if input.Language != nil {
+		workspace.Language = *input.Language
+	}
+	if input.Currency != nil {
+		workspace.Currency = *input.Currency
+	}
+	if input.Country != nil {
+		workspace.Country = input.Country
+	}
+	if input.Industry != nil {
+		workspace.Industry = input.Industry
+	}
+	if input.CompanySize != nil {
+		workspace.CompanySize = input.CompanySize
+	}
+	if input.Website != nil {
+		workspace.Website = input.Website
+	}
+	if input.BillingEmail != nil {
+		workspace.BillingEmail = input.BillingEmail
 	}
 	if input.Settings != nil {
 		workspace.Settings = input.Settings

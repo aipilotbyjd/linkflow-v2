@@ -19,6 +19,10 @@ type Workflow struct {
 	Connections      JSONArray      `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
 	Settings         JSON           `gorm:"type:jsonb;default:'{}'" json:"settings"`
 	Tags             StringArray    `gorm:"type:text[]" json:"tags"`
+	Color            *string        `gorm:"size:20" json:"color,omitempty"`
+	Icon             *string        `gorm:"size:50" json:"icon,omitempty"`
+	Category         *string        `gorm:"size:50" json:"category,omitempty"`
+	IsFavorite       bool           `gorm:"default:false" json:"is_favorite"`
 	FolderID         *uuid.UUID     `gorm:"type:uuid;column:project_id" json:"folder_id,omitempty"`
 	ErrorWorkflowID  *uuid.UUID     `gorm:"type:uuid" json:"error_workflow_id,omitempty"` // Workflow to trigger on error
 	ErrorTrigger     *string        `gorm:"size:50" json:"error_trigger,omitempty"`        // on_failure, on_timeout, on_all

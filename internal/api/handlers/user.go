@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
+	"github.com/linkflow-ai/linkflow/internal/api/mappers"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -47,19 +48,8 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 		dto.UserResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		UserResponse: dto.UserResponse{
-			ID:            user.ID.String(),
-			Email:         user.Email,
-			Username:      user.Username,
-			FirstName:     user.FirstName,
-			LastName:      user.LastName,
-			AvatarURL:     user.AvatarURL,
-			Timezone:      user.Timezone,
-			EmailVerified: user.EmailVerified,
-			MFAEnabled:    user.MFAEnabled,
-			CreatedAt:     user.CreatedAt.Unix(),
-		},
-		Actions: actions,
+		UserResponse: mappers.UserToResponse(user),
+		Actions:      actions,
 	}
 
 	dto.NewResponse(response).
@@ -85,31 +75,27 @@ func (h *UserHandler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	user, err := h.userSvc.Update(r.Context(), claims.UserID, services.UpdateUserInput{
-		FirstName: req.FirstName,
-		LastName:  req.LastName,
-		Username:  req.Username,
-		AvatarURL: req.AvatarURL,
-		Timezone:  req.Timezone,
+		FirstName:               req.FirstName,
+		LastName:                req.LastName,
+		Username:                req.Username,
+		AvatarURL:               req.AvatarURL,
+		Phone:                   req.Phone,
+		Bio:                     req.Bio,
+		JobTitle:                req.JobTitle,
+		Company:                 req.Company,
+		Timezone:                req.Timezone,
+		Language:                req.Language,
+		DateFormat:              req.DateFormat,
+		TimeFormat:              req.TimeFormat,
+		Theme:                   req.Theme,
+		NotificationPreferences: req.NotificationPreferences,
 	})
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to update user")
 		return
 	}
 
-	response := dto.UserResponse{
-		ID:            user.ID.String(),
-		Email:         user.Email,
-		Username:      user.Username,
-		FirstName:     user.FirstName,
-		LastName:      user.LastName,
-		AvatarURL:     user.AvatarURL,
-		Timezone:      user.Timezone,
-		EmailVerified: user.EmailVerified,
-		MFAEnabled:    user.MFAEnabled,
-		CreatedAt:     user.CreatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(mappers.UserToResponse(user)).
 		WithLinks(&dto.Links{Self: "/api/v1/users/me"}).
 		Send(w)
 }

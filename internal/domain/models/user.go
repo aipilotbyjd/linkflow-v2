@@ -15,7 +15,16 @@ type User struct {
 	FirstName    string         `gorm:"size:100" json:"first_name"`
 	LastName     string         `gorm:"size:100" json:"last_name"`
 	AvatarURL    *string        `gorm:"size:500" json:"avatar_url,omitempty"`
+	Phone        *string        `gorm:"size:20" json:"phone,omitempty"`
+	Bio          *string        `gorm:"type:text" json:"bio,omitempty"`
+	JobTitle     *string        `gorm:"size:100" json:"job_title,omitempty"`
+	Company      *string        `gorm:"size:100" json:"company,omitempty"`
 	Timezone     string         `gorm:"size:50;default:UTC" json:"timezone"`
+	Language     string         `gorm:"size:10;default:en" json:"language"`
+	DateFormat   string         `gorm:"size:20;default:MM/DD/YYYY" json:"date_format"`
+	TimeFormat   string         `gorm:"size:5;default:12h" json:"time_format"`
+	Theme        string         `gorm:"size:10;default:system" json:"theme"`
+	NotificationPreferences JSON `gorm:"type:jsonb;default:'{}'" json:"notification_preferences"`
 	Status       string         `gorm:"size:20;default:active;index" json:"status"`
 	EmailVerified bool          `gorm:"default:false" json:"email_verified"`
 	MFAEnabled   bool           `gorm:"default:false" json:"mfa_enabled"`
