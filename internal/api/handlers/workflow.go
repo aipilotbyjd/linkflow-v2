@@ -371,18 +371,29 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		IsFavorite:  req.IsFavorite,
 	}
 
-	// Handle folder assignment
-	if req.FolderID != nil {
-		if *req.FolderID == "" {
-			// Empty string means remove from folder
+	// Handle folder assignment: null or "" clears folder, UUID sets it
+	if len(req.FolderID) > 0 {
+		folderStr := string(req.FolderID)
+		if folderStr == "null" || folderStr == `""` {
+			// null or empty string means remove from folder
 			updateInput.ClearFolder = true
 		} else {
-			folderID, err := uuid.Parse(*req.FolderID)
-			if err != nil {
+			// Parse the JSON string value (remove quotes)
+			var folderIDStr string
+			if err := json.Unmarshal(req.FolderID, &folderIDStr); err != nil {
 				dto.BadRequest(w, "invalid folder_id format")
 				return
 			}
-			updateInput.FolderID = &folderID
+			if folderIDStr == "" {
+				updateInput.ClearFolder = true
+			} else {
+				folderID, err := uuid.Parse(folderIDStr)
+				if err != nil {
+					dto.BadRequest(w, "invalid folder_id: must be a valid UUID")
+					return
+				}
+				updateInput.FolderID = &folderID
+			}
 		}
 	}
 

@@ -34,7 +34,7 @@ type UpdateWorkflowRequest struct {
 	Icon        *string          `json:"icon,omitempty" validate:"omitempty,max=50"`
 	Category    *string          `json:"category,omitempty" validate:"omitempty,max=50"`
 	IsFavorite  *bool            `json:"is_favorite,omitempty"`
-	FolderID    *string          `json:"folder_id,omitempty" validate:"omitempty,uuid"`
+	FolderID    json.RawMessage  `json:"folder_id,omitempty"`
 }
 
 type ExecuteWorkflowRequest struct {
