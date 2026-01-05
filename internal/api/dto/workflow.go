@@ -61,6 +61,7 @@ type WorkflowResponse struct {
 	Icon           *string     `json:"icon,omitempty"`
 	Category       *string     `json:"category,omitempty"`
 	IsFavorite     bool        `json:"is_favorite"`
+	FolderID       *string     `json:"folder_id,omitempty"`
 	ExecutionCount int         `json:"execution_count"`
 	LastExecutedAt *int64      `json:"last_executed_at,omitempty"`
 	CreatedAt      int64       `json:"created_at"`

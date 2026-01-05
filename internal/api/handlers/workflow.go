@@ -284,6 +284,7 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 			Tags:           workflow.Tags,
 			ExecutionCount: workflow.ExecutionCount,
 			LastExecutedAt: lastExecutedAt,
+			FolderID:       uuidPtrToStringPtr(workflow.FolderID),
 			CreatedAt:      workflow.CreatedAt.Unix(),
 			UpdatedAt:      workflow.UpdatedAt.Unix(),
 		},
@@ -408,6 +409,7 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Connections: workflow.Connections,
 		Settings:    workflow.Settings,
 		Tags:        workflow.Tags,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	}
@@ -1001,4 +1003,13 @@ func filtersToWorkflowRepoFilter(f *dto.WorkflowFilters) *repositories.WorkflowF
 		SortBy:        f.SortBy,
 		Order:         f.Order,
 	}
+}
+
+// uuidPtrToStringPtr converts a uuid.UUID pointer to a string pointer
+func uuidPtrToStringPtr(u *uuid.UUID) *string {
+	if u == nil {
+		return nil
+	}
+	s := u.String()
+	return &s
 }
