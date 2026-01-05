@@ -72,12 +72,6 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	response := []WorkflowWithActions{}
 	for _, wf := range workflows {
-		var lastExecutedAt *int64
-		if wf.LastExecutedAt != nil {
-			ts := wf.LastExecutedAt.Unix()
-			lastExecutedAt = &ts
-		}
-
 		wsID := wsCtx.WorkspaceID.String()
 		wfID := wf.ID.String()
 
@@ -92,20 +86,8 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 		actions = append(actions, dto.DeleteAction("/api/v1/workspaces/"+wsID+"/workflows/"+wfID))
 
 		response = append(response, WorkflowWithActions{
-			WorkflowResponse: dto.WorkflowResponse{
-				ID:             wfID,
-				Name:           wf.Name,
-				Description:    wf.Description,
-				Status:         wf.Status,
-				Version:        wf.Version,
-				Tags:           wf.Tags,
-				ExecutionCount: wf.ExecutionCount,
-				LastExecutedAt: lastExecutedAt,
-				FolderID:       uuidPtrToStringPtr(wf.FolderID),
-				CreatedAt:      wf.CreatedAt.Unix(),
-				UpdatedAt:      wf.UpdatedAt.Unix(),
-			},
-			Actions: actions,
+			WorkflowResponse: buildWorkflowResponse(&wf),
+			Actions:          actions,
 		})
 	}
 
@@ -210,20 +192,7 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		Nodes:       workflow.Nodes,
-		Connections: workflow.Connections,
-		Settings:    workflow.Settings,
-		Tags:        workflow.Tags,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	dto.Created(w, buildWorkflowResponse(workflow))
 }
 
 func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -241,12 +210,6 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: Validate workspace ownership to prevent cross-tenant access
 	if !ValidateWorkspaceOwnership(w, r, workflow) {
 		return
-	}
-
-	var lastExecutedAt *int64
-	if workflow.LastExecutedAt != nil {
-		ts := workflow.LastExecutedAt.Unix()
-		lastExecutedAt = &ts
 	}
 
 	wsCtx := middleware.MustWorkspace(w, r)
@@ -274,23 +237,8 @@ func (h *WorkflowHandler) Get(w http.ResponseWriter, r *http.Request) {
 		dto.WorkflowResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		WorkflowResponse: dto.WorkflowResponse{
-			ID:             wfID,
-			Name:           workflow.Name,
-			Description:    workflow.Description,
-			Status:         workflow.Status,
-			Version:        workflow.Version,
-			Nodes:          workflow.Nodes,
-			Connections:    workflow.Connections,
-			Settings:       workflow.Settings,
-			Tags:           workflow.Tags,
-			ExecutionCount: workflow.ExecutionCount,
-			LastExecutedAt: lastExecutedAt,
-			FolderID:       uuidPtrToStringPtr(workflow.FolderID),
-			CreatedAt:      workflow.CreatedAt.Unix(),
-			UpdatedAt:      workflow.UpdatedAt.Unix(),
-		},
-		Actions: actions,
+		WorkflowResponse: buildWorkflowResponse(workflow),
+		Actions:          actions,
 	}
 
 	dto.NewResponse(response).
@@ -412,22 +360,7 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 	wfID := workflow.ID.String()
 	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
 
-	response := dto.WorkflowResponse{
-		ID:          wfID,
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		Nodes:       workflow.Nodes,
-		Connections: workflow.Connections,
-		Settings:    workflow.Settings,
-		Tags:        workflow.Tags,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(buildWorkflowResponse(workflow)).
 		WithLinks(&dto.Links{Self: basePath}).
 		Send(w)
 }
@@ -550,16 +483,7 @@ func (h *WorkflowHandler) Clone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	dto.Created(w, buildWorkflowResponse(workflow))
 }
 
 func (h *WorkflowHandler) Activate(w http.ResponseWriter, r *http.Request) {
@@ -861,20 +785,7 @@ func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		Nodes:       workflow.Nodes,
-		Connections: workflow.Connections,
-		Settings:    workflow.Settings,
-		Tags:        workflow.Tags,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	dto.Created(w, buildWorkflowResponse(workflow))
 }
 
 // RollbackVersion restores workflow to a previous version
@@ -911,22 +822,7 @@ func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request
 	wfID := workflow.ID.String()
 	basePath := "/api/v1/workspaces/" + wsID + "/workflows/" + wfID
 
-	response := dto.WorkflowResponse{
-		ID:          wfID,
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		Nodes:       workflow.Nodes,
-		Connections: workflow.Connections,
-		Settings:    workflow.Settings,
-		Tags:        workflow.Tags,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(buildWorkflowResponse(workflow)).
 		WithLinks(&dto.Links{Self: basePath}).
 		Send(w)
 }
@@ -988,20 +884,7 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.WorkflowResponse{
-		ID:          workflow.ID.String(),
-		Name:        workflow.Name,
-		Description: workflow.Description,
-		Status:      workflow.Status,
-		Version:     workflow.Version,
-		Nodes:       workflow.Nodes,
-		Connections: workflow.Connections,
-		Settings:    workflow.Settings,
-		Tags:        workflow.Tags,
-		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
-		CreatedAt:   workflow.CreatedAt.Unix(),
-		UpdatedAt:   workflow.UpdatedAt.Unix(),
-	})
+	dto.Created(w, buildWorkflowResponse(workflow))
 }
 
 // filtersToWorkflowRepoFilter converts DTO filters to repository filters
@@ -1029,4 +912,43 @@ func uuidPtrToStringPtr(u *uuid.UUID) *string {
 	}
 	s := u.String()
 	return &s
+}
+
+// timePtrToInt64Ptr converts a time.Time pointer to an int64 (unix timestamp) pointer
+func timePtrToInt64Ptr(t *time.Time) *int64 {
+	if t == nil {
+		return nil
+	}
+	ts := t.Unix()
+	return &ts
+}
+
+// buildWorkflowResponse creates a WorkflowResponse from a Workflow model
+func buildWorkflowResponse(wf *models.Workflow) dto.WorkflowResponse {
+	return dto.WorkflowResponse{
+		ID:              wf.ID.String(),
+		WorkspaceID:     wf.WorkspaceID.String(),
+		CreatedBy:       wf.CreatedBy.String(),
+		Name:            wf.Name,
+		Description:     wf.Description,
+		Status:          wf.Status,
+		Version:         wf.Version,
+		Nodes:           wf.Nodes,
+		Connections:     wf.Connections,
+		Settings:        wf.Settings,
+		Tags:            wf.Tags,
+		Color:           wf.Color,
+		Icon:            wf.Icon,
+		Category:        wf.Category,
+		IsFavorite:      wf.IsFavorite,
+		FolderID:        uuidPtrToStringPtr(wf.FolderID),
+		ErrorWorkflowID: uuidPtrToStringPtr(wf.ErrorWorkflowID),
+		ErrorTrigger:    wf.ErrorTrigger,
+		ExecutionCount:  wf.ExecutionCount,
+		LastExecutedAt:  timePtrToInt64Ptr(wf.LastExecutedAt),
+		ActivatedAt:     timePtrToInt64Ptr(wf.ActivatedAt),
+		ArchivedAt:      timePtrToInt64Ptr(wf.ArchivedAt),
+		CreatedAt:       wf.CreatedAt.Unix(),
+		UpdatedAt:       wf.UpdatedAt.Unix(),
+	}
 }

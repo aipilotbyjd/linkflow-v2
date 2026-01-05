@@ -48,24 +48,30 @@ type CloneWorkflowRequest struct {
 // Workflow responses
 
 type WorkflowResponse struct {
-	ID             string      `json:"id"`
-	Name           string      `json:"name"`
-	Description    *string     `json:"description,omitempty"`
-	Status         string      `json:"status"`
-	Version        int         `json:"version"`
-	Nodes          interface{} `json:"nodes,omitempty"`
-	Connections    interface{} `json:"connections,omitempty"`
-	Settings       interface{} `json:"settings,omitempty"`
-	Tags           []string    `json:"tags,omitempty"`
-	Color          *string     `json:"color,omitempty"`
-	Icon           *string     `json:"icon,omitempty"`
-	Category       *string     `json:"category,omitempty"`
-	IsFavorite     bool        `json:"is_favorite"`
-	FolderID       *string     `json:"folder_id,omitempty"`
-	ExecutionCount int         `json:"execution_count"`
-	LastExecutedAt *int64      `json:"last_executed_at,omitempty"`
-	CreatedAt      int64       `json:"created_at"`
-	UpdatedAt      int64       `json:"updated_at"`
+	ID              string      `json:"id"`
+	WorkspaceID     string      `json:"workspace_id"`
+	CreatedBy       string      `json:"created_by"`
+	Name            string      `json:"name"`
+	Description     *string     `json:"description,omitempty"`
+	Status          string      `json:"status"`
+	Version         int         `json:"version"`
+	Nodes           interface{} `json:"nodes,omitempty"`
+	Connections     interface{} `json:"connections,omitempty"`
+	Settings        interface{} `json:"settings,omitempty"`
+	Tags            []string    `json:"tags,omitempty"`
+	Color           *string     `json:"color,omitempty"`
+	Icon            *string     `json:"icon,omitempty"`
+	Category        *string     `json:"category,omitempty"`
+	IsFavorite      bool        `json:"is_favorite"`
+	FolderID        *string     `json:"folder_id,omitempty"`
+	ErrorWorkflowID *string     `json:"error_workflow_id,omitempty"`
+	ErrorTrigger    *string     `json:"error_trigger,omitempty"`
+	ExecutionCount  int         `json:"execution_count"`
+	LastExecutedAt  *int64      `json:"last_executed_at,omitempty"`
+	ActivatedAt     *int64      `json:"activated_at,omitempty"`
+	ArchivedAt      *int64      `json:"archived_at,omitempty"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
 }
 
 type WorkflowVersionResponse struct {
