@@ -101,6 +101,7 @@ func (h *WorkflowHandler) List(w http.ResponseWriter, r *http.Request) {
 				Tags:           wf.Tags,
 				ExecutionCount: wf.ExecutionCount,
 				LastExecutedAt: lastExecutedAt,
+				FolderID:       uuidPtrToStringPtr(wf.FolderID),
 				CreatedAt:      wf.CreatedAt.Unix(),
 				UpdatedAt:      wf.UpdatedAt.Unix(),
 			},
@@ -219,6 +220,7 @@ func (h *WorkflowHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Connections: workflow.Connections,
 		Settings:    workflow.Settings,
 		Tags:        workflow.Tags,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
@@ -543,6 +545,7 @@ func (h *WorkflowHandler) Clone(w http.ResponseWriter, r *http.Request) {
 		Description: workflow.Description,
 		Status:      workflow.Status,
 		Version:     workflow.Version,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
@@ -857,6 +860,7 @@ func (h *WorkflowHandler) Import(w http.ResponseWriter, r *http.Request) {
 		Connections: workflow.Connections,
 		Settings:    workflow.Settings,
 		Tags:        workflow.Tags,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
@@ -906,6 +910,7 @@ func (h *WorkflowHandler) RollbackVersion(w http.ResponseWriter, r *http.Request
 		Connections: workflow.Connections,
 		Settings:    workflow.Settings,
 		Tags:        workflow.Tags,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	}
@@ -982,6 +987,7 @@ func (h *WorkflowHandler) Duplicate(w http.ResponseWriter, r *http.Request) {
 		Connections: workflow.Connections,
 		Settings:    workflow.Settings,
 		Tags:        workflow.Tags,
+		FolderID:    uuidPtrToStringPtr(workflow.FolderID),
 		CreatedAt:   workflow.CreatedAt.Unix(),
 		UpdatedAt:   workflow.UpdatedAt.Unix(),
 	})
