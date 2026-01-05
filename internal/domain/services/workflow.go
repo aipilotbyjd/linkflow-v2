@@ -163,6 +163,8 @@ type UpdateWorkflowInput struct {
 	Icon        *string
 	Category    *string
 	IsFavorite  *bool
+	FolderID    *uuid.UUID
+	ClearFolder bool // Set to true to remove workflow from folder
 }
 
 // Update updates a workflow and creates a new version.
@@ -206,6 +208,12 @@ func (s *WorkflowService) Update(ctx context.Context, workflowID uuid.UUID, inpu
 	}
 	if input.IsFavorite != nil {
 		workflow.IsFavorite = *input.IsFavorite
+	}
+	if input.FolderID != nil {
+		workflow.FolderID = input.FolderID
+	}
+	if input.ClearFolder {
+		workflow.FolderID = nil
 	}
 
 	workflow.Version++

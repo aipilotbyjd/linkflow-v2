@@ -1194,9 +1194,24 @@ PUT /workspaces/{workspaceID}/workflows/{workflowID}
   "nodes": [...],
   "connections": [...],
   "settings": { "timeout_seconds": 600 },
-  "tags": ["updated"]
+  "tags": ["updated"],
+  "folder_id": "folder-uuid"
 }
 ```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | No | Workflow name (1-255 chars) |
+| `description` | string | No | Workflow description |
+| `nodes` | array | No | Workflow nodes definition |
+| `connections` | array | No | Node connections |
+| `settings` | object | No | Workflow settings |
+| `tags` | array | No | Tags (max 10) |
+| `color` | string | No | Display color |
+| `icon` | string | No | Display icon |
+| `category` | string | No | Workflow category |
+| `is_favorite` | boolean | No | Mark as favorite |
+| `folder_id` | uuid | No | Move workflow to folder. Set to empty string `""` to remove from folder |
 
 **Response:** `200 OK`
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
@@ -354,7 +355,7 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	workflow, err := h.workflowSvc.Update(r.Context(), workflowID, services.UpdateWorkflowInput{
+	updateInput := services.UpdateWorkflowInput{
 		Name:        req.Name,
 		Description: req.Description,
 		Nodes:       req.Nodes,
@@ -365,7 +366,24 @@ func (h *WorkflowHandler) Update(w http.ResponseWriter, r *http.Request) {
 		Icon:        req.Icon,
 		Category:    req.Category,
 		IsFavorite:  req.IsFavorite,
-	}, claims.UserID)
+	}
+
+	// Handle folder assignment
+	if req.FolderID != nil {
+		if *req.FolderID == "" {
+			// Empty string means remove from folder
+			updateInput.ClearFolder = true
+		} else {
+			folderID, err := uuid.Parse(*req.FolderID)
+			if err != nil {
+				dto.BadRequest(w, "invalid folder_id format")
+				return
+			}
+			updateInput.FolderID = &folderID
+		}
+	}
+
+	workflow, err := h.workflowSvc.Update(r.Context(), workflowID, updateInput, claims.UserID)
 	if err != nil {
 		dto.ErrorResponse(w, http.StatusInternalServerError, "failed to update workflow")
 		return
