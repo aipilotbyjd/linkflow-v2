@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
+	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
@@ -77,18 +78,8 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := []ExecutionWithActions{}
+	wsID := wsCtx.WorkspaceID.String()
 	for _, exec := range executions {
-		var startedAt, completedAt *int64
-		if exec.StartedAt != nil {
-			ts := exec.StartedAt.Unix()
-			startedAt = &ts
-		}
-		if exec.CompletedAt != nil {
-			ts := exec.CompletedAt.Unix()
-			completedAt = &ts
-		}
-
-		wsID := wsCtx.WorkspaceID.String()
 		execID := exec.ID.String()
 
 		// Build actions based on execution status
@@ -102,23 +93,8 @@ func (h *ExecutionHandler) List(w http.ResponseWriter, r *http.Request) {
 		actions = append(actions, dto.DeleteAction("/api/v1/workspaces/"+wsID+"/executions/"+execID))
 
 		response = append(response, ExecutionWithActions{
-			ExecutionResponse: dto.ExecutionResponse{
-				ID:              execID,
-				WorkflowID:      exec.WorkflowID.String(),
-				WorkflowVersion: exec.WorkflowVersion,
-				Status:          exec.Status,
-				TriggerType:     exec.TriggerType,
-				InputData:       exec.InputData,
-				OutputData:      exec.OutputData,
-				ErrorMessage:    exec.ErrorMessage,
-				ErrorNodeID:     exec.ErrorNodeID,
-				NodesTotal:      exec.NodesTotal,
-				NodesCompleted:  exec.NodesCompleted,
-				QueuedAt:        exec.QueuedAt.Unix(),
-				StartedAt:       startedAt,
-				CompletedAt:     completedAt,
-			},
-			Actions: actions,
+			ExecutionResponse: buildExecutionResponse(&exec),
+			Actions:           actions,
 		})
 	}
 
@@ -166,16 +142,6 @@ func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var startedAt, completedAt *int64
-	if execution.StartedAt != nil {
-		ts := execution.StartedAt.Unix()
-		startedAt = &ts
-	}
-	if execution.CompletedAt != nil {
-		ts := execution.CompletedAt.Unix()
-		completedAt = &ts
-	}
-
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
@@ -200,23 +166,8 @@ func (h *ExecutionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		dto.ExecutionResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		ExecutionResponse: dto.ExecutionResponse{
-			ID:              execID,
-			WorkflowID:      execution.WorkflowID.String(),
-			WorkflowVersion: execution.WorkflowVersion,
-			Status:          execution.Status,
-			TriggerType:     execution.TriggerType,
-			InputData:       execution.InputData,
-			OutputData:      execution.OutputData,
-			ErrorMessage:    execution.ErrorMessage,
-			ErrorNodeID:     execution.ErrorNodeID,
-			NodesTotal:      execution.NodesTotal,
-			NodesCompleted:  execution.NodesCompleted,
-			QueuedAt:        execution.QueuedAt.Unix(),
-			StartedAt:       startedAt,
-			CompletedAt:     completedAt,
-		},
-		Actions: actions,
+		ExecutionResponse: buildExecutionResponse(execution),
+		Actions:           actions,
 	}
 
 	dto.NewResponse(response).
@@ -250,29 +201,7 @@ func (h *ExecutionHandler) GetNodes(w http.ResponseWriter, r *http.Request) {
 
 	response := []dto.NodeExecutionResponse{}
 	for _, ne := range nodeExecutions {
-		var startedAt, completedAt *int64
-		if ne.StartedAt != nil {
-			ts := ne.StartedAt.Unix()
-			startedAt = &ts
-		}
-		if ne.CompletedAt != nil {
-			ts := ne.CompletedAt.Unix()
-			completedAt = &ts
-		}
-
-		response = append(response, dto.NodeExecutionResponse{
-			ID:           ne.ID.String(),
-			NodeID:       ne.NodeID,
-			NodeType:     ne.NodeType,
-			NodeName:     ne.NodeName,
-			Status:       ne.Status,
-			InputData:    ne.InputData,
-			OutputData:   ne.OutputData,
-			ErrorMessage: ne.ErrorMessage,
-			DurationMs:   ne.DurationMs,
-			StartedAt:    startedAt,
-			CompletedAt:  completedAt,
-		})
+		response = append(response, buildNodeExecutionResponse(&ne))
 	}
 
 	wsCtx := middleware.MustWorkspace(w, r)
@@ -421,32 +350,7 @@ func (h *ExecutionHandler) Search(w http.ResponseWriter, r *http.Request) {
 
 	response := []dto.ExecutionResponse{}
 	for _, exec := range executions {
-		var startedAt, completedAt *int64
-		if exec.StartedAt != nil {
-			ts := exec.StartedAt.Unix()
-			startedAt = &ts
-		}
-		if exec.CompletedAt != nil {
-			ts := exec.CompletedAt.Unix()
-			completedAt = &ts
-		}
-
-		response = append(response, dto.ExecutionResponse{
-			ID:              exec.ID.String(),
-			WorkflowID:      exec.WorkflowID.String(),
-			WorkflowVersion: exec.WorkflowVersion,
-			Status:          exec.Status,
-			TriggerType:     exec.TriggerType,
-			InputData:       exec.InputData,
-			OutputData:      exec.OutputData,
-			ErrorMessage:    exec.ErrorMessage,
-			ErrorNodeID:     exec.ErrorNodeID,
-			NodesTotal:      exec.NodesTotal,
-			NodesCompleted:  exec.NodesCompleted,
-			QueuedAt:        exec.QueuedAt.Unix(),
-			StartedAt:       startedAt,
-			CompletedAt:     completedAt,
-		})
+		response = append(response, buildExecutionResponse(&exec))
 	}
 
 	dto.JSONWithMeta(w, http.StatusOK, response, pg.NewMeta(total))
@@ -539,4 +443,98 @@ func (h *ExecutionHandler) Stats(w http.ResponseWriter, r *http.Request) {
 	dto.NewResponse(stats).
 		WithLinks(&dto.Links{Self: "/api/v1/workspaces/" + wsID + "/executions/stats"}).
 		Send(w)
+}
+
+// buildExecutionResponse creates an ExecutionResponse from an Execution model
+func buildExecutionResponse(e *models.Execution) dto.ExecutionResponse {
+	var startedAt, completedAt, pausedAt, resumedAt *int64
+	if e.StartedAt != nil {
+		ts := e.StartedAt.Unix()
+		startedAt = &ts
+	}
+	if e.CompletedAt != nil {
+		ts := e.CompletedAt.Unix()
+		completedAt = &ts
+	}
+	if e.PausedAt != nil {
+		ts := e.PausedAt.Unix()
+		pausedAt = &ts
+	}
+	if e.ResumedAt != nil {
+		ts := e.ResumedAt.Unix()
+		resumedAt = &ts
+	}
+
+	var triggeredBy, parentExecutionID, batchID *string
+	if e.TriggeredBy != nil {
+		id := e.TriggeredBy.String()
+		triggeredBy = &id
+	}
+	if e.ParentExecutionID != nil {
+		id := e.ParentExecutionID.String()
+		parentExecutionID = &id
+	}
+	if e.BatchID != nil {
+		id := e.BatchID.String()
+		batchID = &id
+	}
+
+	return dto.ExecutionResponse{
+		ID:                e.ID.String(),
+		WorkflowID:        e.WorkflowID.String(),
+		WorkspaceID:       e.WorkspaceID.String(),
+		TriggeredBy:       triggeredBy,
+		WorkflowVersion:   e.WorkflowVersion,
+		Status:            e.Status,
+		TriggerType:       e.TriggerType,
+		TriggerData:       e.TriggerData,
+		InputData:         e.InputData,
+		OutputData:        e.OutputData,
+		ErrorMessage:      e.ErrorMessage,
+		ErrorNodeID:       e.ErrorNodeID,
+		NodesTotal:        e.NodesTotal,
+		NodesCompleted:    e.NodesCompleted,
+		RetryCount:        e.RetryCount,
+		MaxRetries:        e.MaxRetries,
+		Priority:          e.Priority,
+		TimeoutSeconds:    e.TimeoutSeconds,
+		ParentExecutionID: parentExecutionID,
+		BatchID:           batchID,
+		QueuedAt:          e.QueuedAt.Unix(),
+		StartedAt:         startedAt,
+		CompletedAt:       completedAt,
+		PausedAt:          pausedAt,
+		ResumedAt:         resumedAt,
+		CreatedAt:         e.CreatedAt.Unix(),
+	}
+}
+
+// buildNodeExecutionResponse creates a NodeExecutionResponse from a NodeExecution model
+func buildNodeExecutionResponse(ne *models.NodeExecution) dto.NodeExecutionResponse {
+	var startedAt, completedAt *int64
+	if ne.StartedAt != nil {
+		ts := ne.StartedAt.Unix()
+		startedAt = &ts
+	}
+	if ne.CompletedAt != nil {
+		ts := ne.CompletedAt.Unix()
+		completedAt = &ts
+	}
+
+	return dto.NodeExecutionResponse{
+		ID:           ne.ID.String(),
+		ExecutionID:  ne.ExecutionID.String(),
+		NodeID:       ne.NodeID,
+		NodeType:     ne.NodeType,
+		NodeName:     ne.NodeName,
+		Status:       ne.Status,
+		InputData:    ne.InputData,
+		OutputData:   ne.OutputData,
+		ErrorMessage: ne.ErrorMessage,
+		DurationMs:   ne.DurationMs,
+		RetryCount:   ne.RetryCount,
+		StartedAt:    startedAt,
+		CompletedAt:  completedAt,
+		CreatedAt:    ne.CreatedAt.Unix(),
+	}
 }

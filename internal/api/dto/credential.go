@@ -21,9 +21,12 @@ type UpdateCredentialRequest struct {
 
 type CredentialResponse struct {
 	ID          string  `json:"id"`
+	WorkspaceID string  `json:"workspace_id"`
+	CreatedBy   string  `json:"created_by"`
 	Name        string  `json:"name"`
 	Type        string  `json:"type"`
 	Description *string `json:"description,omitempty"`
 	LastUsedAt  *int64  `json:"last_used_at,omitempty"`
 	CreatedAt   int64   `json:"created_at"`
+	UpdatedAt   int64   `json:"updated_at"`
 }

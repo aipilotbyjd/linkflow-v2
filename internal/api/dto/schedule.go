@@ -24,16 +24,20 @@ type UpdateScheduleRequest struct {
 // Schedule responses
 
 type ScheduleResponse struct {
-	ID             string      `json:"id"`
-	WorkflowID     string      `json:"workflow_id"`
-	Name           string      `json:"name"`
-	Description    *string     `json:"description,omitempty"`
-	CronExpression string      `json:"cron_expression"`
-	Timezone       string      `json:"timezone"`
-	IsActive       bool        `json:"is_active"`
-	InputData      interface{} `json:"input_data,omitempty"`
-	NextRunAt      *int64      `json:"next_run_at,omitempty"`
-	LastRunAt      *int64      `json:"last_run_at,omitempty"`
-	RunCount       int         `json:"run_count"`
-	CreatedAt      int64       `json:"created_at"`
+	ID              string      `json:"id"`
+	WorkflowID      string      `json:"workflow_id"`
+	WorkspaceID     string      `json:"workspace_id"`
+	CreatedBy       string      `json:"created_by"`
+	Name            string      `json:"name"`
+	Description     *string     `json:"description,omitempty"`
+	CronExpression  string      `json:"cron_expression"`
+	Timezone        string      `json:"timezone"`
+	IsActive        bool        `json:"is_active"`
+	InputData       interface{} `json:"input_data,omitempty"`
+	NextRunAt       *int64      `json:"next_run_at,omitempty"`
+	LastRunAt       *int64      `json:"last_run_at,omitempty"`
+	LastExecutionID *string     `json:"last_execution_id,omitempty"`
+	RunCount        int         `json:"run_count"`
+	CreatedAt       int64       `json:"created_at"`
+	UpdatedAt       int64       `json:"updated_at"`
 }

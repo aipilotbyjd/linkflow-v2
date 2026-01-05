@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
+	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -61,16 +62,6 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsID := wsCtx.WorkspaceID.String()
 
 	for _, sched := range schedules {
-		var nextRunAt, lastRunAt *int64
-		if sched.NextRunAt != nil {
-			ts := sched.NextRunAt.Unix()
-			nextRunAt = &ts
-		}
-		if sched.LastRunAt != nil {
-			ts := sched.LastRunAt.Unix()
-			lastRunAt = &ts
-		}
-
 		schedID := sched.ID.String()
 		basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
 
@@ -86,21 +77,8 @@ func (h *ScheduleHandler) List(w http.ResponseWriter, r *http.Request) {
 		actions = append(actions, dto.Action{Name: "delete", Method: "DELETE", Href: basePath, Label: "Delete"})
 
 		response = append(response, ScheduleWithActions{
-			ScheduleResponse: dto.ScheduleResponse{
-				ID:             schedID,
-				WorkflowID:     sched.WorkflowID.String(),
-				Name:           sched.Name,
-				Description:    sched.Description,
-				CronExpression: sched.CronExpression,
-				Timezone:       sched.Timezone,
-				IsActive:       sched.IsActive,
-				InputData:      sched.InputData,
-				NextRunAt:      nextRunAt,
-				LastRunAt:      lastRunAt,
-				RunCount:       sched.RunCount,
-				CreatedAt:      sched.CreatedAt.Unix(),
-			},
-			Actions: actions,
+			ScheduleResponse: buildScheduleResponse(&sched),
+			Actions:          actions,
 		})
 	}
 
@@ -173,25 +151,7 @@ func (h *ScheduleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var nextRunAt *int64
-	if schedule.NextRunAt != nil {
-		ts := schedule.NextRunAt.Unix()
-		nextRunAt = &ts
-	}
-
-	dto.Created(w, dto.ScheduleResponse{
-		ID:             schedule.ID.String(),
-		WorkflowID:     schedule.WorkflowID.String(),
-		Name:           schedule.Name,
-		Description:    schedule.Description,
-		CronExpression: schedule.CronExpression,
-		Timezone:       schedule.Timezone,
-		IsActive:       schedule.IsActive,
-		InputData:      schedule.InputData,
-		NextRunAt:      nextRunAt,
-		RunCount:       schedule.RunCount,
-		CreatedAt:      schedule.CreatedAt.Unix(),
-	})
+	dto.Created(w, buildScheduleResponse(schedule))
 }
 
 func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -208,16 +168,6 @@ func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	if !ValidateWorkspaceOwnership(w, r, schedule) {
 		return
-	}
-
-	var nextRunAt, lastRunAt *int64
-	if schedule.NextRunAt != nil {
-		ts := schedule.NextRunAt.Unix()
-		nextRunAt = &ts
-	}
-	if schedule.LastRunAt != nil {
-		ts := schedule.LastRunAt.Unix()
-		lastRunAt = &ts
 	}
 
 	wsCtx := middleware.MustWorkspace(w, r)
@@ -244,21 +194,8 @@ func (h *ScheduleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		dto.ScheduleResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		ScheduleResponse: dto.ScheduleResponse{
-			ID:             schedID,
-			WorkflowID:     schedule.WorkflowID.String(),
-			Name:           schedule.Name,
-			Description:    schedule.Description,
-			CronExpression: schedule.CronExpression,
-			Timezone:       schedule.Timezone,
-			IsActive:       schedule.IsActive,
-			InputData:      schedule.InputData,
-			NextRunAt:      nextRunAt,
-			LastRunAt:      lastRunAt,
-			RunCount:       schedule.RunCount,
-			CreatedAt:      schedule.CreatedAt.Unix(),
-		},
-		Actions: actions,
+		ScheduleResponse: buildScheduleResponse(schedule),
+		Actions:          actions,
 	}
 
 	dto.NewResponse(response).
@@ -309,16 +246,6 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var nextRunAt, lastRunAt *int64
-	if schedule.NextRunAt != nil {
-		ts := schedule.NextRunAt.Unix()
-		nextRunAt = &ts
-	}
-	if schedule.LastRunAt != nil {
-		ts := schedule.LastRunAt.Unix()
-		lastRunAt = &ts
-	}
-
 	wsCtx := middleware.MustWorkspace(w, r)
 	if wsCtx == nil {
 		return
@@ -328,22 +255,7 @@ func (h *ScheduleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	schedID := schedule.ID.String()
 	basePath := "/api/v1/workspaces/" + wsID + "/schedules/" + schedID
 
-	response := dto.ScheduleResponse{
-		ID:             schedID,
-		WorkflowID:     schedule.WorkflowID.String(),
-		Name:           schedule.Name,
-		Description:    schedule.Description,
-		CronExpression: schedule.CronExpression,
-		Timezone:       schedule.Timezone,
-		IsActive:       schedule.IsActive,
-		InputData:      schedule.InputData,
-		NextRunAt:      nextRunAt,
-		LastRunAt:      lastRunAt,
-		RunCount:       schedule.RunCount,
-		CreatedAt:      schedule.CreatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(buildScheduleResponse(schedule)).
 		WithLinks(&dto.Links{Self: basePath}).
 		Send(w)
 }
@@ -442,4 +354,42 @@ func (h *ScheduleHandler) Resume(w http.ResponseWriter, r *http.Request) {
 		WithLinks(&dto.Links{Self: basePath}).
 		WithActions(dto.Action{Name: "pause", Method: "POST", Href: basePath + "/pause", Label: "Pause"}).
 		Send(w)
+}
+
+// buildScheduleResponse creates a ScheduleResponse from a Schedule model
+func buildScheduleResponse(s *models.Schedule) dto.ScheduleResponse {
+	var nextRunAt, lastRunAt *int64
+	if s.NextRunAt != nil {
+		ts := s.NextRunAt.Unix()
+		nextRunAt = &ts
+	}
+	if s.LastRunAt != nil {
+		ts := s.LastRunAt.Unix()
+		lastRunAt = &ts
+	}
+
+	var lastExecutionID *string
+	if s.LastExecutionID != nil {
+		id := s.LastExecutionID.String()
+		lastExecutionID = &id
+	}
+
+	return dto.ScheduleResponse{
+		ID:              s.ID.String(),
+		WorkflowID:      s.WorkflowID.String(),
+		WorkspaceID:     s.WorkspaceID.String(),
+		CreatedBy:       s.CreatedBy.String(),
+		Name:            s.Name,
+		Description:     s.Description,
+		CronExpression:  s.CronExpression,
+		Timezone:        s.Timezone,
+		IsActive:        s.IsActive,
+		InputData:       s.InputData,
+		NextRunAt:       nextRunAt,
+		LastRunAt:       lastRunAt,
+		LastExecutionID: lastExecutionID,
+		RunCount:        s.RunCount,
+		CreatedAt:       s.CreatedAt.Unix(),
+		UpdatedAt:       s.UpdatedAt.Unix(),
+	}
 }

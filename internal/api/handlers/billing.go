@@ -13,6 +13,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
+	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
 )
@@ -45,19 +46,8 @@ func (h *BillingHandler) GetPlans(w http.ResponseWriter, r *http.Request) {
 			{Name: "view", Method: "GET", Href: "/api/v1/billing/plans/" + plan.ID, Label: "View Details"},
 		}
 		response = append(response, PlanWithActions{
-			PlanResponse: dto.PlanResponse{
-				ID:               plan.ID,
-				Name:             plan.Name,
-				Description:      plan.Description,
-				PriceMonthly:     plan.PriceMonthly,
-				PriceYearly:      plan.PriceYearly,
-				ExecutionsLimit:  plan.ExecutionsLimit,
-				WorkflowsLimit:   plan.WorkflowsLimit,
-				MembersLimit:     plan.MembersLimit,
-				CredentialsLimit: plan.CredentialsLimit,
-				Features:         plan.Features,
-			},
-			Actions: actions,
+			PlanResponse: buildPlanResponse(&plan),
+			Actions:      actions,
 		})
 	}
 
@@ -78,12 +68,6 @@ func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var cancelAt *int64
-	if subscription.CancelAt != nil {
-		ts := subscription.CancelAt.Unix()
-		cancelAt = &ts
-	}
-
 	wsID := wsCtx.WorkspaceID.String()
 	basePath := "/api/v1/workspaces/" + wsID + "/billing/subscription"
 
@@ -96,16 +80,8 @@ func (h *BillingHandler) GetSubscription(w http.ResponseWriter, r *http.Request)
 		dto.SubscriptionResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		SubscriptionResponse: dto.SubscriptionResponse{
-			ID:                 subscription.ID.String(),
-			PlanID:             subscription.PlanID,
-			Status:             subscription.Status,
-			BillingCycle:       subscription.BillingCycle,
-			CurrentPeriodStart: subscription.CurrentPeriodStart.Unix(),
-			CurrentPeriodEnd:   subscription.CurrentPeriodEnd.Unix(),
-			CancelAt:           cancelAt,
-		},
-		Actions: actions,
+		SubscriptionResponse: buildSubscriptionResponse(subscription),
+		Actions:              actions,
 	}
 
 	dto.NewResponse(response).
@@ -140,14 +116,7 @@ func (h *BillingHandler) CreateSubscription(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	dto.Created(w, dto.SubscriptionResponse{
-		ID:                 subscription.ID.String(),
-		PlanID:             subscription.PlanID,
-		Status:             subscription.Status,
-		BillingCycle:       subscription.BillingCycle,
-		CurrentPeriodStart: subscription.CurrentPeriodStart.Unix(),
-		CurrentPeriodEnd:   subscription.CurrentPeriodEnd.Unix(),
-	})
+	dto.Created(w, buildSubscriptionResponse(subscription))
 }
 
 func (h *BillingHandler) CancelSubscription(w http.ResponseWriter, r *http.Request) {
@@ -353,4 +322,72 @@ func (h *BillingHandler) verifyStripeSignature(payload []byte, sigHeader string)
 	expectedSig := hex.EncodeToString(mac.Sum(nil))
 
 	return hmac.Equal([]byte(signature), []byte(expectedSig))
+}
+
+// buildPlanResponse creates a PlanResponse from a Plan model
+func buildPlanResponse(p *models.Plan) dto.PlanResponse {
+	return dto.PlanResponse{
+		ID:                  p.ID,
+		Name:                p.Name,
+		Tier:                p.Tier,
+		Description:         p.Description,
+		PriceMonthly:        p.PriceMonthly,
+		PriceYearly:         p.PriceYearly,
+		CreditsIncluded:     p.CreditsIncluded,
+		CreditsMax:          p.CreditsMax,
+		CreditOverageCost:   p.CreditOverageCost,
+		ExecutionsLimit:     p.ExecutionsLimit,
+		WorkflowsLimit:      p.WorkflowsLimit,
+		MembersLimit:        p.MembersLimit,
+		CredentialsLimit:    p.CredentialsLimit,
+		SchedulesLimit:      p.SchedulesLimit,
+		WebhooksLimit:       p.WebhooksLimit,
+		ExecutionTimeout:    p.ExecutionTimeout,
+		MaxNodesPerWorkflow: p.MaxNodesPerWorkflow,
+		RetentionDays:       p.RetentionDays,
+		LogRetentionDays:    p.LogRetentionDays,
+		Features:            p.Features,
+		IsActive:            p.IsActive,
+		IsPublic:            p.IsPublic,
+		SortOrder:           p.SortOrder,
+		CreatedAt:           p.CreatedAt.Unix(),
+		UpdatedAt:           p.UpdatedAt.Unix(),
+	}
+}
+
+// buildSubscriptionResponse creates a SubscriptionResponse from a Subscription model
+func buildSubscriptionResponse(s *models.Subscription) dto.SubscriptionResponse {
+	var cancelAt, canceledAt, trialStart, trialEnd *int64
+	if s.CancelAt != nil {
+		ts := s.CancelAt.Unix()
+		cancelAt = &ts
+	}
+	if s.CanceledAt != nil {
+		ts := s.CanceledAt.Unix()
+		canceledAt = &ts
+	}
+	if s.TrialStart != nil {
+		ts := s.TrialStart.Unix()
+		trialStart = &ts
+	}
+	if s.TrialEnd != nil {
+		ts := s.TrialEnd.Unix()
+		trialEnd = &ts
+	}
+
+	return dto.SubscriptionResponse{
+		ID:                 s.ID.String(),
+		WorkspaceID:        s.WorkspaceID.String(),
+		PlanID:             s.PlanID,
+		Status:             s.Status,
+		BillingCycle:       s.BillingCycle,
+		CurrentPeriodStart: s.CurrentPeriodStart.Unix(),
+		CurrentPeriodEnd:   s.CurrentPeriodEnd.Unix(),
+		CancelAt:           cancelAt,
+		CanceledAt:         canceledAt,
+		TrialStart:         trialStart,
+		TrialEnd:           trialEnd,
+		CreatedAt:          s.CreatedAt.Unix(),
+		UpdatedAt:          s.UpdatedAt.Unix(),
+	}
 }

@@ -40,7 +40,11 @@ type UserResponse struct {
 	TimeFormat              string      `json:"time_format"`
 	Theme                   string      `json:"theme"`
 	NotificationPreferences models.JSON `json:"notification_preferences,omitempty"`
+	Status                  string      `json:"status"`
 	EmailVerified           bool        `json:"email_verified"`
 	MFAEnabled              bool        `json:"mfa_enabled"`
+	LastLoginAt             *int64      `json:"last_login_at,omitempty"`
+	LoginCount              int         `json:"login_count"`
 	CreatedAt               int64       `json:"created_at"`
+	UpdatedAt               int64       `json:"updated_at"`
 }

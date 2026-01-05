@@ -7,6 +7,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/api/dto"
 	"github.com/linkflow-ai/linkflow/internal/api/middleware"
+	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
 	"github.com/linkflow-ai/linkflow/internal/pkg/validator"
@@ -55,12 +56,6 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 	wsID := wsCtx.WorkspaceID.String()
 
 	for _, cred := range credentials {
-		var lastUsedAt *int64
-		if cred.LastUsedAt != nil {
-			ts := cred.LastUsedAt.Unix()
-			lastUsedAt = &ts
-		}
-
 		credID := cred.ID.String()
 		basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credID
 
@@ -71,15 +66,8 @@ func (h *CredentialHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response = append(response, CredentialWithActions{
-			CredentialResponse: dto.CredentialResponse{
-				ID:          credID,
-				Name:        cred.Name,
-				Type:        cred.Type,
-				Description: cred.Description,
-				LastUsedAt:  lastUsedAt,
-				CreatedAt:   cred.CreatedAt.Unix(),
-			},
-			Actions: actions,
+			CredentialResponse: buildCredentialResponse(&cred),
+			Actions:            actions,
 		})
 	}
 
@@ -140,13 +128,7 @@ func (h *CredentialHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dto.Created(w, dto.CredentialResponse{
-		ID:          credential.ID.String(),
-		Name:        credential.Name,
-		Type:        credential.Type,
-		Description: credential.Description,
-		CreatedAt:   credential.CreatedAt.Unix(),
-	})
+	dto.Created(w, buildCredentialResponse(credential))
 }
 
 func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -164,12 +146,6 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 	// SECURITY: Validate workspace ownership to prevent cross-tenant access
 	if !ValidateWorkspaceOwnership(w, r, credential) {
 		return
-	}
-
-	var lastUsedAt *int64
-	if credential.LastUsedAt != nil {
-		ts := credential.LastUsedAt.Unix()
-		lastUsedAt = &ts
 	}
 
 	wsCtx := middleware.MustWorkspace(w, r)
@@ -191,15 +167,8 @@ func (h *CredentialHandler) Get(w http.ResponseWriter, r *http.Request) {
 		dto.CredentialResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		CredentialResponse: dto.CredentialResponse{
-			ID:          credID,
-			Name:        credential.Name,
-			Type:        credential.Type,
-			Description: credential.Description,
-			LastUsedAt:  lastUsedAt,
-			CreatedAt:   credential.CreatedAt.Unix(),
-		},
-		Actions: actions,
+		CredentialResponse: buildCredentialResponse(credential),
+		Actions:            actions,
 	}
 
 	dto.NewResponse(response).
@@ -250,18 +219,9 @@ func (h *CredentialHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wsID := wsCtx.WorkspaceID.String()
-	credID := credential.ID.String()
-	basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credID
+	basePath := "/api/v1/workspaces/" + wsID + "/credentials/" + credential.ID.String()
 
-	response := dto.CredentialResponse{
-		ID:          credID,
-		Name:        credential.Name,
-		Type:        credential.Type,
-		Description: credential.Description,
-		CreatedAt:   credential.CreatedAt.Unix(),
-	}
-
-	dto.NewResponse(response).
+	dto.NewResponse(buildCredentialResponse(credential)).
 		WithLinks(&dto.Links{Self: basePath}).
 		Send(w)
 }
@@ -313,4 +273,25 @@ func (h *CredentialHandler) Test(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dto.JSON(w, http.StatusOK, map[string]bool{"success": success})
+}
+
+// buildCredentialResponse creates a CredentialResponse from a Credential model
+func buildCredentialResponse(c *models.Credential) dto.CredentialResponse {
+	var lastUsedAt *int64
+	if c.LastUsedAt != nil {
+		ts := c.LastUsedAt.Unix()
+		lastUsedAt = &ts
+	}
+
+	return dto.CredentialResponse{
+		ID:          c.ID.String(),
+		WorkspaceID: c.WorkspaceID.String(),
+		CreatedBy:   c.CreatedBy.String(),
+		Name:        c.Name,
+		Type:        c.Type,
+		Description: c.Description,
+		LastUsedAt:  lastUsedAt,
+		CreatedAt:   c.CreatedAt.Unix(),
+		UpdatedAt:   c.UpdatedAt.Unix(),
+	}
 }

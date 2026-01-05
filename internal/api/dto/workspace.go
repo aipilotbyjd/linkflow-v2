@@ -45,21 +45,24 @@ type UpdateMemberRoleRequest struct {
 // Workspace responses
 
 type WorkspaceResponse struct {
-	ID           string  `json:"id"`
-	Name         string  `json:"name"`
-	Slug         string  `json:"slug"`
-	Description  *string `json:"description,omitempty"`
-	LogoURL      *string `json:"logo_url,omitempty"`
-	Website      *string `json:"website,omitempty"`
-	Timezone     string  `json:"timezone"`
-	Language     string  `json:"language"`
-	Currency     string  `json:"currency"`
-	Country      *string `json:"country,omitempty"`
-	Industry     *string `json:"industry,omitempty"`
-	CompanySize  *string `json:"company_size,omitempty"`
-	BillingEmail *string `json:"billing_email,omitempty"`
-	PlanID       string  `json:"plan_id"`
-	CreatedAt    int64   `json:"created_at"`
+	ID           string      `json:"id"`
+	OwnerID      string      `json:"owner_id"`
+	Name         string      `json:"name"`
+	Slug         string      `json:"slug"`
+	Description  *string     `json:"description,omitempty"`
+	LogoURL      *string     `json:"logo_url,omitempty"`
+	Website      *string     `json:"website,omitempty"`
+	Timezone     string      `json:"timezone"`
+	Language     string      `json:"language"`
+	Currency     string      `json:"currency"`
+	Country      *string     `json:"country,omitempty"`
+	Industry     *string     `json:"industry,omitempty"`
+	CompanySize  *string     `json:"company_size,omitempty"`
+	BillingEmail *string     `json:"billing_email,omitempty"`
+	Settings     interface{} `json:"settings,omitempty"`
+	PlanID       string      `json:"plan_id"`
+	CreatedAt    int64       `json:"created_at"`
+	UpdatedAt    int64       `json:"updated_at"`
 }
 
 type WorkspaceMemberResponse struct {

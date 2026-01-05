@@ -56,16 +56,8 @@ func (h *WorkspaceHandler) List(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response = append(response, WorkspaceWithActions{
-			WorkspaceResponse: dto.WorkspaceResponse{
-				ID:          wsID,
-				Name:        ws.Name,
-				Slug:        ws.Slug,
-				Description: ws.Description,
-				LogoURL:     ws.LogoURL,
-				PlanID:      ws.PlanID,
-				CreatedAt:   ws.CreatedAt.Unix(),
-			},
-			Actions: actions,
+			WorkspaceResponse: mappers.WorkspaceToResponse(&ws),
+			Actions:           actions,
 		})
 	}
 
@@ -146,16 +138,8 @@ func (h *WorkspaceHandler) Get(w http.ResponseWriter, r *http.Request) {
 		dto.WorkspaceResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		WorkspaceResponse: dto.WorkspaceResponse{
-			ID:          wsID,
-			Name:        workspace.Name,
-			Slug:        workspace.Slug,
-			Description: workspace.Description,
-			LogoURL:     workspace.LogoURL,
-			PlanID:      workspace.PlanID,
-			CreatedAt:   workspace.CreatedAt.Unix(),
-		},
-		Actions: actions,
+		WorkspaceResponse: mappers.WorkspaceToResponse(workspace),
+		Actions:           actions,
 	}
 
 	dto.NewResponse(response).

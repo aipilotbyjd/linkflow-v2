@@ -638,16 +638,8 @@ func (h *WorkflowHandler) GetVersions(w http.ResponseWriter, r *http.Request) {
 		}
 
 		response = append(response, VersionWithActions{
-			WorkflowVersionResponse: dto.WorkflowVersionResponse{
-				ID:            v.ID.String(),
-				Version:       v.Version,
-				Nodes:         v.Nodes,
-				Connections:   v.Connections,
-				Settings:      v.Settings,
-				ChangeMessage: v.ChangeMessage,
-				CreatedAt:     v.CreatedAt.Unix(),
-			},
-			Actions: actions,
+			WorkflowVersionResponse: buildWorkflowVersionResponse(&v),
+			Actions:                 actions,
 		})
 	}
 
@@ -690,15 +682,7 @@ func (h *WorkflowHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
 		dto.WorkflowVersionResponse
 		Actions []dto.Action `json:"actions,omitempty"`
 	}{
-		WorkflowVersionResponse: dto.WorkflowVersionResponse{
-			ID:            v.ID.String(),
-			Version:       v.Version,
-			Nodes:         v.Nodes,
-			Connections:   v.Connections,
-			Settings:      v.Settings,
-			ChangeMessage: v.ChangeMessage,
-			CreatedAt:     v.CreatedAt.Unix(),
-		},
+		WorkflowVersionResponse: buildWorkflowVersionResponse(v),
 		Actions: []dto.Action{
 			{Name: "diff", Method: "GET", Href: basePath + "/diff", Label: "Compare with Current"},
 			{Name: "rollback", Method: "POST", Href: basePath + "/rollback", Label: "Rollback to This Version"},
@@ -950,5 +934,26 @@ func buildWorkflowResponse(wf *models.Workflow) dto.WorkflowResponse {
 		ArchivedAt:      timePtrToInt64Ptr(wf.ArchivedAt),
 		CreatedAt:       wf.CreatedAt.Unix(),
 		UpdatedAt:       wf.UpdatedAt.Unix(),
+	}
+}
+
+// buildWorkflowVersionResponse creates a WorkflowVersionResponse from a WorkflowVersion model
+func buildWorkflowVersionResponse(v *models.WorkflowVersion) dto.WorkflowVersionResponse {
+	var createdBy *string
+	if v.CreatedBy != nil {
+		s := v.CreatedBy.String()
+		createdBy = &s
+	}
+
+	return dto.WorkflowVersionResponse{
+		ID:            v.ID.String(),
+		WorkflowID:    v.WorkflowID.String(),
+		Version:       v.Version,
+		Nodes:         v.Nodes,
+		Connections:   v.Connections,
+		Settings:      v.Settings,
+		CreatedBy:     createdBy,
+		ChangeMessage: v.ChangeMessage,
+		CreatedAt:     v.CreatedAt.Unix(),
 	}
 }

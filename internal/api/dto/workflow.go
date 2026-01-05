@@ -76,10 +76,12 @@ type WorkflowResponse struct {
 
 type WorkflowVersionResponse struct {
 	ID            string      `json:"id"`
+	WorkflowID    string      `json:"workflow_id"`
 	Version       int         `json:"version"`
 	Nodes         interface{} `json:"nodes"`
 	Connections   interface{} `json:"connections"`
 	Settings      interface{} `json:"settings,omitempty"`
+	CreatedBy     *string     `json:"created_by,omitempty"`
 	ChangeMessage *string     `json:"change_message,omitempty"`
 	CreatedAt     int64       `json:"created_at"`
 }

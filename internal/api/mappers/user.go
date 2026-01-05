@@ -7,6 +7,12 @@ import (
 
 // UserToResponse converts a User model to UserResponse DTO
 func UserToResponse(u *models.User) dto.UserResponse {
+	var lastLoginAt *int64
+	if u.LastLoginAt != nil {
+		ts := u.LastLoginAt.Unix()
+		lastLoginAt = &ts
+	}
+
 	return dto.UserResponse{
 		ID:                      u.ID.String(),
 		Email:                   u.Email,
@@ -24,9 +30,13 @@ func UserToResponse(u *models.User) dto.UserResponse {
 		TimeFormat:              u.TimeFormat,
 		Theme:                   u.Theme,
 		NotificationPreferences: u.NotificationPreferences,
+		Status:                  u.Status,
 		EmailVerified:           u.EmailVerified,
 		MFAEnabled:              u.MFAEnabled,
+		LastLoginAt:             lastLoginAt,
+		LoginCount:              u.LoginCount,
 		CreatedAt:               u.CreatedAt.Unix(),
+		UpdatedAt:               u.UpdatedAt.Unix(),
 	}
 }
 

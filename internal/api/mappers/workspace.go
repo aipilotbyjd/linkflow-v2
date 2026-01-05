@@ -7,8 +7,14 @@ import (
 
 // WorkspaceToResponse converts a Workspace model to WorkspaceResponse DTO
 func WorkspaceToResponse(ws *models.Workspace) dto.WorkspaceResponse {
+	var settings interface{}
+	if ws.Settings != nil {
+		settings = ws.Settings
+	}
+
 	return dto.WorkspaceResponse{
 		ID:           ws.ID.String(),
+		OwnerID:      ws.OwnerID.String(),
 		Name:         ws.Name,
 		Slug:         ws.Slug,
 		Description:  ws.Description,
@@ -21,8 +27,10 @@ func WorkspaceToResponse(ws *models.Workspace) dto.WorkspaceResponse {
 		Industry:     ws.Industry,
 		CompanySize:  ws.CompanySize,
 		BillingEmail: ws.BillingEmail,
+		Settings:     settings,
 		PlanID:       ws.PlanID,
 		CreatedAt:    ws.CreatedAt.Unix(),
+		UpdatedAt:    ws.UpdatedAt.Unix(),
 	}
 }
 
