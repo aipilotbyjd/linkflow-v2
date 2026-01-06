@@ -68,6 +68,7 @@ func AutoMigrate(db *gorm.DB) error {
 
 		// Credentials
 		&models.Credential{},
+		&models.CredentialShare{},
 
 		// Schedules
 		&models.Schedule{},
