@@ -89,7 +89,7 @@ func main() {
 	}
 
 	// Create worker
-	w := worker.New(app.Config, app.ExecutionSvc, app.CredentialSvc, app.WorkflowSvc, app.BillingSvc, app.Redis.Client, emailSvc)
+	w := worker.New(app.Config, app.ExecutionSvc, app.CredentialSvc, app.WorkflowSvc, app.BillingSvc, app.OAuthSvc, app.Redis.Client, emailSvc)
 
 	// Handle shutdown
 	go func() {

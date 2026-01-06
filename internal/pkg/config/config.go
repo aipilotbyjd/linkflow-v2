@@ -170,9 +170,15 @@ type JWTConfig struct {
 }
 
 type OAuthConfig struct {
-	Google    OAuthProviderConfig
-	GitHub    OAuthProviderConfig
-	Microsoft OAuthProviderConfig
+	Google     OAuthProviderConfig
+	GitHub     OAuthProviderConfig
+	Microsoft  OAuthProviderConfig
+	Slack      OAuthProviderConfig
+	Notion     OAuthProviderConfig
+	HubSpot    OAuthProviderConfig
+	Salesforce OAuthProviderConfig
+	Airtable   OAuthProviderConfig
+	Stripe     OAuthProviderConfig
 }
 
 type OAuthProviderConfig struct {
@@ -477,6 +483,18 @@ func bindEnvVars() {
 		"oauth.github.client_secret":    {"OAUTH_GITHUB_CLIENT_SECRET", "GITHUB_CLIENT_SECRET"},
 		"oauth.microsoft.client_id":     {"OAUTH_MICROSOFT_CLIENT_ID", "MICROSOFT_CLIENT_ID"},
 		"oauth.microsoft.client_secret": {"OAUTH_MICROSOFT_CLIENT_SECRET", "MICROSOFT_CLIENT_SECRET"},
+		"oauth.slack.client_id":         {"OAUTH_SLACK_CLIENT_ID", "SLACK_CLIENT_ID"},
+		"oauth.slack.client_secret":     {"OAUTH_SLACK_CLIENT_SECRET", "SLACK_CLIENT_SECRET"},
+		"oauth.notion.client_id":        {"OAUTH_NOTION_CLIENT_ID", "NOTION_CLIENT_ID"},
+		"oauth.notion.client_secret":    {"OAUTH_NOTION_CLIENT_SECRET", "NOTION_CLIENT_SECRET"},
+		"oauth.hubspot.client_id":       {"OAUTH_HUBSPOT_CLIENT_ID", "HUBSPOT_CLIENT_ID"},
+		"oauth.hubspot.client_secret":   {"OAUTH_HUBSPOT_CLIENT_SECRET", "HUBSPOT_CLIENT_SECRET"},
+		"oauth.salesforce.client_id":    {"OAUTH_SALESFORCE_CLIENT_ID", "SALESFORCE_CLIENT_ID"},
+		"oauth.salesforce.client_secret": {"OAUTH_SALESFORCE_CLIENT_SECRET", "SALESFORCE_CLIENT_SECRET"},
+		"oauth.airtable.client_id":      {"OAUTH_AIRTABLE_CLIENT_ID", "AIRTABLE_CLIENT_ID"},
+		"oauth.airtable.client_secret":  {"OAUTH_AIRTABLE_CLIENT_SECRET", "AIRTABLE_CLIENT_SECRET"},
+		"oauth.stripe.client_id":        {"OAUTH_STRIPE_CLIENT_ID", "STRIPE_CONNECT_CLIENT_ID"},
+		"oauth.stripe.client_secret":    {"OAUTH_STRIPE_CLIENT_SECRET", "STRIPE_CONNECT_CLIENT_SECRET"},
 
 		// S3
 		"s3.endpoint":          {"S3_ENDPOINT", "AWS_S3_ENDPOINT"},
@@ -665,6 +683,29 @@ func buildConfig() *Config {
 	cfg.OAuth.Microsoft.ClientSecret = viper.GetString("oauth.microsoft.client_secret")
 	cfg.OAuth.Microsoft.RedirectURL = viper.GetString("oauth.microsoft.redirect_url")
 	cfg.OAuth.Microsoft.Scopes = viper.GetStringSlice("oauth.microsoft.scopes")
+	cfg.OAuth.Slack.ClientID = viper.GetString("oauth.slack.client_id")
+	cfg.OAuth.Slack.ClientSecret = viper.GetString("oauth.slack.client_secret")
+	cfg.OAuth.Slack.RedirectURL = viper.GetString("oauth.slack.redirect_url")
+	cfg.OAuth.Slack.Scopes = viper.GetStringSlice("oauth.slack.scopes")
+	cfg.OAuth.Notion.ClientID = viper.GetString("oauth.notion.client_id")
+	cfg.OAuth.Notion.ClientSecret = viper.GetString("oauth.notion.client_secret")
+	cfg.OAuth.Notion.RedirectURL = viper.GetString("oauth.notion.redirect_url")
+	cfg.OAuth.HubSpot.ClientID = viper.GetString("oauth.hubspot.client_id")
+	cfg.OAuth.HubSpot.ClientSecret = viper.GetString("oauth.hubspot.client_secret")
+	cfg.OAuth.HubSpot.RedirectURL = viper.GetString("oauth.hubspot.redirect_url")
+	cfg.OAuth.HubSpot.Scopes = viper.GetStringSlice("oauth.hubspot.scopes")
+	cfg.OAuth.Salesforce.ClientID = viper.GetString("oauth.salesforce.client_id")
+	cfg.OAuth.Salesforce.ClientSecret = viper.GetString("oauth.salesforce.client_secret")
+	cfg.OAuth.Salesforce.RedirectURL = viper.GetString("oauth.salesforce.redirect_url")
+	cfg.OAuth.Salesforce.Scopes = viper.GetStringSlice("oauth.salesforce.scopes")
+	cfg.OAuth.Airtable.ClientID = viper.GetString("oauth.airtable.client_id")
+	cfg.OAuth.Airtable.ClientSecret = viper.GetString("oauth.airtable.client_secret")
+	cfg.OAuth.Airtable.RedirectURL = viper.GetString("oauth.airtable.redirect_url")
+	cfg.OAuth.Airtable.Scopes = viper.GetStringSlice("oauth.airtable.scopes")
+	cfg.OAuth.Stripe.ClientID = viper.GetString("oauth.stripe.client_id")
+	cfg.OAuth.Stripe.ClientSecret = viper.GetString("oauth.stripe.client_secret")
+	cfg.OAuth.Stripe.RedirectURL = viper.GetString("oauth.stripe.redirect_url")
+	cfg.OAuth.Stripe.Scopes = viper.GetStringSlice("oauth.stripe.scopes")
 
 	// S3
 	cfg.S3.Endpoint = viper.GetString("s3.endpoint")
@@ -1044,6 +1085,18 @@ func (c *Config) HasOAuth(provider string) bool {
 		return c.OAuth.GitHub.ClientID != "" && c.OAuth.GitHub.ClientSecret != ""
 	case "microsoft":
 		return c.OAuth.Microsoft.ClientID != "" && c.OAuth.Microsoft.ClientSecret != ""
+	case "slack":
+		return c.OAuth.Slack.ClientID != "" && c.OAuth.Slack.ClientSecret != ""
+	case "notion":
+		return c.OAuth.Notion.ClientID != "" && c.OAuth.Notion.ClientSecret != ""
+	case "hubspot":
+		return c.OAuth.HubSpot.ClientID != "" && c.OAuth.HubSpot.ClientSecret != ""
+	case "salesforce":
+		return c.OAuth.Salesforce.ClientID != "" && c.OAuth.Salesforce.ClientSecret != ""
+	case "airtable":
+		return c.OAuth.Airtable.ClientID != "" && c.OAuth.Airtable.ClientSecret != ""
+	case "stripe":
+		return c.OAuth.Stripe.ClientID != "" && c.OAuth.Stripe.ClientSecret != ""
 	default:
 		return false
 	}
@@ -1051,14 +1104,11 @@ func (c *Config) HasOAuth(provider string) bool {
 
 func (c *Config) EnabledOAuthProviders() []string {
 	var providers []string
-	if c.HasOAuth("google") {
-		providers = append(providers, "google")
-	}
-	if c.HasOAuth("github") {
-		providers = append(providers, "github")
-	}
-	if c.HasOAuth("microsoft") {
-		providers = append(providers, "microsoft")
+	allProviders := []string{"google", "github", "microsoft", "slack", "notion", "hubspot", "salesforce", "airtable", "stripe"}
+	for _, p := range allProviders {
+		if c.HasOAuth(p) {
+			providers = append(providers, p)
+		}
 	}
 	return providers
 }

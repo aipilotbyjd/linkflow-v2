@@ -99,4 +99,5 @@ var WorkerRepositorySet = wire.NewSet(
 	repositories.NewUsageRepository,
 	repositories.NewInvoiceRepository,
 	repositories.NewWebhookEndpointRepository,
+	repositories.NewOAuthStateRepository,
 )

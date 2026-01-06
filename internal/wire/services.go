@@ -91,10 +91,24 @@ func ProvideOAuthService(
 	if cfg.HasOAuth("microsoft") {
 		svc.ConfigureProvider("microsoft", cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret)
 	}
-
-	// TODO: Add more providers as their configs are added to config.Config
-	// if cfg.HasOAuth("slack") { ... }
-	// if cfg.HasOAuth("notion") { ... }
+	if cfg.HasOAuth("slack") {
+		svc.ConfigureProvider("slack", cfg.OAuth.Slack.ClientID, cfg.OAuth.Slack.ClientSecret)
+	}
+	if cfg.HasOAuth("notion") {
+		svc.ConfigureProvider("notion", cfg.OAuth.Notion.ClientID, cfg.OAuth.Notion.ClientSecret)
+	}
+	if cfg.HasOAuth("hubspot") {
+		svc.ConfigureProvider("hubspot", cfg.OAuth.HubSpot.ClientID, cfg.OAuth.HubSpot.ClientSecret)
+	}
+	if cfg.HasOAuth("salesforce") {
+		svc.ConfigureProvider("salesforce", cfg.OAuth.Salesforce.ClientID, cfg.OAuth.Salesforce.ClientSecret)
+	}
+	if cfg.HasOAuth("airtable") {
+		svc.ConfigureProvider("airtable", cfg.OAuth.Airtable.ClientID, cfg.OAuth.Airtable.ClientSecret)
+	}
+	if cfg.HasOAuth("stripe") {
+		svc.ConfigureProvider("stripe", cfg.OAuth.Stripe.ClientID, cfg.OAuth.Stripe.ClientSecret)
+	}
 
 	return svc
 }
@@ -163,6 +177,7 @@ var WorkerServiceSet = wire.NewSet(
 	services.NewExecutionService,
 	services.NewCredentialService,
 	ProvideWorkerBillingService,
+	ProvideOAuthService,
 )
 
 // ProvideWorkerBillingService creates billing service for worker (no counting repos needed)

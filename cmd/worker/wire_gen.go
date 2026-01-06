@@ -53,7 +53,11 @@ func InitializeWorkerApp() (*WorkerApp, error) {
 	invoiceRepository := repositories.NewInvoiceRepository(db)
 	workspaceRepository := repositories.NewWorkspaceRepository(db)
 	billingService := wire.ProvideWorkerBillingService(planRepository, subscriptionRepository, usageRepository, invoiceRepository, workspaceRepository)
-	workerApp := provideWorkerApp(config, db, client, queueClient, encryptor, workflowService, executionService, credentialService, billingService)
+	oAuthStateRepository := repositories.NewOAuthStateRepository(db)
+	baseURL := wire.ProvideBaseURL(config)
+	frontendURL := wire.ProvideFrontendURL(config)
+	oAuthService := wire.ProvideOAuthService(oAuthStateRepository, credentialRepository, encryptor, config, baseURL, frontendURL)
+	workerApp := provideWorkerApp(config, db, client, queueClient, encryptor, workflowService, executionService, credentialService, billingService, oAuthService)
 	return workerApp, nil
 }
 
@@ -70,6 +74,7 @@ type WorkerApp struct {
 	ExecutionSvc  *services.ExecutionService
 	CredentialSvc *services.CredentialService
 	BillingSvc    *services.BillingService
+	OAuthSvc      *services.OAuthService
 }
 
 // provideWorkerApp creates the WorkerApp struct with all dependencies
@@ -81,6 +86,7 @@ func provideWorkerApp(
 	executionSvc *services.ExecutionService,
 	credentialSvc *services.CredentialService,
 	billingSvc *services.BillingService,
+	oauthSvc *services.OAuthService,
 ) *WorkerApp {
 	return &WorkerApp{
 		Config:        cfg,
@@ -92,5 +98,6 @@ func provideWorkerApp(
 		ExecutionSvc:  executionSvc,
 		CredentialSvc: credentialSvc,
 		BillingSvc:    billingSvc,
+		OAuthSvc:      oauthSvc,
 	}
 }

@@ -25,6 +25,7 @@ type WorkerApp struct {
 	ExecutionSvc  *services.ExecutionService
 	CredentialSvc *services.CredentialService
 	BillingSvc    *services.BillingService
+	OAuthSvc      *services.OAuthService
 }
 
 // provideWorkerApp creates the WorkerApp struct with all dependencies
@@ -38,6 +39,7 @@ func provideWorkerApp(
 	executionSvc *services.ExecutionService,
 	credentialSvc *services.CredentialService,
 	billingSvc *services.BillingService,
+	oauthSvc *services.OAuthService,
 ) *WorkerApp {
 	return &WorkerApp{
 		Config:        cfg,
@@ -49,6 +51,7 @@ func provideWorkerApp(
 		ExecutionSvc:  executionSvc,
 		CredentialSvc: credentialSvc,
 		BillingSvc:    billingSvc,
+		OAuthSvc:      oauthSvc,
 	}
 }
 

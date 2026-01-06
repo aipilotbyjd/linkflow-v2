@@ -260,6 +260,11 @@ func NewServer(
 			r.Get("/auth/oauth/{provider}", authHandler.OAuthRedirect)
 			r.Get("/auth/oauth/{provider}/callback", authHandler.OAuthCallback)
 
+			// OAuth callback for credential creation (must be public - no auth token in redirect)
+			if oauthHandler != nil {
+				r.Get("/oauth/callback/{provider}", oauthHandler.Callback)
+			}
+
 			// Health
 			r.Get("/health", healthHandler.Health)
 			r.Get("/health/live", healthHandler.Live)
@@ -466,11 +471,10 @@ func NewServer(
 				r.Get("/billing/usage", billingHandler.GetUsage)
 				r.Get("/billing/invoices", billingHandler.GetInvoices)
 
-				// OAuth (workspace-scoped)
+				// OAuth (workspace-scoped) - Note: callback is in public routes
 				if oauthHandler != nil {
 					r.Get("/oauth/authorize/{provider}", oauthHandler.Authorize)
 					r.Post("/oauth/authorize", oauthHandler.Authorize)
-					r.Get("/oauth/callback/{provider}", oauthHandler.Callback)
 					r.Post("/credentials/{credentialID}/refresh", oauthHandler.RefreshToken)
 				}
 

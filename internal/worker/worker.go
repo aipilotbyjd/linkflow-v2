@@ -19,21 +19,24 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/worker/middleware"
 	"github.com/linkflow-ai/linkflow/internal/worker/nodes"
 	"github.com/linkflow-ai/linkflow/internal/worker/processor"
+	"github.com/linkflow-ai/linkflow/internal/worker/tasks"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
 
 // Worker handles background job processing
 type Worker struct {
-	cfg          *config.Config
-	server       *queue.Server
-	processor    *processor.Processor
-	executor     *executor.Executor
-	cancellation *processor.CancellationManager
-	emailSvc     *email.Service
-	publisher    *events.Publisher
-	metrics      *middleware.MetricsCollector
-	redisClient  *redis.Client
+	cfg            *config.Config
+	server         *queue.Server
+	processor      *processor.Processor
+	executor       *executor.Executor
+	cancellation   *processor.CancellationManager
+	emailSvc       *email.Service
+	publisher      *events.Publisher
+	metrics        *middleware.MetricsCollector
+	redisClient    *redis.Client
+	oauthSvc       *services.OAuthService
+	tokenRefresher *tasks.TokenRefreshScheduler
 }
 
 // Dependencies holds all external dependencies for the worker
@@ -53,6 +56,7 @@ func New(
 	credentialSvc *services.CredentialService,
 	workflowSvc *services.WorkflowService,
 	billingSvc *services.BillingService,
+	oauthSvc *services.OAuthService,
 	redisClient *redis.Client,
 	emailSvc *email.Service,
 ) *Worker {
@@ -127,16 +131,29 @@ func New(
 		queueClient,
 	)
 
+	// Create token refresh scheduler (if OAuth service available)
+	var tokenRefresher *tasks.TokenRefreshScheduler
+	if oauthSvc != nil {
+		redisAddr := cfg.Redis.Addr()
+		tokenRefresher = tasks.NewTokenRefreshScheduler(
+			redisAddr,
+			tasks.DefaultRefreshInterval,
+			tasks.DefaultRefreshWithin,
+		)
+	}
+
 	w := &Worker{
-		cfg:          cfg,
-		server:       server,
-		processor:    proc,
-		executor:     exec,
-		cancellation: cancellation,
-		emailSvc:     emailSvc,
-		publisher:    publisher,
-		metrics:      metricsCollector,
-		redisClient:  redisClient,
+		cfg:            cfg,
+		server:         server,
+		processor:      proc,
+		executor:       exec,
+		cancellation:   cancellation,
+		emailSvc:       emailSvc,
+		publisher:      publisher,
+		metrics:        metricsCollector,
+		redisClient:    redisClient,
+		oauthSvc:       oauthSvc,
+		tokenRefresher: tokenRefresher,
 	}
 
 	// Register handlers
@@ -146,6 +163,13 @@ func New(
 	server.HandleFunc("email:send", w.handleEmailSend)
 	server.HandleFunc("workflow:cancel", w.handleWorkflowCancel)
 
+	// Register OAuth token refresh handler
+	if oauthSvc != nil {
+		tokenRefreshHandler := tasks.NewTokenRefreshHandler(oauthSvc)
+		server.HandleFunc(tasks.TypeTokenRefresh, tokenRefreshHandler.Handle)
+		log.Info().Msg("OAuth token refresh handler registered")
+	}
+
 	return w
 }
 
@@ -153,11 +177,12 @@ func New(
 func (w *Worker) Start() error {
 	log.Info().Msg("Starting worker with scalable architecture...")
 
+	ctx := context.Background()
+
 	// Start cancellation listener
-	go w.cancellation.Listen(context.Background())
+	go w.cancellation.Listen(ctx)
 
 	// Start credential cache cleanup
-	ctx := context.Background()
 	go func() {
 		ticker := time.NewTicker(5 * time.Minute)
 		defer ticker.Stop()
@@ -170,6 +195,12 @@ func (w *Worker) Start() error {
 			}
 		}
 	}()
+
+	// Start token refresh scheduler
+	if w.tokenRefresher != nil {
+		go w.tokenRefresher.Start(ctx)
+		log.Info().Msg("OAuth token refresh scheduler started")
+	}
 
 	return w.server.Run()
 }
