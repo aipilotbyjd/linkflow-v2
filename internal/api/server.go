@@ -454,6 +454,10 @@ func NewServer(
 				r.Put("/credentials/{credentialID}", credentialHandler.Update)
 				r.Delete("/credentials/{credentialID}", credentialHandler.Delete)
 				r.Post("/credentials/{credentialID}/test", credentialHandler.Test)
+				r.Post("/credentials/{credentialID}/share", credentialHandler.Share)
+				r.Get("/credentials/{credentialID}/shares", credentialHandler.GetShares)
+				r.Delete("/credentials/{credentialID}/shares/{userID}", credentialHandler.Unshare)
+				r.Put("/credentials/{credentialID}/sharing-scope", credentialHandler.UpdateSharingScope)
 
 				// Schedules
 				r.Get("/schedules", scheduleHandler.List)

@@ -15,20 +15,27 @@ import (
 
 // Credential errors
 var (
-	ErrCredentialNotFound     = errors.New("credential not found")
-	ErrCredentialNameRequired = errors.New("credential name is required")
-	ErrCredentialTypeRequired = errors.New("credential type is required")
+	ErrCredentialNotFound      = errors.New("credential not found")
+	ErrCredentialNameRequired  = errors.New("credential name is required")
+	ErrCredentialTypeRequired  = errors.New("credential type is required")
+	ErrCredentialAccessDenied  = errors.New("access denied to credential")
+	ErrCredentialEditDenied    = errors.New("only the owner can edit this credential")
+	ErrCredentialShareDenied   = errors.New("only the owner can share this credential")
+	ErrCredentialAlreadyShared = errors.New("credential already shared with this user")
+	ErrCannotShareWithSelf     = errors.New("cannot share credential with yourself")
 )
 
 // CredentialService handles credential management with encryption.
 type CredentialService struct {
 	credentialRepo *repositories.CredentialRepository
+	shareRepo      *repositories.CredentialShareRepository
 	encryptor      *crypto.Encryptor
 }
 
 // NewCredentialService creates a new CredentialService with required dependencies.
 func NewCredentialService(
 	credentialRepo *repositories.CredentialRepository,
+	shareRepo *repositories.CredentialShareRepository,
 	encryptor *crypto.Encryptor,
 ) *CredentialService {
 	if credentialRepo == nil || encryptor == nil {
@@ -36,17 +43,19 @@ func NewCredentialService(
 	}
 	return &CredentialService{
 		credentialRepo: credentialRepo,
+		shareRepo:      shareRepo,
 		encryptor:      encryptor,
 	}
 }
 
 type CreateCredentialInput struct {
-	WorkspaceID uuid.UUID
-	CreatedBy   uuid.UUID
-	Name        string
-	Type        string
-	Data        models.CredentialData
-	Description *string
+	WorkspaceID  uuid.UUID
+	CreatedBy    uuid.UUID
+	Name         string
+	Type         string
+	Data         models.CredentialData
+	Description  *string
+	SharingScope models.SharingScope // Optional, defaults to "workspace"
 }
 
 // Create creates a new encrypted credential.
@@ -69,13 +78,20 @@ func (s *CredentialService) Create(ctx context.Context, input CreateCredentialIn
 		return nil, fmt.Errorf("failed to encrypt credential data: %w", err)
 	}
 
+	// Default to workspace scope if not specified
+	sharingScope := input.SharingScope
+	if sharingScope == "" {
+		sharingScope = models.SharingScopeWorkspace
+	}
+
 	credential := &models.Credential{
-		WorkspaceID: input.WorkspaceID,
-		CreatedBy:   input.CreatedBy,
-		Name:        input.Name,
-		Type:        input.Type,
-		Data:        encryptedData,
-		Description: input.Description,
+		WorkspaceID:  input.WorkspaceID,
+		CreatedBy:    input.CreatedBy,
+		Name:         input.Name,
+		Type:         input.Type,
+		Data:         encryptedData,
+		Description:  input.Description,
+		SharingScope: sharingScope,
 	}
 
 	if err := s.credentialRepo.Create(ctx, credential); err != nil {
@@ -260,4 +276,238 @@ func (s *CredentialService) TestConnection(ctx context.Context, credentialID uui
 		Msg("Credential test connection - validation successful")
 
 	return true, nil
+}
+
+// GetAccessibleByUser returns credentials the user can access in a workspace
+func (s *CredentialService) GetAccessibleByUser(ctx context.Context, workspaceID, userID uuid.UUID, filter *repositories.CredentialFilter, opts *repositories.ListOptions) ([]models.Credential, int64, error) {
+	credentials, total, err := s.credentialRepo.FindAccessibleByUser(ctx, workspaceID, userID, filter, opts)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get credentials: %w", err)
+	}
+	return credentials, total, nil
+}
+
+// GetByIDWithAccessCheck returns a credential if the user has access
+func (s *CredentialService) GetByIDWithAccessCheck(ctx context.Context, credentialID, userID uuid.UUID, isWorkspaceMember bool) (*models.Credential, error) {
+	credential, err := s.credentialRepo.FindByIDWithShares(ctx, credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	if !credential.CanUserAccess(userID, isWorkspaceMember) {
+		return nil, ErrCredentialAccessDenied
+	}
+
+	return credential, nil
+}
+
+// GetDecryptedWithAccessCheck returns a credential with decrypted data if user has access
+func (s *CredentialService) GetDecryptedWithAccessCheck(ctx context.Context, credentialID, userID uuid.UUID, isWorkspaceMember bool) (*models.Credential, *models.CredentialData, error) {
+	credential, err := s.GetByIDWithAccessCheck(ctx, credentialID, userID, isWorkspaceMember)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	decrypted, err := s.encryptor.Decrypt(credential.Data)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to decrypt credential data: %w", err)
+	}
+
+	var data models.CredentialData
+	if err := json.Unmarshal([]byte(decrypted), &data); err != nil {
+		return nil, nil, fmt.Errorf("failed to unmarshal credential data: %w", err)
+	}
+
+	// Update last used timestamp
+	if err := s.credentialRepo.UpdateLastUsed(ctx, credentialID); err != nil {
+		log.Warn().Err(err).Str("credential_id", credentialID.String()).Msg("Failed to update last used")
+	}
+
+	return credential, &data, nil
+}
+
+// UpdateWithAccessCheck updates a credential if user is the owner
+func (s *CredentialService) UpdateWithAccessCheck(ctx context.Context, credentialID, userID uuid.UUID, input UpdateCredentialInput) (*models.Credential, error) {
+	credential, err := s.credentialRepo.FindByID(ctx, credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	if !credential.CanUserEdit(userID) {
+		return nil, ErrCredentialEditDenied
+	}
+
+	return s.Update(ctx, credentialID, input)
+}
+
+// DeleteWithAccessCheck deletes a credential if user is the owner
+func (s *CredentialService) DeleteWithAccessCheck(ctx context.Context, credentialID, userID uuid.UUID) error {
+	credential, err := s.credentialRepo.FindByID(ctx, credentialID)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	if !credential.CanUserEdit(userID) {
+		return ErrCredentialEditDenied
+	}
+
+	// Delete all shares first
+	if s.shareRepo != nil {
+		if err := s.shareRepo.DeleteByCredentialID(ctx, credentialID); err != nil {
+			log.Warn().Err(err).Str("credential_id", credentialID.String()).Msg("Failed to delete shares")
+		}
+	}
+
+	return s.Delete(ctx, credentialID)
+}
+
+// ShareCredentialInput contains input for sharing a credential
+type ShareCredentialInput struct {
+	CredentialID uuid.UUID
+	OwnerID      uuid.UUID   // User making the share request (must be owner)
+	UserIDs      []uuid.UUID // Users to share with
+}
+
+// ShareCredential shares a credential with specific users
+func (s *CredentialService) ShareCredential(ctx context.Context, input ShareCredentialInput) ([]models.CredentialShare, error) {
+	if s.shareRepo == nil {
+		return nil, errors.New("sharing not configured")
+	}
+
+	credential, err := s.credentialRepo.FindByIDWithShares(ctx, input.CredentialID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrCredentialNotFound, input.CredentialID)
+	}
+
+	if !credential.CanUserShare(input.OwnerID) {
+		return nil, ErrCredentialShareDenied
+	}
+
+	var shares []models.CredentialShare
+	for _, userID := range input.UserIDs {
+		// Cannot share with self
+		if userID == input.OwnerID {
+			continue
+		}
+
+		// Check if already shared
+		existing, _ := s.shareRepo.FindShare(ctx, input.CredentialID, userID)
+		if existing != nil {
+			continue
+		}
+
+		share := &models.CredentialShare{
+			CredentialID: input.CredentialID,
+			UserID:       userID,
+			Permission:   "use",
+			SharedBy:     input.OwnerID,
+		}
+
+		if err := s.shareRepo.Create(ctx, share); err != nil {
+			log.Error().Err(err).
+				Str("credential_id", input.CredentialID.String()).
+				Str("user_id", userID.String()).
+				Msg("Failed to create share")
+			continue
+		}
+
+		shares = append(shares, *share)
+	}
+
+	// Update sharing scope to "specific" if it was private
+	if credential.SharingScope == models.SharingScopePrivate && len(shares) > 0 {
+		if err := s.credentialRepo.UpdateSharingScope(ctx, input.CredentialID, models.SharingScopeSpecific); err != nil {
+			log.Warn().Err(err).Msg("Failed to update sharing scope")
+		}
+	}
+
+	log.Info().
+		Str("credential_id", input.CredentialID.String()).
+		Int("shared_count", len(shares)).
+		Msg("Credential shared")
+
+	return shares, nil
+}
+
+// UnshareCredential removes sharing for a specific user
+func (s *CredentialService) UnshareCredential(ctx context.Context, credentialID, ownerID, userID uuid.UUID) error {
+	if s.shareRepo == nil {
+		return errors.New("sharing not configured")
+	}
+
+	credential, err := s.credentialRepo.FindByID(ctx, credentialID)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	if !credential.CanUserShare(ownerID) {
+		return ErrCredentialShareDenied
+	}
+
+	if err := s.shareRepo.DeleteShare(ctx, credentialID, userID); err != nil {
+		return fmt.Errorf("failed to remove share: %w", err)
+	}
+
+	log.Info().
+		Str("credential_id", credentialID.String()).
+		Str("user_id", userID.String()).
+		Msg("Credential unshared")
+
+	return nil
+}
+
+// GetCredentialShares returns all shares for a credential
+func (s *CredentialService) GetCredentialShares(ctx context.Context, credentialID, userID uuid.UUID) ([]models.CredentialShare, error) {
+	if s.shareRepo == nil {
+		return nil, errors.New("sharing not configured")
+	}
+
+	credential, err := s.credentialRepo.FindByID(ctx, credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	// Only owner can view shares
+	if !credential.CanUserShare(userID) {
+		return nil, ErrCredentialShareDenied
+	}
+
+	shares, err := s.shareRepo.FindByCredentialID(ctx, credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shares: %w", err)
+	}
+
+	return shares, nil
+}
+
+// UpdateSharingScope updates the sharing scope of a credential
+func (s *CredentialService) UpdateSharingScope(ctx context.Context, credentialID, userID uuid.UUID, scope models.SharingScope) error {
+	credential, err := s.credentialRepo.FindByID(ctx, credentialID)
+	if err != nil {
+		return fmt.Errorf("%w: %s", ErrCredentialNotFound, credentialID)
+	}
+
+	if !credential.CanUserEdit(userID) {
+		return ErrCredentialEditDenied
+	}
+
+	// If changing from specific to private/workspace, remove all shares
+	if credential.SharingScope == models.SharingScopeSpecific && scope != models.SharingScopeSpecific {
+		if s.shareRepo != nil {
+			if err := s.shareRepo.DeleteByCredentialID(ctx, credentialID); err != nil {
+				log.Warn().Err(err).Msg("Failed to delete shares when changing scope")
+			}
+		}
+	}
+
+	if err := s.credentialRepo.UpdateSharingScope(ctx, credentialID, scope); err != nil {
+		return fmt.Errorf("failed to update sharing scope: %w", err)
+	}
+
+	log.Info().
+		Str("credential_id", credentialID.String()).
+		Str("scope", string(scope)).
+		Msg("Credential sharing scope updated")
+
+	return nil
 }
