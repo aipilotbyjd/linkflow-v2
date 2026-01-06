@@ -283,15 +283,24 @@ func buildCredentialResponse(c *models.Credential) dto.CredentialResponse {
 		lastUsedAt = &ts
 	}
 
+	var tokenExpiresAt *int64
+	if c.TokenExpiresAt != nil {
+		ts := c.TokenExpiresAt.Unix()
+		tokenExpiresAt = &ts
+	}
+
 	return dto.CredentialResponse{
-		ID:          c.ID.String(),
-		WorkspaceID: c.WorkspaceID.String(),
-		CreatedBy:   c.CreatedBy.String(),
-		Name:        c.Name,
-		Type:        c.Type,
-		Description: c.Description,
-		LastUsedAt:  lastUsedAt,
-		CreatedAt:   c.CreatedAt.Unix(),
-		UpdatedAt:   c.UpdatedAt.Unix(),
+		ID:                c.ID.String(),
+		WorkspaceID:       c.WorkspaceID.String(),
+		CreatedBy:         c.CreatedBy.String(),
+		Name:              c.Name,
+		Type:              c.Type,
+		Description:       c.Description,
+		Provider:          c.Provider,
+		ProviderAccountID: c.ProviderAccountID,
+		TokenExpiresAt:    tokenExpiresAt,
+		LastUsedAt:        lastUsedAt,
+		CreatedAt:         c.CreatedAt.Unix(),
+		UpdatedAt:         c.UpdatedAt.Unix(),
 	}
 }

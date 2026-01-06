@@ -44,12 +44,23 @@ func ProvideQueue(cfg *config.Config) *queue.Client {
 // BaseURL is a type alias for dependency injection
 type BaseURL string
 
+// FrontendURL is a type alias for frontend URL dependency injection
+type FrontendURL string
+
 // ProvideBaseURL returns the base URL for the application
 func ProvideBaseURL(cfg *config.Config) BaseURL {
 	if cfg.App.URL != "" {
 		return BaseURL(cfg.App.URL)
 	}
 	return BaseURL(fmt.Sprintf("http://localhost:%d", cfg.Server.Port))
+}
+
+// ProvideFrontendURL returns the frontend URL for redirects
+func ProvideFrontendURL(cfg *config.Config) FrontendURL {
+	if cfg.App.FrontendURL != "" {
+		return FrontendURL(cfg.App.FrontendURL)
+	}
+	return FrontendURL("http://localhost:3000")
 }
 
 // InfraSet provides infrastructure dependencies
@@ -59,4 +70,5 @@ var InfraSet = wire.NewSet(
 	ProvideRedis,
 	ProvideQueue,
 	ProvideBaseURL,
+	ProvideFrontendURL,
 )

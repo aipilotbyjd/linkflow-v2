@@ -113,3 +113,33 @@ func (r *CredentialRepository) FindWithFilters(ctx context.Context, workspaceID 
 	err := query.Find(&credentials).Error
 	return credentials, total, err
 }
+
+// FindExpiringTokens returns OAuth credentials with tokens expiring within the given duration
+func (r *CredentialRepository) FindExpiringTokens(ctx context.Context, within time.Duration) ([]models.Credential, error) {
+	var credentials []models.Credential
+	expiryThreshold := time.Now().Add(within)
+
+	err := r.DB().WithContext(ctx).
+		Where("type = ? AND token_expires_at IS NOT NULL AND token_expires_at <= ?",
+			models.CredentialTypeOAuth2, expiryThreshold).
+		Find(&credentials).Error
+
+	return credentials, err
+}
+
+// FindByProvider returns all credentials for a specific OAuth provider
+func (r *CredentialRepository) FindByProvider(ctx context.Context, workspaceID uuid.UUID, provider string) ([]models.Credential, error) {
+	var credentials []models.Credential
+	err := r.DB().WithContext(ctx).
+		Where("workspace_id = ? AND provider = ?", workspaceID, provider).
+		Order("name ASC").
+		Find(&credentials).Error
+	return credentials, err
+}
+
+// UpdateTokenExpiry updates the token expiry time for a credential
+func (r *CredentialRepository) UpdateTokenExpiry(ctx context.Context, credentialID uuid.UUID, expiresAt *time.Time) error {
+	return r.DB().WithContext(ctx).Model(&models.Credential{}).
+		Where("id = ?", credentialID).
+		Update("token_expires_at", expiresAt).Error
+}

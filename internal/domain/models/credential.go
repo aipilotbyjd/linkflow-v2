@@ -8,17 +8,20 @@ import (
 )
 
 type Credential struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	CreatedBy   uuid.UUID      `gorm:"type:uuid;not null" json:"created_by"`
-	Name        string         `gorm:"size:100;not null" json:"name"`
-	Type        string         `gorm:"size:50;not null;index" json:"type"`
-	Data        string         `gorm:"type:text;not null" json:"-"` // AES-256-GCM encrypted
-	Description *string        `gorm:"type:text" json:"description,omitempty"`
-	LastUsedAt  *time.Time     `json:"last_used_at,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID       uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	CreatedBy         uuid.UUID      `gorm:"type:uuid;not null" json:"created_by"`
+	Name              string         `gorm:"size:100;not null" json:"name"`
+	Type              string         `gorm:"size:50;not null;index" json:"type"`
+	Data              string         `gorm:"type:text;not null" json:"-"` // AES-256-GCM encrypted
+	Description       *string        `gorm:"type:text" json:"description,omitempty"`
+	Provider          *string        `gorm:"size:50;index" json:"provider,omitempty"`           // OAuth provider (google, slack, etc.)
+	ProviderAccountID *string        `gorm:"size:255" json:"provider_account_id,omitempty"`     // Provider's user/account ID
+	TokenExpiresAt    *time.Time     `gorm:"index" json:"token_expires_at,omitempty"`           // When OAuth token expires
+	LastUsedAt        *time.Time     `json:"last_used_at,omitempty"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+	DeletedAt         gorm.DeletedAt `gorm:"index" json:"-"`
 
 	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"-"`
 	Creator   User      `gorm:"foreignKey:CreatedBy" json:"-"`
@@ -34,6 +37,9 @@ func (c *Credential) GetWorkspaceID() uuid.UUID {
 
 // CredentialData represents the decrypted credential data structure
 type CredentialData struct {
+	// Provider info (for OAuth)
+	Provider string `json:"provider,omitempty"`
+
 	// API Key
 	APIKey string `json:"api_key,omitempty"`
 
@@ -44,6 +50,7 @@ type CredentialData struct {
 	RefreshToken string `json:"refresh_token,omitempty"`
 	TokenType    string `json:"token_type,omitempty"`
 	Scope        string `json:"scope,omitempty"`
+	ExpiresAt    string `json:"expires_at,omitempty"` // RFC3339 timestamp
 
 	// Basic Auth
 	Username string `json:"username,omitempty"`

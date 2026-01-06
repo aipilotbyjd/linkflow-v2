@@ -20,13 +20,16 @@ type UpdateCredentialRequest struct {
 // Credential responses
 
 type CredentialResponse struct {
-	ID          string  `json:"id"`
-	WorkspaceID string  `json:"workspace_id"`
-	CreatedBy   string  `json:"created_by"`
-	Name        string  `json:"name"`
-	Type        string  `json:"type"`
-	Description *string `json:"description,omitempty"`
-	LastUsedAt  *int64  `json:"last_used_at,omitempty"`
-	CreatedAt   int64   `json:"created_at"`
-	UpdatedAt   int64   `json:"updated_at"`
+	ID                string  `json:"id"`
+	WorkspaceID       string  `json:"workspace_id"`
+	CreatedBy         string  `json:"created_by"`
+	Name              string  `json:"name"`
+	Type              string  `json:"type"`
+	Description       *string `json:"description,omitempty"`
+	Provider          *string `json:"provider,omitempty"`
+	ProviderAccountID *string `json:"provider_account_id,omitempty"`
+	TokenExpiresAt    *int64  `json:"token_expires_at,omitempty"`
+	LastUsedAt        *int64  `json:"last_used_at,omitempty"`
+	CreatedAt         int64   `json:"created_at"`
+	UpdatedAt         int64   `json:"updated_at"`
 }

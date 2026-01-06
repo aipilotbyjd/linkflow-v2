@@ -5,6 +5,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/domain/models"
 	"github.com/linkflow-ai/linkflow/internal/domain/repositories"
 	"github.com/linkflow-ai/linkflow/internal/domain/services"
+	"github.com/linkflow-ai/linkflow/internal/pkg/config"
 	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
 	"gorm.io/gorm"
 )
@@ -69,13 +70,33 @@ func ProvideBillingService(
 	return svc
 }
 
-// ProvideOAuthService creates the OAuth service with base URL
+// ProvideOAuthService creates the OAuth service with encryption and URL configuration
 func ProvideOAuthService(
 	stateRepo *repositories.OAuthStateRepository,
 	credentialRepo *repositories.CredentialRepository,
+	encryptor *crypto.Encryptor,
+	cfg *config.Config,
 	baseURL BaseURL,
+	frontendURL FrontendURL,
 ) *services.OAuthService {
-	return services.NewOAuthService(stateRepo, credentialRepo, string(baseURL))
+	svc := services.NewOAuthService(stateRepo, credentialRepo, encryptor, string(baseURL), string(frontendURL))
+
+	// Configure OAuth providers from application config
+	if cfg.HasOAuth("google") {
+		svc.ConfigureProvider("google", cfg.OAuth.Google.ClientID, cfg.OAuth.Google.ClientSecret)
+	}
+	if cfg.HasOAuth("github") {
+		svc.ConfigureProvider("github", cfg.OAuth.GitHub.ClientID, cfg.OAuth.GitHub.ClientSecret)
+	}
+	if cfg.HasOAuth("microsoft") {
+		svc.ConfigureProvider("microsoft", cfg.OAuth.Microsoft.ClientID, cfg.OAuth.Microsoft.ClientSecret)
+	}
+
+	// TODO: Add more providers as their configs are added to config.Config
+	// if cfg.HasOAuth("slack") { ... }
+	// if cfg.HasOAuth("notion") { ... }
+
+	return svc
 }
 
 // ProvideWebhookManager creates the webhook manager with base URL
