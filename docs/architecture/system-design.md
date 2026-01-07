@@ -158,8 +158,6 @@
    - Cascading failures possible
 
 4. **Missing Features**
-   - OAuth not implemented (stubs only)
-   - MFA not implemented (stubs only)
    - No real-time execution updates
    - No job priority queues
 
