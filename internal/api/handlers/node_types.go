@@ -246,12 +246,9 @@ func (h *NodeTypeHandler) TestNode(w http.ResponseWriter, r *http.Request) {
 func validateWorkflowDefinition(nodesData models.JSONArray, connections models.JSONArray) []map[string]interface{} {
 	var errors []map[string]interface{}
 
+	// Allow empty workflows (draft mode) - they can be saved without nodes
 	if len(nodesData) == 0 {
-		errors = append(errors, map[string]interface{}{
-			"type":    "error",
-			"message": "Workflow must have at least one node",
-		})
-		return errors
+		return errors // Return empty errors - valid draft
 	}
 
 	nodeIDs := make(map[string]bool)

@@ -62,15 +62,35 @@ func (r *WorkflowValidationResult) Error() string {
 // NodeTypeChecker is a function that checks if a node type is valid
 type NodeTypeChecker func(nodeType string) bool
 
+// ValidationMode determines the strictness of validation
+type ValidationMode int
+
+const (
+	// ValidationModeDraft allows empty workflows (for create/update/save)
+	ValidationModeDraft ValidationMode = iota
+	// ValidationModeStrict requires nodes and triggers (for activation/execution)
+	ValidationModeStrict
+)
+
 // WorkflowValidator validates workflow structure
 type WorkflowValidator struct {
 	nodeTypeChecker NodeTypeChecker
+	mode            ValidationMode
 }
 
-// NewWorkflowValidator creates a new workflow validator
+// NewWorkflowValidator creates a new workflow validator (defaults to draft mode)
 func NewWorkflowValidator(checker NodeTypeChecker) *WorkflowValidator {
 	return &WorkflowValidator{
 		nodeTypeChecker: checker,
+		mode:            ValidationModeDraft,
+	}
+}
+
+// NewWorkflowValidatorWithMode creates a validator with specific mode
+func NewWorkflowValidatorWithMode(checker NodeTypeChecker, mode ValidationMode) *WorkflowValidator {
+	return &WorkflowValidator{
+		nodeTypeChecker: checker,
+		mode:            mode,
 	}
 }
 
@@ -96,12 +116,15 @@ func (v *WorkflowValidator) Validate(nodes []WorkflowNode, connections []Workflo
 
 // validateNodes checks individual node validity
 func (v *WorkflowValidator) validateNodes(nodes []WorkflowNode, nodeMap map[string]*WorkflowNode, nodeIDs map[string]bool, result *WorkflowValidationResult) {
+	// In draft mode, allow empty workflows
 	if len(nodes) == 0 {
-		result.AddError(WorkflowValidationError{
-			Field:   "nodes",
-			Code:    "EMPTY_WORKFLOW",
-			Message: "Workflow must have at least one node",
-		})
+		if v.mode == ValidationModeStrict {
+			result.AddError(WorkflowValidationError{
+				Field:   "nodes",
+				Code:    "EMPTY_WORKFLOW",
+				Message: "Workflow must have at least one node",
+			})
+		}
 		return
 	}
 
@@ -269,8 +292,8 @@ func (v *WorkflowValidator) validateGraphStructure(nodes []WorkflowNode, connect
 		}
 	}
 
-	// Validate at least one trigger node
-	if len(triggerNodes) == 0 {
+	// Validate at least one trigger node (only in strict mode)
+	if len(triggerNodes) == 0 && v.mode == ValidationModeStrict {
 		result.AddError(WorkflowValidationError{
 			Field:   "nodes",
 			Code:    "NO_TRIGGER_NODE",
@@ -313,19 +336,22 @@ func (v *WorkflowValidator) validateGraphStructure(nodes []WorkflowNode, connect
 	}
 
 	// Check for unreachable nodes (nodes not reachable from any trigger)
-	reachable := make(map[string]bool)
-	for _, triggerID := range triggerNodes {
-		v.markReachable(triggerID, edges, reachable)
-	}
+	// Only check in strict mode and when there are trigger nodes
+	if v.mode == ValidationModeStrict && len(triggerNodes) > 0 {
+		reachable := make(map[string]bool)
+		for _, triggerID := range triggerNodes {
+			v.markReachable(triggerID, edges, reachable)
+		}
 
-	for _, node := range nodes {
-		if !reachable[node.ID] && !isTriggerNode(node.Type) {
-			result.AddError(WorkflowValidationError{
-				Field:   "nodes",
-				NodeID:  node.ID,
-				Code:    "UNREACHABLE_NODE",
-				Message: fmt.Sprintf("Node '%s' is not reachable from any trigger", node.Name),
-			})
+		for _, node := range nodes {
+			if !reachable[node.ID] && !isTriggerNode(node.Type) {
+				result.AddError(WorkflowValidationError{
+					Field:   "nodes",
+					NodeID:  node.ID,
+					Code:    "UNREACHABLE_NODE",
+					Message: fmt.Sprintf("Node '%s' is not reachable from any trigger", node.Name),
+				})
+			}
 		}
 	}
 }
@@ -379,9 +405,15 @@ func isTriggerNode(nodeType string) bool {
 	return strings.HasPrefix(nodeType, "trigger.")
 }
 
-// ValidateWorkflow is a convenience function for quick validation
+// ValidateWorkflow is a convenience function for quick validation (draft mode - allows empty)
 func ValidateWorkflow(nodes []WorkflowNode, connections []WorkflowConnection, typeChecker NodeTypeChecker) *WorkflowValidationResult {
 	v := NewWorkflowValidator(typeChecker)
+	return v.Validate(nodes, connections)
+}
+
+// ValidateWorkflowStrict validates with strict mode (requires nodes and triggers)
+func ValidateWorkflowStrict(nodes []WorkflowNode, connections []WorkflowConnection, typeChecker NodeTypeChecker) *WorkflowValidationResult {
+	v := NewWorkflowValidatorWithMode(typeChecker, ValidationModeStrict)
 	return v.Validate(nodes, connections)
 }
 

@@ -23,7 +23,7 @@ type WorkflowInput struct {
 	Connections []map[string]interface{}
 }
 
-// ValidateWorkflow validates workflow input
+// ValidateWorkflow validates workflow input (draft mode - allows empty)
 func ValidateWorkflow(input WorkflowInput) error {
 	// Name validation
 	if strings.TrimSpace(input.Name) == "" {
@@ -33,12 +33,25 @@ func ValidateWorkflow(input WorkflowInput) error {
 		return ErrWorkflowNameTooLong
 	}
 
-	// Nodes validation
+	// Allow empty workflows in draft mode
+	// Strict validation (nodes, triggers) happens at activation/execution time
+
+	return nil
+}
+
+// ValidateWorkflowForActivation validates workflow for activation (strict mode)
+func ValidateWorkflowForActivation(input WorkflowInput) error {
+	// First run basic validation
+	if err := ValidateWorkflow(input); err != nil {
+		return err
+	}
+
+	// Nodes validation - required for activation
 	if len(input.Nodes) == 0 {
 		return ErrWorkflowNoNodes
 	}
 
-	// Check for trigger node
+	// Check for trigger node - required for activation
 	hasTrigger := false
 	for _, node := range input.Nodes {
 		nodeType, ok := node["type"].(string)
