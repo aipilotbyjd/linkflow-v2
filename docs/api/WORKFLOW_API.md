@@ -633,50 +633,88 @@ When creating or updating workflows, the following validations are performed:
 | `trigger.manual` | Manual execution | None |
 | `trigger.webhook` | HTTP webhook | `path` (optional), `method` (default: POST) |
 | `trigger.schedule` | Cron schedule | `cron` (required), `timezone` (default: UTC) |
+| `trigger.error` | Error trigger | None |
 
 ### Actions
 | Type | Description | Required Parameters |
 |------|-------------|---------------------|
 | `action.http` | HTTP request | `url`, `method` |
-| `action.code` | Execute code | `code`, `language` (default: javascript) |
-| `action.set` | Set variables | `values` |
-| `action.email` | Send email | `to`, `subject` |
-| `action.respond` | Webhook response | `status`, `body` |
+| `action.code` | Execute JavaScript code | `code` |
+| `action.function` | Execute function | `code` |
+| `action.transform` | Transform data | `code` |
+| `action.set` | Set variables | `name`, `value` |
+| `action.respond` | Webhook response | `statusCode`, `body` |
+| `action.respondWebhook` | Respond to webhook | `statusCode`, `body` |
+| `action.stopError` | Stop on error | None |
+| `action.sub_workflow` | Execute sub-workflow | `workflowId` |
+| `action.execute_workflow` | Execute workflow | `workflowId` |
 
 ### Logic
 | Type | Description | Required Parameters |
 |------|-------------|---------------------|
-| `logic.if` | Conditional branch | `conditions` |
+| `logic.condition` | Conditional branch (IF) | `conditions` |
 | `logic.switch` | Multi-way branch | `value`, `cases` |
 | `logic.loop` | Iterate items | `items` |
 | `logic.merge` | Merge branches | None |
 | `logic.filter` | Filter array | `conditions` |
 | `logic.sort` | Sort array | `field`, `order` |
 | `logic.limit` | Limit/paginate | `limit`, `offset` |
+| `logic.unique` | Remove duplicates | `field` |
+| `logic.splitBatches` | Split into batches | `batchSize` |
 | `logic.aggregate` | Aggregate data | `operation` |
 | `logic.wait` | Pause execution | `duration` |
 | `logic.noop` | Pass-through | None |
+| `logic.dataFilter` | Advanced data filter | `conditions` |
+| `logic.dataSort` | Advanced data sort | `field`, `order` |
+| `logic.dataLimit` | Advanced data limit | `limit`, `offset` |
+| `logic.remove_duplicates` | Remove duplicates | `field` |
+| `logic.datetime` | Date/time operations | `operation` |
+| `logic.expression` | Evaluate expression | `expression` |
+| `logic.math` | Math operations | `operation` |
+| `logic.crypto` | Cryptographic operations | `operation` |
+| `logic.xml` | Parse/generate XML | `operation` |
+| `logic.json_transform` | JSON transformation | `operation` |
+| `logic.splitData` | Split data | `splitBy` |
+| `logic.mergeData` | Merge data | None |
+| `logic.html_extract` | Extract from HTML | `selector` |
+
+### Error Handling
+| Type | Description | Required Parameters |
+|------|-------------|---------------------|
+| `logic.try_catch` | Try/catch block | None |
+| `logic.retry` | Retry with backoff | `maxRetries`, `delay` |
+| `logic.throw_error` | Throw custom error | `message` |
+| `logic.continue_on_fail` | Continue on failure | None |
+| `logic.timeout` | Add timeout | `timeout` |
+| `logic.fallback` | Fallback value | `fallbackValue` |
 
 ### Integrations
 | Type | Description |
 |------|-------------|
 | `integration.slack` | Slack messages |
+| `integration.discord` | Discord messages |
+| `integration.telegram` | Telegram messages |
 | `integration.github` | GitHub API |
 | `integration.postgres` | PostgreSQL queries |
 | `integration.mysql` | MySQL queries |
 | `integration.mongodb` | MongoDB operations |
 | `integration.redis` | Redis commands |
-| `integration.aws_s3` | S3 operations |
-| `integration.google_drive` | Drive operations |
-| `integration.twilio` | SMS/calls |
-| `integration.sendgrid` | SendGrid email |
+| `integration.email` | Send email via SMTP |
+| `integration.openai` | OpenAI API |
+| `integration.anthropic` | Anthropic Claude API |
+| `integration.googleSheets` | Google Sheets operations |
 | `integration.stripe` | Stripe payments |
-| `integration.jira` | Jira issues |
-| `integration.salesforce` | Salesforce CRM |
-| `integration.airtable` | Airtable bases |
-| `integration.notion` | Notion pages |
-| `integration.graphql` | GraphQL queries |
-| `integration.ftp` | FTP operations |
+| `integrations.aws_s3` | AWS S3 operations |
+| `integrations.google_drive` | Google Drive operations |
+| `integrations.twilio` | Twilio SMS/calls |
+| `integrations.sendgrid` | SendGrid email |
+| `integrations.jira` | Jira issues |
+| `integrations.salesforce` | Salesforce CRM |
+| `integrations.airtable` | Airtable bases |
+| `integrations.notion` | Notion pages |
+| `integrations.graphql` | GraphQL queries |
+| `integrations.ftp` | FTP operations |
+| `integrations.sftp` | SFTP operations |
 
 ---
 
@@ -731,11 +769,20 @@ Parameters support **expressions** using `{{variable}}` syntax, which bypasses t
 | `username` | string | No | Bot username |
 | `icon_emoji` | string | No | Bot icon emoji |
 
-### IF Condition Node (`logic.if`)
+### Condition Node (`logic.condition`)
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `conditions` | array | Yes | Condition rules |
-| `combineWith` | enum | No | and, or (default: and) |
+| `conditions` | array | Yes | Array of condition objects |
+| `combineWith` | enum | No | `and`, `or` (default: and) |
+
+Each condition object has:
+| Field | Type | Description |
+|-------|------|-------------|
+| `leftValue` | any | Left operand (supports `{{expression}}` syntax) |
+| `operator` | string | Comparison operator (see below) |
+| `rightValue` | any | Right operand (supports `{{expression}}` syntax) |
+
+**Operators:** `equal`, `notEqual`, `greater`, `greaterEqual`, `less`, `lessEqual`, `contains`, `notContains`, `startsWith`, `endsWith`, `regex`, `isEmpty`, `isNotEmpty`, `isTrue`, `isFalse`, `isNull`, `isNotNull`, `in`, `notIn`, `between`
 
 ### Loop Node (`logic.loop`)
 | Parameter | Type | Required | Description |
@@ -826,16 +873,37 @@ Parameters support **expressions** using `{{variable}}` syntax, which bypasses t
 }
 ```
 
-### logic.condition
+### logic.condition (IF Node)
 ```json
 {
   "inputs": [
-    {"name": "conditions", "type": "array", "required": true}
+    {"name": "conditions", "type": "array", "required": true},
+    {"name": "combineWith", "type": "string", "default": "and"}
   ],
   "outputs": [
-    {"name": "true", "type": "boolean"},
-    {"name": "false", "type": "boolean"}
+    {"name": "result", "type": "boolean"},
+    {"name": "branch", "type": "string", "values": ["true", "false"]},
+    {"name": "data", "type": "any"}
   ]
+}
+```
+
+**Example:**
+```json
+{
+  "id": "if-node-1",
+  "type": "logic.condition",
+  "name": "Check Status",
+  "parameters": {
+    "conditions": [
+      {
+        "leftValue": "{{$json.status}}",
+        "operator": "equal",
+        "rightValue": "success"
+      }
+    ],
+    "combineWith": "and"
+  }
 }
 ```
 
