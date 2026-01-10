@@ -41,6 +41,7 @@ var ServiceSet = wire.NewSet(
 	services.NewTemplateRatingService,
 	ProvideBinaryDataService,
 	ProvideDashboardService,
+	services.NewNoteService,
 )
 
 // ProvideWorkflowService creates the workflow service with webhook repo

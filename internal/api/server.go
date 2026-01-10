@@ -68,6 +68,7 @@ type Services struct {
 	TemplateRating *services.TemplateRatingService
 	BinaryData    *services.BinaryDataService
 	Dashboard     *services.DashboardService
+	Note          *services.NoteService
 }
 
 type Repositories struct {
@@ -202,6 +203,11 @@ func NewServer(
 	var dashboardHandler *handlers.DashboardHandler
 	if svc.Dashboard != nil {
 		dashboardHandler = handlers.NewDashboardHandler(svc.Dashboard)
+	}
+
+	var noteHandler *handlers.NoteHandler
+	if svc.Note != nil {
+		noteHandler = handlers.NewNoteHandler(svc.Note)
 	}
 
 	replayHandler := handlers.NewExecutionReplayHandler(svc.ExecReplay)
@@ -559,7 +565,14 @@ func NewServer(
 					r.Get("/stats", dashboardHandler.GetQuickStats)
 				}
 
-
+				// Notes
+				if noteHandler != nil {
+					r.Get("/notes", noteHandler.List)
+					r.Post("/notes", noteHandler.Create)
+					r.Get("/notes/{noteID}", noteHandler.Get)
+					r.Put("/notes/{noteID}", noteHandler.Update)
+					r.Delete("/notes/{noteID}", noteHandler.Delete)
+				}
 
 				// Execution Replay
 				r.Post("/executions/{executionID}/replay", replayHandler.Replay)

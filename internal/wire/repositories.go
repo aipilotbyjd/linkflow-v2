@@ -32,6 +32,7 @@ var RepositorySet = wire.NewSet(
 	repositories.NewOAuthStateRepository,
 	repositories.NewWebhookEndpointRepository,
 	repositories.NewAPIKeyRepository,
+	repositories.NewNoteRepository,
 	// Generic repositories (for newer features)
 	ProvideAuditLogRepo,
 	ProvideAlertRepo,

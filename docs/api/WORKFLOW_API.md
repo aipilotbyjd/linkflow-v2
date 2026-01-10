@@ -1099,6 +1099,487 @@ workflow_versions (
 
 ---
 
+## NOTES API
+
+Notes are visual annotations (sticky notes) that can be attached to any resource (workflows, executions, etc.) via a polymorphic relationship using `resource_id` and `resource_name`.
+
+### Base URL
+```
+/api/v1/workspaces/{workspaceID}/notes
+```
+
+---
+
+### 1. LIST NOTES
+
+**GET** `/api/v1/workspaces/{workspaceID}/notes`
+
+#### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `resource_id` | UUID | Filter by resource ID (e.g., workflow ID) |
+| `resource_name` | string | Filter by resource type: `workflow`, `execution`, etc. |
+| `color` | string | Filter by color |
+| `search` | string | Search in content |
+| `sort_by` | string | `created_at`, `updated_at` (default: `created_at`) |
+| `order` | string | `asc` or `desc` (default: `desc`) |
+| `page` | int | Page number (default: 1) |
+| `per_page` | int | Items per page (default: 20, max: 100) |
+
+#### Example: Get all notes for a workflow
+```
+GET /api/v1/workspaces/{wsId}/notes?resource_id={workflowId}&resource_name=workflow
+```
+
+#### Response
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "workspace_id": "uuid",
+      "resource_id": "uuid",
+      "resource_name": "workflow",
+      "created_by": "uuid",
+      "content": "This section handles authentication",
+      "position": {"x": 100, "y": 200},
+      "size": {"width": 200, "height": 150},
+      "color": "yellow",
+      "created_at": 1704067200,
+      "updated_at": 1704067200
+    }
+  ],
+  "links": {
+    "self": "/api/v1/workspaces/{wsId}/notes?page=1&per_page=20",
+    "next": null,
+    "prev": null,
+    "first": "/api/v1/workspaces/{wsId}/notes?page=1&per_page=20",
+    "last": "/api/v1/workspaces/{wsId}/notes?page=1&per_page=20"
+  },
+  "meta": {
+    "total": 1,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 1
+  }
+}
+```
+
+---
+
+### 2. CREATE NOTE
+
+**POST** `/api/v1/workspaces/{workspaceID}/notes`
+
+#### Request Body
+```json
+{
+  "resource_id": "workflow-uuid",
+  "resource_name": "workflow",
+  "content": "This workflow handles user authentication",
+  "position": {"x": 100, "y": 200},
+  "size": {"width": 200, "height": 150},
+  "color": "yellow"
+}
+```
+
+#### Validation Rules
+
+| Field | Validation |
+|-------|------------|
+| `resource_id` | **Required**, valid UUID |
+| `resource_name` | **Required**, min=1, max=50 characters |
+| `content` | **Required**, min=1 character |
+| `position` | Optional, defaults to `{x: 0, y: 0}` |
+| `size` | Optional, defaults to `{width: 200, height: 150}` |
+| `color` | Optional, max=20 characters, defaults to `yellow` |
+
+#### Response (201 Created)
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "workspace_id": "uuid",
+    "resource_id": "uuid",
+    "resource_name": "workflow",
+    "created_by": "uuid",
+    "content": "This workflow handles user authentication",
+    "position": {"x": 100, "y": 200},
+    "size": {"width": 200, "height": 150},
+    "color": "yellow",
+    "created_at": 1704067200,
+    "updated_at": 1704067200
+  }
+}
+```
+
+---
+
+### 3. GET NOTE
+
+**GET** `/api/v1/workspaces/{workspaceID}/notes/{noteID}`
+
+#### Response
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "workspace_id": "uuid",
+    "resource_id": "uuid",
+    "resource_name": "workflow",
+    "created_by": "uuid",
+    "content": "This workflow handles user authentication",
+    "position": {"x": 100, "y": 200},
+    "size": {"width": 200, "height": 150},
+    "color": "yellow",
+    "created_at": 1704067200,
+    "updated_at": 1704067200
+  },
+  "links": {
+    "self": "/api/v1/workspaces/{wsId}/notes/{noteId}"
+  }
+}
+```
+
+---
+
+### 4. UPDATE NOTE
+
+**PUT** `/api/v1/workspaces/{workspaceID}/notes/{noteID}`
+
+#### Request Body (all fields optional)
+```json
+{
+  "content": "Updated content",
+  "position": {"x": 150, "y": 250},
+  "size": {"width": 250, "height": 200},
+  "color": "blue"
+}
+```
+
+#### Response
+Returns updated note object.
+
+---
+
+### 5. DELETE NOTE
+
+**DELETE** `/api/v1/workspaces/{workspaceID}/notes/{noteID}`
+
+#### Response (204 No Content)
+
+---
+
+### NOTE COLORS
+
+Suggested color values (frontend can use any string up to 20 chars):
+
+| Color | Description |
+|-------|-------------|
+| `yellow` | Default, general notes |
+| `blue` | Information |
+| `green` | Success/completed |
+| `red` | Warning/important |
+| `purple` | Special notes |
+| `orange` | Action required |
+| `pink` | Personal notes |
+| `gray` | Archived/inactive |
+
+---
+
+### RESOURCE TYPES
+
+| Resource Name | Description |
+|---------------|-------------|
+| `workflow` | Workflow canvas notes |
+| `execution` | Execution-related notes |
+
+---
+
+### DATABASE SCHEMA
+
+```sql
+notes (
+  id              UUID PRIMARY KEY,
+  workspace_id    UUID NOT NULL,
+  resource_id     UUID NOT NULL,
+  resource_name   VARCHAR(50) NOT NULL,
+  created_by      UUID NOT NULL,
+  content         TEXT NOT NULL,
+  position        JSONB DEFAULT '{}',
+  size            JSONB DEFAULT '{}',
+  color           VARCHAR(20) DEFAULT 'yellow',
+  created_at      TIMESTAMP,
+  updated_at      TIMESTAMP,
+  deleted_at      TIMESTAMP
+)
+
+-- Indexes
+CREATE INDEX idx_notes_workspace_id ON notes(workspace_id);
+CREATE INDEX idx_notes_resource_id ON notes(resource_id);
+CREATE INDEX idx_notes_resource_name ON notes(resource_name);
+```
+
+---
+
+### FRONTEND INTEGRATION
+
+#### React/TypeScript Example
+
+```typescript
+// types/note.ts
+interface Note {
+  id: string;
+  workspace_id: string;
+  resource_id: string;
+  resource_name: string;
+  created_by: string;
+  content: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  color: string;
+  created_at: number;
+  updated_at: number;
+}
+
+interface CreateNoteRequest {
+  resource_id: string;
+  resource_name: string;
+  content: string;
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
+  color?: string;
+}
+
+interface UpdateNoteRequest {
+  content?: string;
+  position?: { x: number; y: number };
+  size?: { width: number; height: number };
+  color?: string;
+}
+```
+
+```typescript
+// api/notes.ts
+import { apiClient } from './client';
+
+export const notesApi = {
+  // List notes for a resource
+  list: (workspaceId: string, resourceId?: string, resourceName?: string) => {
+    const params = new URLSearchParams();
+    if (resourceId) params.append('resource_id', resourceId);
+    if (resourceName) params.append('resource_name', resourceName);
+    return apiClient.get(`/workspaces/${workspaceId}/notes?${params}`);
+  },
+
+  // Create a note
+  create: (workspaceId: string, data: CreateNoteRequest) => {
+    return apiClient.post(`/workspaces/${workspaceId}/notes`, data);
+  },
+
+  // Get a note
+  get: (workspaceId: string, noteId: string) => {
+    return apiClient.get(`/workspaces/${workspaceId}/notes/${noteId}`);
+  },
+
+  // Update a note
+  update: (workspaceId: string, noteId: string, data: UpdateNoteRequest) => {
+    return apiClient.put(`/workspaces/${workspaceId}/notes/${noteId}`, data);
+  },
+
+  // Delete a note
+  delete: (workspaceId: string, noteId: string) => {
+    return apiClient.delete(`/workspaces/${workspaceId}/notes/${noteId}`);
+  },
+};
+```
+
+```typescript
+// hooks/useNotes.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { notesApi } from '../api/notes';
+
+export function useNotes(workspaceId: string, resourceId: string, resourceName: string) {
+  return useQuery({
+    queryKey: ['notes', workspaceId, resourceId, resourceName],
+    queryFn: () => notesApi.list(workspaceId, resourceId, resourceName),
+  });
+}
+
+export function useCreateNote(workspaceId: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data: CreateNoteRequest) => notesApi.create(workspaceId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', workspaceId] });
+    },
+  });
+}
+
+export function useUpdateNote(workspaceId: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: ({ noteId, data }: { noteId: string; data: UpdateNoteRequest }) =>
+      notesApi.update(workspaceId, noteId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', workspaceId] });
+    },
+  });
+}
+
+export function useDeleteNote(workspaceId: string) {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (noteId: string) => notesApi.delete(workspaceId, noteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notes', workspaceId] });
+    },
+  });
+}
+```
+
+```tsx
+// components/StickyNote.tsx
+import React, { useState } from 'react';
+import { Rnd } from 'react-rnd'; // For drag & resize
+import { useUpdateNote, useDeleteNote } from '../hooks/useNotes';
+
+interface StickyNoteProps {
+  note: Note;
+  workspaceId: string;
+}
+
+export function StickyNote({ note, workspaceId }: StickyNoteProps) {
+  const [content, setContent] = useState(note.content);
+  const updateNote = useUpdateNote(workspaceId);
+  const deleteNote = useDeleteNote(workspaceId);
+
+  const handleDragStop = (e: any, d: { x: number; y: number }) => {
+    updateNote.mutate({
+      noteId: note.id,
+      data: { position: { x: d.x, y: d.y } },
+    });
+  };
+
+  const handleResizeStop = (
+    e: any,
+    direction: any,
+    ref: HTMLElement,
+    delta: any,
+    position: { x: number; y: number }
+  ) => {
+    updateNote.mutate({
+      noteId: note.id,
+      data: {
+        size: {
+          width: parseInt(ref.style.width),
+          height: parseInt(ref.style.height),
+        },
+        position,
+      },
+    });
+  };
+
+  const handleContentBlur = () => {
+    if (content !== note.content) {
+      updateNote.mutate({
+        noteId: note.id,
+        data: { content },
+      });
+    }
+  };
+
+  const colorMap: Record<string, string> = {
+    yellow: '#fef3c7',
+    blue: '#dbeafe',
+    green: '#d1fae5',
+    red: '#fee2e2',
+    purple: '#e9d5ff',
+    orange: '#fed7aa',
+    pink: '#fce7f3',
+    gray: '#e5e7eb',
+  };
+
+  return (
+    <Rnd
+      default={{
+        x: note.position.x,
+        y: note.position.y,
+        width: note.size.width,
+        height: note.size.height,
+      }}
+      onDragStop={handleDragStop}
+      onResizeStop={handleResizeStop}
+      bounds="parent"
+      style={{
+        backgroundColor: colorMap[note.color] || colorMap.yellow,
+        borderRadius: '4px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        padding: '8px',
+      }}
+    >
+      <div className="sticky-note-header">
+        <button onClick={() => deleteNote.mutate(note.id)}>×</button>
+      </div>
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        onBlur={handleContentBlur}
+        style={{
+          width: '100%',
+          height: 'calc(100% - 24px)',
+          border: 'none',
+          background: 'transparent',
+          resize: 'none',
+        }}
+      />
+    </Rnd>
+  );
+}
+```
+
+```tsx
+// components/WorkflowCanvas.tsx - Usage in workflow editor
+import { useNotes, useCreateNote } from '../hooks/useNotes';
+import { StickyNote } from './StickyNote';
+
+export function WorkflowCanvas({ workspaceId, workflowId }: Props) {
+  const { data: notesData } = useNotes(workspaceId, workflowId, 'workflow');
+  const createNote = useCreateNote(workspaceId);
+
+  const handleAddNote = (x: number, y: number) => {
+    createNote.mutate({
+      resource_id: workflowId,
+      resource_name: 'workflow',
+      content: 'New note...',
+      position: { x, y },
+      size: { width: 200, height: 150 },
+      color: 'yellow',
+    });
+  };
+
+  return (
+    <div className="workflow-canvas" onDoubleClick={(e) => handleAddNote(e.clientX, e.clientY)}>
+      {/* Workflow nodes... */}
+      
+      {/* Render sticky notes */}
+      {notesData?.data?.map((note: Note) => (
+        <StickyNote key={note.id} note={note} workspaceId={workspaceId} />
+      ))}
+    </div>
+  );
+}
+```
+
+---
+
 ## NODE TYPES ENDPOINTS
 
 ### List All Node Types

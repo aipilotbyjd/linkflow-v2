@@ -127,6 +127,9 @@ func AutoMigrate(db *gorm.DB) error {
 		// Import/Export
 		&models.WorkflowExport{},
 		&models.WorkflowImport{},
+
+		// Notes
+		&models.Note{},
 	)
 
 	if err != nil {
