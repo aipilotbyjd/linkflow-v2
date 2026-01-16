@@ -31,15 +31,15 @@ func NewListSchedulesHandler(scheduleRepo schedule.Repository) *ListSchedulesHan
 	return &ListSchedulesHandler{scheduleRepo: scheduleRepo}
 }
 
-func (h *ListSchedulesHandler) Handle(ctx context.Context, q ListSchedulesQuery) (*ListSchedulesResult, error) {
-	opts := types.NewListOptions(q.Page, q.PageSize)
+func (h *ListSchedulesHandler) Handle(ctx context.Context, query ListSchedulesQuery) (*ListSchedulesResult, error) {
+	opts := types.NewListOptions(query.Page, query.PageSize)
 
-	schedules, total, err := h.scheduleRepo.FindByWorkspaceID(ctx, q.WorkspaceID, opts)
+	schedules, total, err := h.scheduleRepo.FindByWorkspaceID(ctx, query.WorkspaceID, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	pageSize := q.PageSize
+	pageSize := query.PageSize
 	if pageSize <= 0 {
 		pageSize = types.DefaultPageSize
 	}
@@ -51,7 +51,7 @@ func (h *ListSchedulesHandler) Handle(ctx context.Context, q ListSchedulesQuery)
 	return &ListSchedulesResult{
 		Schedules:  schedules,
 		Total:      total,
-		Page:       q.Page,
+		Page:       query.Page,
 		PageSize:   pageSize,
 		TotalPages: totalPages,
 	}, nil

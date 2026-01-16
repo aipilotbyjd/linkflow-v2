@@ -23,9 +23,32 @@ func (r Role) IsValid() bool {
 	}
 }
 
-func ParseRole(s string) (Role, bool) {
+func ParseRole(s string) (Role, error) {
 	role := Role(s)
-	return role, role.IsValid()
+	if !role.IsValid() {
+		return "", ErrInvalidRole
+	}
+	return role, nil
+}
+
+// CanManageWorkspace checks if role can update workspace settings
+func (r Role) CanManageWorkspace() bool {
+	return r == RoleOwner || r == RoleAdmin
+}
+
+// CanInviteMembers checks if role can invite new members
+func (r Role) CanInviteMembers() bool {
+	return r == RoleOwner || r == RoleAdmin
+}
+
+// CanRemoveMembers checks if role can remove members
+func (r Role) CanRemoveMembers() bool {
+	return r == RoleOwner || r == RoleAdmin
+}
+
+// CanManageRoles checks if role can change member roles
+func (r Role) CanManageRoles() bool {
+	return r == RoleOwner || r == RoleAdmin
 }
 
 // Level returns the permission level (higher = more permissions)
