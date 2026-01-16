@@ -1,71 +1,129 @@
 # =============================================================================
-# LinkFlow Staging Configuration Overlay
+# LinkFlow Staging Configuration
 # =============================================================================
-# This file is automatically loaded when APP_ENVIRONMENT=staging
-# It overrides values from config.yaml with staging-appropriate settings.
+# Overrides for staging environment - mirrors production with lower resources
+# All secrets MUST be set via environment variables
 # =============================================================================
 
 app:
+  name: linkflow
+  environment: staging
   debug: false
+  # url: set via APP_URL
+  # frontend_url: set via APP_FRONTEND_URL
+  cors_origins: []  # Set via APP_CORS_ORIGINS
 
 server:
+  host: 0.0.0.0
+  port: 8090
   read_timeout: 30s
   write_timeout: 30s
   idle_timeout: 120s
-  shutdown_timeout: 30s
 
 database:
+  # host: set via DATABASE_HOST
+  port: 5432
+  # user: set via DATABASE_USER
+  # password: set via DATABASE_PASSWORD
+  # name: set via DATABASE_NAME
   sslmode: require
-  max_open_conns: 25
-  max_idle_conns: 10
-  conn_max_lifetime: 30m
-  log_queries: false
+  max_open_conns: 15
+  max_idle_conns: 5
+  max_lifetime: 15m
 
 redis:
-  tls: true
-  pool_size: 15
-  min_idle_conns: 5
-  max_retries: 3
+  # host: set via REDIS_HOST
+  port: 6379
+  # password: set via REDIS_PASSWORD
+  db: 0
+  pool_size: 10
 
-queue:
-  concurrency: 15
+jwt:
+  # secret: set via JWT_SECRET
+  access_expiry: 15m
+  refresh_expiry: 168h
+  issuer: linkflow
+
+email:
+  provider: sendgrid
+  from: noreply@staging.linkflow.dev
+  from_name: LinkFlow Staging
+  # sendgrid_key: set via SENDGRID_KEY
+
+storage:
+  provider: s3
+  s3:
+    # bucket: set via S3_BUCKET
+    # region: set via S3_REGION
+    # access_key_id: set via S3_ACCESS_KEY_ID
+    # secret_access_key: set via S3_SECRET_ACCESS_KEY
+    use_path_style: false
+
+worker:
+  concurrency: 5
+  queues:
+    - critical
+    - default
+    - low
+  strict_priority: true
+  shutdown_timeout: 30s
+  health_check_interval: 15s
   retry_limit: 3
 
-rate_limit:
+scheduler:
   enabled: true
-  requests_per_second: 100
-  burst: 200
+  poll_interval: 15s
+  lock_ttl: 30s
+  batch_size: 50
+  leader_election: true
 
-logging:
-  level: info
-  format: json
-  redact_secrets: true
-
-tracing:
+websocket:
   enabled: true
-  sample_rate: 0.5
+  ping_interval: 30s
+  pong_timeout: 10s
+  write_timeout: 10s
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+  max_message_size: 524288
 
-metrics:
-  enabled: true
-  enable_runtime_metrics: true
-  enable_db_metrics: true
-  enable_http_metrics: true
-
-health:
-  detailed_response: true
-  include_db_check: true
-  include_redis_check: true
+crypto:
+  # encryption_key: set via CRYPTO_ENCRYPTION_KEY
+  # signing_key: set via CRYPTO_SIGNING_KEY
 
 features:
   webhook_stream:
     enabled: true
-    max_len: 200000
-    dlq_max_len: 20000
-    batch_size: 25
+    max_len: 50000
+    batch_size: 10
     max_retries: 3
     consumer_count: 2
-
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+    burst_size: 15
   execution:
-    max_concurrent: 100
-    default_timeout: 300s
-    max_timeout: 1800s
+    default_timeout: 300
+    max_retries: 3
+    worker_count: 5
+    queue_size: 500
+
+metrics:
+  enabled: true
+  path: /metrics
+
+resilience:
+  circuit_breaker:
+    enabled: true
+    max_requests: 5
+    interval: 10s
+    timeout: 60s
+    failure_threshold: 5
+  retry:
+    max_attempts: 3
+    initial_interval: 100ms
+    max_interval: 10s
+    multiplier: 2.0
+  rate_limit:
+    enabled: true
+    rate: 50.0
+    burst: 15

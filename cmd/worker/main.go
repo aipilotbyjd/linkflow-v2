@@ -2,113 +2,191 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
-	"fmt"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
-	"github.com/linkflow-ai/linkflow/internal/pkg/email"
-	"github.com/linkflow-ai/linkflow/internal/pkg/logger"
-	"github.com/linkflow-ai/linkflow/internal/pkg/streams"
-	"github.com/linkflow-ai/linkflow/internal/worker"
 	"github.com/rs/zerolog/log"
+
+	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
+	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
 
+// nodeAdapter adapts nodes.Node to executor.NodeHandler
+type nodeAdapter struct {
+	node nodes.Node
+}
+
+func (a *nodeAdapter) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {
+	return a.node.Execute(ctx, runtime, node)
+}
+
 func main() {
-	// Initialize app with all dependencies (wire-generated)
-	app, err := InitializeWorkerApp()
+	// Load configuration
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		configPath = "configs/config.yaml"
+	}
+
+	cfg, err := config.Load(configPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize worker application")
+		log.Fatal().Err(err).Msg("Failed to load configuration")
 	}
 
 	// Initialize logger
-	logger.Init(app.Config.App.Environment, app.Config.App.Debug)
+	var appLogger logger.Logger
+	if cfg.App.IsDevelopment() {
+		appLogger = logger.NewDevelopment()
+	} else {
+		appLogger = logger.NewDefault()
+	}
 
-	log.Info().
-		Str("app", app.Config.App.Name).
+	appLogger.Info().
+		Str("app", cfg.App.Name).
 		Str("service", "worker").
 		Msg("Starting worker service")
 
-	// Initialize Asynq client for email queue
-	asynqOpts := asynq.RedisClientOpt{
-		Addr:     fmt.Sprintf("%s:%d", app.Config.Redis.Host, app.Config.Redis.Port),
-		Password: app.Config.Redis.Password,
-		DB:       app.Config.Redis.DB,
+	// Initialize database
+	db, err := postgres.NewClient(postgres.Config{
+		Host:         cfg.Database.Host,
+		Port:         cfg.Database.Port,
+		User:         cfg.Database.User,
+		Password:     cfg.Database.Password,
+		Database:     cfg.Database.Name,
+		SSLMode:      cfg.Database.SSLMode,
+		MaxOpenConns: cfg.Database.MaxOpenConns,
+		MaxIdleConns: cfg.Database.MaxIdleConns,
+		MaxLifetime:  cfg.Database.MaxLifetime,
+	})
+	if err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
-	if app.Config.Redis.TLS {
-		asynqOpts.TLSConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
+	defer func() {
+		sqlDB, err := db.DB()
+		if err == nil {
+			sqlDB.Close()
 		}
+	}()
+
+	// Initialize Redis
+	redis, err := redisAdapter.NewClient(redisAdapter.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+		PoolSize: cfg.Redis.PoolSize,
+	})
+	if err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to connect to Redis")
 	}
-	asynqClient := asynq.NewClient(asynqOpts)
-	defer asynqClient.Close()
+	defer redis.Close()
 
-	// Initialize email service
-	emailCfg := &email.Config{
-		SMTPHost:     app.Config.SMTP.Host,
-		SMTPPort:     app.Config.SMTP.Port,
-		SMTPUser:     app.Config.SMTP.Username,
-		SMTPPassword: app.Config.SMTP.Password,
-		FromEmail:    app.Config.SMTP.From,
-		FromName:     app.Config.SMTP.FromName,
-		QueueEnabled: true,
+	// Initialize repositories
+	gormDB, err := db.DB()
+	if err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to get raw DB")
 	}
-	emailSvc := email.NewService(emailCfg, asynqClient)
+	_ = gormDB // db.DB() returns sql.DB, not gorm.DB for repositories
 
-	defer app.Queue.Close()
+	// Initialize repositories
+	executionRepo := repositories.NewExecutionRepository(db)
+	nodeExecRepo := repositories.NewNodeExecutionRepository(db)
+	workflowRepo := repositories.NewWorkflowRepository(db)
 
-	// Initialize webhook stream consumers if enabled
-	var webhookConsumers []*streams.WebhookConsumer
-	ctx, cancel := context.WithCancel(context.Background())
+	// Initialize node registry and load all nodes
+	nodeRegistry := nodes.NewRegistry()
+	if err := nodes.LoadAllNodes(nodeRegistry); err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to load nodes")
+	}
+	appLogger.Info().Int("node_count", len(nodeRegistry.ListTypes())).Msg("Loaded workflow nodes")
 
-	if app.Config.Features.WebhookStream.Enabled {
-		webhookStream := streams.NewWebhookStream(app.Redis.Client)
+	// Initialize processor and register node handlers
+	processor := executor.NewProcessor(appLogger)
+	for _, nodeType := range nodeRegistry.ListTypes() {
+		node, _ := nodeRegistry.Get(nodeType)
+		processor.RegisterHandler(nodeType, &nodeAdapter{node: node})
+	}
 
-		// Start multiple consumers based on config
-		consumerCount := app.Config.Features.WebhookStream.ConsumerCount
-		if consumerCount < 1 {
-			consumerCount = 2
+	// Initialize executor
+	workflowExecutor := executor.NewExecutor(
+		workflowRepo,
+		executionRepo,
+		nodeExecRepo,
+		processor,
+		appLogger,
+	)
+
+	// Initialize Asynq server
+	server, err := asynqAdapter.NewServer(asynqAdapter.Config{
+		RedisAddr:     cfg.Redis.GetAddress(),
+		RedisPassword: cfg.Redis.Password,
+		RedisDB:       cfg.Redis.DB,
+		Concurrency:   cfg.Features.Execution.WorkerCount,
+	})
+	if err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to create Asynq server")
+	}
+
+	// Register task handlers
+	server.HandleFunc(asynqAdapter.TaskExecuteWorkflow, func(ctx context.Context, t *asynq.Task) error {
+		var payload asynqAdapter.ExecuteWorkflowPayload
+		if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+			return err
 		}
 
-		for i := 0; i < consumerCount; i++ {
-			consumerName := fmt.Sprintf("worker-%d-consumer-%d", os.Getpid(), i)
-			consumer := streams.NewWebhookConsumer(webhookStream, app.WorkflowSvc, app.Queue, consumerName)
+		appLogger.Info().
+			Str("execution_id", payload.ExecutionID).
+			Str("workflow_id", payload.WorkflowID).
+			Msg("Processing workflow execution")
 
-			if err := consumer.Start(ctx); err != nil {
-				log.Error().Err(err).Int("consumer", i).Msg("Failed to start webhook consumer")
-				continue
-			}
-
-			webhookConsumers = append(webhookConsumers, consumer)
-			log.Info().Str("consumer", consumerName).Msg("Webhook stream consumer started")
+		execID, err := uuid.Parse(payload.ExecutionID)
+		if err != nil {
+			return err
 		}
 
-		log.Info().Int("count", len(webhookConsumers)).Msg("Webhook stream consumers running")
-	}
+		return workflowExecutor.Execute(ctx, execID)
+	})
 
-	// Create worker
-	w := worker.New(app.Config, app.ExecutionSvc, app.CredentialSvc, app.WorkflowSvc, app.BillingSvc, app.OAuthSvc, app.Redis.Client, emailSvc)
+	server.HandleFunc(asynqAdapter.TaskSendEmail, func(ctx context.Context, t *asynq.Task) error {
+		var payload asynqAdapter.SendEmailPayload
+		if err := json.Unmarshal(t.Payload(), &payload); err != nil {
+			return err
+		}
 
-	// Handle shutdown
+		appLogger.Info().
+			Str("to", payload.To).
+			Str("subject", payload.Subject).
+			Msg("Sending email")
+
+		// TODO: Implement email sending via email service
+		return nil
+	})
+
+	// Keep references
+	_ = redis
+
+	// Handle graceful shutdown
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		<-quit
-		log.Info().Msg("Shutting down worker...")
-
-		// Stop webhook consumers first
-		cancel()
-		for _, consumer := range webhookConsumers {
-			consumer.Stop()
-		}
-
-		w.Shutdown()
+		appLogger.Info().Msg("Shutting down worker...")
+		server.Shutdown()
 	}()
 
-	// Start worker
-	if err := w.Start(); err != nil {
-		log.Fatal().Err(err).Msg("Worker error")
+	// Start server
+	appLogger.Info().Msg("Starting Asynq worker server")
+	if err := server.Start(); err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to start worker server")
 	}
 }

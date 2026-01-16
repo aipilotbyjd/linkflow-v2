@@ -1,48 +1,98 @@
 # =============================================================================
-# LinkFlow Test Configuration Overlay
+# LinkFlow Test Configuration
 # =============================================================================
-# This file is automatically loaded when APP_ENVIRONMENT=test
-# It overrides values from config.yaml with test-appropriate settings.
+# Overrides for test environment - uses in-memory/mock services where possible
 # =============================================================================
 
 app:
+  name: linkflow-test
+  environment: test
   debug: true
+  url: http://localhost:8091
+  frontend_url: http://localhost:3000
+  cors_origins:
+    - "*"
+
+server:
+  host: 127.0.0.1
+  port: 8091
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 10s
 
 database:
+  host: localhost
+  port: 5432
+  user: postgres
   name: linkflow_test
   sslmode: disable
   max_open_conns: 5
   max_idle_conns: 2
+  max_lifetime: 5m
 
 redis:
+  host: localhost
+  port: 6379
   db: 1  # Use different DB for tests
-  tls: false
+  pool_size: 5
 
-queue:
+jwt:
+  secret: test-secret-key-minimum-32-characters
+  access_expiry: 5m
+  refresh_expiry: 1h
+  issuer: linkflow-test
+
+email:
+  provider: smtp
+  from: test@linkflow.dev
+  from_name: LinkFlow Test
+
+storage:
+  provider: local
+  local_path: ./test-storage
+
+worker:
   concurrency: 2
+  queues:
+    - default
+  strict_priority: false
+  shutdown_timeout: 5s
+  retry_limit: 1
 
-rate_limit:
+scheduler:
+  enabled: false
+  poll_interval: 1s
+  batch_size: 10
+  leader_election: false
+
+websocket:
   enabled: false
 
-logging:
-  level: debug
-  format: console
-  redact_secrets: false
-
-metrics:
-  enabled: false
-
-health:
-  detailed_response: true
-  include_db_check: false
-  include_redis_check: false
+crypto:
+  encryption_key: test-encryption-key-32-bytes!!
+  signing_key: test-signing-key
 
 features:
   webhook_stream:
     enabled: false
-    consumer_count: 1
-
+  rate_limit:
+    enabled: false
   execution:
-    max_concurrent: 10
-    default_timeout: 30s
-    max_timeout: 60s
+    default_timeout: 30
+    max_retries: 1
+    worker_count: 2
+    queue_size: 100
+
+metrics:
+  enabled: false
+
+resilience:
+  circuit_breaker:
+    enabled: false
+  retry:
+    max_attempts: 1
+    initial_interval: 10ms
+    max_interval: 100ms
+    multiplier: 1.5
+  rate_limit:
+    enabled: false

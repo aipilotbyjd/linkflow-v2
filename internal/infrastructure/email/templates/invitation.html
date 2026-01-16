@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>You're Invited to Join a Workspace</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; }
+        .logo { font-size: 28px; font-weight: bold; color: #6366f1; }
+        .content { background: #f9fafb; padding: 30px; border-radius: 8px; }
+        .workspace { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border: 1px solid #e5e7eb; }
+        .button { display: inline-block; background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">LinkFlow</div>
+        </div>
+        <div class="content">
+            <h2>You're Invited!</h2>
+            <p>{{.InviterName}} has invited you to join their workspace on LinkFlow.</p>
+            <div class="workspace">
+                <strong>{{.WorkspaceName}}</strong>
+                <p>Role: {{.Role}}</p>
+            </div>
+            <p>Click below to accept the invitation:</p>
+            <a href="{{.InviteURL}}" class="button">Accept Invitation</a>
+            <p style="font-size: 12px; color: #666;">This invitation expires in {{.ExpiresIn}}.</p>
+        </div>
+        <div class="footer">
+            <p>LinkFlow - Workflow Automation Platform</p>
+            <p>If you have any questions, contact us at support@linkflow.ai</p>
+        </div>
+    </div>
+</body>
+</html>

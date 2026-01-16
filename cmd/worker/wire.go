@@ -5,60 +5,166 @@ package main
 
 import (
 	"github.com/google/wire"
-	"github.com/linkflow-ai/linkflow/internal/domain/services"
-	"github.com/linkflow-ai/linkflow/internal/pkg/config"
-	"github.com/linkflow-ai/linkflow/internal/pkg/crypto"
-	"github.com/linkflow-ai/linkflow/internal/pkg/queue"
-	pkgredis "github.com/linkflow-ai/linkflow/internal/pkg/redis"
-	appwire "github.com/linkflow-ai/linkflow/internal/wire"
+	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
+	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/schedule"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	"github.com/linkflow-ai/linkflow/internal/shared/events"
 	"gorm.io/gorm"
 )
 
-// WorkerApp holds all initialized dependencies for worker
+// WorkerApp holds all dependencies for the worker service
 type WorkerApp struct {
-	Config        *config.Config
-	DB            *gorm.DB
-	Redis         *pkgredis.Client
-	Queue         *queue.Client
-	Encryptor     *crypto.Encryptor
-	WorkflowSvc   *services.WorkflowService
-	ExecutionSvc  *services.ExecutionService
-	CredentialSvc *services.CredentialService
-	BillingSvc    *services.BillingService
-	OAuthSvc      *services.OAuthService
+	Config    *config.Config
+	Logger    logger.Logger
+	DB        *postgres.Client
+	Redis     *redisAdapter.Client
+	Queue     *asynqAdapter.Client
+	Encryptor *crypto.Encryptor
+
+	// Repositories
+	WorkflowRepo      workflow.Repository
+	ExecutionRepo     execution.Repository
+	NodeExecutionRepo execution.NodeExecutionRepository
+	CredentialRepo    credential.Repository
+	ScheduleRepo      schedule.Repository
+
+	// Command Handlers
+	StartExecutionHandler *executionCmd.StartExecutionHandler
 }
 
-// provideWorkerApp creates the WorkerApp struct with all dependencies
+// Infrastructure provider set
+var workerInfraSet = wire.NewSet(
+	provideWorkerConfig,
+	provideWorkerLogger,
+	provideWorkerPostgres,
+	provideWorkerGormDB,
+	provideWorkerRedis,
+	provideWorkerAsynqClient,
+	provideWorkerEncryptor,
+	provideWorkerEventBus,
+)
+
+// Repository provider set
+var workerRepoSet = wire.NewSet(
+	repositories.NewWorkflowRepository,
+	repositories.NewExecutionRepository,
+	repositories.NewNodeExecutionRepository,
+	repositories.NewCredentialRepository,
+	repositories.NewScheduleRepository,
+
+	wire.Bind(new(workflow.Repository), new(*repositories.WorkflowRepository)),
+	wire.Bind(new(execution.Repository), new(*repositories.ExecutionRepository)),
+	wire.Bind(new(execution.NodeExecutionRepository), new(*repositories.NodeExecutionRepository)),
+	wire.Bind(new(credential.Repository), new(*repositories.CredentialRepository)),
+	wire.Bind(new(schedule.Repository), new(*repositories.ScheduleRepository)),
+)
+
+// Command handler provider set
+var workerCommandSet = wire.NewSet(
+	executionCmd.NewStartExecutionHandler,
+)
+
+func provideWorkerConfig() (*config.Config, error) {
+	configPath := "configs/config.yaml"
+	return config.Load(configPath)
+}
+
+func provideWorkerLogger(cfg *config.Config) logger.Logger {
+	if cfg.App.IsDevelopment() {
+		return logger.NewDevelopment()
+	}
+	return logger.NewDefault()
+}
+
+func provideWorkerPostgres(cfg *config.Config) (*postgres.Client, error) {
+	return postgres.NewClient(postgres.Config{
+		Host:         cfg.Database.Host,
+		Port:         cfg.Database.Port,
+		User:         cfg.Database.User,
+		Password:     cfg.Database.Password,
+		Database:     cfg.Database.Name,
+		SSLMode:      cfg.Database.SSLMode,
+		MaxOpenConns: cfg.Database.MaxOpenConns,
+		MaxIdleConns: cfg.Database.MaxIdleConns,
+		MaxLifetime:  cfg.Database.MaxLifetime,
+	})
+}
+
+func provideWorkerGormDB(client *postgres.Client) *gorm.DB {
+	return client.DB()
+}
+
+func provideWorkerRedis(cfg *config.Config) (*redisAdapter.Client, error) {
+	return redisAdapter.NewClient(redisAdapter.Config{
+		Host:     cfg.Redis.Host,
+		Port:     cfg.Redis.Port,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+		PoolSize: cfg.Redis.PoolSize,
+	})
+}
+
+func provideWorkerAsynqClient(cfg *config.Config) (*asynqAdapter.Client, error) {
+	return asynqAdapter.NewClient(asynqAdapter.Config{
+		RedisAddr:     cfg.Redis.GetAddress(),
+		RedisPassword: cfg.Redis.Password,
+		RedisDB:       cfg.Redis.DB,
+	})
+}
+
+func provideWorkerEncryptor(cfg *config.Config) (*crypto.Encryptor, error) {
+	return crypto.NewEncryptor(cfg.App.SecretKey)
+}
+
+func provideWorkerEventBus() events.Bus {
+	return events.NewInMemoryBus()
+}
+
 func provideWorkerApp(
 	cfg *config.Config,
-	db *gorm.DB,
-	redis *pkgredis.Client,
-	queue *queue.Client,
+	log logger.Logger,
+	db *postgres.Client,
+	redis *redisAdapter.Client,
+	queue *asynqAdapter.Client,
 	encryptor *crypto.Encryptor,
-	workflowSvc *services.WorkflowService,
-	executionSvc *services.ExecutionService,
-	credentialSvc *services.CredentialService,
-	billingSvc *services.BillingService,
-	oauthSvc *services.OAuthService,
+	workflowRepo workflow.Repository,
+	executionRepo execution.Repository,
+	nodeExecRepo execution.NodeExecutionRepository,
+	credentialRepo credential.Repository,
+	scheduleRepo schedule.Repository,
+	startExecutionHandler *executionCmd.StartExecutionHandler,
 ) *WorkerApp {
 	return &WorkerApp{
-		Config:        cfg,
-		DB:            db,
-		Redis:         redis,
-		Queue:         queue,
-		Encryptor:     encryptor,
-		WorkflowSvc:   workflowSvc,
-		ExecutionSvc:  executionSvc,
-		CredentialSvc: credentialSvc,
-		BillingSvc:    billingSvc,
-		OAuthSvc:      oauthSvc,
+		Config:                cfg,
+		Logger:                log,
+		DB:                    db,
+		Redis:                 redis,
+		Queue:                 queue,
+		Encryptor:             encryptor,
+		WorkflowRepo:          workflowRepo,
+		ExecutionRepo:         executionRepo,
+		NodeExecutionRepo:     nodeExecRepo,
+		CredentialRepo:        credentialRepo,
+		ScheduleRepo:          scheduleRepo,
+		StartExecutionHandler: startExecutionHandler,
 	}
 }
 
-// InitializeWorkerApp wires all dependencies and returns the WorkerApp
+// InitializeWorkerApp wires all dependencies
 func InitializeWorkerApp() (*WorkerApp, error) {
 	wire.Build(
-		appwire.WorkerSet,
+		workerInfraSet,
+		workerRepoSet,
+		workerCommandSet,
 		provideWorkerApp,
 	)
 	return nil, nil
