@@ -7,6 +7,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -17,6 +18,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"gorm.io/gorm"
+	"os"
 )
 
 // Injectors from wire.go:
@@ -76,7 +78,14 @@ var schedulerInfraSet = wire.NewSet(
 var schedulerRepoSet = wire.NewSet(repositories.NewScheduleRepository, repositories.NewWorkflowRepository, wire.Bind(new(schedule.Repository), new(*repositories.ScheduleRepository)), wire.Bind(new(workflow.Repository), new(*repositories.WorkflowRepository)))
 
 func provideSchedulerConfig() (*config.Config, error) {
-	configPath := "configs/config.yaml"
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		env := os.Getenv("APP_ENV")
+		if env == "" {
+			env = "local"
+		}
+		configPath = fmt.Sprintf("configs/config.%s.yaml", env)
+	}
 	return config.Load(configPath)
 }
 

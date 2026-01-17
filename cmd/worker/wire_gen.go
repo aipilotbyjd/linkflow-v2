@@ -7,6 +7,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -22,6 +23,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 	"gorm.io/gorm"
+	"os"
 )
 
 // Injectors from wire.go:
@@ -102,7 +104,14 @@ var workerRepoSet = wire.NewSet(repositories.NewWorkflowRepository, repositories
 var workerCommandSet = wire.NewSet(execution.NewStartExecutionHandler)
 
 func provideWorkerConfig() (*config.Config, error) {
-	configPath := "configs/config.yaml"
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		env := os.Getenv("APP_ENV")
+		if env == "" {
+			env = "local"
+		}
+		configPath = fmt.Sprintf("configs/config.%s.yaml", env)
+	}
 	return config.Load(configPath)
 }
 

@@ -4,6 +4,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -146,7 +149,14 @@ var querySet = wire.NewSet(
 )
 
 func provideConfig() (*config.Config, error) {
-	configPath := "configs/config.yaml"
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		env := os.Getenv("APP_ENV")
+		if env == "" {
+			env = "local"
+		}
+		configPath = fmt.Sprintf("configs/config.%s.yaml", env)
+	}
 	return config.Load(configPath)
 }
 

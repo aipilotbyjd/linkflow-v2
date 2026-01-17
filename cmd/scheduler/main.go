@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,7 +24,11 @@ func main() {
 	// Load configuration
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		configPath = "configs/config.yaml"
+		env := os.Getenv("APP_ENV")
+		if env == "" {
+			env = "local"
+		}
+		configPath = fmt.Sprintf("configs/config.%s.yaml", env)
 	}
 
 	cfg, err := config.Load(configPath)
