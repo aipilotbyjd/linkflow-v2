@@ -27,12 +27,17 @@ type Config struct {
 // Handlers holds all HTTP handlers
 type Handlers struct {
 	Auth       AuthHandlers
+	User       UserHandlers
+	APIKey     APIKeyHandlers
 	Workflow   WorkflowHandlers
 	Execution  ExecutionHandlers
 	Workspace  WorkspaceHandlers
 	Credential CredentialHandlers
 	Schedule   ScheduleHandlers
 	Webhook    WebhookHandlers
+	Folder     FolderHandlers
+	Dashboard  DashboardHandlers
+	NodeType   NodeTypeHandlers
 }
 
 // AuthHandlers holds auth-related handlers
@@ -41,6 +46,19 @@ type AuthHandlers struct {
 	Login    http.HandlerFunc
 	Refresh  http.HandlerFunc
 	Logout   http.HandlerFunc
+}
+
+// UserHandlers holds user-related handlers
+type UserHandlers struct {
+	GetCurrentUser    http.HandlerFunc
+	UpdateCurrentUser http.HandlerFunc
+}
+
+// APIKeyHandlers holds API key handlers
+type APIKeyHandlers struct {
+	List   http.HandlerFunc
+	Create http.HandlerFunc
+	Revoke http.HandlerFunc
 }
 
 // WorkflowHandlers holds workflow-related handlers
@@ -52,15 +70,22 @@ type WorkflowHandlers struct {
 	Delete     http.HandlerFunc
 	Activate   http.HandlerFunc
 	Deactivate http.HandlerFunc
+	Validate   http.HandlerFunc
+	TestNode   http.HandlerFunc
 }
 
 // ExecutionHandlers holds execution-related handlers
 type ExecutionHandlers struct {
-	Start  http.HandlerFunc
-	Get    http.HandlerFunc
-	List   http.HandlerFunc
-	Cancel http.HandlerFunc
-	Retry  http.HandlerFunc
+	Start      http.HandlerFunc
+	Get        http.HandlerFunc
+	List       http.HandlerFunc
+	Cancel     http.HandlerFunc
+	Retry      http.HandlerFunc
+	Search     http.HandlerFunc
+	BulkDelete http.HandlerFunc
+	Replay     http.HandlerFunc
+	GetNodes   http.HandlerFunc
+	Stats      http.HandlerFunc
 }
 
 // WorkspaceHandlers holds workspace-related handlers
@@ -98,6 +123,29 @@ type ScheduleHandlers struct {
 // WebhookHandlers holds webhook-related handlers
 type WebhookHandlers struct {
 	Trigger http.HandlerFunc
+}
+
+// FolderHandlers holds folder-related handlers
+type FolderHandlers struct {
+	Create http.HandlerFunc
+	Get    http.HandlerFunc
+	List   http.HandlerFunc
+	Tree   http.HandlerFunc
+	Update http.HandlerFunc
+	Delete http.HandlerFunc
+}
+
+// DashboardHandlers holds dashboard-related handlers
+type DashboardHandlers struct {
+	GetDashboard  http.HandlerFunc
+	GetQuickStats http.HandlerFunc
+}
+
+// NodeTypeHandlers holds node type handlers
+type NodeTypeHandlers struct {
+	List          http.HandlerFunc
+	GetCategories http.HandlerFunc
+	Get           http.HandlerFunc
 }
 
 // NewRouter creates a new HTTP router
@@ -146,9 +194,23 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			})
 		})
 
+		// Node types (public - for workflow editor)
+		r.Get("/node-types", handlers.NodeType.List)
+		r.Get("/node-types/categories", handlers.NodeType.GetCategories)
+		r.Get("/node-types/{nodeType}", handlers.NodeType.Get)
+
 		// Protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(cfg.JWTManager))
+
+			// User profile
+			r.Get("/users/me", handlers.User.GetCurrentUser)
+			r.Put("/users/me", handlers.User.UpdateCurrentUser)
+
+			// API Keys
+			r.Get("/api-keys", handlers.APIKey.List)
+			r.Post("/api-keys", handlers.APIKey.Create)
+			r.Delete("/api-keys/{keyId}", handlers.APIKey.Revoke)
 
 			// User workspaces
 			r.Get("/workspaces", handlers.Workspace.List)
@@ -162,15 +224,34 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Put("/", handlers.Workspace.Update)
 				r.Delete("/", handlers.Workspace.Delete)
 
+				// Dashboard
+				r.Get("/dashboard", handlers.Dashboard.GetDashboard)
+				r.Get("/stats", handlers.Dashboard.GetQuickStats)
+
 				// Members
 				r.Get("/members", handlers.Workspace.ListMembers)
 				r.Post("/members/invite", handlers.Workspace.InviteMember)
 				r.Delete("/members/{memberId}", handlers.Workspace.RemoveMember)
 
+				// Folders
+				r.Route("/folders", func(r chi.Router) {
+					r.Get("/", handlers.Folder.List)
+					r.Get("/tree", handlers.Folder.Tree)
+					r.Post("/", handlers.Folder.Create)
+
+					r.Route("/{folderId}", func(r chi.Router) {
+						r.Get("/", handlers.Folder.Get)
+						r.Put("/", handlers.Folder.Update)
+						r.Delete("/", handlers.Folder.Delete)
+					})
+				})
+
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {
 					r.Get("/", handlers.Workflow.List)
 					r.Post("/", handlers.Workflow.Create)
+					r.Post("/validate", handlers.Workflow.Validate)
+					r.Post("/test-node", handlers.Workflow.TestNode)
 
 					r.Route("/{workflowId}", func(r chi.Router) {
 						r.Get("/", handlers.Workflow.Get)
@@ -185,11 +266,16 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				// Executions
 				r.Route("/executions", func(r chi.Router) {
 					r.Get("/", handlers.Execution.List)
+					r.Get("/search", handlers.Execution.Search)
+					r.Get("/stats", handlers.Execution.Stats)
+					r.Delete("/bulk", handlers.Execution.BulkDelete)
 					
 					r.Route("/{executionId}", func(r chi.Router) {
 						r.Get("/", handlers.Execution.Get)
 						r.Post("/cancel", handlers.Execution.Cancel)
 						r.Post("/retry", handlers.Execution.Retry)
+						r.Post("/replay", handlers.Execution.Replay)
+						r.Get("/nodes", handlers.Execution.GetNodes)
 					})
 				})
 
