@@ -297,6 +297,11 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 	r.Use(middleware.Recovery(cfg.Logger))
 	r.Use(middleware.Logging(cfg.Logger))
 
+	// Security middleware
+	r.Use(middleware.SecurityHeaders)
+	r.Use(middleware.RequestIDMiddleware)
+	r.Use(middleware.MaxBodySize(10 * 1024 * 1024)) // 10MB max body
+
 	// CORS
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   cfg.CorsOrigins,

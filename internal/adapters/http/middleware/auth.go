@@ -17,6 +17,7 @@ const (
 	WorkspaceContextKey contextKey = "workspace"
 	TokenContextKey     contextKey = "token"
 	ClaimsContextKey    contextKey = "claims"
+	RequestIDContextKey contextKey = "request_id"
 )
 
 // UserClaims represents authenticated user information
@@ -154,4 +155,17 @@ func GetClaimsFromContext(ctx context.Context) *jwt.Claims {
 		return claims
 	}
 	return nil
+}
+
+// SetRequestID sets request ID in context
+func SetRequestID(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, RequestIDContextKey, requestID)
+}
+
+// GetRequestID retrieves request ID from context
+func GetRequestID(ctx context.Context) string {
+	if id, ok := ctx.Value(RequestIDContextKey).(string); ok {
+		return id
+	}
+	return ""
 }
