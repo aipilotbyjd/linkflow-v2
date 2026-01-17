@@ -1,0 +1,197 @@
+# =============================================================================
+# LinkFlow Configuration - Clean Architecture
+# =============================================================================
+# All secrets should be set via environment variables, not in this file.
+# Environment variable format: SECTION_KEY (e.g., DATABASE_PASSWORD, JWT_SECRET)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Application
+# -----------------------------------------------------------------------------
+app:
+  name: linkflow
+  environment: development  # development, staging, production
+  debug: true
+  url: http://localhost:8090
+  frontend_url: http://localhost:3000
+  # secret_key: set via APP_SECRET_KEY
+  cors_origins:
+    - http://localhost:3000
+    - http://localhost:5173
+
+# -----------------------------------------------------------------------------
+# Server
+# -----------------------------------------------------------------------------
+server:
+  host: 0.0.0.0
+  port: 8090
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+# -----------------------------------------------------------------------------
+# Database (PostgreSQL)
+# -----------------------------------------------------------------------------
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  # password: set via DATABASE_PASSWORD
+  name: linkflow
+  sslmode: disable
+  max_open_conns: 25
+  max_idle_conns: 10
+  max_lifetime: 30m
+
+# -----------------------------------------------------------------------------
+# Redis
+# -----------------------------------------------------------------------------
+redis:
+  host: localhost
+  port: 6379
+  # password: set via REDIS_PASSWORD
+  db: 0
+  pool_size: 10
+
+# -----------------------------------------------------------------------------
+# JWT Authentication
+# -----------------------------------------------------------------------------
+jwt:
+  # secret: set via JWT_SECRET (min 32 chars)
+  access_expiry: 15m
+  refresh_expiry: 168h  # 7 days
+  issuer: linkflow
+
+# -----------------------------------------------------------------------------
+# Email
+# -----------------------------------------------------------------------------
+email:
+  provider: smtp  # smtp, sendgrid
+  from: noreply@linkflow.dev
+  from_name: LinkFlow
+  smtp_host: localhost
+  smtp_port: 587
+  # smtp_user: set via SMTP_USER
+  # smtp_pass: set via SMTP_PASS
+  # sendgrid_key: set via SENDGRID_KEY
+
+# -----------------------------------------------------------------------------
+# OAuth Providers
+# -----------------------------------------------------------------------------
+oauth:
+  google:
+    # client_id: set via OAUTH_GOOGLE_CLIENT_ID
+    # client_secret: set via OAUTH_GOOGLE_CLIENT_SECRET
+    redirect_url: /api/v1/auth/oauth/google/callback
+  github:
+    # client_id: set via OAUTH_GITHUB_CLIENT_ID
+    # client_secret: set via OAUTH_GITHUB_CLIENT_SECRET
+    redirect_url: /api/v1/auth/oauth/github/callback
+  microsoft:
+    # client_id: set via OAUTH_MICROSOFT_CLIENT_ID
+    # client_secret: set via OAUTH_MICROSOFT_CLIENT_SECRET
+    redirect_url: /api/v1/auth/oauth/microsoft/callback
+
+# -----------------------------------------------------------------------------
+# Storage
+# -----------------------------------------------------------------------------
+storage:
+  provider: local  # local, s3
+  local_path: ./storage
+  s3:
+    bucket: linkflow
+    region: us-east-1
+    # access_key_id: set via S3_ACCESS_KEY_ID
+    # secret_access_key: set via S3_SECRET_ACCESS_KEY
+    endpoint: ""
+    use_path_style: false
+
+# -----------------------------------------------------------------------------
+# Worker (Asynq)
+# -----------------------------------------------------------------------------
+worker:
+  concurrency: 10
+  queues:
+    - critical
+    - default
+    - low
+  strict_priority: true
+  shutdown_timeout: 30s
+  health_check_interval: 15s
+  retry_limit: 3
+
+# -----------------------------------------------------------------------------
+# Scheduler
+# -----------------------------------------------------------------------------
+scheduler:
+  enabled: true
+  poll_interval: 10s
+  lock_ttl: 30s
+  batch_size: 100
+  leader_election: true
+
+# -----------------------------------------------------------------------------
+# WebSocket
+# -----------------------------------------------------------------------------
+websocket:
+  enabled: true
+  ping_interval: 30s
+  pong_timeout: 10s
+  write_timeout: 10s
+  read_buffer_size: 1024
+  write_buffer_size: 1024
+  max_message_size: 524288  # 512KB
+
+# -----------------------------------------------------------------------------
+# Crypto
+# -----------------------------------------------------------------------------
+crypto:
+  # encryption_key: set via CRYPTO_ENCRYPTION_KEY (32 bytes for AES-256)
+  # signing_key: set via CRYPTO_SIGNING_KEY
+
+# -----------------------------------------------------------------------------
+# Features
+# -----------------------------------------------------------------------------
+features:
+  webhook_stream:
+    enabled: true
+    max_len: 100000
+    batch_size: 10
+    max_retries: 3
+    consumer_count: 2
+  rate_limit:
+    enabled: true
+    requests_per_minute: 100
+    burst_size: 20
+  execution:
+    default_timeout: 300
+    max_retries: 3
+    worker_count: 10
+    queue_size: 1000
+
+# -----------------------------------------------------------------------------
+# Metrics
+# -----------------------------------------------------------------------------
+metrics:
+  enabled: true
+  path: /metrics
+
+# -----------------------------------------------------------------------------
+# Resilience
+# -----------------------------------------------------------------------------
+resilience:
+  circuit_breaker:
+    enabled: true
+    max_requests: 5
+    interval: 10s
+    timeout: 60s
+    failure_threshold: 5
+  retry:
+    max_attempts: 3
+    initial_interval: 100ms
+    max_interval: 10s
+    multiplier: 2.0
+  rate_limit:
+    enabled: true
+    rate: 100.0
+    burst: 20

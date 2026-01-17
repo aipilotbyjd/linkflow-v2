@@ -51,9 +51,9 @@ credentials/
 # -----------------------------------------------------------------------------
 # Configuration Overrides
 # -----------------------------------------------------------------------------
-configs/config.local.yaml
-configs/config.local.yml
-configs/*.local.*
+# configs/config.local.yaml
+# configs/config.local.yml
+# configs/*.local.*
 
 # -----------------------------------------------------------------------------
 # IDE & Editors
