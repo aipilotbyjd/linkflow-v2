@@ -1,15 +1,20 @@
+# ============================================================================
+# Continuous Integration - Runs on every push and PR
+# ============================================================================
+
 name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, dev]
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev]
 
 env:
   GO_VERSION: '1.23'
 
 jobs:
+  # ======================== LINT ========================
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -20,22 +25,24 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
 
-      - name: golangci-lint
+      - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
           version: latest
           args: --timeout=5m
 
+  # ======================== TEST ========================
   test:
     name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: linkflow
+          POSTGRES_PASSWORD: testpassword
           POSTGRES_DB: linkflow_test
         ports:
           - 5432:5432
@@ -46,7 +53,7 @@ jobs:
           --health-retries 5
 
       redis:
-        image: redis:7
+        image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
@@ -62,28 +69,19 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache Go modules
-        uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Download dependencies
-        run: go mod download
+          cache: true
 
       - name: Run tests
-        run: go test -v -race -coverprofile=coverage.out ./...
         env:
-          DATABASE_HOST: localhost
-          DATABASE_PORT: 5432
-          DATABASE_USER: postgres
-          DATABASE_PASSWORD: postgres
-          DATABASE_NAME: linkflow_test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: linkflow
+          DB_PASSWORD: testpassword
+          DB_NAME: linkflow_test
           REDIS_HOST: localhost
           REDIS_PORT: 6379
+        run: |
+          go test -v -race -coverprofile=coverage.out ./...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -91,6 +89,7 @@ jobs:
           files: ./coverage.out
           fail_ci_if_error: false
 
+  # ======================== BUILD ========================
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -102,6 +101,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: true
 
       - name: Build binaries
         run: |
@@ -115,19 +115,20 @@ jobs:
           name: binaries
           path: bin/
 
-  docker:
-    name: Docker Build
+  # ======================== SECURITY ========================
+  security:
+    name: Security Scan
     runs-on: ubuntu-latest
-    needs: [lint, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Run Gosec
+        uses: securecodewarrior/github-action-gosec@master
+        with:
+          args: '-no-fail -fmt json -out gosec-results.json ./...'
 
-      - name: Build Docker images
-        run: |
-          docker build -f deploy/docker/Dockerfile --target api -t linkflow-api:${{ github.sha }} .
-          docker build -f deploy/docker/Dockerfile --target worker -t linkflow-worker:${{ github.sha }} .
-          docker build -f deploy/docker/Dockerfile --target scheduler -t linkflow-scheduler:${{ github.sha }} .
+      - name: Upload security results
+        uses: actions/upload-artifact@v4
+        with:
+          name: gosec-results
+          path: gosec-results.json

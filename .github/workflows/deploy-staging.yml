@@ -1,0 +1,69 @@
+# ============================================================================
+# Deploy to Staging - Auto-deploys when pushing to main branch
+# ============================================================================
+
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Run database migrations
+        run: |
+          flyctl ssh console \
+            --app linkflow-staging \
+            -C "/bin/app migrate up"
+
+      - name: Deploy API
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-staging \
+            --build-arg SERVICE=api \
+            --remote-only \
+            --strategy rolling
+
+      - name: Deploy Worker
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-staging-worker \
+            --build-arg SERVICE=worker \
+            --remote-only
+
+      - name: Deploy Scheduler
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-staging-scheduler \
+            --build-arg SERVICE=scheduler \
+            --remote-only
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -sf https://staging-api.linkflow.io/api/v1/health || exit 1
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

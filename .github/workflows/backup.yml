@@ -1,0 +1,91 @@
+# ============================================================================
+# Scheduled Backups - Runs daily
+# ============================================================================
+
+name: Scheduled Backup
+
+on:
+  schedule:
+    # Every day at 2 AM UTC
+    - cron: '0 2 * * *'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to backup'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  backup:
+    name: Backup Database
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Configure AWS CLI (for R2)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.R2_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.R2_SECRET_KEY }}
+          aws-region: auto
+
+      - name: Create backup
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BACKUP_FILE="linkflow-${{ matrix.environment }}-${TIMESTAMP}.sql.gz"
+          
+          # Dump database
+          flyctl ssh console \
+            --app linkflow-${{ matrix.environment }} \
+            -C "pg_dump \$DATABASE_URL" | gzip > /tmp/${BACKUP_FILE}
+          
+          # Upload to R2
+          aws s3 cp /tmp/${BACKUP_FILE} \
+            s3://linkflow-backups/${{ matrix.environment }}/daily/${BACKUP_FILE} \
+            --endpoint-url ${{ secrets.R2_ENDPOINT }}
+          
+          echo "Backup uploaded: ${BACKUP_FILE}"
+
+      - name: Verify backup
+        run: |
+          # List recent backups
+          aws s3 ls s3://linkflow-backups/${{ matrix.environment }}/daily/ \
+            --endpoint-url ${{ secrets.R2_ENDPOINT }} | tail -5
+
+      - name: Cleanup old backups (keep 30 days)
+        run: |
+          # Delete backups older than 30 days
+          aws s3 ls s3://linkflow-backups/${{ matrix.environment }}/daily/ \
+            --endpoint-url ${{ secrets.R2_ENDPOINT }} | \
+          while read -r line; do
+            FILE_DATE=$(echo $line | awk '{print $1}')
+            FILE_NAME=$(echo $line | awk '{print $4}')
+            if [[ $(date -d "$FILE_DATE" +%s) -lt $(date -d "30 days ago" +%s) ]]; then
+              aws s3 rm "s3://linkflow-backups/${{ matrix.environment }}/daily/$FILE_NAME" \
+                --endpoint-url ${{ secrets.R2_ENDPOINT }}
+            fi
+          done
+
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: '❌ Backup FAILED for ${{ matrix.environment }}!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

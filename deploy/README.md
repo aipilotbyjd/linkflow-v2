@@ -1,5 +1,44 @@
 # LinkFlow Deployment
 
+## CI/CD Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           AUTOMATED PIPELINE                             │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  git push                    git push                   git tag v1.0.0
+  to dev branch               to main branch             (or manual)
+       │                           │                          │
+       ▼                           ▼                          ▼
+┌─────────────┐            ┌─────────────┐            ┌─────────────┐
+│    CI       │            │    CI       │            │    CI       │
+│  ─────────  │            │  ─────────  │            │  ─────────  │
+│  • Lint     │            │  • Lint     │            │  • Lint     │
+│  • Test     │            │  • Test     │            │  • Test     │
+│  • Build    │            │  • Build    │            │  • Build    │
+│  • Security │            │  • Security │            │  • Security │
+└──────┬──────┘            └──────┬──────┘            └──────┬──────┘
+       │ ✅                       │ ✅                       │ ✅
+       ▼                          ▼                          ▼
+┌─────────────┐            ┌─────────────┐            ┌─────────────┐
+│  DEV        │            │  STAGING    │            │  PRODUCTION │
+│  Auto-deploy│            │  Auto-deploy│            │  + Backup   │
+│             │            │  + Health   │            │  + Health   │
+│             │            │    check    │            │  + Notify   │
+└─────────────┘            └─────────────┘            └─────────────┘
+```
+
+### GitHub Secrets Required
+
+| Secret | Description |
+|--------|-------------|
+| `FLY_API_TOKEN` | Fly.io API token |
+| `SLACK_WEBHOOK_URL` | Slack notifications |
+| `R2_ACCESS_KEY` | Cloudflare R2 for backups |
+| `R2_SECRET_KEY` | Cloudflare R2 secret |
+| `R2_ENDPOINT` | Cloudflare R2 endpoint |
+
 ## Quick Start
 
 ```bash

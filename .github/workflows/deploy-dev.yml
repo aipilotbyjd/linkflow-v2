@@ -1,0 +1,57 @@
+# ============================================================================
+# Deploy to Dev - Auto-deploys when pushing to dev branch
+# ============================================================================
+
+name: Deploy Dev
+
+on:
+  push:
+    branches: [dev]
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+jobs:
+  deploy:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    environment: development
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Fly.io
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy API
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-dev \
+            --build-arg SERVICE=api \
+            --remote-only
+
+      - name: Deploy Worker
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-dev-worker \
+            --build-arg SERVICE=worker \
+            --remote-only
+
+      - name: Deploy Scheduler
+        run: |
+          flyctl deploy \
+            --config deploy/platforms/fly/fly.toml \
+            --app linkflow-dev-scheduler \
+            --build-arg SERVICE=scheduler \
+            --remote-only
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
