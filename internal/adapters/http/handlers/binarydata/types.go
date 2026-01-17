@@ -1,6 +1,7 @@
 package binarydata
 
 import (
+	"context"
 	"io"
 	"time"
 )
@@ -34,6 +35,7 @@ type MimeTypeStats struct {
 // StorageService defines the storage service interface
 type StorageService interface {
 	Upload(data io.Reader, fileName, mimeType string) (string, error)
+	Store(ctx context.Context, path string, data io.Reader, contentType string) error
 	Download(path string) (io.ReadCloser, error)
 	Delete(path string) error
 	GetInfo(path string) (*BinaryData, error)

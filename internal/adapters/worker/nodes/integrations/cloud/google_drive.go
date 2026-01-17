@@ -40,21 +40,21 @@ func (n *GoogleDriveNode) Execute(ctx context.Context, runtime *executor.Runtime
 }
 
 func (n *GoogleDriveNode) listFiles(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	folderId, _ := params["folder_id"].(string)
+	folderID, _ := params["folder_id"].(string)
 	query, _ := params["query"].(string)
 
 	return types.JSON{
-		"folder_id": folderId,
+		"folder_id": folderID,
 		"query":     query,
 		"files":     []interface{}{},
 	}, nil
 }
 
 func (n *GoogleDriveNode) getFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	fileId, _ := params["file_id"].(string)
+	fileID, _ := params["file_id"].(string)
 
 	return types.JSON{
-		"file_id": fileId,
+		"file_id": fileID,
 		"name":    "",
 		"mime":    "",
 	}, nil
@@ -63,39 +63,39 @@ func (n *GoogleDriveNode) getFile(ctx context.Context, params map[string]interfa
 func (n *GoogleDriveNode) createFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
 	name, _ := params["name"].(string)
 	mimeType, _ := params["mime_type"].(string)
-	parentId, _ := params["parent_id"].(string)
+	parentID, _ := params["parent_id"].(string)
 
 	return types.JSON{
 		"file_id":   "",
 		"name":      name,
 		"mime_type": mimeType,
-		"parent_id": parentId,
+		"parent_id": parentID,
 	}, nil
 }
 
 func (n *GoogleDriveNode) updateFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	fileId, _ := params["file_id"].(string)
+	fileID, _ := params["file_id"].(string)
 
 	return types.JSON{
-		"file_id": fileId,
+		"file_id": fileID,
 		"updated": true,
 	}, nil
 }
 
 func (n *GoogleDriveNode) deleteFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	fileId, _ := params["file_id"].(string)
+	fileID, _ := params["file_id"].(string)
 
 	return types.JSON{
-		"file_id": fileId,
+		"file_id": fileID,
 		"deleted": true,
 	}, nil
 }
 
 func (n *GoogleDriveNode) downloadFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	fileId, _ := params["file_id"].(string)
+	fileID, _ := params["file_id"].(string)
 
 	return types.JSON{
-		"file_id": fileId,
+		"file_id": fileID,
 		"content": nil,
 	}, nil
 }

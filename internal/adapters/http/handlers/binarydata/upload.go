@@ -12,10 +12,14 @@ import (
 
 // UploadResponse represents upload response
 type UploadResponse struct {
-	ID       string `json:"id"`
-	FileName string `json:"fileName"`
-	MimeType string `json:"mimeType"`
-	Size     int64  `json:"size"`
+	ID          string    `json:"id"`
+	ExecutionID string    `json:"executionId"`
+	NodeID      string    `json:"nodeId"`
+	FileName    string    `json:"fileName"`
+	MimeType    string    `json:"mimeType"`
+	Size        int64     `json:"size"`
+	StoragePath string    `json:"storagePath"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 // UploadHandler handles binary data upload
@@ -52,21 +56,39 @@ func (h *UploadHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	binaryID := uuid.New().String()
 
-	binaryData := BinaryData{
+	storagePath := "uploads/" + binaryID + "/" + header.Filename
+	mimeType := header.Header.Get("Content-Type")
+
+	// Store the file
+	if h.storage != nil {
+		if err := h.storage.Store(r.Context(), storagePath, file, mimeType); err != nil {
+			common.HandleError(w, err)
+			return
+		}
+	}
+
+	// Create metadata record
+	binaryData := &BinaryData{
 		ID:          binaryID,
 		ExecutionID: executionID,
 		NodeID:      nodeID,
 		FileName:    header.Filename,
-		MimeType:    header.Header.Get("Content-Type"),
+		MimeType:    mimeType,
 		Size:        header.Size,
-		StoragePath: "uploads/" + binaryID + "/" + header.Filename,
+		StoragePath: storagePath,
 		CreatedAt:   time.Now(),
 	}
 
+	// TODO: Save metadata to repository
+
 	common.Created(w, UploadResponse{
-		ID:       binaryData.ID,
-		FileName: binaryData.FileName,
-		MimeType: binaryData.MimeType,
-		Size:     binaryData.Size,
+		ID:          binaryData.ID,
+		ExecutionID: binaryData.ExecutionID,
+		NodeID:      binaryData.NodeID,
+		FileName:    binaryData.FileName,
+		MimeType:    binaryData.MimeType,
+		Size:        binaryData.Size,
+		StoragePath: binaryData.StoragePath,
+		CreatedAt:   binaryData.CreatedAt,
 	})
 }

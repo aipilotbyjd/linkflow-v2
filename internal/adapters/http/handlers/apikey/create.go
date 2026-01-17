@@ -99,7 +99,7 @@ func (h *CreateAPIKeyHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 func generateAPIKey() string {
 	bytes := make([]byte, 32)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes)
 	return hex.EncodeToString(bytes)
 }
 

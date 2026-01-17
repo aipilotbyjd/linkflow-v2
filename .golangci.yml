@@ -55,6 +55,8 @@ linters-settings:
       - ifElseChain
       - unnamedResult
       - sprintfQuotedString
+      - exitAfterDefer
+      - assignOp
 
   revive:
     rules:

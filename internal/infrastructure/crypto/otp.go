@@ -19,7 +19,6 @@ const (
 
 // OTP provides TOTP (Time-based One-Time Password) functionality
 type OTP struct {
-	secret string
 	issuer string
 }
 

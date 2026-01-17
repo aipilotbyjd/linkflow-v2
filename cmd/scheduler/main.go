@@ -143,7 +143,7 @@ func main() {
 
 	// Stop health server
 	if healthServer != nil {
-		healthServer.Shutdown(shutdownCtx)
+		_ = healthServer.Shutdown(shutdownCtx)
 	}
 
 	appLogger.Info().Msg("Scheduler stopped gracefully")
