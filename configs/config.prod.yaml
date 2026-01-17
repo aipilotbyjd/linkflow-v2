@@ -1,77 +1,57 @@
 # =============================================================================
-# LinkFlow Production Configuration
+# LinkFlow Production Environment Configuration
 # =============================================================================
-# Production environment - optimized for performance and security
-# ALL secrets MUST be set via environment variables - NEVER commit secrets!
+# Production environment - maximum security and performance
+# All secrets MUST be set via environment variables
 # =============================================================================
 
 app:
   name: linkflow
   environment: production
   debug: false
-  # url: set via APP_URL
-  # frontend_url: set via APP_FRONTEND_URL
-  # secret_key: set via APP_SECRET_KEY
-  cors_origins: []  # Set via APP_CORS_ORIGINS
+  url: https://api.linkflow.ai
+  frontend_url: https://app.linkflow.ai
+  cors_origins:
+    - https://app.linkflow.ai
 
 server:
   host: 0.0.0.0
-  port: 8090
+  port: 8080
   read_timeout: 30s
   write_timeout: 30s
   idle_timeout: 120s
 
 database:
-  # host: set via DATABASE_HOST
+  host: ${DATABASE_HOST}
   port: 5432
-  # user: set via DATABASE_USER
-  # password: set via DATABASE_PASSWORD
-  # name: set via DATABASE_NAME
+  user: ${DATABASE_USER}
+  name: linkflow_prod
   sslmode: require
   max_open_conns: 50
-  max_idle_conns: 10
+  max_idle_conns: 25
   max_lifetime: 30m
 
 redis:
-  # host: set via REDIS_HOST
+  host: ${REDIS_HOST}
   port: 6379
-  # password: set via REDIS_PASSWORD
   db: 0
-  pool_size: 20
+  pool_size: 25
 
 jwt:
-  # secret: set via JWT_SECRET (min 64 chars recommended)
   access_expiry: 15m
   refresh_expiry: 168h
   issuer: linkflow
 
 email:
   provider: sendgrid
-  from: noreply@linkflow.dev
+  from: noreply@linkflow.ai
   from_name: LinkFlow
-  # sendgrid_key: set via SENDGRID_KEY
-
-oauth:
-  google:
-    # client_id: set via OAUTH_GOOGLE_CLIENT_ID
-    # client_secret: set via OAUTH_GOOGLE_CLIENT_SECRET
-    redirect_url: /api/v1/auth/oauth/google/callback
-  github:
-    # client_id: set via OAUTH_GITHUB_CLIENT_ID
-    # client_secret: set via OAUTH_GITHUB_CLIENT_SECRET
-    redirect_url: /api/v1/auth/oauth/github/callback
-  microsoft:
-    # client_id: set via OAUTH_MICROSOFT_CLIENT_ID
-    # client_secret: set via OAUTH_MICROSOFT_CLIENT_SECRET
-    redirect_url: /api/v1/auth/oauth/microsoft/callback
 
 storage:
   provider: s3
   s3:
-    # bucket: set via S3_BUCKET
-    # region: set via S3_REGION
-    # access_key_id: set via S3_ACCESS_KEY_ID
-    # secret_access_key: set via S3_SECRET_ACCESS_KEY
+    bucket: linkflow-prod
+    region: us-east-1
     use_path_style: false
 
 worker:
@@ -83,7 +63,7 @@ worker:
   strict_priority: true
   shutdown_timeout: 60s
   health_check_interval: 15s
-  retry_limit: 5
+  retry_limit: 3
 
 scheduler:
   enabled: true
@@ -99,28 +79,24 @@ websocket:
   write_timeout: 10s
   read_buffer_size: 2048
   write_buffer_size: 2048
-  max_message_size: 1048576  # 1MB
-
-crypto:
-  # encryption_key: set via CRYPTO_ENCRYPTION_KEY (32 bytes for AES-256)
-  # signing_key: set via CRYPTO_SIGNING_KEY
+  max_message_size: 1048576
 
 features:
   webhook_stream:
     enabled: true
-    max_len: 500000
-    batch_size: 50
-    max_retries: 5
-    consumer_count: 5
+    max_len: 100000
+    batch_size: 10
+    max_retries: 3
+    consumer_count: 4
   rate_limit:
     enabled: true
-    requests_per_minute: 300
-    burst_size: 50
+    requests_per_minute: 100
+    burst_size: 20
   execution:
-    default_timeout: 600
-    max_retries: 5
+    default_timeout: 300
+    max_retries: 3
     worker_count: 20
-    queue_size: 5000
+    queue_size: 2000
 
 metrics:
   enabled: true
@@ -132,13 +108,13 @@ resilience:
     max_requests: 10
     interval: 10s
     timeout: 60s
-    failure_threshold: 10
+    failure_threshold: 5
   retry:
-    max_attempts: 5
+    max_attempts: 3
     initial_interval: 100ms
-    max_interval: 30s
+    max_interval: 10s
     multiplier: 2.0
   rate_limit:
     enabled: true
-    rate: 200.0
-    burst: 50
+    rate: 100.0
+    burst: 20
