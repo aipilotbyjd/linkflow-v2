@@ -32,26 +32,6 @@ func NewOAuthCallbackHandler(oauthManager OAuthManager, userCreator UserCreator,
 	}
 }
 
-type OAuthCallbackRequest struct {
-	Code  string `json:"code"`
-	State string `json:"state"`
-}
-
-type OAuthCallbackResponse struct {
-	AccessToken  string    `json:"accessToken"`
-	RefreshToken string    `json:"refreshToken"`
-	ExpiresAt    time.Time `json:"expiresAt"`
-	User         OAuthUser `json:"user"`
-	IsNewUser    bool      `json:"isNewUser"`
-}
-
-type OAuthUser struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Name     string `json:"name"`
-	Provider string `json:"provider"`
-}
-
 func (h *OAuthCallbackHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
 

@@ -11,10 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 )
 
-type VerifyMFARequest struct {
-	Code string `json:"code" validate:"required,len=6"`
-}
-
 type VerifyMFAHandler struct {
 	userRepo user.Repository
 	cache    cache.Cache

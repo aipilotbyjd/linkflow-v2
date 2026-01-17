@@ -2,7 +2,6 @@ package execution
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -10,22 +9,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 )
-
-type NodeExecutionResponse struct {
-	ID          string                 `json:"id"`
-	ExecutionID string                 `json:"executionId"`
-	NodeID      string                 `json:"nodeId"`
-	NodeType    string                 `json:"nodeType"`
-	NodeName    string                 `json:"nodeName"`
-	Status      string                 `json:"status"`
-	StartedAt   *time.Time             `json:"startedAt,omitempty"`
-	CompletedAt *time.Time             `json:"completedAt,omitempty"`
-	Duration    *int64                 `json:"durationMs,omitempty"`
-	InputData   map[string]interface{} `json:"inputData,omitempty"`
-	OutputData  map[string]interface{} `json:"outputData,omitempty"`
-	Error       *string                `json:"error,omitempty"`
-	RetryCount  int                    `json:"retryCount"`
-}
 
 type GetNodeHandler struct {
 	executionRepo     execution.Repository

@@ -81,7 +81,7 @@ func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	executions := make([]ExecutionResponse, len(result.Executions))
 	for i, e := range result.Executions {
-		executions[i] = toExecutionResponse(&e)
+		executions[i] = ToExecutionResponse(&e)
 	}
 
 	common.List(w, executions, types.PageResponse{

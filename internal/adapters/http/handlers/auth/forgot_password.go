@@ -13,10 +13,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 )
 
-type ForgotPasswordRequest struct {
-	Email string `json:"email" validate:"required,email"`
-}
-
 type ForgotPasswordHandler struct {
 	userRepo     user.Repository
 	cache        cache.Cache

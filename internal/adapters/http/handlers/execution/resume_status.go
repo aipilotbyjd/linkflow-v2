@@ -10,16 +10,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 )
 
-type ResumeStatusResponse struct {
-	Token       string     `json:"token"`
-	ExecutionID string     `json:"executionId"`
-	Status      string     `json:"status"`
-	NodeID      string     `json:"nodeId"`
-	WaitType    string     `json:"waitType"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	ExpiresAt   *time.Time `json:"expiresAt,omitempty"`
-}
-
 type ResumeStatusHandler struct {
 	executionRepo execution.Repository
 }

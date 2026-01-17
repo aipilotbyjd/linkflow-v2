@@ -17,15 +17,6 @@ func NewGetExecutionStatsHandler(executionRepo execution.Repository) *GetExecuti
 	return &GetExecutionStatsHandler{executionRepo: executionRepo}
 }
 
-type ExecutionStatsResponse struct {
-	Total           int64            `json:"total"`
-	ByStatus        map[string]int64 `json:"by_status"`
-	AvgDurationMs   int64            `json:"avg_duration_ms"`
-	Period          string           `json:"period"`
-	StartDate       string           `json:"start_date"`
-	EndDate         string           `json:"end_date"`
-}
-
 func (h *GetExecutionStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

@@ -10,11 +10,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 )
 
-type DisableMFARequest struct {
-	Code     string `json:"code" validate:"required,len=6"`
-	Password string `json:"password" validate:"required"`
-}
-
 type DisableMFAHandler struct {
 	userRepo user.Repository
 	otp      *crypto.OTP

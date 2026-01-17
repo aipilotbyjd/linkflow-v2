@@ -9,13 +9,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
-	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-// StartRequest represents execution start request
-type StartRequest struct {
-	InputData types.JSON `json:"input_data,omitempty"`
-}
 
 // StartHandler handles starting workflow execution
 type StartHandler struct {
@@ -68,5 +62,5 @@ func (h *StartHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Created(w, toExecutionResponse(exec))
+	common.Created(w, ToExecutionResponse(exec))
 }

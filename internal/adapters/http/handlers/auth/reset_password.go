@@ -10,11 +10,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 )
 
-type ResetPasswordRequest struct {
-	Token       string `json:"token" validate:"required"`
-	NewPassword string `json:"new_password" validate:"required,min=8"`
-}
-
 type ResetPasswordHandler struct {
 	userRepo    user.Repository
 	sessionRepo user.SessionRepository

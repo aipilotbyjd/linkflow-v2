@@ -31,11 +31,6 @@ func NewReplayExecutionHandler(
 	}
 }
 
-type ReplayRequest struct {
-	UseOriginalInput bool                   `json:"useOriginalInput"`
-	InputData        map[string]interface{} `json:"input_data,omitempty"`
-}
-
 func (h *ReplayExecutionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

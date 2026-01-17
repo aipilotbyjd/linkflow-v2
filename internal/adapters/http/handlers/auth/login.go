@@ -8,23 +8,6 @@ import (
 	userCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/user"
 )
 
-// LoginRequest represents login request body
-type LoginRequest struct {
-	Email     string `json:"email" validate:"required,email"`
-	Password  string `json:"password" validate:"required"`
-	MFACode   string `json:"mfa_code,omitempty"`
-}
-
-// LoginResponse represents login response
-type LoginResponse struct {
-	User        UserResponse  `json:"user"`
-	AccessToken string        `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	ExpiresAt   string        `json:"expires_at"`
-	TokenType   string        `json:"token_type"`
-	RequiresMFA bool          `json:"requires_mfa,omitempty"`
-}
-
 // LoginHandler handles user login
 type LoginHandler struct {
 	handler *userCmd.LoginUserHandler
@@ -70,7 +53,7 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.Success(w, LoginResponse{
-		User:         toUserResponse(result.User),
+		User:         ToUserResponse(result.User),
 		AccessToken:  result.TokenPair.AccessToken,
 		RefreshToken: result.TokenPair.RefreshToken,
 		ExpiresAt:    result.TokenPair.ExpiresAt.Format("2006-01-02T15:04:05Z"),

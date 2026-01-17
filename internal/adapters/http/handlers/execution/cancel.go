@@ -38,5 +38,5 @@ func (h *CancelHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toExecutionResponse(exec))
+	common.Success(w, ToExecutionResponse(exec))
 }

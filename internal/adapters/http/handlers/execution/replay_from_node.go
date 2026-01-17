@@ -32,10 +32,6 @@ func NewReplayFromNodeHandler(
 	}
 }
 
-type ReplayFromNodeRequest struct {
-	NodeID string `json:"node_id"`
-}
-
 func (h *ReplayFromNodeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

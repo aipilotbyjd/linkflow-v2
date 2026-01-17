@@ -11,16 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 )
 
-type ResumeRequest struct {
-	Data map[string]interface{} `json:"data,omitempty"`
-}
-
-type ResumeResponse struct {
-	ExecutionID string    `json:"executionId"`
-	Status      string    `json:"status"`
-	ResumedAt   time.Time `json:"resumedAt"`
-}
-
 type ResumeHandler struct {
 	executionRepo execution.Repository
 }

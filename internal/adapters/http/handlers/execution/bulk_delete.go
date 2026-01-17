@@ -19,16 +19,6 @@ func NewBulkDeleteExecutionsHandler(executionRepo execution.Repository) *BulkDel
 	return &BulkDeleteExecutionsHandler{executionRepo: executionRepo}
 }
 
-type BulkDeleteRequest struct {
-	ExecutionIDs []string `json:"execution_ids,omitempty"`
-	OlderThan    *string  `json:"older_than,omitempty"`
-	Status       *string  `json:"status,omitempty"`
-}
-
-type BulkDeleteResponse struct {
-	Deleted int64 `json:"deleted"`
-}
-
 func (h *BulkDeleteExecutionsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

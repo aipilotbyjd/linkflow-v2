@@ -11,11 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 )
 
-type SetupMFAResponse struct {
-	Secret    string `json:"secret"`
-	QRCodeURL string `json:"qr_code_url"`
-}
-
 type SetupMFAHandler struct {
 	userRepo user.Repository
 	cache    cache.Cache

@@ -8,19 +8,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 )
 
-// RefreshRequest represents refresh request body
-type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
-}
-
-// RefreshResponse represents refresh response
-type RefreshResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresAt    string `json:"expires_at"`
-	TokenType    string `json:"token_type"`
-}
-
 // RefreshHandler handles token refresh
 type RefreshHandler struct {
 	jwtManager *jwt.Manager

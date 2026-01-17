@@ -2,7 +2,6 @@ package execution
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -10,18 +9,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 )
-
-type WaitingExecution struct {
-	ID           string     `json:"id"`
-	WorkflowID   string     `json:"workflowId"`
-	WorkflowName string     `json:"workflowName"`
-	NodeID       string     `json:"nodeId"`
-	NodeName     string     `json:"nodeName"`
-	WaitType     string     `json:"waitType"`
-	WaitUntil    *time.Time `json:"waitUntil,omitempty"`
-	ResumeToken  string     `json:"resumeToken"`
-	CreatedAt    time.Time  `json:"createdAt"`
-}
 
 type GetWaitingHandler struct {
 	executionRepo execution.Repository
