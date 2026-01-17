@@ -180,18 +180,18 @@ func main() {
 	// Keep references
 	_ = redis
 
-	// Handle graceful shutdown
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-		appLogger.Info().Msg("Shutting down worker...")
-		server.Shutdown()
-	}()
-
-	// Start server
+	// Start server (non-blocking)
 	appLogger.Info().Msg("Starting Asynq worker server")
 	if err := server.Start(); err != nil {
 		appLogger.Fatal().Err(err).Msg("Failed to start worker server")
 	}
+
+	// Wait for shutdown signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	appLogger.Info().Msg("Shutting down worker...")
+	server.Shutdown()
+	appLogger.Info().Msg("Worker stopped gracefully")
 }

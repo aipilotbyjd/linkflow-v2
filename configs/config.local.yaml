@@ -35,8 +35,8 @@ server:
 database:
   host: localhost
   port: 5432
-  user: postgres
-  # password: set via DATABASE_PASSWORD
+  user: linkflow
+  password: ""  # Override via DATABASE_PASSWORD env var
   name: linkflow
   sslmode: disable
   max_open_conns: 25
@@ -49,7 +49,7 @@ database:
 redis:
   host: localhost
   port: 6379
-  # password: set via REDIS_PASSWORD
+  password: ""  # Override via REDIS_PASSWORD env var
   db: 0
   pool_size: 10
 
