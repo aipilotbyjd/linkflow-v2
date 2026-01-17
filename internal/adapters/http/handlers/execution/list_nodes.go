@@ -10,23 +10,22 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 )
 
-// GetNodeExecutionHandler gets a specific node execution
-type GetNodeExecutionHandler struct {
+type GetExecutionNodesHandler struct {
 	executionRepo     execution.Repository
 	nodeExecutionRepo execution.NodeExecutionRepository
 }
 
-func NewGetNodeExecutionHandler(
+func NewGetExecutionNodesHandler(
 	executionRepo execution.Repository,
 	nodeExecutionRepo execution.NodeExecutionRepository,
-) *GetNodeExecutionHandler {
-	return &GetNodeExecutionHandler{
+) *GetExecutionNodesHandler {
+	return &GetExecutionNodesHandler{
 		executionRepo:     executionRepo,
 		nodeExecutionRepo: nodeExecutionRepo,
 	}
 }
 
-func (h *GetNodeExecutionHandler) Handle(w http.ResponseWriter, r *http.Request) {
+func (h *GetExecutionNodesHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {
 		common.BadRequest(w, "workspace context required")
@@ -37,12 +36,6 @@ func (h *GetNodeExecutionHandler) Handle(w http.ResponseWriter, r *http.Request)
 	execID, err := uuid.Parse(execIDStr)
 	if err != nil {
 		common.BadRequest(w, "invalid execution ID")
-		return
-	}
-
-	nodeID := chi.URLParam(r, "nodeId")
-	if nodeID == "" {
-		common.BadRequest(w, "node ID is required")
 		return
 	}
 
@@ -58,12 +51,12 @@ func (h *GetNodeExecutionHandler) Handle(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Get node execution
-	nodeExec, err := h.nodeExecutionRepo.FindByExecutionAndNodeID(r.Context(), execID, nodeID)
+	// Get node executions
+	nodeExecutions, err := h.nodeExecutionRepo.FindByExecutionID(r.Context(), execID)
 	if err != nil {
 		common.HandleError(w, err)
 		return
 	}
 
-	common.Success(w, nodeExec)
+	common.Success(w, nodeExecutions)
 }

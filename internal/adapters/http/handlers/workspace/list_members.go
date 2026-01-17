@@ -7,18 +7,8 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	workspaceQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/workspace"
-	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-// MemberResponse represents member in responses
-type MemberResponse struct {
-	ID          string `json:"id"`
-	UserID      string `json:"user_id"`
-	WorkspaceID string `json:"workspace_id"`
-	Role        string `json:"role"`
-	JoinedAt    string `json:"joined_at"`
-}
 
 // ListMembersHandler handles listing workspace members
 type ListMembersHandler struct {
@@ -64,7 +54,7 @@ func (h *ListMembersHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	members := make([]MemberResponse, len(result.Members))
 	for i, m := range result.Members {
-		members[i] = toMemberResponse(&m)
+		members[i] = ToMemberResponse(&m)
 	}
 
 	common.List(w, members, types.PageResponse{
@@ -74,14 +64,4 @@ func (h *ListMembersHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		TotalPages: result.TotalPages,
 		HasMore:    result.Page < result.TotalPages,
 	})
-}
-
-func toMemberResponse(m *workspace.Member) MemberResponse {
-	return MemberResponse{
-		ID:          m.ID.String(),
-		UserID:      m.UserID.String(),
-		WorkspaceID: m.WorkspaceID.String(),
-		Role:        string(m.Role),
-		JoinedAt:    m.CreatedAt.Format("2006-01-02T15:04:05Z"),
-	}
 }
