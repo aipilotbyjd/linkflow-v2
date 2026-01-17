@@ -1,0 +1,71 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Scale Script
+# Usage: ./scale <env> <service> <count> [platform]
+# Examples:
+#   ./scale production api 5
+#   ./scale production worker 3 fly
+# ============================================================================
+
+set -e
+
+ENV=${1:-production}
+SERVICE=${2:-api}
+COUNT=${3:-2}
+PLATFORM=${4:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[SCALE]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+scale_compose() {
+    log "Scaling $SERVICE to $COUNT on $ENV..."
+    cd "$SCRIPT_DIR/../compose"
+    
+    ENV=$ENV docker compose up -d --scale "$SERVICE=$COUNT" --no-recreate
+    
+    success "Scaled $SERVICE to $COUNT!"
+}
+
+scale_fly() {
+    log "Scaling $SERVICE to $COUNT on Fly.io..."
+    APP_NAME="linkflow-$ENV"
+    
+    [[ "$SERVICE" != "api" ]] && APP_NAME="$APP_NAME-$SERVICE"
+    
+    fly scale count "$COUNT" --app "$APP_NAME"
+    
+    success "Scaled $SERVICE to $COUNT on Fly.io!"
+}
+
+scale_k8s() {
+    log "Scaling $SERVICE to $COUNT on Kubernetes..."
+    NAMESPACE="linkflow-$ENV"
+    DEPLOYMENT="linkflow-$SERVICE"
+    
+    kubectl scale deployment/"$DEPLOYMENT" --replicas="$COUNT" -n "$NAMESPACE"
+    kubectl rollout status deployment/"$DEPLOYMENT" -n "$NAMESPACE"
+    
+    success "Scaled $SERVICE to $COUNT on Kubernetes!"
+}
+
+main() {
+    log "Environment: $ENV"
+    log "Service: $SERVICE"
+    log "Count: $COUNT"
+    log "Platform: $PLATFORM"
+    echo ""
+    
+    case $PLATFORM in
+        compose|coolify) scale_compose ;;
+        fly) scale_fly ;;
+        k8s|kubernetes) scale_k8s ;;
+        *) echo "Unknown platform: $PLATFORM" && exit 1 ;;
+    esac
+}
+
+main

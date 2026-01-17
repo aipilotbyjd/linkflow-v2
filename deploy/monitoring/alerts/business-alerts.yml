@@ -1,0 +1,49 @@
+groups:
+  - name: business
+    rules:
+      # No workflow executions in last hour (during business hours)
+      - alert: NoWorkflowExecutions
+        expr: |
+          increase(workflow_executions_total[1h]) == 0 
+          and hour() >= 9 and hour() <= 17
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "No workflow executions"
+          description: "No workflows executed in the last hour during business hours"
+
+      # High workflow failure rate
+      - alert: HighWorkflowFailureRate
+        expr: |
+          sum(rate(workflow_executions_total{status="failed"}[1h])) 
+          / sum(rate(workflow_executions_total[1h])) > 0.1
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High workflow failure rate"
+          description: "{{ $value | humanizePercentage }} of workflows failing"
+
+      # Worker queue backing up
+      - alert: WorkerQueueBacklog
+        expr: asynq_queue_size > 1000
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Worker queue backing up"
+          description: "{{ $value }} jobs in queue"
+
+      # No active users (during business hours)
+      - alert: NoActiveUsers
+        expr: |
+          active_users_count == 0 
+          and hour() >= 9 and hour() <= 17
+          and day_of_week() >= 1 and day_of_week() <= 5
+        for: 2h
+        labels:
+          severity: warning
+        annotations:
+          summary: "No active users"
+          description: "No users active during business hours"

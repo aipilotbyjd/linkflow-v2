@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkflow-scheduler
+  namespace: linkflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: linkflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: linkflow-scheduler
+    spec:
+      containers:
+        - name: scheduler
+          image: linkflow/scheduler:latest
+          envFrom:
+            - configMapRef:
+                name: linkflow-config
+            - secretRef:
+                name: linkflow-secrets
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      terminationGracePeriodSeconds: 30

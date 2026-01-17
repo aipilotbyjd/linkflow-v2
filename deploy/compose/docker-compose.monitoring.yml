@@ -1,0 +1,81 @@
+# ============================================================================
+# Monitoring Stack
+# Usage: docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+# ============================================================================
+
+services:
+  # ======================== PROMETHEUS ========================
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ../monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - linkflow
+    restart: unless-stopped
+
+  # ======================== GRAFANA ========================
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ../monitoring/grafana:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=${GRAFANA_URL:-http://localhost:3001}
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - linkflow
+    restart: unless-stopped
+
+  # ======================== LOKI (Logs) ========================
+  loki:
+    image: grafana/loki:latest
+    volumes:
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - linkflow
+    restart: unless-stopped
+
+  # ======================== PROMTAIL (Log Collector) ========================
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ../monitoring/promtail:/etc/promtail
+    command: -config.file=/etc/promtail/promtail.yml
+    networks:
+      - linkflow
+    restart: unless-stopped
+
+  # ======================== ALERTMANAGER ========================
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ../monitoring/alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    ports:
+      - "9093:9093"
+    networks:
+      - linkflow
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:

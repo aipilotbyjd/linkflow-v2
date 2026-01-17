@@ -1,0 +1,54 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Logs Script
+# Usage: ./logs <env> [service] [platform]
+# Examples:
+#   ./logs production
+#   ./logs production api
+#   ./logs production worker fly
+# ============================================================================
+
+set -e
+
+ENV=${1:-production}
+SERVICE=${2:-api}
+PLATFORM=${3:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+logs_compose() {
+    cd "$SCRIPT_DIR/../compose"
+    
+    if [[ -z "$SERVICE" || "$SERVICE" == "all" ]]; then
+        ENV=$ENV docker compose logs -f --tail=100
+    else
+        ENV=$ENV docker compose logs -f --tail=100 "$SERVICE"
+    fi
+}
+
+logs_fly() {
+    APP_NAME="linkflow-$ENV"
+    [[ "$SERVICE" != "api" && -n "$SERVICE" ]] && APP_NAME="$APP_NAME-$SERVICE"
+    
+    fly logs --app "$APP_NAME"
+}
+
+logs_k8s() {
+    NAMESPACE="linkflow-$ENV"
+    
+    if [[ -z "$SERVICE" || "$SERVICE" == "all" ]]; then
+        kubectl logs -l app.kubernetes.io/name=linkflow -n "$NAMESPACE" -f --tail=100
+    else
+        kubectl logs -l app=linkflow-"$SERVICE" -n "$NAMESPACE" -f --tail=100
+    fi
+}
+
+main() {
+    case $PLATFORM in
+        compose|coolify) logs_compose ;;
+        fly) logs_fly ;;
+        k8s|kubernetes) logs_k8s ;;
+        *) echo "Unknown platform: $PLATFORM" && exit 1 ;;
+    esac
+}
+
+main

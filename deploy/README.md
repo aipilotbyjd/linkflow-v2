@@ -1,34 +1,124 @@
-# Deployment
+# LinkFlow Deployment
 
-## Coolify (Production)
-
-1. Add Docker Compose application in Coolify
-2. Docker Compose path: `deploy/docker-compose.yml`
-3. Set environment variables:
-
-   | Variable | Generate |
-   |----------|----------|
-   | `POSTGRES_PASSWORD` | `openssl rand -base64 32` |
-   | `JWT_SECRET` | `openssl rand -hex 32` |
-   | `APP_URL` | `https://api.yourdomain.com` |
-   | `APP_FRONTEND_URL` | `https://app.yourdomain.com` |
-
-4. Configure domain for `api` service on port `8090`
-5. Deploy
-
-## Local Development
+## Quick Start
 
 ```bash
-# From project root
-docker compose -f deploy/docker-compose.dev.yml up -d
+# Local development
+./scripts/deploy local
+
+# Deploy to production
+./scripts/deploy production fly
 ```
 
-## Services
+## Structure
 
-| Service | Port | Description |
-|---------|------|-------------|
-| api | 8090 | HTTP API |
-| worker | - | Background jobs |
-| scheduler | - | Cron jobs |
-| postgres | 5432 | Database |
-| redis | 6379 | Cache & Queue |
+```
+deploy/
+├── docker/                 # Dockerfiles
+├── config/                 # Environment configs
+├── compose/                # Docker Compose files
+├── platforms/              # Platform-specific configs
+│   ├── coolify/           # Self-hosted ($7/mo)
+│   ├── fly/               # Fly.io ($30/mo)
+│   ├── railway/           # Railway
+│   ├── render/            # Render
+│   └── kubernetes/        # K8s (scale phase)
+├── monitoring/             # Prometheus, Grafana, Alerts
+├── scripts/                # Management scripts
+├── backup/                 # Backup scripts
+└── runbooks/               # Emergency procedures
+```
+
+## Environments
+
+| Environment | Purpose | URL |
+|-------------|---------|-----|
+| local | Development | localhost:8090 |
+| dev | Team testing | dev.linkflow.io |
+| staging | Pre-production | staging.linkflow.io |
+| production | Live | api.linkflow.io |
+
+## Commands
+
+```bash
+# Deploy
+./scripts/deploy <env> [platform]     # Deploy
+./scripts/rollback <env>              # Rollback
+./scripts/scale <env> <service> <n>   # Scale
+
+# Database
+./scripts/db-migrate <env>            # Run migrations
+./scripts/backup <env>                # Backup
+./scripts/restore <env> <file>        # Restore
+
+# Monitoring
+./scripts/status <env>                # Health check
+./scripts/logs <env> [service]        # View logs
+./scripts/shell <env> [service]       # Shell access
+```
+
+## Platforms
+
+### Phase 1: Bootstrap ($7-15/mo)
+Use **Coolify + Hetzner**
+```bash
+./scripts/deploy production coolify
+```
+
+### Phase 2: Growth ($50-100/mo)
+Use **Fly.io**
+```bash
+./scripts/deploy production fly
+```
+
+### Phase 3: Scale ($200+/mo)
+Use **Kubernetes**
+```bash
+./scripts/deploy production k8s
+```
+
+## Setup New Environment
+
+1. Copy config:
+   ```bash
+   cp deploy/config/production.env.example deploy/config/production.env
+   ```
+
+2. Fill in secrets
+
+3. Deploy:
+   ```bash
+   ./scripts/deploy production
+   ```
+
+## Backup & Recovery
+
+```bash
+# Backup
+./scripts/backup production           # Full backup
+./scripts/backup production db        # Database only
+
+# Restore
+./scripts/restore production <file>
+```
+
+## Monitoring
+
+Start monitoring stack:
+```bash
+docker compose -f deploy/compose/docker-compose.yml \
+               -f deploy/compose/docker-compose.monitoring.yml up -d
+```
+
+Access:
+- Grafana: http://localhost:3001
+- Prometheus: http://localhost:9090
+- Alertmanager: http://localhost:9093
+
+## Runbooks
+
+See `deploy/runbooks/` for emergency procedures:
+- [Incident Response](runbooks/incident-response.md)
+- [Database Down](runbooks/database-down.md)
+- [High CPU](runbooks/high-cpu.md)
+- [Deployment Failed](runbooks/deployment-failed.md)

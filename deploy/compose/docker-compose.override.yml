@@ -1,0 +1,48 @@
+# ============================================================================
+# Local Development Overrides
+# Auto-loaded by docker compose in local development
+# ============================================================================
+
+services:
+  api:
+    build:
+      target: builder
+    volumes:
+      - ../..:/app
+      - go_modules:/go/pkg/mod
+    command: ["go", "run", "./cmd/api"]
+    environment:
+      - APP_DEBUG=true
+      - AIR_ENABLED=true
+
+  worker:
+    build:
+      target: builder
+    volumes:
+      - ../..:/app
+      - go_modules:/go/pkg/mod
+    command: ["go", "run", "./cmd/worker"]
+    environment:
+      - APP_DEBUG=true
+
+  scheduler:
+    build:
+      target: builder
+    volumes:
+      - ../..:/app
+      - go_modules:/go/pkg/mod
+    command: ["go", "run", "./cmd/scheduler"]
+    environment:
+      - APP_DEBUG=true
+
+  # Local mail server for testing
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - linkflow
+
+volumes:
+  go_modules:

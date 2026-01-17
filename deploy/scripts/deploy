@@ -1,0 +1,165 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Deploy Script
+# Usage: ./deploy <env> [platform]
+# Examples:
+#   ./deploy local
+#   ./deploy dev coolify
+#   ./deploy staging fly
+#   ./deploy production k8s
+# ============================================================================
+
+set -e
+
+ENV=${1:-local}
+PLATFORM=${2:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[DEPLOY]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# Validate environment
+validate_env() {
+    case $ENV in
+        local|dev|staging|production) ;;
+        *) error "Invalid environment: $ENV. Use: local, dev, staging, production" ;;
+    esac
+}
+
+# Check required files
+check_requirements() {
+    if [[ "$PLATFORM" == "compose" || "$PLATFORM" == "coolify" ]]; then
+        [[ -f "$SCRIPT_DIR/../config/$ENV.env" ]] || error "Missing $ENV.env. Copy from $ENV.env.example"
+    fi
+}
+
+# Deploy with Docker Compose
+deploy_compose() {
+    log "Deploying to $ENV with Docker Compose..."
+    cd "$SCRIPT_DIR/../compose"
+    
+    # Build and deploy
+    ENV=$ENV docker compose pull 2>/dev/null || true
+    ENV=$ENV docker compose build
+    ENV=$ENV docker compose up -d --remove-orphans
+    
+    # Wait for health
+    log "Waiting for services to be healthy..."
+    sleep 10
+    ENV=$ENV docker compose ps
+    
+    success "Deployed to $ENV!"
+}
+
+# Deploy to Fly.io
+deploy_fly() {
+    log "Deploying to $ENV on Fly.io..."
+    cd "$ROOT_DIR"
+    
+    APP_NAME="linkflow-$ENV"
+    
+    # Deploy API
+    log "Deploying API..."
+    fly deploy \
+        -c deploy/platforms/fly/fly.toml \
+        --app "$APP_NAME" \
+        --build-arg SERVICE=api
+    
+    # Deploy Worker
+    log "Deploying Worker..."
+    fly deploy \
+        -c deploy/platforms/fly/fly.toml \
+        --app "$APP_NAME-worker" \
+        --build-arg SERVICE=worker
+    
+    # Deploy Scheduler
+    log "Deploying Scheduler..."
+    fly deploy \
+        -c deploy/platforms/fly/fly.toml \
+        --app "$APP_NAME-scheduler" \
+        --build-arg SERVICE=scheduler
+    
+    success "Deployed to $ENV on Fly.io!"
+}
+
+# Deploy to Railway
+deploy_railway() {
+    log "Deploying to $ENV on Railway..."
+    cd "$ROOT_DIR"
+    
+    railway up --environment "$ENV"
+    
+    success "Deployed to $ENV on Railway!"
+}
+
+# Deploy to Render
+deploy_render() {
+    log "Deploying to $ENV on Render..."
+    warn "Render deploys automatically on git push."
+    warn "Push to the appropriate branch for $ENV."
+    
+    git push render main
+    
+    success "Triggered deploy to $ENV on Render!"
+}
+
+# Deploy to Kubernetes
+deploy_k8s() {
+    log "Deploying to $ENV on Kubernetes..."
+    cd "$ROOT_DIR"
+    
+    OVERLAY="deploy/platforms/kubernetes/overlays/$ENV"
+    
+    # Apply configuration
+    kubectl apply -k "$OVERLAY"
+    
+    # Wait for rollout
+    log "Waiting for rollout..."
+    kubectl rollout status deployment/linkflow-api -n "linkflow-$ENV" --timeout=300s
+    kubectl rollout status deployment/linkflow-worker -n "linkflow-$ENV" --timeout=300s
+    
+    success "Deployed to $ENV on Kubernetes!"
+}
+
+# Main
+main() {
+    validate_env
+    check_requirements
+    
+    log "Environment: $ENV"
+    log "Platform: $PLATFORM"
+    echo ""
+    
+    case $PLATFORM in
+        compose|coolify)
+            deploy_compose
+            ;;
+        fly)
+            deploy_fly
+            ;;
+        railway)
+            deploy_railway
+            ;;
+        render)
+            deploy_render
+            ;;
+        k8s|kubernetes)
+            deploy_k8s
+            ;;
+        *)
+            error "Unknown platform: $PLATFORM. Use: compose, coolify, fly, railway, render, k8s"
+            ;;
+    esac
+}
+
+main

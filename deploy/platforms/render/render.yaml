@@ -1,0 +1,67 @@
+# ============================================================================
+# Render Blueprint
+# ============================================================================
+
+services:
+  # API
+  - type: web
+    name: linkflow-api
+    env: docker
+    dockerfilePath: deploy/docker/Dockerfile
+    dockerContext: .
+    buildArgs:
+      SERVICE: api
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: linkflow-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: linkflow-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: linkflow-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: linkflow-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: linkflow-db
+          property: database
+      - key: REDIS_HOST
+        fromService:
+          name: linkflow-redis
+          type: pserv
+          property: host
+      - key: JWT_SECRET
+        generateValue: true
+
+  # Worker
+  - type: worker
+    name: linkflow-worker
+    env: docker
+    dockerfilePath: deploy/docker/Dockerfile
+    dockerContext: .
+    buildArgs:
+      SERVICE: worker
+
+  # Scheduler
+  - type: worker
+    name: linkflow-scheduler
+    env: docker
+    dockerfilePath: deploy/docker/Dockerfile
+    dockerContext: .
+    buildArgs:
+      SERVICE: scheduler
+
+databases:
+  - name: linkflow-db
+    databaseName: linkflow
+    plan: starter

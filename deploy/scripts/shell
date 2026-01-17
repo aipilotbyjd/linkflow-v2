@@ -1,0 +1,43 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Shell Script
+# Usage: ./shell <env> [service] [platform]
+# Example: ./shell production api
+# ============================================================================
+
+set -e
+
+ENV=${1:-production}
+SERVICE=${2:-api}
+PLATFORM=${3:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+shell_compose() {
+    cd "$SCRIPT_DIR/../compose"
+    ENV=$ENV docker compose exec "$SERVICE" /bin/sh
+}
+
+shell_fly() {
+    APP_NAME="linkflow-$ENV"
+    [[ "$SERVICE" != "api" ]] && APP_NAME="$APP_NAME-$SERVICE"
+    
+    fly ssh console --app "$APP_NAME"
+}
+
+shell_k8s() {
+    NAMESPACE="linkflow-$ENV"
+    POD=$(kubectl get pods -n "$NAMESPACE" -l app=linkflow-"$SERVICE" -o jsonpath='{.items[0].metadata.name}')
+    
+    kubectl exec -it "$POD" -n "$NAMESPACE" -- /bin/sh
+}
+
+main() {
+    case $PLATFORM in
+        compose|coolify) shell_compose ;;
+        fly) shell_fly ;;
+        k8s|kubernetes) shell_k8s ;;
+        *) echo "Unknown platform: $PLATFORM" && exit 1 ;;
+    esac
+}
+
+main

@@ -1,0 +1,79 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Database Migration Script
+# Usage: ./db-migrate <env> [platform]
+# ============================================================================
+
+set -e
+
+ENV=${1:-production}
+PLATFORM=${2:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[MIGRATE]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+migrate_compose() {
+    log "Running migrations for $ENV..."
+    cd "$SCRIPT_DIR/../compose"
+    
+    ENV=$ENV docker compose run --rm api /bin/app migrate up
+    
+    success "Migrations complete!"
+}
+
+migrate_fly() {
+    log "Running migrations for $ENV on Fly.io..."
+    APP_NAME="linkflow-$ENV"
+    
+    fly ssh console --app "$APP_NAME" -C "/bin/app migrate up"
+    
+    success "Migrations complete!"
+}
+
+migrate_k8s() {
+    log "Running migrations for $ENV on Kubernetes..."
+    NAMESPACE="linkflow-$ENV"
+    
+    # Run migration job
+    kubectl apply -f - <<EOF
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: linkflow-migrate-$(date +%s)
+  namespace: $NAMESPACE
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrate
+        image: linkflow/migrate:latest
+        envFrom:
+        - secretRef:
+            name: linkflow-secrets
+      restartPolicy: Never
+  backoffLimit: 1
+EOF
+    
+    success "Migration job started!"
+}
+
+main() {
+    log "Environment: $ENV"
+    log "Platform: $PLATFORM"
+    echo ""
+    
+    case $PLATFORM in
+        compose|coolify) migrate_compose ;;
+        fly) migrate_fly ;;
+        k8s|kubernetes) migrate_k8s ;;
+        *) echo "Unknown platform: $PLATFORM" && exit 1 ;;
+    esac
+}
+
+main

@@ -1,0 +1,94 @@
+#!/bin/bash
+# ============================================================================
+# LinkFlow Status Script
+# Usage: ./status <env> [platform]
+# ============================================================================
+
+set -e
+
+ENV=${1:-production}
+PLATFORM=${2:-compose}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+log() { echo -e "${BLUE}[STATUS]${NC} $1"; }
+
+status_compose() {
+    log "Status for $ENV (Docker Compose)"
+    echo ""
+    
+    cd "$SCRIPT_DIR/../compose"
+    
+    echo "=== Services ==="
+    ENV=$ENV docker compose ps
+    echo ""
+    
+    echo "=== Health Checks ==="
+    for service in api worker scheduler postgres redis; do
+        if ENV=$ENV docker compose ps "$service" | grep -q "healthy"; then
+            echo -e "$service: ${GREEN}healthy${NC}"
+        elif ENV=$ENV docker compose ps "$service" | grep -q "running"; then
+            echo -e "$service: ${YELLOW}running${NC}"
+        else
+            echo -e "$service: ${RED}not running${NC}"
+        fi
+    done
+    echo ""
+    
+    echo "=== Resource Usage ==="
+    ENV=$ENV docker compose top
+}
+
+status_fly() {
+    log "Status for $ENV (Fly.io)"
+    APP_NAME="linkflow-$ENV"
+    
+    echo ""
+    echo "=== API ==="
+    fly status --app "$APP_NAME"
+    
+    echo ""
+    echo "=== Worker ==="
+    fly status --app "$APP_NAME-worker"
+    
+    echo ""
+    echo "=== Scheduler ==="
+    fly status --app "$APP_NAME-scheduler"
+}
+
+status_k8s() {
+    log "Status for $ENV (Kubernetes)"
+    NAMESPACE="linkflow-$ENV"
+    
+    echo ""
+    echo "=== Pods ==="
+    kubectl get pods -n "$NAMESPACE"
+    
+    echo ""
+    echo "=== Deployments ==="
+    kubectl get deployments -n "$NAMESPACE"
+    
+    echo ""
+    echo "=== HPA ==="
+    kubectl get hpa -n "$NAMESPACE"
+    
+    echo ""
+    echo "=== Services ==="
+    kubectl get services -n "$NAMESPACE"
+}
+
+main() {
+    case $PLATFORM in
+        compose|coolify) status_compose ;;
+        fly) status_fly ;;
+        k8s|kubernetes) status_k8s ;;
+        *) echo "Unknown platform: $PLATFORM" && exit 1 ;;
+    esac
+}
+
+main

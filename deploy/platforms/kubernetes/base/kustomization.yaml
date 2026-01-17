@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: linkflow
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - api-deployment.yaml
+  - api-service.yaml
+  - api-hpa.yaml
+  - worker-deployment.yaml
+  - worker-hpa.yaml
+  - scheduler-deployment.yaml
+  - ingress.yaml
+
+commonLabels:
+  app.kubernetes.io/name: linkflow
+  app.kubernetes.io/managed-by: kustomize

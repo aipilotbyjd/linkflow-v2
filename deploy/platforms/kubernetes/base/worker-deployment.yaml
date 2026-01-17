@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: linkflow-worker
+  namespace: linkflow
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: linkflow-worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: linkflow-worker
+    spec:
+      containers:
+        - name: worker
+          image: linkflow/worker:latest
+          envFrom:
+            - configMapRef:
+                name: linkflow-config
+            - secretRef:
+                name: linkflow-secrets
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "pgrep -f worker || exit 1"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+      terminationGracePeriodSeconds: 60

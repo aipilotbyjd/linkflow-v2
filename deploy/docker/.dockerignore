@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+bin/
+dist/
+*.exe
+
+# Test
+coverage.out
+*.test
+
+# Docs
+docs/
+*.md
+!README.md
+
+# Deploy (don't include deploy in image)
+deploy/
+
+# Local
+.env
+.env.local
+*.local.*
+
+# Logs
+*.log
+logs/
