@@ -30,25 +30,25 @@ func (n *TelegramNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 }
 
 func (n *TelegramNode) sendMessage(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	chatId, _ := params["chat_id"].(string)
+	chatID, _ := params["chat_id"].(string)
 	text, _ := params["text"].(string)
 
 	return types.JSON{
 		"success": true,
-		"chat_id": chatId,
+		"chat_id": chatID,
 		"text":    text,
 	}, nil
 }
 
 func (n *TelegramNode) sendPhoto(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	chatId, _ := params["chat_id"].(string)
-	photoUrl, _ := params["photo_url"].(string)
+	chatID, _ := params["chat_id"].(string)
+	photoURL, _ := params["photo_url"].(string)
 	caption, _ := params["caption"].(string)
 
 	return types.JSON{
 		"success":   true,
-		"chat_id":   chatId,
-		"photo_url": photoUrl,
+		"chat_id":   chatID,
+		"photo_url": photoURL,
 		"caption":   caption,
 	}, nil
 }
