@@ -5,16 +5,28 @@ import (
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 )
 
 type VerifyMFARequest struct {
 	Code string `json:"code" validate:"required,len=6"`
 }
 
-type VerifyMFAHandler struct{}
+type VerifyMFAHandler struct {
+	userRepo user.Repository
+	cache    cache.Cache
+	otp      *crypto.OTP
+}
 
-func NewVerifyMFAHandler() *VerifyMFAHandler {
-	return &VerifyMFAHandler{}
+func NewVerifyMFAHandler(userRepo user.Repository, cache cache.Cache) *VerifyMFAHandler {
+	return &VerifyMFAHandler{
+		userRepo: userRepo,
+		cache:    cache,
+		otp:      crypto.NewOTP("LinkFlow"),
+	}
 }
 
 func (h *VerifyMFAHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -24,17 +36,45 @@ func (h *VerifyMFAHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Get user from context
-	// userID := middleware.GetUserIDFromContext(r.Context())
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		common.Unauthorized(w, "authentication required")
+		return
+	}
 
-	// TODO: Implement MFA verification
-	// 1. Get pending MFA secret
-	// 2. Validate TOTP code
-	// 3. Enable MFA for user
-	// 4. Generate backup codes
+	// Get pending MFA secret from cache
+	cacheKey := "mfa_setup:" + claims.UserID.String()
+	secretBytes, err := h.cache.Get(r.Context(), cacheKey)
+	if err != nil {
+		common.BadRequest(w, "MFA setup not initiated or expired. Please start setup again.")
+		return
+	}
+	secret := string(secretBytes)
+
+	// Validate TOTP code
+	if !h.otp.Validate(secret, req.Code) {
+		common.BadRequest(w, "Invalid verification code")
+		return
+	}
+
+	// Enable MFA for user
+	if err := h.userRepo.EnableMFA(r.Context(), claims.UserID, secret); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Generate backup codes
+	backupCodes, err := crypto.GenerateRecoveryCodes(10)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Delete the temporary secret from cache
+	_ = h.cache.Delete(r.Context(), cacheKey)
 
 	common.Success(w, map[string]interface{}{
 		"message":      "MFA enabled successfully",
-		"backup_codes": []string{"12345678", "23456789", "34567890", "45678901", "56789012"},
+		"backup_codes": backupCodes,
 	})
 }

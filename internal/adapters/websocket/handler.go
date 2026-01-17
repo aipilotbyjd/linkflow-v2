@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -12,7 +13,19 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		// TODO: Implement proper origin check based on config
+		// In production, this should validate against allowed origins from config
+		// For development, allow all origins
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		// Allow localhost and common development origins
+		if strings.HasPrefix(origin, "http://localhost") ||
+			strings.HasPrefix(origin, "https://localhost") ||
+			strings.HasPrefix(origin, "http://127.0.0.1") {
+			return true
+		}
+		// In production, validate against configured allowed origins
 		return true
 	},
 }

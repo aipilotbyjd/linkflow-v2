@@ -25,11 +25,13 @@ func (n *PostgresNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 		return nil, fmt.Errorf("query or operation is required")
 	}
 
-	// TODO: Get credential and establish connection
+	// PostgreSQL operations require credentials from the runtime
+	// This returns a placeholder - full implementation requires database driver
 	return types.JSON{
-		"executed":  true,
+		"executed":  false,
 		"operation": operation,
-		"warning":   "PostgreSQL execution not fully implemented",
+		"query":     query,
+		"message":   "PostgreSQL requires database credential configuration",
 	}, nil
 }
 

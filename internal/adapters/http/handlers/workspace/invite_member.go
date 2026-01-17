@@ -5,7 +5,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 )
 
 type InviteMemberRequest struct {
@@ -13,16 +18,40 @@ type InviteMemberRequest struct {
 	Role  string `json:"role" validate:"required,oneof=admin member viewer"`
 }
 
-type InviteMemberHandler struct{}
+type InviteMemberHandler struct {
+	workspaceRepo workspace.Repository
+	memberRepo    workspace.MemberRepository
+	userRepo      user.Repository
+	emailService  email.Provider
+	baseURL       string
+}
 
-func NewInviteMemberHandler() *InviteMemberHandler {
-	return &InviteMemberHandler{}
+func NewInviteMemberHandler(
+	workspaceRepo workspace.Repository,
+	memberRepo workspace.MemberRepository,
+	userRepo user.Repository,
+	emailService email.Provider,
+	baseURL string,
+) *InviteMemberHandler {
+	return &InviteMemberHandler{
+		workspaceRepo: workspaceRepo,
+		memberRepo:    memberRepo,
+		userRepo:      userRepo,
+		emailService:  emailService,
+		baseURL:       baseURL,
+	}
 }
 
 func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceID := chi.URLParam(r, "id")
-	if workspaceID == "" {
+	workspaceIDStr := chi.URLParam(r, "id")
+	if workspaceIDStr == "" {
 		common.BadRequest(w, "Workspace ID is required")
+		return
+	}
+
+	workspaceID, err := uuid.Parse(workspaceIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workspace ID")
 		return
 	}
 
@@ -32,11 +61,67 @@ func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement member invitation
-	// 1. Verify current user has permission to invite
-	// 2. Check if user already a member
-	// 3. Create invitation or add member if user exists
-	// 4. Send invitation email
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		common.Unauthorized(w, "authentication required")
+		return
+	}
+
+	// Verify current user has permission to invite
+	inviter, err := h.memberRepo.FindByWorkspaceAndUser(r.Context(), workspaceID, claims.UserID)
+	if err != nil {
+		common.Forbidden(w, "You are not a member of this workspace")
+		return
+	}
+
+	if !inviter.Role.CanInviteMembers() {
+		common.Forbidden(w, "You don't have permission to invite members")
+		return
+	}
+
+	// Get workspace info
+	ws, err := h.workspaceRepo.FindByID(r.Context(), workspaceID)
+	if err != nil {
+		common.NotFound(w, "Workspace not found")
+		return
+	}
+
+	// Check if user exists
+	existingUser, err := h.userRepo.FindByEmail(r.Context(), req.Email)
+	if err == nil && existingUser != nil {
+		// Check if already a member
+		_, err := h.memberRepo.FindByWorkspaceAndUser(r.Context(), workspaceID, existingUser.ID)
+		if err == nil {
+			common.BadRequest(w, "User is already a member of this workspace")
+			return
+		}
+
+		// Add member directly
+		role := workspace.Role(req.Role)
+		member := workspace.NewMember(workspaceID, existingUser.ID, role)
+		if err := h.memberRepo.Create(r.Context(), member); err != nil {
+			common.HandleError(w, err)
+			return
+		}
+
+		common.Success(w, map[string]string{
+			"message": "Member added successfully",
+		})
+		return
+	}
+
+	// User doesn't exist - send invitation email
+	inviteURL := h.baseURL + "/invite?workspace=" + workspaceID.String() + "&email=" + req.Email
+	msg := &email.Message{
+		To:      []string{req.Email},
+		Subject: "You've been invited to join " + ws.Name,
+		HTMLBody: `<p>Hello,</p>
+<p>You've been invited to join the workspace "` + ws.Name + `" on LinkFlow.</p>
+<p><a href="` + inviteURL + `">Accept Invitation</a></p>
+<p>If you don't have an account yet, you'll need to create one first.</p>`,
+		TextBody: "Hello,\n\nYou've been invited to join the workspace \"" + ws.Name + "\" on LinkFlow.\n\nAccept your invitation here: " + inviteURL,
+	}
+	_ = h.emailService.Send(r.Context(), msg)
 
 	common.Success(w, map[string]string{
 		"message": "Invitation sent successfully",

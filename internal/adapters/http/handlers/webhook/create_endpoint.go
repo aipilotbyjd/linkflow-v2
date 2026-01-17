@@ -1,15 +1,21 @@
 package webhook
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/webhook"
+	workflowDomain "github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
 )
 
 type CreateEndpointRequest struct {
 	WorkflowID         string   `json:"workflow_id" validate:"required,uuid"`
+	NodeID             string   `json:"node_id" validate:"required"`
 	Path               string   `json:"path" validate:"required"`
 	Method             string   `json:"method" validate:"required,oneof=GET POST PUT PATCH DELETE"`
 	AuthenticationType string   `json:"authentication_type,omitempty"`
@@ -17,16 +23,30 @@ type CreateEndpointRequest struct {
 	RateLimit          int      `json:"rate_limit,omitempty"`
 }
 
-type CreateEndpointHandler struct{}
+type CreateEndpointHandler struct {
+	webhookRepo  webhook.Repository
+	workflowRepo workflowDomain.Repository
+	baseURL      string
+}
 
-func NewCreateEndpointHandler() *CreateEndpointHandler {
-	return &CreateEndpointHandler{}
+func NewCreateEndpointHandler(webhookRepo webhook.Repository, workflowRepo workflowDomain.Repository, baseURL string) *CreateEndpointHandler {
+	return &CreateEndpointHandler{
+		webhookRepo:  webhookRepo,
+		workflowRepo: workflowRepo,
+		baseURL:      baseURL,
+	}
 }
 
 func (h *CreateEndpointHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceID := chi.URLParam(r, "id")
-	if workspaceID == "" {
+	workspaceIDStr := chi.URLParam(r, "id")
+	if workspaceIDStr == "" {
 		common.BadRequest(w, "Workspace ID is required")
+		return
+	}
+
+	workspaceID, err := uuid.Parse(workspaceIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workspace ID")
 		return
 	}
 
@@ -36,15 +56,47 @@ func (h *CreateEndpointHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement endpoint creation
-	// 1. Validate workflow exists and belongs to workspace
-	// 2. Generate webhook secret
-	// 3. Create endpoint
+	workflowID, err := uuid.Parse(req.WorkflowID)
+	if err != nil {
+		common.BadRequest(w, "Invalid workflow ID")
+		return
+	}
+
+	// Validate workflow exists and belongs to workspace
+	wf, err := h.workflowRepo.FindByID(r.Context(), workflowID)
+	if err != nil {
+		common.NotFound(w, "Workflow not found")
+		return
+	}
+
+	if wf.WorkspaceID != workspaceID {
+		common.Forbidden(w, "Workflow does not belong to this workspace")
+		return
+	}
+
+	// Generate webhook secret
+	secretBytes := make([]byte, 32)
+	if _, err := rand.Read(secretBytes); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+	secret := base64.URLEncoding.EncodeToString(secretBytes)
+
+	// Create endpoint
+	endpoint := webhook.NewEndpoint(workflowID, workspaceID, req.NodeID, req.Path)
+	endpoint.WithMethod(req.Method)
+	endpoint.WithSecret(secret)
+
+	if err := h.webhookRepo.Create(r.Context(), endpoint); err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	common.Created(w, map[string]interface{}{
-		"id":     "endpoint-id",
-		"path":   req.Path,
-		"secret": "generated-secret",
-		"url":    "https://api.linkflow.ai/webhooks/endpoint-id",
+		"id":     endpoint.ID.String(),
+		"path":   endpoint.Path,
+		"method": endpoint.Method,
+		"secret": secret,
+		"url":    endpoint.GetURL(h.baseURL),
 	})
 }

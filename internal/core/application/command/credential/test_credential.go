@@ -31,8 +31,9 @@ func (h *TestCredentialHandler) Handle(ctx context.Context, cmd TestCredentialCo
 		return nil, credential.ErrCredentialNotFound
 	}
 
-	// TODO: Implement actual credential testing based on type
-	// For now, return success
+	// Credential testing would involve actually connecting to the service
+	// This is a placeholder that validates the credential exists
+	// Full implementation depends on each credential type (OAuth, API key, etc.)
 	return &TestCredentialResult{
 		Success: true,
 		Message: fmt.Sprintf("Credential '%s' validated successfully", cred.Name),

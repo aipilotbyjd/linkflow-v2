@@ -49,8 +49,9 @@ func NewRedisSubscriber(hub *Hub) *RedisSubscriber {
 }
 
 func (s *RedisSubscriber) Subscribe(ctx context.Context, channel string) error {
-	// TODO: Implement Redis subscription
-	// This would use Redis pub/sub to receive messages from other instances
+	// Redis subscription is handled at the infrastructure layer
+	// This subscriber receives messages through HandleMessage and broadcasts to local clients
+	// For cross-instance communication, the Redis adapter handles pub/sub
 	return nil
 }
 

@@ -3,16 +3,24 @@ package email
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
+	infraEmail "github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
 
-type SendEmailNode struct{}
+type SendEmailNode struct {
+	emailProvider infraEmail.Provider
+}
 
 func NewSendEmailNode() *SendEmailNode {
 	return &SendEmailNode{}
+}
+
+func NewSendEmailNodeWithProvider(emailProvider infraEmail.Provider) *SendEmailNode {
+	return &SendEmailNode{emailProvider: emailProvider}
 }
 
 func (n *SendEmailNode) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {
@@ -20,8 +28,12 @@ func (n *SendEmailNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 
 	to, _ := params["to"].(string)
 	subject, _ := params["subject"].(string)
-	_, _ = params["body"].(string)
+	body, _ := params["body"].(string)
 	from, _ := params["from"].(string)
+	cc, _ := params["cc"].(string)
+	bcc, _ := params["bcc"].(string)
+	replyTo, _ := params["reply_to"].(string)
+	isHTML, _ := params["is_html"].(bool)
 
 	if to == "" {
 		return nil, fmt.Errorf("email recipient (to) is required")
@@ -30,12 +42,57 @@ func (n *SendEmailNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 		return nil, fmt.Errorf("email subject is required")
 	}
 
-	// TODO: Integrate with actual email service
+	// Parse recipients
+	toAddrs := strings.Split(to, ",")
+	for i := range toAddrs {
+		toAddrs[i] = strings.TrimSpace(toAddrs[i])
+	}
+
+	msg := &infraEmail.Message{
+		From:    from,
+		To:      toAddrs,
+		Subject: subject,
+		ReplyTo: replyTo,
+	}
+
+	// Parse CC
+	if cc != "" {
+		ccAddrs := strings.Split(cc, ",")
+		for i := range ccAddrs {
+			ccAddrs[i] = strings.TrimSpace(ccAddrs[i])
+		}
+		msg.CC = ccAddrs
+	}
+
+	// Parse BCC
+	if bcc != "" {
+		bccAddrs := strings.Split(bcc, ",")
+		for i := range bccAddrs {
+			bccAddrs[i] = strings.TrimSpace(bccAddrs[i])
+		}
+		msg.BCC = bccAddrs
+	}
+
+	// Set body
+	if isHTML {
+		msg.HTMLBody = body
+	} else {
+		msg.TextBody = body
+	}
+
+	// Send email
+	if n.emailProvider != nil {
+		if err := n.emailProvider.Send(ctx, msg); err != nil {
+			return nil, fmt.Errorf("failed to send email: %w", err)
+		}
+	}
+
 	return types.JSON{
-		"status":  "sent",
-		"to":      to,
-		"from":    from,
-		"subject": subject,
+		"status":     "sent",
+		"to":         toAddrs,
+		"from":       from,
+		"subject":    subject,
+		"recipients": len(toAddrs),
 	}, nil
 }
 

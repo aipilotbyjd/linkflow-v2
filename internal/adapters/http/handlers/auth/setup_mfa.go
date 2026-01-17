@@ -2,8 +2,13 @@ package auth
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 )
 
 type SetupMFAResponse struct {
@@ -11,24 +16,59 @@ type SetupMFAResponse struct {
 	QRCodeURL string `json:"qr_code_url"`
 }
 
-type SetupMFAHandler struct{}
+type SetupMFAHandler struct {
+	userRepo user.Repository
+	cache    cache.Cache
+	otp      *crypto.OTP
+}
 
-func NewSetupMFAHandler() *SetupMFAHandler {
-	return &SetupMFAHandler{}
+func NewSetupMFAHandler(userRepo user.Repository, cache cache.Cache) *SetupMFAHandler {
+	return &SetupMFAHandler{
+		userRepo: userRepo,
+		cache:    cache,
+		otp:      crypto.NewOTP("LinkFlow"),
+	}
 }
 
 func (h *SetupMFAHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	// TODO: Get user from context
-	// userID := middleware.GetUserIDFromContext(r.Context())
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		common.Unauthorized(w, "authentication required")
+		return
+	}
 
-	// TODO: Implement MFA setup
-	// 1. Generate TOTP secret
-	// 2. Generate QR code URL
-	// 3. Store secret temporarily (not enabled yet)
+	// Get user to check if MFA is already enabled
+	u, err := h.userRepo.FindByID(r.Context(), claims.UserID)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	if u.MFAEnabled {
+		common.BadRequest(w, "MFA is already enabled")
+		return
+	}
+
+	// Generate TOTP secret
+	secret, err := h.otp.GenerateSecret()
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Store secret temporarily in cache (expires in 10 minutes)
+	cacheKey := "mfa_setup:" + claims.UserID.String()
+	if err := h.cache.Set(r.Context(), cacheKey, []byte(secret), 10*time.Minute); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Generate QR code URL
+	qrCodeURL := h.otp.GenerateURI(secret, u.Email)
 
 	response := SetupMFAResponse{
-		Secret:    "PLACEHOLDER_SECRET",
-		QRCodeURL: "otpauth://totp/LinkFlow:user@example.com?secret=PLACEHOLDER_SECRET&issuer=LinkFlow",
+		Secret:    secret,
+		QRCodeURL: qrCodeURL,
 	}
 
 	common.Success(w, response)

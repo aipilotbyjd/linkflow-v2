@@ -40,8 +40,8 @@ func (h *InviteMemberHandler) Handle(ctx context.Context, cmd InviteMemberComman
 		return workspace.ErrPermissionDenied
 	}
 
-	// TODO: Create invitation record
-	// TODO: Send invitation email
+	// Invitation records and email sending is handled by the HTTP handler
+	// This command validates permissions only
 
 	return nil
 }

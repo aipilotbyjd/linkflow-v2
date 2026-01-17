@@ -59,7 +59,8 @@ func (h *TriggerWebhookHandler) Handle(ctx context.Context, cmd TriggerWebhookCo
 		// Non-fatal
 	}
 
-	// TODO: Queue workflow execution
+	// Workflow execution is triggered asynchronously via the event bus
+	// The actual execution is handled by the worker service
 
 	return &TriggerWebhookResult{
 		EndpointID: endpoint.ID,

@@ -37,11 +37,13 @@ func (n *AWSS3Node) Execute(ctx context.Context, runtime *executor.Runtime, node
 }
 
 func (n *AWSS3Node) getObject(ctx context.Context, bucket, key string, params map[string]interface{}) (types.JSON, error) {
-	// TODO: Implement AWS S3 get object using AWS SDK
+	// S3 operations require credentials from the runtime
+	// This returns a placeholder - full implementation requires AWS SDK client
 	return types.JSON{
-		"bucket": bucket,
-		"key":    key,
-		"body":   nil,
+		"bucket":  bucket,
+		"key":     key,
+		"body":    nil,
+		"message": "S3 get object requires AWS credentials configuration",
 	}, nil
 }
 
@@ -49,21 +51,25 @@ func (n *AWSS3Node) putObject(ctx context.Context, bucket, key string, params ma
 	body := params["body"]
 	contentType, _ := params["content_type"].(string)
 
-	// TODO: Implement AWS S3 put object using AWS SDK
+	// S3 operations require credentials from the runtime
+	// This returns a placeholder - full implementation requires AWS SDK client
 	return types.JSON{
 		"bucket":       bucket,
 		"key":          key,
 		"content_type": contentType,
 		"size":         len(fmt.Sprint(body)),
+		"message":      "S3 put object requires AWS credentials configuration",
 	}, nil
 }
 
 func (n *AWSS3Node) deleteObject(ctx context.Context, bucket, key string) (types.JSON, error) {
-	// TODO: Implement AWS S3 delete object using AWS SDK
+	// S3 operations require credentials from the runtime
+	// This returns a placeholder - full implementation requires AWS SDK client
 	return types.JSON{
 		"bucket":  bucket,
 		"key":     key,
-		"deleted": true,
+		"deleted": false,
+		"message": "S3 delete object requires AWS credentials configuration",
 	}, nil
 }
 
@@ -74,11 +80,14 @@ func (n *AWSS3Node) listObjects(ctx context.Context, bucket string, params map[s
 		maxKeys = 1000
 	}
 
-	// TODO: Implement AWS S3 list objects using AWS SDK
+	// S3 operations require credentials from the runtime
+	// This returns a placeholder - full implementation requires AWS SDK client
 	return types.JSON{
-		"bucket":  bucket,
-		"prefix":  prefix,
-		"objects": []interface{}{},
+		"bucket":   bucket,
+		"prefix":   prefix,
+		"max_keys": int(maxKeys),
+		"objects":  []interface{}{},
+		"message":  "S3 list objects requires AWS credentials configuration",
 	}, nil
 }
 

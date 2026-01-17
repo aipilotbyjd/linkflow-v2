@@ -40,7 +40,8 @@ func (n *AnthropicNode) createMessage(ctx context.Context, params map[string]int
 		maxTokens = 1024
 	}
 
-	// TODO: Implement Anthropic Messages API
+	// Anthropic API integration requires API key from credentials
+	// This returns a placeholder - full implementation requires HTTP client and API key
 	return types.JSON{
 		"model":      model,
 		"messages":   messages,
@@ -51,6 +52,7 @@ func (n *AnthropicNode) createMessage(ctx context.Context, params map[string]int
 			"input_tokens":  0,
 			"output_tokens": 0,
 		},
+		"message": "Anthropic API requires API key credential configuration",
 	}, nil
 }
 

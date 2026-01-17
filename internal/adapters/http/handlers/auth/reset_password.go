@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 )
 
 type ResetPasswordRequest struct {
@@ -12,10 +15,18 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"new_password" validate:"required,min=8"`
 }
 
-type ResetPasswordHandler struct{}
+type ResetPasswordHandler struct {
+	userRepo    user.Repository
+	sessionRepo user.SessionRepository
+	cache       cache.Cache
+}
 
-func NewResetPasswordHandler() *ResetPasswordHandler {
-	return &ResetPasswordHandler{}
+func NewResetPasswordHandler(userRepo user.Repository, sessionRepo user.SessionRepository, cache cache.Cache) *ResetPasswordHandler {
+	return &ResetPasswordHandler{
+		userRepo:    userRepo,
+		sessionRepo: sessionRepo,
+		cache:       cache,
+	}
 }
 
 func (h *ResetPasswordHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -25,11 +36,41 @@ func (h *ResetPasswordHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Implement password reset
-	// 1. Validate reset token
-	// 2. Update user password
-	// 3. Invalidate all sessions
-	// 4. Mark token as used
+	// Validate reset token
+	cacheKey := "password_reset:" + req.Token
+	userIDBytes, err := h.cache.Get(r.Context(), cacheKey)
+	if err != nil {
+		common.BadRequest(w, "Invalid or expired reset token")
+		return
+	}
+	userIDStr := string(userIDBytes)
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid reset token")
+		return
+	}
+
+	// Validate password strength
+	newPassword, err := user.NewPassword(req.NewPassword)
+	if err != nil {
+		common.BadRequest(w, err.Error())
+		return
+	}
+
+	// Update user password
+	if err := h.userRepo.UpdatePassword(r.Context(), userID, newPassword.Hash()); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Invalidate all sessions
+	if err := h.sessionRepo.RevokeAllUserSessions(r.Context(), userID); err != nil {
+		// Non-fatal, continue
+	}
+
+	// Delete the token from cache (mark as used)
+	_ = h.cache.Delete(r.Context(), cacheKey)
 
 	common.Success(w, map[string]string{
 		"message": "Password has been reset successfully",

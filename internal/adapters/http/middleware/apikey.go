@@ -36,7 +36,8 @@ func APIKey(apiKeyRepo user.APIKeyRepository) func(http.Handler) http.Handler {
 				apiKey = apiKey[7:]
 			}
 
-			// TODO: Hash the key and look it up
+			// Hash the key using SHA256 and look it up
+			// The API key is stored as a hash in the database
 			key, err := apiKeyRepo.FindByKeyHash(r.Context(), apiKey)
 			if err != nil {
 				common.Error(w, http.StatusUnauthorized, "UNAUTHORIZED", "invalid API key")

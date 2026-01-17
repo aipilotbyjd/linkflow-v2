@@ -179,7 +179,7 @@ func main() {
 	exGetHandler := executionHandler.NewGetHandler(getExecutionHandler)
 	exListHandler := executionHandler.NewListHandler(executionQry.NewListExecutionsHandler(executionRepo))
 	exCancelHandler := executionHandler.NewCancelHandler(executionRepo)
-	exRetryHandler := executionHandler.NewRetryHandler(startExecutionHandler)
+	exRetryHandler := executionHandler.NewRetryHandler(startExecutionHandler, executionRepo)
 
 	// Credential handlers
 	crCreateHandler := credentialHandler.NewCreateHandler(createCredentialHandler)

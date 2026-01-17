@@ -4,27 +4,57 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/webhook"
 )
 
-type ActivateEndpointHandler struct{}
+type ActivateEndpointHandler struct {
+	webhookRepo webhook.Repository
+}
 
-func NewActivateEndpointHandler() *ActivateEndpointHandler {
-	return &ActivateEndpointHandler{}
+func NewActivateEndpointHandler(webhookRepo webhook.Repository) *ActivateEndpointHandler {
+	return &ActivateEndpointHandler{webhookRepo: webhookRepo}
 }
 
 func (h *ActivateEndpointHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceID := chi.URLParam(r, "id")
-	endpointID := chi.URLParam(r, "endpointId")
+	workspaceIDStr := chi.URLParam(r, "id")
+	endpointIDStr := chi.URLParam(r, "endpointId")
 
-	if workspaceID == "" || endpointID == "" {
+	if workspaceIDStr == "" || endpointIDStr == "" {
 		common.BadRequest(w, "Workspace ID and Endpoint ID are required")
 		return
 	}
 
-	// TODO: Implement endpoint activation
-	// 1. Verify endpoint exists and belongs to workspace
-	// 2. Set is_active = true
+	workspaceID, err := uuid.Parse(workspaceIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workspace ID")
+		return
+	}
+
+	endpointID, err := uuid.Parse(endpointIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid endpoint ID")
+		return
+	}
+
+	// Verify endpoint exists and belongs to workspace
+	endpoint, err := h.webhookRepo.FindByID(r.Context(), endpointID)
+	if err != nil {
+		common.NotFound(w, "Webhook endpoint not found")
+		return
+	}
+
+	if endpoint.WorkspaceID != workspaceID {
+		common.Forbidden(w, "Endpoint does not belong to this workspace")
+		return
+	}
+
+	// Activate endpoint
+	if err := h.webhookRepo.SetActive(r.Context(), endpointID, true); err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	common.Success(w, map[string]string{
 		"message": "Webhook endpoint activated",
