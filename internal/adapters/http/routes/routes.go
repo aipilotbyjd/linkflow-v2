@@ -46,6 +46,7 @@ type Handlers struct {
 	Marketplace     MarketplaceHandlers
 	BinaryData      BinaryDataHandlers
 	Admin           AdminHandlers
+	Analytics       AnalyticsHandlers
 }
 
 // AuthHandlers holds auth-related handlers
@@ -280,6 +281,12 @@ type AdminHandlers struct {
 	TrimStream        http.HandlerFunc
 }
 
+// AnalyticsHandlers holds analytics handlers
+type AnalyticsHandlers struct {
+	WorkflowAnalytics  http.HandlerFunc
+	WorkspaceAnalytics http.HandlerFunc
+}
+
 // NewRouter creates a new HTTP router
 func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 	r := chi.NewRouter()
@@ -417,6 +424,9 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Get("/dashboard", handlers.Dashboard.GetDashboard)
 				r.Get("/stats", handlers.Dashboard.GetQuickStats)
 
+				// Analytics
+				r.Get("/analytics", handlers.Analytics.WorkspaceAnalytics)
+
 				// Members
 				r.Get("/members", handlers.Workspace.ListMembers)
 				r.Post("/members", handlers.Workspace.InviteMember)
@@ -472,6 +482,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 						r.Get("/versions/{version}", handlers.Workflow.GetVersion)
 						r.Post("/versions/{version}/rollback", handlers.Workflow.Rollback)
 						r.Get("/compare-versions", handlers.Workflow.CompareVersions)
+						r.Get("/analytics", handlers.Analytics.WorkflowAnalytics)
 
 						// Webhooks for workflow
 						r.Post("/webhooks", handlers.Webhook.Create)
