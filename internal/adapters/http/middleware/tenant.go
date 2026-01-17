@@ -87,6 +87,11 @@ func GetWorkspaceIDFromContext(ctx context.Context) uuid.UUID {
 	return uuid.Nil
 }
 
+// GetWorkspaceID is an alias for GetWorkspaceIDFromContext
+func GetWorkspaceID(ctx context.Context) uuid.UUID {
+	return GetWorkspaceIDFromContext(ctx)
+}
+
 // RequireWorkspace ensures workspace context is present
 func RequireWorkspace(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

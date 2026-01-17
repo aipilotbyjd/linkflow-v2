@@ -124,6 +124,11 @@ func GetUserIDFromContext(ctx context.Context) uuid.UUID {
 	return uuid.Nil
 }
 
+// GetUserID is an alias for GetUserIDFromContext
+func GetUserID(ctx context.Context) uuid.UUID {
+	return GetUserIDFromContext(ctx)
+}
+
 // RequireAuth ensures user is authenticated
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

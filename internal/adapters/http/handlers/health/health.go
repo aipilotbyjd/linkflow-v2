@@ -3,93 +3,143 @@ package health
 import (
 	"context"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 )
 
-// Checker interface for health checks
-type Checker interface {
+type HealthChecker interface {
 	Check(ctx context.Context) error
 }
 
-// Handler handles health check endpoints
 type Handler struct {
-	checkers map[string]Checker
+	dbChecker    HealthChecker
+	redisChecker HealthChecker
+	version      string
+	startTime    time.Time
 }
 
-// NewHandler creates a new health handler
-func NewHandler() *Handler {
+func NewHandler(checkers ...interface{}) *Handler {
+	h := &Handler{
+		version:   "1.0.0",
+		startTime: time.Now(),
+	}
+	
+	for i, checker := range checkers {
+		if hc, ok := checker.(HealthChecker); ok {
+			if i == 0 {
+				h.dbChecker = hc
+			} else if i == 1 {
+				h.redisChecker = hc
+			}
+		} else if v, ok := checker.(string); ok {
+			h.version = v
+		}
+	}
+	
+	return h
+}
+
+func NewHandlerWithCheckers(dbChecker, redisChecker HealthChecker, version string) *Handler {
 	return &Handler{
-		checkers: make(map[string]Checker),
+		dbChecker:    dbChecker,
+		redisChecker: redisChecker,
+		version:      version,
+		startTime:    time.Now(),
 	}
 }
 
-// RegisterChecker registers a health checker
-func (h *Handler) RegisterChecker(name string, checker Checker) {
-	h.checkers[name] = checker
-}
-
-// HealthResponse represents the health check response
 type HealthResponse struct {
-	Status    string                 `json:"status"`
-	Timestamp string                 `json:"timestamp"`
-	Services  map[string]ServiceStatus `json:"services,omitempty"`
+	Status    string            `json:"status"`
+	Version   string            `json:"version"`
+	Uptime    string            `json:"uptime"`
+	Timestamp time.Time         `json:"timestamp"`
+	Services  map[string]string `json:"services,omitempty"`
 }
 
-// ServiceStatus represents individual service status
-type ServiceStatus struct {
-	Status  string `json:"status"`
-	Message string `json:"message,omitempty"`
-}
-
-// Health handles basic health check
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	common.Success(w, HealthResponse{
-		Status:    "healthy",
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-	})
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	services := make(map[string]string)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	overallStatus := "healthy"
+
+	checks := map[string]HealthChecker{
+		"database": h.dbChecker,
+		"redis":    h.redisChecker,
+	}
+
+	for name, checker := range checks {
+		if checker == nil {
+			continue
+		}
+		wg.Add(1)
+		go func(name string, checker HealthChecker) {
+			defer wg.Done()
+			status := "healthy"
+			if err := checker.Check(ctx); err != nil {
+				status = "unhealthy"
+				mu.Lock()
+				overallStatus = "degraded"
+				mu.Unlock()
+			}
+			mu.Lock()
+			services[name] = status
+			mu.Unlock()
+		}(name, checker)
+	}
+	wg.Wait()
+
+	resp := HealthResponse{
+		Status:    overallStatus,
+		Version:   h.version,
+		Uptime:    time.Since(h.startTime).String(),
+		Timestamp: time.Now(),
+		Services:  services,
+	}
+
+	if overallStatus != "healthy" {
+		common.JSON(w, http.StatusServiceUnavailable, resp)
+		return
+	}
+
+	common.Success(w, resp)
 }
 
-// Live handles liveness probe
-func (h *Handler) Live(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Liveness(w http.ResponseWriter, r *http.Request) {
 	common.Success(w, map[string]string{
 		"status": "alive",
 	})
 }
 
-// Ready handles readiness probe
-func (h *Handler) Ready(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Readiness(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	services := make(map[string]ServiceStatus)
-	allHealthy := true
-
-	for name, checker := range h.checkers {
-		if err := checker.Check(ctx); err != nil {
-			services[name] = ServiceStatus{
-				Status:  "unhealthy",
-				Message: err.Error(),
-			}
-			allHealthy = false
-		} else {
-			services[name] = ServiceStatus{
-				Status: "healthy",
-			}
+	if h.dbChecker != nil {
+		if err := h.dbChecker.Check(ctx); err != nil {
+			common.JSON(w, http.StatusServiceUnavailable, map[string]string{
+				"status": "not ready",
+				"reason": "database unavailable",
+			})
+			return
 		}
 	}
 
-	response := HealthResponse{
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
-		Services:  services,
+	if h.redisChecker != nil {
+		if err := h.redisChecker.Check(ctx); err != nil {
+			common.JSON(w, http.StatusServiceUnavailable, map[string]string{
+				"status": "not ready",
+				"reason": "redis unavailable",
+			})
+			return
+		}
 	}
 
-	if allHealthy {
-		response.Status = "ready"
-		common.Success(w, response)
-	} else {
-		response.Status = "not_ready"
-		common.JSON(w, http.StatusServiceUnavailable, response)
-	}
+	common.Success(w, map[string]string{
+		"status": "ready",
+	})
 }
