@@ -70,6 +70,7 @@ func (p *SMTPProvider) Send(ctx context.Context, msg *Message) error {
 	if p.config.UseTLS {
 		tlsConfig := &tls.Config{
 			ServerName: p.config.Host,
+			MinVersion: tls.VersionTLS12, // G402: Enforce TLS 1.2+
 		}
 		if err := client.StartTLS(tlsConfig); err != nil {
 			return fmt.Errorf("failed to start TLS: %w", err)

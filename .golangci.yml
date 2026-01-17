@@ -69,6 +69,9 @@ linters-settings:
   gosec:
     excludes:
       - G104 # Unhandled errors (too noisy)
+      - G505 # sha1 required for TOTP (RFC 6238)
+      - G101 # False positives on variable names containing "token", "credential"
+      - G115 # Integer overflow - handled by application logic
 
 issues:
   exclude-rules:

@@ -88,12 +88,12 @@ func RetryWithResult[T any](ctx context.Context, config RetryConfig, fn func() (
 func calculateInterval(config RetryConfig, attempt int) time.Duration {
 	interval := float64(config.InitialInterval) * math.Pow(config.Multiplier, float64(attempt))
 
-	// Add jitter
+	// Add jitter (math/rand is fine for non-security purposes)
 	if config.RandomFactor > 0 {
 		delta := config.RandomFactor * interval
 		minInterval := interval - delta
 		maxInterval := interval + delta
-		interval = minInterval + (rand.Float64() * (maxInterval - minInterval))
+		interval = minInterval + (rand.Float64() * (maxInterval - minInterval)) // #nosec G404 - jitter doesn't need crypto rand
 	}
 
 	// Cap at max interval
