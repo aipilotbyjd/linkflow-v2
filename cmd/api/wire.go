@@ -82,8 +82,8 @@ type App struct {
 var infraSet = wire.NewSet(
 	provideConfig,
 	provideLogger,
-	providePostgres,
 	provideGormDB,
+	providePostgresClient,
 	provideRedis,
 	provideAsynqClient,
 	provideCache,
@@ -157,7 +157,7 @@ func provideLogger(cfg *config.Config) logger.Logger {
 	return logger.NewDefault()
 }
 
-func providePostgres(cfg *config.Config) (*postgres.Client, error) {
+func provideGormDB(cfg *config.Config) (*gorm.DB, error) {
 	return postgres.NewClient(postgres.Config{
 		Host:         cfg.Database.Host,
 		Port:         cfg.Database.Port,
@@ -171,8 +171,8 @@ func providePostgres(cfg *config.Config) (*postgres.Client, error) {
 	})
 }
 
-func provideGormDB(client *postgres.Client) *gorm.DB {
-	return client.DB()
+func providePostgresClient(db *gorm.DB) *postgres.Client {
+	return postgres.NewClientWrapper(db)
 }
 
 func provideRedis(cfg *config.Config) (*redisAdapter.Client, error) {
