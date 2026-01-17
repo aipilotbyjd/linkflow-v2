@@ -11,10 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
 )
 
-type CloneRequest struct {
-	Name string `json:"name" validate:"required"`
-}
-
 type CloneHandler struct {
 	workflowRepo workflow.Repository
 }
@@ -67,5 +63,5 @@ func (h *CloneHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Created(w, toWorkflowResponse(cloned))
+	common.Created(w, ToWorkflowResponse(cloned))
 }

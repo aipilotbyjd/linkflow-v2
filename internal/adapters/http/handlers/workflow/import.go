@@ -48,5 +48,5 @@ func (h *ImportHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Created(w, toWorkflowResponse(wf))
+	common.Created(w, ToWorkflowResponse(wf))
 }

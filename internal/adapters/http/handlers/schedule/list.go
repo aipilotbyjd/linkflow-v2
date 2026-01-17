@@ -46,7 +46,7 @@ func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var responses []ScheduleResponse
 	for _, s := range result.Schedules {
-		responses = append(responses, toScheduleResponse(&s))
+		responses = append(responses, ToScheduleResponse(&s))
 	}
 
 	common.List(w, responses, types.PageResponse{

@@ -53,7 +53,7 @@ func (h *SearchHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var responses []WorkflowResponse
 	for _, wf := range workflows {
-		responses = append(responses, toWorkflowResponse(&wf))
+		responses = append(responses, ToWorkflowResponse(&wf))
 	}
 
 	common.List(w, responses, types.PageResponse{

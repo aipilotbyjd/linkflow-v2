@@ -89,7 +89,7 @@ func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// Convert to response
 	workflows := make([]WorkflowResponse, len(result.Workflows))
 	for i, wf := range result.Workflows {
-		workflows[i] = toWorkflowResponse(&wf)
+		workflows[i] = ToWorkflowResponse(&wf)
 	}
 
 	common.List(w, workflows, types.PageResponse{

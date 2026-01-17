@@ -11,18 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
 
-type VersionResponse struct {
-	ID          string          `json:"id"`
-	WorkflowID  string          `json:"workflow_id"`
-	Version     int             `json:"version"`
-	Nodes       types.JSONArray `json:"nodes"`
-	Connections types.JSONArray `json:"connections"`
-	Settings    types.JSON      `json:"settings,omitempty"`
-	ChangeNote  *string         `json:"change_note,omitempty"`
-	CreatedBy   string          `json:"created_by"`
-	CreatedAt   string          `json:"created_at"`
-}
-
 type ListVersionsHandler struct {
 	versionRepo workflow.VersionRepository
 }
@@ -56,7 +44,7 @@ func (h *ListVersionsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var responses []VersionResponse
 	for _, v := range versions {
-		responses = append(responses, toVersionResponse(&v))
+		responses = append(responses, ToVersionResponse(&v))
 	}
 
 	common.List(w, responses, types.PageResponse{
@@ -66,22 +54,4 @@ func (h *ListVersionsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		TotalPages: int((total + int64(pageSize) - 1) / int64(pageSize)),
 		HasMore:    int64(page*pageSize) < total,
 	})
-}
-
-func toVersionResponse(v *workflow.Version) VersionResponse {
-	createdBy := ""
-	if v.CreatedBy != nil {
-		createdBy = v.CreatedBy.String()
-	}
-	return VersionResponse{
-		ID:          v.ID.String(),
-		WorkflowID:  v.WorkflowID.String(),
-		Version:     v.Version,
-		Nodes:       v.Nodes,
-		Connections: v.Connections,
-		Settings:    v.Settings,
-		ChangeNote:  v.ChangeMessage,
-		CreatedBy:   createdBy,
-		CreatedAt:   v.CreatedAt.Format("2006-01-02T15:04:05Z"),
-	}
 }

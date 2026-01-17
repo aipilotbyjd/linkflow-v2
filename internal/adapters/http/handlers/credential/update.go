@@ -8,16 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
-	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
-	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-type UpdateRequest struct {
-	Name        *string                  `json:"name,omitempty"`
-	Description *string                  `json:"description,omitempty"`
-	Data        types.JSON               `json:"data,omitempty"`
-	Scope       *credential.SharingScope `json:"scope,omitempty"`
-}
 
 type UpdateHandler struct {
 	handler *credentialCmd.UpdateCredentialHandler
@@ -53,5 +44,5 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toCredentialResponse(cred))
+	common.Success(w, ToCredentialResponse(cred))
 }

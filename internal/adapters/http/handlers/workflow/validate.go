@@ -17,37 +17,6 @@ func NewValidateWorkflowHandler(nodeRegistry *nodes.Registry) *ValidateWorkflowH
 	return &ValidateWorkflowHandler{nodeRegistry: nodeRegistry}
 }
 
-type ValidateRequest struct {
-	Nodes       []NodeDef       `json:"nodes"`
-	Connections []ConnectionDef `json:"connections"`
-}
-
-type NodeDef struct {
-	ID         string                 `json:"id"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	Position   map[string]float64     `json:"position"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
-}
-
-type ConnectionDef struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-}
-
-type ValidationResult struct {
-	Valid    bool              `json:"valid"`
-	Errors   []ValidationError `json:"errors,omitempty"`
-	Warnings []ValidationError `json:"warnings,omitempty"`
-}
-
-type ValidationError struct {
-	NodeID  string `json:"node_id,omitempty"`
-	Field   string `json:"field,omitempty"`
-	Message string `json:"message"`
-	Code    string `json:"code"`
-}
-
 func (h *ValidateWorkflowHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

@@ -20,30 +20,6 @@ func NewCompareVersionsHandler(versionRepo workflow.VersionRepository) *CompareV
 	return &CompareVersionsHandler{versionRepo: versionRepo}
 }
 
-type CompareVersionsResponse struct {
-	Version1    int                 `json:"version1"`
-	Version2    int                 `json:"version2"`
-	Differences []VersionDifference `json:"differences"`
-	Summary     DiffSummary         `json:"summary"`
-}
-
-type VersionDifference struct {
-	Type        string      `json:"type"`
-	Path        string      `json:"path"`
-	OldValue    interface{} `json:"oldValue,omitempty"`
-	NewValue    interface{} `json:"newValue,omitempty"`
-	Description string      `json:"description"`
-}
-
-type DiffSummary struct {
-	NodesAdded       int `json:"nodesAdded"`
-	NodesRemoved     int `json:"nodesRemoved"`
-	NodesModified    int `json:"nodesModified"`
-	ConnectionsAdded int `json:"connectionsAdded"`
-	ConnectionsRemoved int `json:"connectionsRemoved"`
-	SettingsChanged  bool `json:"settingsChanged"`
-}
-
 func (h *CompareVersionsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	workflowIDStr := chi.URLParam(r, "workflowId")
 	workflowID, err := uuid.Parse(workflowIDStr)

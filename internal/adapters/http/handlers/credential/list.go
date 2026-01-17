@@ -67,7 +67,7 @@ func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	credentials := make([]CredentialResponse, len(result.Credentials))
 	for i, c := range result.Credentials {
-		credentials[i] = toCredentialResponse(&c)
+		credentials[i] = ToCredentialResponse(&c)
 	}
 
 	common.List(w, credentials, types.PageResponse{

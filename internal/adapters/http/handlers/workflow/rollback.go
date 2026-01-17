@@ -55,5 +55,5 @@ func (h *RollbackHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toWorkflowResponse(wf))
+	common.Success(w, ToWorkflowResponse(wf))
 }

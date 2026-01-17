@@ -11,12 +11,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
 )
 
-type DuplicateRequest struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	FolderID    *string `json:"folderId,omitempty"`
-}
-
 type DuplicateHandler struct {
 	workflowRepo workflow.Repository
 }

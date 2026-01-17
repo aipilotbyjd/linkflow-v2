@@ -29,19 +29,6 @@ func NewTestNodeHandler(nodeRegistry *nodes.Registry, log logger.Logger) *TestNo
 	}
 }
 
-type TestNodeRequest struct {
-	NodeType   string                 `json:"node_type"`
-	Parameters map[string]interface{} `json:"parameters"`
-	Input      map[string]interface{} `json:"input,omitempty"`
-}
-
-type TestNodeResponse struct {
-	Success    bool                   `json:"success"`
-	Output     map[string]interface{} `json:"output,omitempty"`
-	Error      string                 `json:"error,omitempty"`
-	DurationMs int64                  `json:"duration_ms"`
-}
-
 func (h *TestNodeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {

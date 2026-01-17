@@ -8,16 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
-	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-type UpdateRequest struct {
-	Name        *string         `json:"name,omitempty"`
-	Description *string         `json:"description,omitempty"`
-	Nodes       types.JSONArray `json:"nodes,omitempty"`
-	Connections types.JSONArray `json:"connections,omitempty"`
-	Settings    types.JSON      `json:"settings,omitempty"`
-}
 
 type UpdateHandler struct {
 	handler *workflowCmd.UpdateWorkflowHandler
@@ -54,5 +45,5 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toWorkflowResponse(wf))
+	common.Success(w, ToWorkflowResponse(wf))
 }

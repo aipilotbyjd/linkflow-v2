@@ -56,5 +56,5 @@ func (h *PauseHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toScheduleResponse(sched))
+	common.Success(w, ToScheduleResponse(sched))
 }

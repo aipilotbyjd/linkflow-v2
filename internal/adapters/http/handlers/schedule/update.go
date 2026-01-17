@@ -9,17 +9,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/schedule"
-	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-// UpdateRequest represents schedule update request
-type UpdateRequest struct {
-	Name           string     `json:"name" validate:"required"`
-	Description    *string    `json:"description,omitempty"`
-	CronExpression string     `json:"cron_expression" validate:"required"`
-	Timezone       string     `json:"timezone"`
-	InputData      types.JSON `json:"input_data,omitempty"`
-}
 
 // UpdateHandler handles schedule updates
 type UpdateHandler struct {
@@ -65,13 +55,21 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update schedule
-	timezone := req.Timezone
-	if timezone == "" {
-		timezone = sched.Timezone
+	// Build update values from request or keep existing
+	name := sched.Name
+	if req.Name != nil {
+		name = *req.Name
+	}
+	cronExpr := sched.CronExpression
+	if req.CronExpression != nil {
+		cronExpr = *req.CronExpression
+	}
+	timezone := sched.Timezone
+	if req.Timezone != nil {
+		timezone = *req.Timezone
 	}
 
-	sched.Update(req.Name, req.Description, req.CronExpression, timezone)
+	sched.Update(name, req.Description, cronExpr, timezone)
 	if req.InputData != nil {
 		sched.UpdateInputData(req.InputData)
 	}
@@ -88,5 +86,5 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Success(w, toScheduleResponse(sched))
+	common.Success(w, ToScheduleResponse(sched))
 }

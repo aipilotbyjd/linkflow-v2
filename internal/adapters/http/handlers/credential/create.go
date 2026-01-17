@@ -7,34 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
-	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
-	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
-
-// CreateRequest represents credential creation request
-type CreateRequest struct {
-	Name        string               `json:"name" validate:"required"`
-	Description *string              `json:"description,omitempty"`
-	Type        credential.Type      `json:"type" validate:"required"`
-	Provider    string               `json:"provider"`
-	Data        types.JSON           `json:"data" validate:"required"`
-	Scope       credential.SharingScope `json:"scope"`
-}
-
-// CredentialResponse represents credential in responses
-type CredentialResponse struct {
-	ID          string  `json:"id"`
-	WorkspaceID string  `json:"workspace_id"`
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
-	Type        string  `json:"type"`
-	Provider    string  `json:"provider"`
-	Scope       string  `json:"scope"`
-	CreatedBy   string  `json:"created_by"`
-	LastUsedAt  *string `json:"last_used_at,omitempty"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
-}
 
 // CreateHandler handles credential creation
 type CreateHandler struct {
@@ -81,31 +54,5 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Created(w, toCredentialResponse(cred))
-}
-
-func toCredentialResponse(c *credential.Credential) CredentialResponse {
-	provider := ""
-	if c.Provider != nil {
-		provider = *c.Provider
-	}
-	resp := CredentialResponse{
-		ID:          c.ID.String(),
-		WorkspaceID: c.WorkspaceID.String(),
-		Name:        c.Name,
-		Description: c.Description,
-		Type:        string(c.Type),
-		Provider:    provider,
-		Scope:       string(c.SharingScope),
-		CreatedBy:   c.CreatedBy.String(),
-		CreatedAt:   c.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:   c.UpdatedAt.Format("2006-01-02T15:04:05Z"),
-	}
-
-	if c.LastUsedAt != nil {
-		s := c.LastUsedAt.Format("2006-01-02T15:04:05Z")
-		resp.LastUsedAt = &s
-	}
-
-	return resp
+	common.Created(w, ToCredentialResponse(cred))
 }
