@@ -122,10 +122,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Gosec
-        uses: securecodewarrior/github-action-gosec@master
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
-          args: '-no-fail -fmt json -out gosec-results.json ./...'
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run Gosec
+        run: gosec -no-fail -fmt json -out gosec-results.json ./...
 
       - name: Upload security results
         uses: actions/upload-artifact@v4
