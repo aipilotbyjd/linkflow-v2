@@ -35,7 +35,7 @@ func NewSMTPProvider(config SMTPConfig) *SMTPProvider {
 
 // Send sends an email using SMTP
 func (p *SMTPProvider) Send(ctx context.Context, msg *Message) error {
-	addr := fmt.Sprintf("%s:%d", p.config.Host, p.config.Port)
+	addr := net.JoinHostPort(p.config.Host, fmt.Sprintf("%d", p.config.Port))
 
 	// Set up authentication
 	var auth smtp.Auth

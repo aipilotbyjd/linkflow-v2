@@ -99,188 +99,316 @@ LinkFlow is a production-ready n8n-like workflow automation platform built in Go
           └───────────────────────────┘     └─────────────────────────┘
 ```
 
+---
+
+## CODING RULES (MUST FOLLOW)
+
+### Rule 1: One Handler Per File
+
+**ALWAYS create one handler per file.** Never consolidate multiple handlers into a single file.
+
+```
+handlers/
+├── billing/
+│   ├── types.go              # Shared types, interfaces, constants
+│   ├── get_plans.go          # GetPlansHandler
+│   ├── get_subscription.go   # GetSubscriptionHandler
+│   ├── create_subscription.go
+│   ├── cancel_subscription.go
+│   ├── get_usage.go
+│   ├── get_invoices.go
+│   └── stripe_webhook.go
+```
+
+**Handler File Structure:**
+```go
+package billing
+
+import (
+    // imports
+)
+
+// Request/Response types specific to this handler (if not in types.go)
+type GetPlansRequest struct { ... }
+
+// Handler struct with dependencies
+type GetPlansHandler struct {
+    service BillingService
+}
+
+// Constructor
+func NewGetPlansHandler(service BillingService) *GetPlansHandler {
+    return &GetPlansHandler{service: service}
+}
+
+// Handle method
+func (h *GetPlansHandler) Handle(w http.ResponseWriter, r *http.Request) {
+    // implementation
+}
+```
+
+### Rule 2: Shared Types in types.go
+
+Each handler package should have a `types.go` file containing:
+- Shared structs (DTOs, entities)
+- Interfaces
+- Constants
+- Helper functions used across multiple handlers
+
+```go
+// handlers/billing/types.go
+package billing
+
+type Plan struct { ... }
+type Subscription struct { ... }
+type BillingService interface { ... }
+```
+
+### Rule 3: Handler Naming Conventions
+
+| Action | Handler Name | File Name |
+|--------|--------------|-----------|
+| List items | `ListHandler` | `list.go` |
+| Get single | `GetHandler` | `get.go` |
+| Create | `CreateHandler` | `create.go` |
+| Update | `UpdateHandler` | `update.go` |
+| Delete | `DeleteHandler` | `delete.go` |
+| Custom action | `{Action}Handler` | `{action}.go` |
+
+Examples:
+- `GetPlansHandler` → `get_plans.go`
+- `CreateSubscriptionHandler` → `create_subscription.go`
+- `StripeWebhookHandler` → `stripe_webhook.go`
+
+### Rule 4: Use Middleware Helpers
+
+Use the provided middleware helper functions:
+```go
+// Get user ID from context
+userID := middleware.GetUserID(r.Context())
+
+// Get workspace ID from context
+workspaceID := middleware.GetWorkspaceID(r.Context())
+
+// Get full workspace context
+wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+
+// Get user claims
+claims := middleware.GetUserFromContext(r.Context())
+```
+
+### Rule 5: Error Handling
+
+Use the common response helpers:
+```go
+common.Success(w, data)           // 200 OK
+common.Created(w, data)           // 201 Created
+common.BadRequest(w, "message")   // 400 Bad Request
+common.Unauthorized(w, "message") // 401 Unauthorized
+common.Forbidden(w, "message")    // 403 Forbidden
+common.NotFound(w, "resource")    // 404 Not Found
+common.HandleError(w, err)        // Maps domain errors to HTTP
+```
+
+### Rule 6: Always Check Error Returns
+
+**NEVER ignore error returns.** If a function returns an error, handle it:
+
+```go
+// WRONG - ignored error
+result, _ := someFunction()
+
+// CORRECT
+result, err := someFunction()
+if err != nil {
+    // handle error
+}
+```
+
+### Rule 7: IPv6-Safe Network Code
+
+Use `net.JoinHostPort()` instead of `fmt.Sprintf()` for addresses:
+
+```go
+// WRONG - breaks with IPv6
+addr := fmt.Sprintf("%s:%d", host, port)
+
+// CORRECT - works with IPv4 and IPv6
+addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
+```
+
+### Rule 8: Repository Method Naming
+
+Follow these naming conventions for repository methods:
+- `Create(ctx, entity)` - Create new
+- `Update(ctx, entity)` - Update existing
+- `Delete(ctx, id)` - Delete by ID
+- `FindByID(ctx, id)` - Find single by ID
+- `FindByWorkspaceID(ctx, wsID, opts)` - Find by workspace
+- `FindBy{Field}(ctx, value)` - Find by specific field
+- `CountBy{Field}(ctx, value)` - Count by field
+- `ExistsBy{Field}(ctx, value)` - Check existence
+
+### Rule 9: Domain Model Field Access
+
+Access domain entity fields correctly:
+```go
+// If field is a pointer, check for nil
+if entity.CompletedAt != nil {
+    duration := entity.CompletedAt.Sub(*entity.StartedAt)
+}
+
+// Use getter methods when available
+workspaceID := entity.GetWorkspaceID()
+```
+
+### Rule 10: Run Verification Before Committing
+
+Always run these checks before committing:
+```bash
+go build ./...    # Must pass
+go vet ./...      # Must pass
+go test ./...     # Fix any failures
+```
+
+---
+
 ## Project Structure (v2 Clean Architecture)
 
 ```
 linkflow-v2/
 │
 ├── cmd/                                    # Application Entrypoints
-│   ├── api/
-│   │   ├── main.go                         # API server entry
-│   │   └── wire.go                         # Dependency injection
-│   ├── worker/
-│   │   ├── main.go                         # Background worker entry
-│   │   └── wire.go
-│   ├── scheduler/
-│   │   ├── main.go                         # Cron scheduler with leader election
-│   │   └── wire.go
-│   └── migrate/
-│       └── main.go                         # Database migration CLI
+│   ├── api/main.go                         # API server entry
+│   ├── worker/main.go                      # Background worker entry
+│   ├── scheduler/main.go                   # Cron scheduler
+│   └── migrate/main.go                     # Database migration CLI
 │
 ├── internal/                               # Private Application Code
 │   │
 │   ├── core/                               # CORE BUSINESS LOGIC
-│   │   │                                   # (Framework-agnostic, pure Go)
-│   │   │
 │   │   ├── domain/                         # Domain Models & Business Rules
-│   │   │   ├── user/                       # User Aggregate
-│   │   │   │   ├── user.go                 # User entity (aggregate root)
-│   │   │   │   ├── session.go              # Session entity
-│   │   │   │   ├── status.go               # Status value object
-│   │   │   │   ├── repository.go           # Repository interface (port)
-│   │   │   │   └── errors.go               # Domain errors
-│   │   │   │
-│   │   │   ├── workspace/                  # Workspace Aggregate
-│   │   │   │   ├── workspace.go            # Workspace entity
-│   │   │   │   ├── member.go               # Member entity
-│   │   │   │   ├── role.go                 # Role value object
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── workflow/                   # Workflow Aggregate
-│   │   │   │   ├── workflow.go             # Workflow entity
-│   │   │   │   ├── version.go              # Version entity
-│   │   │   │   ├── status.go               # Status value object
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── execution/                  # Execution Aggregate
-│   │   │   │   ├── execution.go            # Execution entity
-│   │   │   │   ├── node_execution.go       # NodeExecution entity
-│   │   │   │   ├── status.go               # Status value object
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── credential/                 # Credential Aggregate
-│   │   │   │   ├── credential.go           # Credential entity
-│   │   │   │   ├── share.go                # Share entity
-│   │   │   │   ├── types.go                # Credential types
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── schedule/                   # Schedule Aggregate
-│   │   │   │   ├── schedule.go             # Schedule entity
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── webhook/                    # Webhook Aggregate
-│   │   │   │   ├── endpoint.go             # WebhookEndpoint entity
-│   │   │   │   ├── event.go                # WebhookEvent entity
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   ├── billing/                    # Billing Aggregate
-│   │   │   │   ├── subscription.go         # Subscription entity
-│   │   │   │   ├── plan.go                 # Plan entity
-│   │   │   │   ├── usage.go                # Usage entity
-│   │   │   │   ├── invoice.go              # Invoice entity
-│   │   │   │   ├── repository.go           # Repository interface
-│   │   │   │   └── errors.go
-│   │   │   │
-│   │   │   └── template/                   # Template Aggregate
-│   │   │       ├── template.go
-│   │   │       ├── category.go
-│   │   │       ├── repository.go
-│   │   │       └── errors.go
+│   │   │   ├── user/
+│   │   │   ├── workspace/
+│   │   │   ├── workflow/
+│   │   │   ├── execution/
+│   │   │   ├── credential/
+│   │   │   ├── schedule/
+│   │   │   ├── webhook/
+│   │   │   ├── billing/
+│   │   │   ├── template/
+│   │   │   └── folder/
 │   │   │
-│   │   └── application/                    # Application Services (Use Cases)
-│   │       │
-│   │       ├── command/                    # Write Operations (CQRS)
-│   │       │   ├── user/
-│   │       │   │   ├── register_user.go
-│   │       │   │   └── login_user.go
-│   │       │   ├── workspace/
-│   │       │   │   └── create_workspace.go
-│   │       │   ├── workflow/
-│   │       │   │   ├── create_workflow.go
-│   │       │   │   ├── update_workflow.go
-│   │       │   │   └── activate_workflow.go
-│   │       │   ├── execution/
-│   │       │   │   └── start_execution.go
-│   │       │   ├── credential/
-│   │       │   │   ├── create_credential.go
-│   │       │   │   ├── update_credential.go
-│   │       │   │   ├── delete_credential.go
-│   │       │   │   ├── share_credential.go
-│   │       │   │   └── test_credential.go
-│   │       │   ├── schedule/
-│   │       │   │   ├── create_schedule.go
-│   │       │   │   ├── update_schedule.go
-│   │       │   │   ├── pause_schedule.go
-│   │       │   │   └── resume_schedule.go
-│   │       │   └── webhook/
-│   │       │       ├── create_endpoint.go
-│   │       │       ├── regenerate_secret.go
-│   │       │       └── trigger_webhook.go
-│   │       │
-│   │       └── query/                      # Read Operations (CQRS)
-│   │           ├── user/
-│   │           │   └── get_user.go
-│   │           ├── workspace/
-│   │           │   └── get_workspace.go
-│   │           ├── workflow/
-│   │           │   ├── get_workflow.go
-│   │           │   └── get_versions.go
-│   │           ├── execution/
-│   │           │   └── get_execution.go
-│   │           ├── credential/
-│   │           │   ├── get_credential.go
-│   │           │   ├── list_credentials.go
-│   │           │   └── get_credential_shares.go
-│   │           ├── schedule/
-│   │           │   ├── get_schedule.go
-│   │           │   └── list_schedules.go
-│   │           └── analytics/
-│   │               ├── get_workspace_analytics.go
-│   │               ├── get_workflow_analytics.go
-│   │               └── get_execution_metrics.go
+│   │   └── application/                    # Application Services (CQRS)
+│   │       ├── command/                    # Write Operations
+│   │       └── query/                      # Read Operations
 │   │
 │   ├── adapters/                           # ADAPTERS LAYER
-│   │   │
 │   │   ├── http/                           # HTTP Adapters (REST API)
-│   │   │   ├── server.go                   # HTTP server setup
-│   │   │   │
-│   │   │   ├── routes/
-│   │   │   │   └── routes.go               # All route registration
-│   │   │   │
-│   │   │   ├── handlers/                   # HTTP handlers (thin layer)
+│   │   │   ├── routes/routes.go            # All route registration
+│   │   │   ├── handlers/                   # HTTP handlers (ONE FILE PER HANDLER)
+│   │   │   │   ├── admin/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── metrics.go
+│   │   │   │   │   ├── stream_stats.go
+│   │   │   │   │   ├── replay_dlq.go
+│   │   │   │   │   └── trim_stream.go
 │   │   │   │   ├── auth/
 │   │   │   │   │   ├── register.go
 │   │   │   │   │   ├── login.go
 │   │   │   │   │   ├── refresh.go
-│   │   │   │   │   └── logout.go
-│   │   │   │   ├── workspace/
-│   │   │   │   │   ├── create.go
-│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── logout.go
+│   │   │   │   │   ├── forgot_password.go
+│   │   │   │   │   ├── reset_password.go
+│   │   │   │   │   ├── setup_mfa.go
+│   │   │   │   │   ├── verify_mfa.go
+│   │   │   │   │   ├── disable_mfa.go
+│   │   │   │   │   ├── oauth_redirect.go
+│   │   │   │   │   └── oauth_callback.go
+│   │   │   │   ├── billing/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── get_plans.go
+│   │   │   │   │   ├── get_subscription.go
+│   │   │   │   │   ├── create_subscription.go
+│   │   │   │   │   ├── cancel_subscription.go
+│   │   │   │   │   ├── get_usage.go
+│   │   │   │   │   ├── get_invoices.go
+│   │   │   │   │   └── stripe_webhook.go
+│   │   │   │   ├── binarydata/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── upload.go
 │   │   │   │   │   ├── list.go
-│   │   │   │   │   ├── update.go
+│   │   │   │   │   ├── get_info.go
+│   │   │   │   │   ├── download.go
 │   │   │   │   │   ├── delete.go
-│   │   │   │   │   └── members.go
-│   │   │   │   ├── workflow/
-│   │   │   │   │   ├── create.go
-│   │   │   │   │   ├── get.go
-│   │   │   │   │   ├── list.go
-│   │   │   │   │   ├── search.go
-│   │   │   │   │   ├── update.go
-│   │   │   │   │   ├── delete.go
-│   │   │   │   │   ├── clone.go
-│   │   │   │   │   ├── activate.go
-│   │   │   │   │   ├── deactivate.go
-│   │   │   │   │   ├── versions.go
-│   │   │   │   │   ├── rollback.go
-│   │   │   │   │   ├── export.go
-│   │   │   │   │   └── import.go
-│   │   │   │   ├── execution/
-│   │   │   │   │   ├── start.go
-│   │   │   │   │   ├── get.go
-│   │   │   │   │   ├── list.go
-│   │   │   │   │   ├── cancel.go
-│   │   │   │   │   └── retry.go
+│   │   │   │   │   ├── stats.go
+│   │   │   │   │   └── cleanup.go
 │   │   │   │   ├── credential/
 │   │   │   │   │   ├── create.go
 │   │   │   │   │   ├── get.go
 │   │   │   │   │   ├── list.go
 │   │   │   │   │   ├── update.go
+│   │   │   │   │   ├── delete.go
+│   │   │   │   │   ├── test.go
+│   │   │   │   │   └── refresh.go
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   ├── dashboard.go
+│   │   │   │   │   └── quick_stats.go
+│   │   │   │   ├── execution/
+│   │   │   │   │   ├── start.go
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── list.go
+│   │   │   │   │   ├── cancel.go
+│   │   │   │   │   ├── retry.go
+│   │   │   │   │   ├── search.go
+│   │   │   │   │   ├── bulk_delete.go
+│   │   │   │   │   ├── replay.go
+│   │   │   │   │   ├── nodes.go
+│   │   │   │   │   ├── get_node.go
+│   │   │   │   │   ├── stats.go
+│   │   │   │   │   ├── waiting.go
+│   │   │   │   │   └── resume.go
+│   │   │   │   ├── folder/
+│   │   │   │   │   ├── create.go
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── list.go
+│   │   │   │   │   ├── tree.go
+│   │   │   │   │   ├── update.go
+│   │   │   │   │   └── delete.go
+│   │   │   │   ├── health/
+│   │   │   │   │   └── health.go
+│   │   │   │   ├── marketplace/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── browse.go
+│   │   │   │   │   ├── featured.go
+│   │   │   │   │   ├── categories.go
+│   │   │   │   │   ├── search.go
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── use.go
+│   │   │   │   │   ├── publish.go
+│   │   │   │   │   ├── my_published.go
+│   │   │   │   │   ├── update.go
+│   │   │   │   │   ├── sync.go
+│   │   │   │   │   ├── unpublish.go
+│   │   │   │   │   ├── rate.go
+│   │   │   │   │   ├── get_my_rating.go
+│   │   │   │   │   ├── list_ratings.go
+│   │   │   │   │   ├── rating_stats.go
+│   │   │   │   │   └── delete_rating.go
+│   │   │   │   ├── nodetypes/
+│   │   │   │   │   ├── list.go
+│   │   │   │   │   ├── categories.go
+│   │   │   │   │   └── get.go
+│   │   │   │   ├── oauth/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── list_providers.go
+│   │   │   │   │   ├── authorize.go
+│   │   │   │   │   └── callback.go
+│   │   │   │   ├── pinneddata/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── get_all.go
+│   │   │   │   │   ├── get_by_node.go
+│   │   │   │   │   ├── set.go
 │   │   │   │   │   └── delete.go
 │   │   │   │   ├── schedule/
 │   │   │   │   │   ├── create.go
@@ -290,259 +418,123 @@ linkflow-v2/
 │   │   │   │   │   ├── delete.go
 │   │   │   │   │   ├── pause.go
 │   │   │   │   │   └── resume.go
+│   │   │   │   ├── share/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── create.go
+│   │   │   │   │   ├── shared_by_me.go
+│   │   │   │   │   ├── shared_with_me.go
+│   │   │   │   │   ├── pending.go
+│   │   │   │   │   ├── accept.go
+│   │   │   │   │   ├── update.go
+│   │   │   │   │   └── revoke.go
+│   │   │   │   ├── template/
+│   │   │   │   │   ├── types.go
+│   │   │   │   │   ├── list.go
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── featured.go
+│   │   │   │   │   ├── categories.go
+│   │   │   │   │   ├── by_category.go
+│   │   │   │   │   ├── search.go
+│   │   │   │   │   └── use.go
+│   │   │   │   ├── user/
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   └── update.go
 │   │   │   │   ├── webhook/
-│   │   │   │   │   └── trigger.go
-│   │   │   │   ├── billing/
-│   │   │   │   │   ├── get_plans.go
-│   │   │   │   │   ├── get_subscription.go
-│   │   │   │   │   ├── get_usage.go
-│   │   │   │   │   ├── get_invoices.go
-│   │   │   │   │   └── stripe_webhook.go
-│   │   │   │   ├── analytics/
-│   │   │   │   │   ├── workspace_analytics.go
-│   │   │   │   │   └── workflow_analytics.go
-│   │   │   │   ├── health/
-│   │   │   │   │   └── health.go
-│   │   │   │   └── admin/
-│   │   │   │       ├── stream_stats.go
-│   │   │   │       └── metrics.go
+│   │   │   │   │   ├── trigger.go
+│   │   │   │   │   ├── create_endpoint.go
+│   │   │   │   │   ├── list_endpoints.go
+│   │   │   │   │   ├── regenerate_secret.go
+│   │   │   │   │   ├── activate.go
+│   │   │   │   │   └── deactivate.go
+│   │   │   │   ├── workflow/
+│   │   │   │   │   ├── create.go
+│   │   │   │   │   ├── get.go
+│   │   │   │   │   ├── list.go
+│   │   │   │   │   ├── search.go
+│   │   │   │   │   ├── update.go
+│   │   │   │   │   ├── delete.go
+│   │   │   │   │   ├── activate.go
+│   │   │   │   │   ├── deactivate.go
+│   │   │   │   │   ├── clone.go
+│   │   │   │   │   ├── duplicate.go
+│   │   │   │   │   ├── export.go
+│   │   │   │   │   ├── import.go
+│   │   │   │   │   ├── validate.go
+│   │   │   │   │   ├── test_node.go
+│   │   │   │   │   ├── versions.go
+│   │   │   │   │   ├── get_version.go
+│   │   │   │   │   ├── rollback.go
+│   │   │   │   │   └── compare_versions.go
+│   │   │   │   └── workspace/
+│   │   │   │       ├── create.go
+│   │   │   │       ├── get.go
+│   │   │   │       ├── list.go
+│   │   │   │       ├── update.go
+│   │   │   │       ├── delete.go
+│   │   │   │       ├── list_members.go
+│   │   │   │       ├── invite_member.go
+│   │   │   │       ├── update_member.go
+│   │   │   │       └── remove_member.go
 │   │   │   │
 │   │   │   ├── middleware/
-│   │   │   │   ├── auth.go                 # JWT authentication
+│   │   │   │   ├── auth.go                 # JWT authentication + GetUserID()
 │   │   │   │   ├── apikey.go               # API key authentication
-│   │   │   │   ├── tenant.go               # Workspace context
-│   │   │   │   ├── ratelimit.go            # Rate limiting
-│   │   │   │   ├── logging.go              # Request logging
-│   │   │   │   ├── recovery.go             # Panic recovery
-│   │   │   │   ├── cors.go                 # CORS handling
-│   │   │   │   ├── metrics.go              # Prometheus metrics
-│   │   │   │   ├── rbac.go                 # Role-based access control
-│   │   │   │   └── idempotency.go          # Idempotency handling
+│   │   │   │   ├── tenant.go               # Workspace context + GetWorkspaceID()
+│   │   │   │   ├── ratelimit.go
+│   │   │   │   ├── logging.go
+│   │   │   │   ├── recovery.go
+│   │   │   │   ├── cors.go
+│   │   │   │   ├── metrics.go
+│   │   │   │   ├── rbac.go
+│   │   │   │   └── idempotency.go
 │   │   │   │
-│   │   │   └── dto/
-│   │   │       └── common/
-│   │   │           └── response.go         # Common response types
+│   │   │   └── dto/common/response.go
 │   │   │
 │   │   ├── persistence/                    # Database Adapters
 │   │   │   ├── postgres/
-│   │   │   │   ├── client.go               # Database client setup
-│   │   │   │   ├── transaction.go          # Transaction wrapper
-│   │   │   │   ├── models/                 # Database models
-│   │   │   │   │   ├── user.go
-│   │   │   │   │   ├── workspace.go
-│   │   │   │   │   ├── workflow.go
-│   │   │   │   │   └── execution.go
-│   │   │   │   ├── repositories/           # Repository implementations
-│   │   │   │   │   ├── user_repository.go
-│   │   │   │   │   ├── workspace_repository.go
-│   │   │   │   │   ├── member_repository.go
-│   │   │   │   │   ├── workflow_repository.go
-│   │   │   │   │   ├── version_repository.go
-│   │   │   │   │   ├── execution_repository.go
-│   │   │   │   │   ├── node_execution_repository.go
-│   │   │   │   │   ├── credential_repository.go
-│   │   │   │   │   ├── schedule_repository.go
-│   │   │   │   │   ├── webhook_repository.go
-│   │   │   │   │   └── session_repository.go
-│   │   │   │   └── mappers/                # Domain ↔ DB mapping
-│   │   │   │       ├── user_mapper.go
-│   │   │   │       ├── workspace_mapper.go
-│   │   │   │       ├── workflow_mapper.go
-│   │   │   │       └── execution_mapper.go
-│   │   │   │
+│   │   │   │   ├── client.go
+│   │   │   │   ├── models/
+│   │   │   │   ├── repositories/
+│   │   │   │   └── mappers/
 │   │   │   └── redis/
-│   │   │       └── client.go               # Redis client
 │   │   │
-│   │   ├── messaging/                      # Message Queue Adapters
-│   │   │   └── asynq/
-│   │   │       └── client.go               # Queue client
-│   │   │
-│   │   ├── websocket/                      # WebSocket Adapter
-│   │   │   ├── hub.go                      # Connection hub
-│   │   │   ├── client.go                   # WebSocket client
-│   │   │   ├── subscriber.go               # Redis subscriber
-│   │   │   ├── events.go                   # Event types
-│   │   │   └── handler.go                  # Connection handler
-│   │   │
-│   │   ├── worker/                         # Background Worker Adapter
+│   │   ├── messaging/asynq/               # Message Queue
+│   │   ├── websocket/                     # WebSocket Adapter
+│   │   ├── worker/                        # Background Worker
 │   │   │   ├── executor/
-│   │   │   │   ├── executor.go             # Main execution orchestrator
-│   │   │   │   ├── processor.go            # Node processor
-│   │   │   │   └── runtime.go              # Runtime context
-│   │   │   │
-│   │   │   ├── nodes/                      # Node Implementations (27 total)
-│   │   │   │   ├── registry.go             # Node registry
-│   │   │   │   ├── interface.go            # Node interface
-│   │   │   │   ├── loader.go               # Auto-registration
-│   │   │   │   │
-│   │   │   │   ├── triggers/               # 3 Trigger Nodes
-│   │   │   │   │   ├── manual.go
-│   │   │   │   │   ├── webhook.go
-│   │   │   │   │   └── schedule.go
-│   │   │   │   │
-│   │   │   │   ├── actions/                # 4 Action Nodes
-│   │   │   │   │   ├── http/
-│   │   │   │   │   │   └── http_request.go
-│   │   │   │   │   ├── email/
-│   │   │   │   │   │   └── send_email.go
-│   │   │   │   │   ├── code/
-│   │   │   │   │   │   └── javascript.go
-│   │   │   │   │   └── transform/
-│   │   │   │   │       └── set.go
-│   │   │   │   │
-│   │   │   │   ├── logic/                  # 10 Logic Nodes
-│   │   │   │   │   ├── if.go
-│   │   │   │   │   ├── switch.go
-│   │   │   │   │   ├── merge.go
-│   │   │   │   │   ├── filter.go
-│   │   │   │   │   ├── sort.go
-│   │   │   │   │   ├── limit.go
-│   │   │   │   │   ├── aggregate.go
-│   │   │   │   │   ├── loop.go
-│   │   │   │   │   ├── wait.go
-│   │   │   │   │   └── noop.go
-│   │   │   │   │
-│   │   │   │   └── integrations/           # 10 Integration Nodes
-│   │   │   │       ├── ai/
-│   │   │   │       │   ├── openai.go
-│   │   │   │       │   └── anthropic.go
-│   │   │   │       ├── cloud/
-│   │   │   │       │   ├── aws_s3.go
-│   │   │   │       │   └── google_drive.go
-│   │   │   │       ├── communication/
-│   │   │   │       │   ├── slack.go
-│   │   │   │       │   ├── discord.go
-│   │   │   │       │   ├── telegram.go
-│   │   │   │       │   └── twilio.go
-│   │   │   │       ├── database/
-│   │   │   │       │   ├── postgres.go
-│   │   │   │       │   ├── mysql.go
-│   │   │   │       │   ├── mongodb.go
-│   │   │   │       │   └── redis.go
-│   │   │   │       ├── crm/
-│   │   │   │       │   ├── salesforce.go
-│   │   │   │       │   ├── hubspot.go
-│   │   │   │       │   ├── airtable.go
-│   │   │   │       │   └── notion.go
-│   │   │   │       └── payment/
-│   │   │   │           └── stripe.go
-│   │   │   │
-│   │   │   ├── middleware/                 # Worker middleware
-│   │   │   │   ├── logging.go
-│   │   │   │   ├── tracing.go
-│   │   │   │   ├── recovery.go
-│   │   │   │   ├── retry.go
-│   │   │   │   └── metrics.go
-│   │   │   │
-│   │   │   ├── cache/
-│   │   │   │   └── cache.go                # Worker caching
-│   │   │   │
-│   │   │   └── types/
-│   │   │       └── node.go                 # Node metadata types
-│   │   │
-│   │   └── scheduler/                      # Scheduler Adapter (Production-ready)
-│   │       ├── server.go                   # Scheduler server
-│   │       ├── poller.go                   # Schedule poller
-│   │       ├── dispatcher.go               # Job dispatcher
-│   │       ├── leader_election.go          # Redis-based leader election (HA)
-│   │       ├── cron.go                     # Cron parser
-│   │       └── metrics.go                  # Scheduler metrics
+│   │   │   └── nodes/                     # 27 Node Types
+│   │   └── scheduler/                     # Cron Scheduler
 │   │
-│   ├── infrastructure/                     # SHARED INFRASTRUCTURE
-│   │   │
-│   │   ├── auth/
-│   │   │   ├── jwt/
-│   │   │   │   ├── manager.go              # JWT token management
-│   │   │   │   └── blacklist.go            # Token blacklist
-│   │   │   └── oauth/
-│   │   │       ├── manager.go              # OAuth flow management
-│   │   │       ├── provider.go             # Provider interface
-│   │   │       └── providers/
-│   │   │           ├── google.go
-│   │   │           └── github.go
-│   │   │
+│   ├── infrastructure/                    # SHARED INFRASTRUCTURE
+│   │   ├── auth/jwt/
+│   │   ├── auth/oauth/
 │   │   ├── crypto/
-│   │   │   ├── encryption.go               # AES-256-GCM encryption
-│   │   │   ├── hashing.go                  # bcrypt hashing
-│   │   │   ├── otp.go                      # TOTP for MFA
-│   │   │   └── signing.go                  # Webhook signatures
-│   │   │
 │   │   ├── email/
-│   │   │   ├── service.go                  # Email service
-│   │   │   ├── template.go                 # Template engine
-│   │   │   ├── sendgrid.go                 # SendGrid HTTP API
-│   │   │   ├── smtp.go                     # SMTP provider
-│   │   │   └── templates/
-│   │   │       ├── welcome.html
-│   │   │       ├── reset_password.html
-│   │   │       ├── invitation.html
-│   │   │       └── execution_failed.html
-│   │   │
 │   │   ├── storage/
-│   │   │   ├── storage.go                  # Storage interface
-│   │   │   ├── s3/
-│   │   │   │   └── client.go               # S3 implementation
-│   │   │   └── local/
-│   │   │       └── filesystem.go           # Local filesystem
-│   │   │
 │   │   ├── cache/
-│   │   │   ├── cache.go                    # Cache interface
-│   │   │   ├── redis_cache.go              # Redis implementation
-│   │   │   ├── memory_cache.go             # In-memory implementation
-│   │   │   └── noop_cache.go               # No-op implementation
-│   │   │
 │   │   ├── observability/
-│   │   │   ├── logger/
-│   │   │   │   └── logger.go               # Logger interface + zerolog
-│   │   │   ├── metrics/
-│   │   │   │   └── metrics.go              # Prometheus metrics
-│   │   │   └── tracing/
-│   │   │       └── tracing.go              # Tracing interface
-│   │   │
 │   │   ├── resilience/
-│   │   │   ├── circuitbreaker.go           # Circuit breaker pattern
-│   │   │   ├── retry.go                    # Retry with backoff
-│   │   │   └── ratelimiter.go              # Rate limiting
-│   │   │
 │   │   ├── validation/
-│   │   │   └── validator.go                # Input validation
-│   │   │
 │   │   └── config/
-│   │       └── config.go                   # Configuration loader
 │   │
-│   └── shared/                             # SHARED KERNEL
+│   └── shared/                            # SHARED KERNEL
 │       ├── types/
-│       │   ├── id.go                       # UUID wrapper
-│       │   ├── pagination.go               # Pagination types
-│       │   ├── filter.go                   # Filter types
-│       │   └── json.go                     # JSON types
-│       │
 │       ├── errors/
-│       │   ├── errors.go                   # Error types
-│       │   └── codes.go                    # Error codes
-│       │
 │       └── events/
-│           ├── event.go                    # Base event interface
-│           └── bus.go                      # Event bus interface
 │
-├── configs/                                # Configuration
-│   ├── config.yaml                         # Default config
-│   ├── config.test.yaml                    # Test config
-│   ├── config.staging.yaml                 # Staging config
-│   └── config.production.yaml              # Production config
-│
-├── deploy/                                 # Deployment
-│   └── ...
-│
-├── docs/                                   # Documentation
-│   └── architecture/
-│       └── STRUCTURE_V2_PLAN.md            # Architecture plan
-│
+├── configs/
+├── deploy/
+├── docs/
+├── migrations/
+├── pkg/
+├── scripts/
 ├── go.mod
 ├── go.sum
 ├── Makefile
-└── AGENTS.md                               # This file
+└── AGENTS.md
 ```
+
+---
 
 ## Dependency Rules
 
@@ -579,6 +571,8 @@ import "internal/adapters/persistence/postgres"
 import "internal/infrastructure/crypto"
 ```
 
+---
+
 ## API Endpoints Reference
 
 ### Authentication
@@ -588,7 +582,19 @@ import "internal/infrastructure/crypto"
 | POST | `/api/v1/auth/login` | Login, get tokens |
 | POST | `/api/v1/auth/refresh` | Refresh access token |
 | POST | `/api/v1/auth/logout` | Invalidate session |
-| GET | `/api/v1/me` | Get current user |
+| POST | `/api/v1/auth/forgot-password` | Request password reset |
+| POST | `/api/v1/auth/reset-password` | Reset password |
+| POST | `/api/v1/auth/mfa/setup` | Setup MFA |
+| POST | `/api/v1/auth/mfa/verify` | Verify MFA code |
+| DELETE | `/api/v1/auth/mfa` | Disable MFA |
+| GET | `/api/v1/auth/oauth/{provider}` | OAuth redirect |
+| GET | `/api/v1/auth/oauth/{provider}/callback` | OAuth callback |
+
+### Users
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users/me` | Get current user |
+| PUT | `/api/v1/users/me` | Update current user |
 
 ### Workspaces
 | Method | Endpoint | Description |
@@ -599,6 +605,9 @@ import "internal/infrastructure/crypto"
 | PUT | `/api/v1/workspaces/{id}` | Update workspace |
 | DELETE | `/api/v1/workspaces/{id}` | Delete workspace |
 | GET | `/api/v1/workspaces/{id}/members` | List members |
+| POST | `/api/v1/workspaces/{id}/members` | Invite member |
+| PUT | `/api/v1/workspaces/{id}/members/{mid}` | Update member |
+| DELETE | `/api/v1/workspaces/{id}/members/{mid}` | Remove member |
 
 ### Workflows (workspace-scoped)
 | Method | Endpoint | Description |
@@ -610,16 +619,31 @@ import "internal/infrastructure/crypto"
 | DELETE | `/api/v1/workspaces/{id}/workflows/{wfId}` | Delete workflow |
 | POST | `/api/v1/workspaces/{id}/workflows/{wfId}/activate` | Activate |
 | POST | `/api/v1/workspaces/{id}/workflows/{wfId}/deactivate` | Deactivate |
+| POST | `/api/v1/workspaces/{id}/workflows/{wfId}/clone` | Clone workflow |
+| POST | `/api/v1/workspaces/{id}/workflows/{wfId}/duplicate` | Duplicate |
+| GET | `/api/v1/workspaces/{id}/workflows/{wfId}/export` | Export JSON |
+| POST | `/api/v1/workspaces/{id}/workflows/import` | Import JSON |
+| POST | `/api/v1/workspaces/{id}/workflows/validate` | Validate |
+| POST | `/api/v1/workspaces/{id}/workflows/test-node` | Test node |
 | GET | `/api/v1/workspaces/{id}/workflows/{wfId}/versions` | List versions |
+| GET | `/api/v1/workspaces/{id}/workflows/{wfId}/versions/{v}` | Get version |
+| POST | `/api/v1/workspaces/{id}/workflows/{wfId}/versions/{v}/rollback` | Rollback |
+| GET | `/api/v1/workspaces/{id}/workflows/{wfId}/compare-versions` | Compare |
 
 ### Executions
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/v1/workspaces/{id}/workflows/{wfId}/execute` | Start execution |
 | GET | `/api/v1/workspaces/{id}/executions` | List executions |
+| GET | `/api/v1/workspaces/{id}/executions/search` | Search executions |
+| GET | `/api/v1/workspaces/{id}/executions/stats` | Get stats |
+| DELETE | `/api/v1/workspaces/{id}/executions/bulk` | Bulk delete |
 | GET | `/api/v1/workspaces/{id}/executions/{exId}` | Get execution |
 | POST | `/api/v1/workspaces/{id}/executions/{exId}/cancel` | Cancel |
 | POST | `/api/v1/workspaces/{id}/executions/{exId}/retry` | Retry |
+| POST | `/api/v1/workspaces/{id}/executions/{exId}/replay` | Replay |
+| GET | `/api/v1/workspaces/{id}/executions/{exId}/nodes` | Get nodes |
+| GET | `/api/v1/workspaces/{id}/waiting-executions` | List waiting |
 
 ### Credentials
 | Method | Endpoint | Description |
@@ -629,6 +653,8 @@ import "internal/infrastructure/crypto"
 | GET | `/api/v1/workspaces/{id}/credentials/{credId}` | Get credential |
 | PUT | `/api/v1/workspaces/{id}/credentials/{credId}` | Update credential |
 | DELETE | `/api/v1/workspaces/{id}/credentials/{credId}` | Delete credential |
+| POST | `/api/v1/workspaces/{id}/credentials/{credId}/test` | Test connection |
+| POST | `/api/v1/workspaces/{id}/credentials/{credId}/refresh` | Refresh token |
 
 ### Schedules
 | Method | Endpoint | Description |
@@ -641,103 +667,87 @@ import "internal/infrastructure/crypto"
 | POST | `/api/v1/workspaces/{id}/schedules/{schId}/pause` | Pause |
 | POST | `/api/v1/workspaces/{id}/schedules/{schId}/resume` | Resume |
 
-### Monitoring
+### Billing
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/billing/plans` | Get available plans |
+| GET | `/api/v1/workspaces/{id}/billing/subscription` | Get subscription |
+| POST | `/api/v1/workspaces/{id}/billing/subscription` | Create subscription |
+| DELETE | `/api/v1/workspaces/{id}/billing/subscription` | Cancel subscription |
+| GET | `/api/v1/workspaces/{id}/billing/usage` | Get usage |
+| GET | `/api/v1/workspaces/{id}/billing/invoices` | Get invoices |
+
+### Templates & Marketplace
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/templates` | List templates |
+| GET | `/api/v1/templates/featured` | Featured templates |
+| GET | `/api/v1/templates/categories` | Categories |
+| GET | `/api/v1/marketplace` | Browse marketplace |
+| GET | `/api/v1/marketplace/featured` | Featured items |
+| POST | `/api/v1/workspaces/{id}/marketplace` | Publish to marketplace |
+
+### Health & Monitoring
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/health` | Health check |
+| GET | `/api/v1/health/live` | Liveness probe |
+| GET | `/api/v1/health/ready` | Readiness probe |
 | GET | `/metrics` | Prometheus metrics |
 
-### Scheduler Health (port 8091)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health/live` | Liveness probe |
-| GET | `/health/ready` | Readiness probe (leader status) |
-| GET | `/metrics` | Scheduler metrics |
-
-## Node Types Reference (27 Total)
-
-### Triggers (3)
-| Type | Description |
-|------|-------------|
-| `trigger.manual` | Manual execution start |
-| `trigger.webhook` | HTTP webhook trigger |
-| `trigger.schedule` | Cron-based scheduling |
-
-### Actions (4)
-| Type | Description |
-|------|-------------|
-| `action.http_request` | HTTP request (GET, POST, etc.) |
-| `action.send_email` | Send email |
-| `action.javascript` | Execute JavaScript |
-| `action.set` | Set variable values |
-
-### Logic (10)
-| Type | Description |
-|------|-------------|
-| `logic.if` | Conditional branching |
-| `logic.switch` | Multi-way branching |
-| `logic.merge` | Merge multiple inputs |
-| `logic.filter` | Filter array data |
-| `logic.sort` | Sort array data |
-| `logic.limit` | Limit/paginate data |
-| `logic.aggregate` | Sum, count, avg, etc. |
-| `logic.loop` | Iterate over items |
-| `logic.wait` | Pause execution |
-| `logic.noop` | No operation (pass-through) |
-
-### Integrations (10)
-| Type | Description |
-|------|-------------|
-| `integration.openai` | OpenAI API |
-| `integration.anthropic` | Anthropic Claude API |
-| `integration.aws_s3` | AWS S3 operations |
-| `integration.google_drive` | Google Drive operations |
-| `integration.slack` | Slack messages |
-| `integration.discord` | Discord messages |
-| `integration.telegram` | Telegram messages |
-| `integration.twilio` | SMS/calls |
-| `integration.postgres` | PostgreSQL queries |
-| `integration.mysql` | MySQL queries |
-| `integration.mongodb` | MongoDB operations |
-| `integration.redis` | Redis commands |
-| `integration.salesforce` | Salesforce CRM |
-| `integration.hubspot` | HubSpot CRM |
-| `integration.airtable` | Airtable bases |
-| `integration.notion` | Notion pages |
-| `integration.stripe` | Stripe payments |
+---
 
 ## Code Patterns
+
+### HTTP Handler Pattern (REQUIRED STRUCTURE)
+```go
+// internal/adapters/http/handlers/billing/get_plans.go
+package billing
+
+import (
+    "net/http"
+    "github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+)
+
+// GetPlansHandler handles get billing plans request
+type GetPlansHandler struct {
+    service BillingService
+}
+
+// NewGetPlansHandler creates a new handler
+func NewGetPlansHandler(service BillingService) *GetPlansHandler {
+    return &GetPlansHandler{service: service}
+}
+
+// Handle handles the request
+func (h *GetPlansHandler) Handle(w http.ResponseWriter, r *http.Request) {
+    plans, err := h.service.GetPlans()
+    if err != nil {
+        common.HandleError(w, err)
+        return
+    }
+    common.Success(w, map[string]interface{}{
+        "plans": plans,
+    })
+}
+```
 
 ### Domain Entity Pattern
 ```go
 // internal/core/domain/workflow/workflow.go
 package workflow
 
-type Workflow struct {
-    id          WorkflowID
-    workspaceID WorkspaceID
-    name        string
-    status      Status
-    nodes       []Node
-    version     int
-}
-
-func NewWorkflow(id WorkflowID, wsID WorkspaceID, name string) *Workflow {
+func NewWorkflow(workspaceID, createdBy uuid.UUID, name string) *Workflow {
     return &Workflow{
-        id:          id,
-        workspaceID: wsID,
-        name:        name,
-        status:      StatusDraft,
-        version:     1,
+        ID:          uuid.New(),
+        WorkspaceID: workspaceID,
+        CreatedBy:   createdBy,
+        Name:        name,
+        Status:      StatusDraft,
+        Version:     1,
+        CreatedAt:   time.Now(),
+        UpdatedAt:   time.Now(),
     }
-}
-
-func (w *Workflow) Activate() error {
-    if len(w.nodes) == 0 {
-        return ErrEmptyWorkflow
-    }
-    w.status = StatusActive
-    return nil
 }
 ```
 
@@ -747,171 +757,44 @@ func (w *Workflow) Activate() error {
 package workflow
 
 type Repository interface {
-    Save(ctx context.Context, workflow *Workflow) error
-    FindByID(ctx context.Context, id WorkflowID) (*Workflow, error)
-    FindByWorkspace(ctx context.Context, wsID WorkspaceID, opts ListOptions) ([]*Workflow, int64, error)
-    Delete(ctx context.Context, id WorkflowID) error
+    Create(ctx context.Context, workflow *Workflow) error
+    Update(ctx context.Context, workflow *Workflow) error
+    Delete(ctx context.Context, id uuid.UUID) error
+    FindByID(ctx context.Context, id uuid.UUID) (*Workflow, error)
+    FindByWorkspaceID(ctx context.Context, wsID uuid.UUID, opts *ListOptions) ([]Workflow, int64, error)
 }
 ```
 
-### Command Handler Pattern (CQRS)
-```go
-// internal/core/application/command/workflow/create_workflow.go
-package workflow
+---
 
-type CreateWorkflowCommand struct {
-    WorkspaceID uuid.UUID
-    Name        string
-    Nodes       []workflow.Node
-}
+## Development Commands
 
-type CreateWorkflowHandler struct {
-    workflowRepo workflow.Repository
-}
-
-func (h *CreateWorkflowHandler) Handle(ctx context.Context, cmd CreateWorkflowCommand) (*workflow.Workflow, error) {
-    wf := workflow.NewWorkflow(
-        workflow.WorkflowID(uuid.New()),
-        workflow.WorkspaceID(cmd.WorkspaceID),
-        cmd.Name,
-    )
-    
-    if err := h.workflowRepo.Save(ctx, wf); err != nil {
-        return nil, err
-    }
-    
-    return wf, nil
-}
-```
-
-### HTTP Handler Pattern
-```go
-// internal/adapters/http/handlers/workflow/create.go
-package workflow
-
-func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
-    // 1. Parse request
-    var req CreateRequest
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "invalid request", http.StatusBadRequest)
-        return
-    }
-    
-    // 2. Create command
-    cmd := command.CreateWorkflowCommand{
-        WorkspaceID: getWorkspaceID(r),
-        Name:        req.Name,
-    }
-    
-    // 3. Execute
-    result, err := h.handler.Handle(r.Context(), cmd)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    
-    // 4. Return response
-    json.NewEncoder(w).Encode(result)
-}
-```
-
-### Node Implementation Pattern
-```go
-// internal/adapters/worker/nodes/logic/if.go
-package logic
-
-type IfNode struct{}
-
-func (n *IfNode) Execute(ctx context.Context, input NodeInput) (*NodeOutput, error) {
-    condition := input.Parameters["condition"].(string)
-    
-    result, err := evaluateCondition(condition, input.Data)
-    if err != nil {
-        return nil, err
-    }
-    
-    return &NodeOutput{
-        Data:   input.Data,
-        Branch: result,
-    }, nil
-}
-
-func (n *IfNode) Metadata() NodeMetadata {
-    return NodeMetadata{
-        Type:        "logic.if",
-        Name:        "If",
-        Description: "Conditional branching",
-        Category:    "logic",
-    }
-}
-```
-
-## Development Setup
-
-### Prerequisites
 ```bash
-go version   # 1.23+
-docker -v    # 20+
-docker compose version  # 2.0+
+# Build
+make build              # Build all binaries
+make build-api          # Build API only
+
+# Development
+make dev-infra          # Start Postgres + Redis in Docker
+make dev-api            # Start infra + run API locally
+make dev-worker         # Start infra + run Worker locally
+
+# Docker
+make docker-dev-up      # Start full stack in Docker
+make docker-dev-down    # Stop Docker stack
+
+# Testing
+make test               # Run tests
+make test-coverage      # Run with coverage
+make lint               # Run golangci-lint
+
+# Verification (run before commits)
+go build ./...          # Must pass
+go vet ./...            # Must pass
+go test ./...           # Fix failures
 ```
 
-### Quick Start
-```bash
-# 1. Start infrastructure
-docker compose up -d postgres redis
-
-# 2. Configure
-cp configs/config.yaml.example configs/config.yaml
-
-# 3. Run services (3 terminals)
-go run cmd/api/main.go        # API on :8080
-go run cmd/worker/main.go     # Worker
-go run cmd/scheduler/main.go  # Scheduler on :8091 (health)
-```
-
-### Build Commands
-```bash
-go build ./...                    # Build all
-go build -o bin/api cmd/api       # Build API
-go build -o bin/worker cmd/worker # Build worker
-go build -o bin/scheduler cmd/scheduler # Build scheduler
-
-go test ./...                     # Run tests
-```
-
-## Common Tasks
-
-### Adding a New Domain Aggregate
-
-1. Create directory: `internal/core/domain/{aggregate}/`
-2. Add files: `entity.go`, `repository.go`, `errors.go`
-3. Define entity with business methods
-4. Define repository interface
-
-### Adding a New Use Case
-
-1. Create command: `internal/core/application/command/{aggregate}/`
-2. Or query: `internal/core/application/query/{aggregate}/`
-3. Define Command/Query struct
-4. Implement Handler with Handle method
-
-### Adding a New API Endpoint
-
-1. Create handler: `internal/adapters/http/handlers/{resource}/`
-2. Add route in `internal/adapters/http/routes/routes.go`
-3. Wire dependencies in `cmd/api/wire.go`
-
-### Adding a New Node Type
-
-1. Create node: `internal/adapters/worker/nodes/{category}/`
-2. Implement `Node` interface (Execute, Metadata)
-3. Register in `internal/adapters/worker/nodes/loader.go`
-
-### Adding a New Repository Implementation
-
-1. Create in `internal/adapters/persistence/postgres/repositories/`
-2. Implement domain repository interface
-3. Add mappers in `mappers/` if needed
+---
 
 ## Security Considerations
 
@@ -921,6 +804,10 @@ go test ./...                     # Run tests
 4. **Rate Limiting**: Per-user, per-workspace, per-endpoint
 5. **RBAC**: Role-based access control middleware
 6. **Input Validation**: All requests validated
+7. **Error Returns**: Always check and handle errors
+8. **Secrets**: Never log sensitive data
+
+---
 
 ## Deployment
 
@@ -932,14 +819,7 @@ go test ./...                     # Run tests
 - [ ] Set up monitoring (Prometheus + Grafana)
 - [ ] Configure log aggregation
 - [ ] Set up database backups
-- [ ] Deploy multiple scheduler instances (leader election enabled)
+- [ ] Deploy multiple scheduler instances (leader election)
 - [ ] Scale workers based on load
 
-### Scheduler High Availability
-The scheduler uses Redis-based leader election. Deploy multiple instances:
-```yaml
-# Only the leader polls and dispatches
-# Other instances remain on standby
-# Health endpoints show leader status
-```
 </coding_guidelines>
