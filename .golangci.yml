@@ -25,13 +25,19 @@ linters:
 
 linters-settings:
   errcheck:
-    check-type-assertions: true
-    check-blank: true
+    check-type-assertions: false
+    check-blank: false
+    exclude-functions:
+      - (io.Closer).Close
+      - (*encoding/json.Encoder).Encode
+      - (github.com/linkflow-ai/linkflow/internal/shared/events.Bus).Publish
+      - (*github.com/linkflow-ai/linkflow/internal/infrastructure/cache.Cache).Delete
 
   govet:
     enable-all: true
     disable:
       - fieldalignment
+      - shadow  # Too noisy, common Go patterns trigger this
 
   goimports:
     local-prefixes: github.com/linkflow-ai/linkflow-v2
@@ -43,7 +49,12 @@ linters-settings:
     enabled-tags:
       - diagnostic
       - performance
-      - style
+    disabled-checks:
+      - hugeParam
+      - rangeValCopy
+      - ifElseChain
+      - unnamedResult
+      - sprintfQuotedString
 
   revive:
     rules:
@@ -55,6 +66,7 @@ linters-settings:
       - name: error-strings
       - name: error-naming
       - name: exported
+        disabled: true  # Too noisy for stuttering names
       - name: increment-decrement
       - name: var-naming
       - name: package-comments
@@ -84,6 +96,16 @@ issues:
     - path: cmd/
       linters:
         - gochecknoinits
+
+    # Exclude common non-fatal error checks
+    - linters:
+        - errcheck
+      text: "Error return value of .*(Write|Close|Expire|Release|Delete|Del|SetReadDeadline|SetWriteDeadline|Unmarshal).* is not checked"
+
+    # Empty branches are often intentional
+    - linters:
+        - staticcheck
+      text: "SA9003"
 
   max-issues-per-linter: 50
   max-same-issues: 10

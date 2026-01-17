@@ -59,10 +59,8 @@ func (h *ResetPasswordHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Invalidate all sessions
-	if err := h.sessionRepo.RevokeAllUserSessions(r.Context(), userID); err != nil {
-		// Non-fatal, continue
-	}
+	// Invalidate all sessions (non-fatal if fails)
+	_ = h.sessionRepo.RevokeAllUserSessions(r.Context(), userID)
 
 	// Delete the token from cache (mark as used)
 	_ = h.cache.Delete(r.Context(), cacheKey)

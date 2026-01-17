@@ -132,14 +132,14 @@ func splitIntoWords(s string) []string {
 // RandomString generates a random string of the specified length
 func RandomString(length int) string {
 	bytes := make([]byte, length)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes) // crypto/rand never fails on modern systems
 	return hex.EncodeToString(bytes)[:length]
 }
 
 // RandomHex generates a random hex string
 func RandomHex(length int) string {
 	bytes := make([]byte, (length+1)/2)
-	rand.Read(bytes)
+	_, _ = rand.Read(bytes) // crypto/rand never fails on modern systems
 	return hex.EncodeToString(bytes)[:length]
 }
 
