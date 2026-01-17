@@ -10,34 +10,34 @@ import (
 
 // User entity (aggregate root)
 type User struct {
-	ID                      uuid.UUID           `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	Email                   string              `gorm:"uniqueIndex;size:255;not null" json:"email"`
-	Username                *string             `gorm:"uniqueIndex;size:100" json:"username,omitempty"`
-	PasswordHash            string              `gorm:"size:255" json:"-"`
-	FirstName               string              `gorm:"size:100" json:"first_name"`
-	LastName                string              `gorm:"size:100" json:"last_name"`
-	AvatarURL               *string             `gorm:"size:500" json:"avatar_url,omitempty"`
-	Phone                   *string             `gorm:"size:20" json:"phone,omitempty"`
-	Bio                     *string             `gorm:"type:text" json:"bio,omitempty"`
-	JobTitle                *string             `gorm:"size:100" json:"job_title,omitempty"`
-	Company                 *string             `gorm:"size:100" json:"company,omitempty"`
-	Timezone                string              `gorm:"size:50;default:UTC" json:"timezone"`
-	Language                string              `gorm:"size:10;default:en" json:"language"`
-	DateFormat              string              `gorm:"size:20;default:MM/DD/YYYY" json:"date_format"`
-	TimeFormat              string              `gorm:"size:5;default:12h" json:"time_format"`
-	Theme                   string              `gorm:"size:10;default:system" json:"theme"`
-	NotificationPreferences types.JSON          `gorm:"type:jsonb;default:'{}'" json:"notification_preferences"`
-	Status                  Status              `gorm:"size:20;default:active;index" json:"status"`
-	EmailVerified           bool                `gorm:"default:false" json:"email_verified"`
-	MFAEnabled              bool                `gorm:"default:false" json:"mfa_enabled"`
-	MFASecret               *string             `gorm:"size:255" json:"-"`
-	LastLoginAt             *time.Time          `json:"last_login_at,omitempty"`
-	LoginCount              int                 `gorm:"default:0" json:"login_count"`
-	FailedLogins            int                 `gorm:"default:0" json:"-"`
-	LockedUntil             *time.Time          `json:"-"`
-	CreatedAt               time.Time           `json:"created_at"`
-	UpdatedAt               time.Time           `json:"updated_at"`
-	DeletedAt               gorm.DeletedAt      `gorm:"index" json:"-"`
+	ID                      uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Email                   string         `gorm:"uniqueIndex;size:255;not null" json:"email"`
+	Username                *string        `gorm:"uniqueIndex;size:100" json:"username,omitempty"`
+	PasswordHash            string         `gorm:"size:255" json:"-"`
+	FirstName               string         `gorm:"size:100" json:"first_name"`
+	LastName                string         `gorm:"size:100" json:"last_name"`
+	AvatarURL               *string        `gorm:"size:500" json:"avatar_url,omitempty"`
+	Phone                   *string        `gorm:"size:20" json:"phone,omitempty"`
+	Bio                     *string        `gorm:"type:text" json:"bio,omitempty"`
+	JobTitle                *string        `gorm:"size:100" json:"job_title,omitempty"`
+	Company                 *string        `gorm:"size:100" json:"company,omitempty"`
+	Timezone                string         `gorm:"size:50;default:UTC" json:"timezone"`
+	Language                string         `gorm:"size:10;default:en" json:"language"`
+	DateFormat              string         `gorm:"size:20;default:MM/DD/YYYY" json:"date_format"`
+	TimeFormat              string         `gorm:"size:5;default:12h" json:"time_format"`
+	Theme                   string         `gorm:"size:10;default:system" json:"theme"`
+	NotificationPreferences types.JSON     `gorm:"type:jsonb;default:'{}'" json:"notification_preferences"`
+	Status                  Status         `gorm:"size:20;default:active;index" json:"status"`
+	EmailVerified           bool           `gorm:"default:false" json:"email_verified"`
+	MFAEnabled              bool           `gorm:"default:false" json:"mfa_enabled"`
+	MFASecret               *string        `gorm:"size:255" json:"-"`
+	LastLoginAt             *time.Time     `json:"last_login_at,omitempty"`
+	LoginCount              int            `gorm:"default:0" json:"login_count"`
+	FailedLogins            int            `gorm:"default:0" json:"-"`
+	LockedUntil             *time.Time     `json:"-"`
+	CreatedAt               time.Time      `json:"created_at"`
+	UpdatedAt               time.Time      `json:"updated_at"`
+	DeletedAt               gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (User) TableName() string {

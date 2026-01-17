@@ -126,9 +126,33 @@ seed-clean:
 seed-fresh: dev-infra
 	$(GOCMD) run ./cmd/seed -clean=true
 
-# Linting
+# Linting & Security
 lint:
 	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
+
+security:
+	gosec -fmt=json -out=gosec-results.json ./... || true
+	@echo "Security scan complete. Results in gosec-results.json"
+
+vuln:
+	govulncheck ./...
+
+# All checks (CI equivalent)
+check: lint security test
+	@echo "All checks passed!"
+
+# Install development tools
+tools:
+	@echo "Installing development tools..."
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
+	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install github.com/air-verse/air@latest
+	go install github.com/google/wire/cmd/wire@latest
+	@echo "Tools installed!"
 
 # Generate
 generate:
@@ -169,7 +193,16 @@ help:
 	@echo "Testing:"
 	@echo "  make test           - Run tests"
 	@echo "  make test-coverage  - Run with coverage"
-	@echo "  make lint           - Run linter"
+	@echo ""
+	@echo "Linting & Security:"
+	@echo "  make lint           - Run golangci-lint"
+	@echo "  make lint-fix       - Run linter with auto-fix"
+	@echo "  make security       - Run gosec security scan"
+	@echo "  make vuln           - Check for vulnerabilities"
+	@echo "  make check          - Run all checks (lint + security + test)"
+	@echo ""
+	@echo "Tools:"
+	@echo "  make tools          - Install all dev tools"
 	@echo ""
 	@echo "Seeding:"
 	@echo "  make seed           - Seed development data"

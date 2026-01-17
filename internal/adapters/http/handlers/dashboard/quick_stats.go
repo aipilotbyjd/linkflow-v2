@@ -33,10 +33,10 @@ func NewQuickStatsHandler(
 }
 
 type QuickStatsResponse struct {
-	Workflows    WorkflowQuickStats    `json:"workflows"`
-	Executions   ExecutionQuickStats   `json:"executions"`
-	Credentials  CredentialQuickStats  `json:"credentials"`
-	Schedules    ScheduleQuickStats    `json:"schedules"`
+	Workflows   WorkflowQuickStats   `json:"workflows"`
+	Executions  ExecutionQuickStats  `json:"executions"`
+	Credentials CredentialQuickStats `json:"credentials"`
+	Schedules   ScheduleQuickStats   `json:"schedules"`
 }
 
 type WorkflowQuickStats struct {
@@ -93,7 +93,7 @@ func (h *QuickStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	_, credTotal, _ := h.credentialRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
 	response.Credentials.Total = credTotal
 
-	// Get schedule stats  
+	// Get schedule stats
 	schedules, schTotal, _ := h.scheduleRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
 	response.Schedules.Total = schTotal
 	for _, sch := range schedules {

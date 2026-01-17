@@ -85,8 +85,8 @@ func (d DateRange) IsEmpty() bool {
 
 // SearchQuery represents a full-text search query
 type SearchQuery struct {
-	Query   string   `json:"query"`
-	Fields  []string `json:"fields"`
-	Fuzzy   bool     `json:"fuzzy"`
-	Prefix  bool     `json:"prefix"`
+	Query  string   `json:"query"`
+	Fields []string `json:"fields"`
+	Fuzzy  bool     `json:"fuzzy"`
+	Prefix bool     `json:"prefix"`
 }

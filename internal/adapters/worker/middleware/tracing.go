@@ -10,9 +10,9 @@ type traceContextKey struct{}
 
 // TraceInfo contains trace information for a task
 type TraceInfo struct {
-	TraceID string
-	SpanID  string
-	TaskID  string
+	TraceID  string
+	SpanID   string
+	TaskID   string
 	TaskType string
 }
 

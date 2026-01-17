@@ -88,7 +88,7 @@ func (p *GoogleProvider) Exchange(ctx context.Context, code string) (*oauth.Toke
 }
 
 func (p *GoogleProvider) GetUser(ctx context.Context, token *oauth.Token) (*oauth.UserInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://www.googleapis.com/oauth2/v2/userinfo", http.NoBody)
 	if err != nil {
 		return nil, err
 	}

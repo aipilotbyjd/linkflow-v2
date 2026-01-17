@@ -94,7 +94,7 @@ func (r *Runtime) GetInputData() types.JSON {
 func (r *Runtime) GetOutputData() types.JSON {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if len(r.nodeOutputs) == 0 {
 		return nil
 	}
@@ -122,7 +122,7 @@ func (r *Runtime) GetVariable(key string) interface{} {
 func (r *Runtime) GetCredentialValue(credType, key string) string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	credKey := credType + ":" + key
 	if val, ok := r.variables[credKey].(string); ok {
 		return val
@@ -134,7 +134,7 @@ func (r *Runtime) GetCredentialValue(credType, key string) string {
 func (r *Runtime) SetCredentialValues(credType string, values map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	for key, value := range values {
 		r.variables[credType+":"+key] = value
 	}

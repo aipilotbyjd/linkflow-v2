@@ -34,7 +34,7 @@ func (h *LogoutHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// Get the token and full claims from context
 	token := middleware.GetTokenFromContext(r.Context())
 	jwtClaims := middleware.GetClaimsFromContext(r.Context())
-	
+
 	if token != "" && h.blacklist != nil && jwtClaims != nil {
 		// Blacklist the current token
 		_ = h.blacklist.AddWithExpiration(r.Context(), token, jwtClaims.ExpiresAt.Time)

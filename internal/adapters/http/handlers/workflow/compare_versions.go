@@ -108,10 +108,10 @@ type arrayCompareResult struct {
 
 func compareJSONArrays(arr1, arr2 types.JSONArray, basePath string) arrayCompareResult {
 	result := arrayCompareResult{}
-	
+
 	len1 := len(arr1)
 	len2 := len(arr2)
-	
+
 	if len2 > len1 {
 		result.added = len2 - len1
 		result.diffs = append(result.diffs, VersionDifference{

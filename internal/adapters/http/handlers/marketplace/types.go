@@ -44,9 +44,9 @@ type Rating struct {
 
 // RatingStats represents rating statistics
 type RatingStats struct {
-	Average      float64        `json:"average"`
-	Total        int            `json:"total"`
-	Distribution map[int]int    `json:"distribution"`
+	Average      float64     `json:"average"`
+	Total        int         `json:"total"`
+	Distribution map[int]int `json:"distribution"`
 }
 
 // GetMarketplaceTemplates returns sample marketplace templates

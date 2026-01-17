@@ -25,7 +25,7 @@ func NewHandler(checkers ...interface{}) *Handler {
 		version:   "1.0.0",
 		startTime: time.Now(),
 	}
-	
+
 	for i, checker := range checkers {
 		if hc, ok := checker.(HealthChecker); ok {
 			if i == 0 {
@@ -37,7 +37,7 @@ func NewHandler(checkers ...interface{}) *Handler {
 			h.version = v
 		}
 	}
-	
+
 	return h
 }
 

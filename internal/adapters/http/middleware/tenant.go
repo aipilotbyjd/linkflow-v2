@@ -64,7 +64,7 @@ func Tenant(memberRepo workspace.MemberRepository, workspaceRepo workspace.Repos
 				Role:        member.Role,
 			}
 			ctx := context.WithValue(r.Context(), WorkspaceContextKey, wsCtx)
-			
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

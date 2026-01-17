@@ -4,17 +4,17 @@ import "encoding/json"
 
 // Node represents a workflow node
 type Node struct {
-	ID         string                 `json:"id"`
-	Type       string                 `json:"type"`
-	Name       string                 `json:"name"`
-	Position   Position               `json:"position"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
-	Credentials []NodeCredential      `json:"credentials,omitempty"`
-	Disabled   bool                   `json:"disabled,omitempty"`
-	Notes      string                 `json:"notes,omitempty"`
-	RetryOnFail bool                  `json:"retry_on_fail,omitempty"`
-	MaxRetries int                    `json:"max_retries,omitempty"`
-	Timeout    int                    `json:"timeout,omitempty"` // seconds
+	ID          string                 `json:"id"`
+	Type        string                 `json:"type"`
+	Name        string                 `json:"name"`
+	Position    Position               `json:"position"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	Credentials []NodeCredential       `json:"credentials,omitempty"`
+	Disabled    bool                   `json:"disabled,omitempty"`
+	Notes       string                 `json:"notes,omitempty"`
+	RetryOnFail bool                   `json:"retry_on_fail,omitempty"`
+	MaxRetries  int                    `json:"max_retries,omitempty"`
+	Timeout     int                    `json:"timeout,omitempty"` // seconds
 }
 
 // Position represents node position on canvas
@@ -65,7 +65,7 @@ type NodeTypeInfo struct {
 // ParseNodeType parses a node type string (e.g., "trigger.webhook")
 func ParseNodeType(nodeType string) NodeTypeInfo {
 	info := NodeTypeInfo{Full: nodeType}
-	
+
 	for i, c := range nodeType {
 		if c == '.' {
 			info.Category = nodeType[:i]
@@ -73,7 +73,7 @@ func ParseNodeType(nodeType string) NodeTypeInfo {
 			return info
 		}
 	}
-	
+
 	info.Category = nodeType
 	return info
 }

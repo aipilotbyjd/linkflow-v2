@@ -40,9 +40,9 @@ func NewShare(credentialID, userID, sharedBy uuid.UUID, permission Permission) *
 type Permission string
 
 const (
-	PermissionUse   Permission = "use"
-	PermissionView  Permission = "view"
-	PermissionEdit  Permission = "edit"
+	PermissionUse  Permission = "use"
+	PermissionView Permission = "view"
+	PermissionEdit Permission = "edit"
 )
 
 func (p Permission) String() string {

@@ -8,19 +8,19 @@ import (
 )
 
 type User struct {
-	ID            uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Email         string         `gorm:"size:255;uniqueIndex;not null"`
-	PasswordHash  string         `gorm:"size:255;not null"`
-	FirstName     string         `gorm:"size:100"`
-	LastName      string         `gorm:"size:100"`
-	AvatarURL     *string        `gorm:"size:500"`
-	Phone         *string        `gorm:"size:20"`
-	Timezone      string         `gorm:"size:50;default:UTC"`
-	Language      string         `gorm:"size:10;default:en"`
-	Status        string         `gorm:"size:20;default:active;index"`
-	MFAEnabled    bool           `gorm:"default:false"`
-	MFASecret     *string        `gorm:"size:100"`
-	EmailVerified bool           `gorm:"default:false"`
+	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email         string    `gorm:"size:255;uniqueIndex;not null"`
+	PasswordHash  string    `gorm:"size:255;not null"`
+	FirstName     string    `gorm:"size:100"`
+	LastName      string    `gorm:"size:100"`
+	AvatarURL     *string   `gorm:"size:500"`
+	Phone         *string   `gorm:"size:20"`
+	Timezone      string    `gorm:"size:50;default:UTC"`
+	Language      string    `gorm:"size:10;default:en"`
+	Status        string    `gorm:"size:20;default:active;index"`
+	MFAEnabled    bool      `gorm:"default:false"`
+	MFASecret     *string   `gorm:"size:100"`
+	EmailVerified bool      `gorm:"default:false"`
 	LastLoginAt   *time.Time
 	LockedUntil   *time.Time
 	CreatedAt     time.Time
@@ -33,12 +33,12 @@ func (User) TableName() string {
 }
 
 type UserSession struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID       uuid.UUID      `gorm:"type:uuid;index;not null"`
-	RefreshToken string         `gorm:"size:500;uniqueIndex;not null"`
-	UserAgent    *string        `gorm:"size:500"`
-	IPAddress    *string        `gorm:"size:45"`
-	ExpiresAt    time.Time      `gorm:"not null"`
+	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID       uuid.UUID `gorm:"type:uuid;index;not null"`
+	RefreshToken string    `gorm:"size:500;uniqueIndex;not null"`
+	UserAgent    *string   `gorm:"size:500"`
+	IPAddress    *string   `gorm:"size:45"`
+	ExpiresAt    time.Time `gorm:"not null"`
 	LastUsedAt   *time.Time
 	RevokedAt    *time.Time
 	CreatedAt    time.Time

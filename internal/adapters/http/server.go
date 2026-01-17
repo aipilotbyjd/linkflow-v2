@@ -13,9 +13,9 @@ import (
 
 // Server represents the HTTP server
 type Server struct {
-	server   *http.Server
-	config   *config.ServerConfig
-	logger   logger.Logger
+	server *http.Server
+	config *config.ServerConfig
+	logger logger.Logger
 }
 
 // NewServer creates a new HTTP server

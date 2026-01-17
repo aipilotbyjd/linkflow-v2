@@ -20,8 +20,8 @@ type BinaryData struct {
 
 // BinaryDataStats represents binary data statistics
 type BinaryDataStats struct {
-	TotalFiles     int                     `json:"totalFiles"`
-	TotalSizeBytes int64                   `json:"totalSizeBytes"`
+	TotalFiles     int                      `json:"totalFiles"`
+	TotalSizeBytes int64                    `json:"totalSizeBytes"`
 	ByMimeType     map[string]MimeTypeStats `json:"byMimeType"`
 }
 

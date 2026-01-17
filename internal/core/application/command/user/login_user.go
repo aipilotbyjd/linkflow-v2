@@ -109,7 +109,7 @@ func (h *LoginUserHandler) Handle(ctx context.Context, cmd LoginUserCommand) (*L
 	// Create session
 	session := user.NewSession(u.ID, crypto.HashSHA256(tokenPair.AccessToken), tokenPair.ExpiresAt)
 	session.WithDeviceInfo(cmd.IPAddress, cmd.UserAgent, nil)
-	
+
 	if err := h.sessionRepo.Create(ctx, session); err != nil {
 		// Non-fatal, continue
 	}

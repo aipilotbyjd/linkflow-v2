@@ -76,12 +76,12 @@ func NewConnectionMap(connections []Connection) *ConnectionMap {
 		bySource: make(map[string][]Connection),
 		byTarget: make(map[string][]Connection),
 	}
-	
+
 	for _, conn := range connections {
 		cm.bySource[conn.SourceNode] = append(cm.bySource[conn.SourceNode], conn)
 		cm.byTarget[conn.TargetNode] = append(cm.byTarget[conn.TargetNode], conn)
 	}
-	
+
 	return cm
 }
 

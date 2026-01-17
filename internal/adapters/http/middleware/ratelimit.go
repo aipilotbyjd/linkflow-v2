@@ -66,17 +66,17 @@ func (rl *RateLimiter) cleanupVisitors() {
 // RateLimit creates a rate limiting middleware
 func RateLimit(requestsPerMinute, burst int) func(http.Handler) http.Handler {
 	rl := NewRateLimiter(requestsPerMinute, burst)
-	
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ip := getClientIP(r)
 			limiter := rl.getVisitor(ip)
-			
+
 			if !limiter.Allow() {
 				common.RateLimited(w)
 				return
 			}
-			
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -85,7 +85,7 @@ func RateLimit(requestsPerMinute, burst int) func(http.Handler) http.Handler {
 // RateLimitByUser creates a rate limiting middleware keyed by user ID
 func RateLimitByUser(requestsPerMinute, burst int) func(http.Handler) http.Handler {
 	rl := NewRateLimiter(requestsPerMinute, burst)
-	
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user := GetUserFromContext(r.Context())
@@ -93,14 +93,14 @@ func RateLimitByUser(requestsPerMinute, burst int) func(http.Handler) http.Handl
 			if user != nil {
 				key = user.UserID.String()
 			}
-			
+
 			limiter := rl.getVisitor(key)
-			
+
 			if !limiter.Allow() {
 				common.RateLimited(w)
 				return
 			}
-			
+
 			next.ServeHTTP(w, r)
 		})
 	}

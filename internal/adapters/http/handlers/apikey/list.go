@@ -17,13 +17,13 @@ func NewListAPIKeysHandler(apiKeyRepo user.APIKeyRepository) *ListAPIKeysHandler
 }
 
 type APIKeyResponse struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	KeyPrefix   string   `json:"key_prefix"`
-	Scopes      []string `json:"scopes"`
-	LastUsedAt  *string  `json:"last_used_at,omitempty"`
-	ExpiresAt   *string  `json:"expires_at,omitempty"`
-	CreatedAt   string   `json:"created_at"`
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	KeyPrefix  string   `json:"key_prefix"`
+	Scopes     []string `json:"scopes"`
+	LastUsedAt *string  `json:"last_used_at,omitempty"`
+	ExpiresAt  *string  `json:"expires_at,omitempty"`
+	CreatedAt  string   `json:"created_at"`
 }
 
 func (h *ListAPIKeysHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +44,7 @@ func (h *ListAPIKeysHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		if key.IsRevoked() {
 			continue
 		}
-		
+
 		resp := APIKeyResponse{
 			ID:        key.ID.String(),
 			Name:      key.Name,

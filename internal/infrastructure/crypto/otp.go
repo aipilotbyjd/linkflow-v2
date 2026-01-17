@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	otpDigits   = 6
-	otpPeriod   = 30 // seconds
-	otpSkew     = 1  // allow 1 period before/after
+	otpDigits = 6
+	otpPeriod = 30 // seconds
+	otpSkew   = 1  // allow 1 period before/after
 )
 
 // OTP provides TOTP (Time-based One-Time Password) functionality
@@ -54,7 +54,7 @@ func (o *OTP) GenerateURI(secret, accountName string) string {
 func (o *OTP) Validate(secret, code string) bool {
 	// Clean up the secret
 	secret = strings.ToUpper(strings.TrimSpace(secret))
-	
+
 	// Decode the secret
 	key, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(secret)
 	if err != nil {
@@ -78,7 +78,7 @@ func (o *OTP) Validate(secret, code string) bool {
 // Generate generates the current TOTP code for a secret
 func (o *OTP) Generate(secret string) (string, error) {
 	secret = strings.ToUpper(strings.TrimSpace(secret))
-	
+
 	key, err := base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(secret)
 	if err != nil {
 		return "", fmt.Errorf("invalid secret: %w", err)

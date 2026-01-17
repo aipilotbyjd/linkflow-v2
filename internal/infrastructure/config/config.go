@@ -49,14 +49,14 @@ type ServerConfig struct {
 
 // DatabaseConfig holds database settings
 type DatabaseConfig struct {
-	Host         string `mapstructure:"host"`
-	Port         int    `mapstructure:"port"`
-	User         string `mapstructure:"user"`
-	Password     string `mapstructure:"password"`
-	Name         string `mapstructure:"name"`
-	SSLMode      string `mapstructure:"sslmode"`
-	MaxOpenConns int    `mapstructure:"max_open_conns"`
-	MaxIdleConns int    `mapstructure:"max_idle_conns"`
+	Host         string        `mapstructure:"host"`
+	Port         int           `mapstructure:"port"`
+	User         string        `mapstructure:"user"`
+	Password     string        `mapstructure:"password"`
+	Name         string        `mapstructure:"name"`
+	SSLMode      string        `mapstructure:"sslmode"`
+	MaxOpenConns int           `mapstructure:"max_open_conns"`
+	MaxIdleConns int           `mapstructure:"max_idle_conns"`
 	MaxLifetime  time.Duration `mapstructure:"max_lifetime"`
 }
 
@@ -121,9 +121,9 @@ type WebhookStreamConfig struct {
 
 // RateLimitConfig holds rate limiting settings
 type RateLimitConfig struct {
-	Enabled       bool `mapstructure:"enabled"`
-	RequestsPerMinute int `mapstructure:"requests_per_minute"`
-	BurstSize     int  `mapstructure:"burst_size"`
+	Enabled           bool `mapstructure:"enabled"`
+	RequestsPerMinute int  `mapstructure:"requests_per_minute"`
+	BurstSize         int  `mapstructure:"burst_size"`
 }
 
 // ExecutionConfig holds execution settings
@@ -142,9 +142,9 @@ type MetricsConfig struct {
 
 // StorageConfig holds file storage settings
 type StorageConfig struct {
-	Provider  string      `mapstructure:"provider"` // local, s3
-	LocalPath string      `mapstructure:"local_path"`
-	S3        S3Config    `mapstructure:"s3"`
+	Provider  string   `mapstructure:"provider"` // local, s3
+	LocalPath string   `mapstructure:"local_path"`
+	S3        S3Config `mapstructure:"s3"`
 }
 
 // S3Config holds S3 storage settings
@@ -159,12 +159,12 @@ type S3Config struct {
 
 // WorkerConfig holds worker settings
 type WorkerConfig struct {
-	Concurrency    int           `mapstructure:"concurrency"`
-	Queues         []string      `mapstructure:"queues"`
-	StrictPriority bool          `mapstructure:"strict_priority"`
-	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
+	Concurrency         int           `mapstructure:"concurrency"`
+	Queues              []string      `mapstructure:"queues"`
+	StrictPriority      bool          `mapstructure:"strict_priority"`
+	ShutdownTimeout     time.Duration `mapstructure:"shutdown_timeout"`
 	HealthCheckInterval time.Duration `mapstructure:"health_check_interval"`
-	RetryLimit     int           `mapstructure:"retry_limit"`
+	RetryLimit          int           `mapstructure:"retry_limit"`
 }
 
 // SchedulerConfig holds scheduler settings
@@ -220,9 +220,9 @@ type RetryConfig struct {
 
 // RateLimiterConfig holds rate limiter settings
 type RateLimiterConfig struct {
-	Enabled    bool    `mapstructure:"enabled"`
-	Rate       float64 `mapstructure:"rate"`
-	Burst      int     `mapstructure:"burst"`
+	Enabled bool    `mapstructure:"enabled"`
+	Rate    float64 `mapstructure:"rate"`
+	Burst   int     `mapstructure:"burst"`
 }
 
 // Load loads configuration from file and environment

@@ -44,7 +44,7 @@ type NoopMetricsCollector struct{}
 
 func (n *NoopMetricsCollector) RecordHTTPRequest(method, path string, statusCode int, duration time.Duration) {
 }
-func (n *NoopMetricsCollector) IncrementActiveRequests()  {}
+func (n *NoopMetricsCollector) IncrementActiveRequests() {}
 func (n *NoopMetricsCollector) DecrementActiveRequests() {}
 
 // PrometheusMiddleware wraps prometheus metrics

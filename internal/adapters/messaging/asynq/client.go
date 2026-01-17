@@ -95,9 +95,9 @@ func (c *Client) EnqueueWorkflowExecution(ctx context.Context, payload ExecuteWo
 
 // SendEmailPayload represents the payload for sending email
 type SendEmailPayload struct {
-	To       string `json:"to"`
-	Subject  string `json:"subject"`
-	Template string `json:"template"`
+	To       string                 `json:"to"`
+	Subject  string                 `json:"subject"`
+	Template string                 `json:"template"`
 	Data     map[string]interface{} `json:"data,omitempty"`
 }
 

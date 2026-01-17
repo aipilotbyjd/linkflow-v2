@@ -28,8 +28,8 @@ type UserRegistered struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserRegistered) EventType() string { return EventUserRegistered }
-func (e UserRegistered) AggregateID() string { return e.UserID.String() }
+func (e UserRegistered) EventType() string     { return EventUserRegistered }
+func (e UserRegistered) AggregateID() string   { return e.UserID.String() }
 func (e UserRegistered) OccurredAt() time.Time { return e.Timestamp }
 
 // UserLoggedIn event
@@ -41,8 +41,8 @@ type UserLoggedIn struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserLoggedIn) EventType() string { return EventUserLoggedIn }
-func (e UserLoggedIn) AggregateID() string { return e.UserID.String() }
+func (e UserLoggedIn) EventType() string     { return EventUserLoggedIn }
+func (e UserLoggedIn) AggregateID() string   { return e.UserID.String() }
 func (e UserLoggedIn) OccurredAt() time.Time { return e.Timestamp }
 
 // UserLoggedOut event
@@ -52,8 +52,8 @@ type UserLoggedOut struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserLoggedOut) EventType() string { return EventUserLoggedOut }
-func (e UserLoggedOut) AggregateID() string { return e.UserID.String() }
+func (e UserLoggedOut) EventType() string     { return EventUserLoggedOut }
+func (e UserLoggedOut) AggregateID() string   { return e.UserID.String() }
 func (e UserLoggedOut) OccurredAt() time.Time { return e.Timestamp }
 
 // UserUpdated event
@@ -63,8 +63,8 @@ type UserUpdated struct {
 	Timestamp time.Time         `json:"timestamp"`
 }
 
-func (e UserUpdated) EventType() string { return EventUserUpdated }
-func (e UserUpdated) AggregateID() string { return e.UserID.String() }
+func (e UserUpdated) EventType() string     { return EventUserUpdated }
+func (e UserUpdated) AggregateID() string   { return e.UserID.String() }
 func (e UserUpdated) OccurredAt() time.Time { return e.Timestamp }
 
 // UserEmailVerified event
@@ -74,8 +74,8 @@ type UserEmailVerified struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserEmailVerified) EventType() string { return EventUserEmailVerified }
-func (e UserEmailVerified) AggregateID() string { return e.UserID.String() }
+func (e UserEmailVerified) EventType() string     { return EventUserEmailVerified }
+func (e UserEmailVerified) AggregateID() string   { return e.UserID.String() }
 func (e UserEmailVerified) OccurredAt() time.Time { return e.Timestamp }
 
 // UserPasswordChanged event
@@ -84,8 +84,8 @@ type UserPasswordChanged struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserPasswordChanged) EventType() string { return EventUserPasswordChanged }
-func (e UserPasswordChanged) AggregateID() string { return e.UserID.String() }
+func (e UserPasswordChanged) EventType() string     { return EventUserPasswordChanged }
+func (e UserPasswordChanged) AggregateID() string   { return e.UserID.String() }
 func (e UserPasswordChanged) OccurredAt() time.Time { return e.Timestamp }
 
 // UserMFAEnabled event
@@ -94,8 +94,8 @@ type UserMFAEnabled struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserMFAEnabled) EventType() string { return EventUserMFAEnabled }
-func (e UserMFAEnabled) AggregateID() string { return e.UserID.String() }
+func (e UserMFAEnabled) EventType() string     { return EventUserMFAEnabled }
+func (e UserMFAEnabled) AggregateID() string   { return e.UserID.String() }
 func (e UserMFAEnabled) OccurredAt() time.Time { return e.Timestamp }
 
 // UserMFADisabled event
@@ -104,6 +104,6 @@ type UserMFADisabled struct {
 	Timestamp time.Time `json:"timestamp"`
 }
 
-func (e UserMFADisabled) EventType() string { return EventUserMFADisabled }
-func (e UserMFADisabled) AggregateID() string { return e.UserID.String() }
+func (e UserMFADisabled) EventType() string     { return EventUserMFADisabled }
+func (e UserMFADisabled) AggregateID() string   { return e.UserID.String() }
 func (e UserMFADisabled) OccurredAt() time.Time { return e.Timestamp }

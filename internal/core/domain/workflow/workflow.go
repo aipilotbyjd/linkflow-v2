@@ -10,31 +10,31 @@ import (
 
 // Workflow entity (aggregate root)
 type Workflow struct {
-	ID              uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID     uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	CreatedBy       uuid.UUID      `gorm:"type:uuid;not null" json:"created_by"`
-	Name            string         `gorm:"size:255;not null" json:"name"`
-	Description     *string        `gorm:"type:text" json:"description,omitempty"`
-	Status          Status         `gorm:"size:20;not null;default:draft;index" json:"status"`
-	Version         int            `gorm:"not null;default:1" json:"version"`
-	Nodes           types.JSONArray `gorm:"type:jsonb;not null;default:'[]'" json:"nodes"`
-	Connections     types.JSONArray `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
-	Settings        types.JSON     `gorm:"type:jsonb;default:'{}'" json:"settings"`
+	ID              uuid.UUID         `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID     uuid.UUID         `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	CreatedBy       uuid.UUID         `gorm:"type:uuid;not null" json:"created_by"`
+	Name            string            `gorm:"size:255;not null" json:"name"`
+	Description     *string           `gorm:"type:text" json:"description,omitempty"`
+	Status          Status            `gorm:"size:20;not null;default:draft;index" json:"status"`
+	Version         int               `gorm:"not null;default:1" json:"version"`
+	Nodes           types.JSONArray   `gorm:"type:jsonb;not null;default:'[]'" json:"nodes"`
+	Connections     types.JSONArray   `gorm:"type:jsonb;not null;default:'[]'" json:"connections"`
+	Settings        types.JSON        `gorm:"type:jsonb;default:'{}'" json:"settings"`
 	Tags            types.StringArray `gorm:"type:text[]" json:"tags"`
-	Color           *string        `gorm:"size:20" json:"color,omitempty"`
-	Icon            *string        `gorm:"size:50" json:"icon,omitempty"`
-	Category        *string        `gorm:"size:50" json:"category,omitempty"`
-	IsFavorite      bool           `gorm:"default:false" json:"is_favorite"`
-	FolderID        *uuid.UUID     `gorm:"type:uuid;column:project_id" json:"folder_id,omitempty"`
-	ErrorWorkflowID *uuid.UUID     `gorm:"type:uuid" json:"error_workflow_id,omitempty"`
-	ErrorTrigger    *string        `gorm:"size:50" json:"error_trigger,omitempty"`
-	ExecutionCount  int            `gorm:"default:0" json:"execution_count"`
-	LastExecutedAt  *time.Time     `json:"last_executed_at,omitempty"`
-	ActivatedAt     *time.Time     `json:"activated_at,omitempty"`
-	ArchivedAt      *time.Time     `json:"archived_at,omitempty"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+	Color           *string           `gorm:"size:20" json:"color,omitempty"`
+	Icon            *string           `gorm:"size:50" json:"icon,omitempty"`
+	Category        *string           `gorm:"size:50" json:"category,omitempty"`
+	IsFavorite      bool              `gorm:"default:false" json:"is_favorite"`
+	FolderID        *uuid.UUID        `gorm:"type:uuid;column:project_id" json:"folder_id,omitempty"`
+	ErrorWorkflowID *uuid.UUID        `gorm:"type:uuid" json:"error_workflow_id,omitempty"`
+	ErrorTrigger    *string           `gorm:"size:50" json:"error_trigger,omitempty"`
+	ExecutionCount  int               `gorm:"default:0" json:"execution_count"`
+	LastExecutedAt  *time.Time        `json:"last_executed_at,omitempty"`
+	ActivatedAt     *time.Time        `json:"activated_at,omitempty"`
+	ArchivedAt      *time.Time        `json:"archived_at,omitempty"`
+	CreatedAt       time.Time         `json:"created_at"`
+	UpdatedAt       time.Time         `json:"updated_at"`
+	DeletedAt       gorm.DeletedAt    `gorm:"index" json:"-"`
 }
 
 func (Workflow) TableName() string {

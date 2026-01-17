@@ -78,14 +78,14 @@ func (h *UpdateMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			common.HandleError(w, err)
 			return
 		}
-		
+
 		ownerCount := 0
 		for _, m := range owners {
 			if m.Role == workspace.RoleOwner {
 				ownerCount++
 			}
 		}
-		
+
 		if ownerCount <= 1 {
 			common.Error(w, http.StatusBadRequest, "LAST_OWNER", "Cannot demote the last owner")
 			return

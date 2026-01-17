@@ -9,10 +9,10 @@ import (
 type InvoiceStatus string
 
 const (
-	InvoiceDraft     InvoiceStatus = "draft"
-	InvoiceOpen      InvoiceStatus = "open"
-	InvoicePaid      InvoiceStatus = "paid"
-	InvoiceVoid      InvoiceStatus = "void"
+	InvoiceDraft         InvoiceStatus = "draft"
+	InvoiceOpen          InvoiceStatus = "open"
+	InvoicePaid          InvoiceStatus = "paid"
+	InvoiceVoid          InvoiceStatus = "void"
 	InvoiceUncollectible InvoiceStatus = "uncollectible"
 )
 

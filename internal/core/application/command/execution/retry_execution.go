@@ -32,7 +32,7 @@ func (h *RetryExecutionHandler) Handle(ctx context.Context, cmd RetryExecutionCo
 		return nil, execution.ErrExecutionNotFound
 	}
 
-	// Can only retry failed or cancelled executions
+	// Can only retry failed or canceled executions
 	if original.Status != execution.StatusFailed && original.Status != execution.StatusCancelled {
 		return nil, execution.ErrCannotRetry
 	}

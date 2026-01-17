@@ -163,7 +163,7 @@ func HandleError(w http.ResponseWriter, err error) {
 	}
 
 	status := errors.GetHTTPStatus(err)
-	
+
 	var domainErr *errors.DomainError
 	if stderrors.As(err, &domainErr) {
 		ErrorWithDetails(w, status, domainErr.Code, domainErr.Message, domainErr.Details)
@@ -185,5 +185,3 @@ func HandleError(w http.ResponseWriter, err error) {
 		InternalError(w, "")
 	}
 }
-
-

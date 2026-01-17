@@ -54,12 +54,12 @@ func (rl *RateLimiter) AllowN(n int) bool {
 	return true
 }
 
-// Wait blocks until a request is allowed or context is cancelled
+// Wait blocks until a request is allowed or context is canceled
 func (rl *RateLimiter) Wait(ctx context.Context) error {
 	return rl.WaitN(ctx, 1)
 }
 
-// WaitN blocks until n requests are allowed or context is cancelled
+// WaitN blocks until n requests are allowed or context is canceled
 func (rl *RateLimiter) WaitN(ctx context.Context, n int) error {
 	for {
 		if rl.AllowN(n) {
@@ -100,10 +100,10 @@ func (rl *RateLimiter) Reserve() time.Duration {
 
 // SlidingWindowRateLimiter implements a sliding window rate limiter
 type SlidingWindowRateLimiter struct {
-	limit      int
-	window     time.Duration
-	requests   []time.Time
-	mu         sync.Mutex
+	limit    int
+	window   time.Duration
+	requests []time.Time
+	mu       sync.Mutex
 }
 
 // NewSlidingWindowRateLimiter creates a new sliding window rate limiter

@@ -36,7 +36,7 @@ func (h *OAuthCallbackHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
 
 	var req OAuthCallbackRequest
-	
+
 	if r.Method == http.MethodGet {
 		req.Code = r.URL.Query().Get("code")
 		req.State = r.URL.Query().Get("state")

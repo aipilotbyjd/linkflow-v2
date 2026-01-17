@@ -3,76 +3,76 @@ package errors
 // Error codes for consistent error handling across the application
 const (
 	// Authentication errors (1xxx)
-	CodeInvalidCredentials   = "AUTH_1001"
-	CodeTokenExpired         = "AUTH_1002"
-	CodeTokenInvalid         = "AUTH_1003"
-	CodeSessionExpired       = "AUTH_1004"
-	CodeMFARequired          = "AUTH_1005"
-	CodeMFAInvalid           = "AUTH_1006"
-	CodeAccountLocked        = "AUTH_1007"
-	CodeEmailNotVerified     = "AUTH_1008"
-	CodePasswordTooWeak      = "AUTH_1009"
-	CodeOAuthError           = "AUTH_1010"
+	CodeInvalidCredentials = "AUTH_1001"
+	CodeTokenExpired       = "AUTH_1002"
+	CodeTokenInvalid       = "AUTH_1003"
+	CodeSessionExpired     = "AUTH_1004"
+	CodeMFARequired        = "AUTH_1005"
+	CodeMFAInvalid         = "AUTH_1006"
+	CodeAccountLocked      = "AUTH_1007"
+	CodeEmailNotVerified   = "AUTH_1008"
+	CodePasswordTooWeak    = "AUTH_1009"
+	CodeOAuthError         = "AUTH_1010"
 
 	// Authorization errors (2xxx)
-	CodeAccessDenied         = "AUTHZ_2001"
-	CodeInsufficientRole     = "AUTHZ_2002"
-	CodeResourceNotOwned     = "AUTHZ_2003"
-	CodeWorkspaceRequired    = "AUTHZ_2004"
+	CodeAccessDenied      = "AUTHZ_2001"
+	CodeInsufficientRole  = "AUTHZ_2002"
+	CodeResourceNotOwned  = "AUTHZ_2003"
+	CodeWorkspaceRequired = "AUTHZ_2004"
 
 	// Validation errors (3xxx)
-	CodeValidationFailed     = "VAL_3001"
-	CodeRequiredField        = "VAL_3002"
-	CodeInvalidFormat        = "VAL_3003"
-	CodeOutOfRange           = "VAL_3004"
-	CodeDuplicateValue       = "VAL_3005"
-	CodeInvalidJSON          = "VAL_3006"
+	CodeValidationFailed = "VAL_3001"
+	CodeRequiredField    = "VAL_3002"
+	CodeInvalidFormat    = "VAL_3003"
+	CodeOutOfRange       = "VAL_3004"
+	CodeDuplicateValue   = "VAL_3005"
+	CodeInvalidJSON      = "VAL_3006"
 
 	// Resource errors (4xxx)
-	CodeNotFound             = "RES_4001"
-	CodeAlreadyExists        = "RES_4002"
-	CodeConflict             = "RES_4003"
-	CodeDependencyExists     = "RES_4004"
-	CodeResourceLocked       = "RES_4005"
+	CodeNotFound         = "RES_4001"
+	CodeAlreadyExists    = "RES_4002"
+	CodeConflict         = "RES_4003"
+	CodeDependencyExists = "RES_4004"
+	CodeResourceLocked   = "RES_4005"
 
 	// Workflow errors (5xxx)
-	CodeWorkflowInactive     = "WF_5001"
-	CodeWorkflowInvalid      = "WF_5002"
-	CodeNoTriggerNode        = "WF_5003"
-	CodeCircularDependency   = "WF_5004"
-	CodeNodeNotFound         = "WF_5005"
-	CodeConnectionInvalid    = "WF_5006"
+	CodeWorkflowInactive   = "WF_5001"
+	CodeWorkflowInvalid    = "WF_5002"
+	CodeNoTriggerNode      = "WF_5003"
+	CodeCircularDependency = "WF_5004"
+	CodeNodeNotFound       = "WF_5005"
+	CodeConnectionInvalid  = "WF_5006"
 
 	// Execution errors (6xxx)
-	CodeExecutionFailed      = "EXEC_6001"
-	CodeExecutionTimeout     = "EXEC_6002"
-	CodeExecutionCancelled   = "EXEC_6003"
-	CodeNodeExecutionFailed  = "EXEC_6004"
-	CodeRetryLimitExceeded   = "EXEC_6005"
-	CodeInvalidTriggerData   = "EXEC_6006"
+	CodeExecutionFailed     = "EXEC_6001"
+	CodeExecutionTimeout    = "EXEC_6002"
+	CodeExecutionCancelled  = "EXEC_6003"
+	CodeNodeExecutionFailed = "EXEC_6004"
+	CodeRetryLimitExceeded  = "EXEC_6005"
+	CodeInvalidTriggerData  = "EXEC_6006"
 
 	// Credential errors (7xxx)
-	CodeCredentialInvalid    = "CRED_7001"
-	CodeCredentialExpired    = "CRED_7002"
-	CodeCredentialNotShared  = "CRED_7003"
-	CodeEncryptionError      = "CRED_7004"
+	CodeCredentialInvalid   = "CRED_7001"
+	CodeCredentialExpired   = "CRED_7002"
+	CodeCredentialNotShared = "CRED_7003"
+	CodeEncryptionError     = "CRED_7004"
 
 	// Rate limiting errors (8xxx)
-	CodeRateLimited          = "RATE_8001"
-	CodeQuotaExceeded        = "RATE_8002"
-	CodePlanLimitReached     = "RATE_8003"
+	CodeRateLimited      = "RATE_8001"
+	CodeQuotaExceeded    = "RATE_8002"
+	CodePlanLimitReached = "RATE_8003"
 
 	// Integration errors (9xxx)
-	CodeIntegrationError     = "INT_9001"
-	CodeAPIError             = "INT_9002"
-	CodeConnectionFailed     = "INT_9003"
-	CodeResponseInvalid      = "INT_9004"
+	CodeIntegrationError = "INT_9001"
+	CodeAPIError         = "INT_9002"
+	CodeConnectionFailed = "INT_9003"
+	CodeResponseInvalid  = "INT_9004"
 
 	// Internal errors (10xxx)
-	CodeInternalError        = "INT_10001"
-	CodeDatabaseError        = "INT_10002"
-	CodeCacheError           = "INT_10003"
-	CodeQueueError           = "INT_10004"
+	CodeInternalError = "INT_10001"
+	CodeDatabaseError = "INT_10002"
+	CodeCacheError    = "INT_10003"
+	CodeQueueError    = "INT_10004"
 )
 
 // ErrorMessages maps error codes to human-readable messages
@@ -110,7 +110,7 @@ var ErrorMessages = map[string]string{
 	CodeConnectionInvalid:   "Invalid connection",
 	CodeExecutionFailed:     "Execution failed",
 	CodeExecutionTimeout:    "Execution timed out",
-	CodeExecutionCancelled:  "Execution cancelled",
+	CodeExecutionCancelled:  "Execution canceled",
 	CodeNodeExecutionFailed: "Node execution failed",
 	CodeRetryLimitExceeded:  "Retry limit exceeded",
 	CodeInvalidTriggerData:  "Invalid trigger data",

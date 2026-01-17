@@ -82,7 +82,7 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 
 func (e *Executor) executeWorkflow(ctx context.Context, runtime *Runtime) error {
 	nodes := runtime.GetNodes()
-	
+
 	triggerNode := findTriggerNode(nodes)
 	if triggerNode == nil {
 		return fmt.Errorf("no trigger node found")

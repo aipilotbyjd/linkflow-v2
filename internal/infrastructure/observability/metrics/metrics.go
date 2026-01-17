@@ -10,32 +10,32 @@ import (
 // Metrics holds all application metrics
 type Metrics struct {
 	// HTTP metrics
-	HTTPRequestsTotal    *prometheus.CounterVec
-	HTTPRequestDuration  *prometheus.HistogramVec
-	HTTPActiveRequests   prometheus.Gauge
+	HTTPRequestsTotal   *prometheus.CounterVec
+	HTTPRequestDuration *prometheus.HistogramVec
+	HTTPActiveRequests  prometheus.Gauge
 
 	// Workflow metrics
-	WorkflowExecutions   *prometheus.CounterVec
-	WorkflowDuration     *prometheus.HistogramVec
-	WorkflowActive       prometheus.Gauge
+	WorkflowExecutions *prometheus.CounterVec
+	WorkflowDuration   *prometheus.HistogramVec
+	WorkflowActive     prometheus.Gauge
 
 	// Node metrics
-	NodeExecutions       *prometheus.CounterVec
-	NodeDuration         *prometheus.HistogramVec
-	NodeRetries          *prometheus.CounterVec
+	NodeExecutions *prometheus.CounterVec
+	NodeDuration   *prometheus.HistogramVec
+	NodeRetries    *prometheus.CounterVec
 
 	// Queue metrics
-	QueueSize            *prometheus.GaugeVec
-	QueueLatency         *prometheus.HistogramVec
-	QueueProcessed       *prometheus.CounterVec
+	QueueSize      *prometheus.GaugeVec
+	QueueLatency   *prometheus.HistogramVec
+	QueueProcessed *prometheus.CounterVec
 
 	// Database metrics
-	DBConnections        prometheus.Gauge
-	DBQueryDuration      *prometheus.HistogramVec
+	DBConnections   prometheus.Gauge
+	DBQueryDuration *prometheus.HistogramVec
 
 	// Cache metrics
-	CacheHits            prometheus.Counter
-	CacheMisses          prometheus.Counter
+	CacheHits   prometheus.Counter
+	CacheMisses prometheus.Counter
 }
 
 // New creates and registers all metrics

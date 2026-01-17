@@ -4,19 +4,19 @@ import "encoding/json"
 
 // Settings represents workflow settings
 type Settings struct {
-	TimeoutSeconds     int               `json:"timeout_seconds,omitempty"`
-	RetryOnFailure     bool              `json:"retry_on_failure,omitempty"`
-	MaxRetries         int               `json:"max_retries,omitempty"`
-	RetryDelaySeconds  int               `json:"retry_delay_seconds,omitempty"`
-	SaveExecutionData  bool              `json:"save_execution_data,omitempty"`
-	Timezone           string            `json:"timezone,omitempty"`
-	ErrorWorkflowID    string            `json:"error_workflow_id,omitempty"`
-	Variables          map[string]string `json:"variables,omitempty"`
-	Tags               []string          `json:"tags,omitempty"`
-	ExecutionOrder     string            `json:"execution_order,omitempty"` // sequential, parallel
-	ConcurrencyLimit   int               `json:"concurrency_limit,omitempty"`
-	DeduplicationKey   string            `json:"deduplication_key,omitempty"`
-	DeduplicationTTL   int               `json:"deduplication_ttl,omitempty"` // seconds
+	TimeoutSeconds    int               `json:"timeout_seconds,omitempty"`
+	RetryOnFailure    bool              `json:"retry_on_failure,omitempty"`
+	MaxRetries        int               `json:"max_retries,omitempty"`
+	RetryDelaySeconds int               `json:"retry_delay_seconds,omitempty"`
+	SaveExecutionData bool              `json:"save_execution_data,omitempty"`
+	Timezone          string            `json:"timezone,omitempty"`
+	ErrorWorkflowID   string            `json:"error_workflow_id,omitempty"`
+	Variables         map[string]string `json:"variables,omitempty"`
+	Tags              []string          `json:"tags,omitempty"`
+	ExecutionOrder    string            `json:"execution_order,omitempty"` // sequential, parallel
+	ConcurrencyLimit  int               `json:"concurrency_limit,omitempty"`
+	DeduplicationKey  string            `json:"deduplication_key,omitempty"`
+	DeduplicationTTL  int               `json:"deduplication_ttl,omitempty"` // seconds
 }
 
 // DefaultSettings returns default workflow settings

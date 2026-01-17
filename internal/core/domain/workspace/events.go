@@ -8,14 +8,14 @@ import (
 
 // Event types
 const (
-	EventWorkspaceCreated       = "workspace.created"
-	EventWorkspaceUpdated       = "workspace.updated"
-	EventWorkspaceDeleted       = "workspace.deleted"
-	EventMemberInvited          = "workspace.member_invited"
-	EventMemberJoined           = "workspace.member_joined"
-	EventMemberRemoved          = "workspace.member_removed"
-	EventMemberRoleChanged      = "workspace.member_role_changed"
-	EventWorkspacePlanChanged   = "workspace.plan_changed"
+	EventWorkspaceCreated     = "workspace.created"
+	EventWorkspaceUpdated     = "workspace.updated"
+	EventWorkspaceDeleted     = "workspace.deleted"
+	EventMemberInvited        = "workspace.member_invited"
+	EventMemberJoined         = "workspace.member_joined"
+	EventMemberRemoved        = "workspace.member_removed"
+	EventMemberRoleChanged    = "workspace.member_role_changed"
+	EventWorkspacePlanChanged = "workspace.plan_changed"
 )
 
 // WorkspaceCreated event
@@ -28,8 +28,8 @@ type WorkspaceCreated struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e WorkspaceCreated) EventType() string    { return EventWorkspaceCreated }
-func (e WorkspaceCreated) AggregateID() string  { return e.WorkspaceID.String() }
+func (e WorkspaceCreated) EventType() string     { return EventWorkspaceCreated }
+func (e WorkspaceCreated) AggregateID() string   { return e.WorkspaceID.String() }
 func (e WorkspaceCreated) OccurredAt() time.Time { return e.Timestamp }
 
 // WorkspaceUpdated event
@@ -40,8 +40,8 @@ type WorkspaceUpdated struct {
 	Timestamp   time.Time         `json:"timestamp"`
 }
 
-func (e WorkspaceUpdated) EventType() string    { return EventWorkspaceUpdated }
-func (e WorkspaceUpdated) AggregateID() string  { return e.WorkspaceID.String() }
+func (e WorkspaceUpdated) EventType() string     { return EventWorkspaceUpdated }
+func (e WorkspaceUpdated) AggregateID() string   { return e.WorkspaceID.String() }
 func (e WorkspaceUpdated) OccurredAt() time.Time { return e.Timestamp }
 
 // WorkspaceDeleted event
@@ -51,8 +51,8 @@ type WorkspaceDeleted struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e WorkspaceDeleted) EventType() string    { return EventWorkspaceDeleted }
-func (e WorkspaceDeleted) AggregateID() string  { return e.WorkspaceID.String() }
+func (e WorkspaceDeleted) EventType() string     { return EventWorkspaceDeleted }
+func (e WorkspaceDeleted) AggregateID() string   { return e.WorkspaceID.String() }
 func (e WorkspaceDeleted) OccurredAt() time.Time { return e.Timestamp }
 
 // MemberInvited event
@@ -64,8 +64,8 @@ type MemberInvited struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e MemberInvited) EventType() string    { return EventMemberInvited }
-func (e MemberInvited) AggregateID() string  { return e.WorkspaceID.String() }
+func (e MemberInvited) EventType() string     { return EventMemberInvited }
+func (e MemberInvited) AggregateID() string   { return e.WorkspaceID.String() }
 func (e MemberInvited) OccurredAt() time.Time { return e.Timestamp }
 
 // MemberJoined event
@@ -76,8 +76,8 @@ type MemberJoined struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e MemberJoined) EventType() string    { return EventMemberJoined }
-func (e MemberJoined) AggregateID() string  { return e.WorkspaceID.String() }
+func (e MemberJoined) EventType() string     { return EventMemberJoined }
+func (e MemberJoined) AggregateID() string   { return e.WorkspaceID.String() }
 func (e MemberJoined) OccurredAt() time.Time { return e.Timestamp }
 
 // MemberRemoved event
@@ -88,8 +88,8 @@ type MemberRemoved struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e MemberRemoved) EventType() string    { return EventMemberRemoved }
-func (e MemberRemoved) AggregateID() string  { return e.WorkspaceID.String() }
+func (e MemberRemoved) EventType() string     { return EventMemberRemoved }
+func (e MemberRemoved) AggregateID() string   { return e.WorkspaceID.String() }
 func (e MemberRemoved) OccurredAt() time.Time { return e.Timestamp }
 
 // MemberRoleChanged event
@@ -102,8 +102,8 @@ type MemberRoleChanged struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e MemberRoleChanged) EventType() string    { return EventMemberRoleChanged }
-func (e MemberRoleChanged) AggregateID() string  { return e.WorkspaceID.String() }
+func (e MemberRoleChanged) EventType() string     { return EventMemberRoleChanged }
+func (e MemberRoleChanged) AggregateID() string   { return e.WorkspaceID.String() }
 func (e MemberRoleChanged) OccurredAt() time.Time { return e.Timestamp }
 
 // WorkspacePlanChanged event
@@ -115,6 +115,6 @@ type WorkspacePlanChanged struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e WorkspacePlanChanged) EventType() string    { return EventWorkspacePlanChanged }
-func (e WorkspacePlanChanged) AggregateID() string  { return e.WorkspaceID.String() }
+func (e WorkspacePlanChanged) EventType() string     { return EventWorkspacePlanChanged }
+func (e WorkspacePlanChanged) AggregateID() string   { return e.WorkspaceID.String() }
 func (e WorkspacePlanChanged) OccurredAt() time.Time { return e.Timestamp }

@@ -8,7 +8,7 @@ const (
 	StatusRunning   Status = "running"
 	StatusCompleted Status = "completed"
 	StatusFailed    Status = "failed"
-	StatusCancelled Status = "cancelled"
+	StatusCancelled Status = "canceled"
 	StatusTimeout   Status = "timeout"
 	StatusWaiting   Status = "waiting"
 )

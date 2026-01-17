@@ -31,60 +31,60 @@ func NewDashboardHandler(
 }
 
 type DashboardResponse struct {
-	Summary            SummaryStats         `json:"summary"`
-	RecentExecutions   []ExecutionSummary   `json:"recent_executions"`
-	TopWorkflows       []WorkflowStats      `json:"top_workflows"`
-	RecentFailures     []ExecutionSummary   `json:"recent_failures"`
-	ExecutionsByDay    []DailyStats         `json:"executions_by_day"`
-	ExecutionsByHour   []HourlyStats        `json:"executions_by_hour"`
-	UpcomingSchedules  []ScheduleSummary    `json:"upcoming_schedules"`
-	StatusDistribution map[string]int64     `json:"status_distribution"`
-	TriggerTypeStats   map[string]int64     `json:"trigger_type_stats"`
+	Summary            SummaryStats       `json:"summary"`
+	RecentExecutions   []ExecutionSummary `json:"recent_executions"`
+	TopWorkflows       []WorkflowStats    `json:"top_workflows"`
+	RecentFailures     []ExecutionSummary `json:"recent_failures"`
+	ExecutionsByDay    []DailyStats       `json:"executions_by_day"`
+	ExecutionsByHour   []HourlyStats      `json:"executions_by_hour"`
+	UpcomingSchedules  []ScheduleSummary  `json:"upcoming_schedules"`
+	StatusDistribution map[string]int64   `json:"status_distribution"`
+	TriggerTypeStats   map[string]int64   `json:"trigger_type_stats"`
 }
 
 type SummaryStats struct {
-	TotalWorkflows    int64   `json:"total_workflows"`
-	ActiveWorkflows   int64   `json:"active_workflows"`
-	TotalExecutions   int64   `json:"total_executions"`
-	ExecutionsToday   int64   `json:"executions_today"`
-	ExecutionsWeek    int64   `json:"executions_week"`
-	ExecutionsMonth   int64   `json:"executions_month"`
-	SuccessRate       float64 `json:"success_rate"`
-	AvgDurationMs     int64   `json:"avg_duration_ms"`
-	TotalCredentials  int64   `json:"total_credentials"`
-	TotalSchedules    int64   `json:"total_schedules"`
-	ActiveSchedules   int64   `json:"active_schedules"`
+	TotalWorkflows   int64   `json:"total_workflows"`
+	ActiveWorkflows  int64   `json:"active_workflows"`
+	TotalExecutions  int64   `json:"total_executions"`
+	ExecutionsToday  int64   `json:"executions_today"`
+	ExecutionsWeek   int64   `json:"executions_week"`
+	ExecutionsMonth  int64   `json:"executions_month"`
+	SuccessRate      float64 `json:"success_rate"`
+	AvgDurationMs    int64   `json:"avg_duration_ms"`
+	TotalCredentials int64   `json:"total_credentials"`
+	TotalSchedules   int64   `json:"total_schedules"`
+	ActiveSchedules  int64   `json:"active_schedules"`
 }
 
 type ExecutionSummary struct {
-	ID           uuid.UUID `json:"id"`
-	WorkflowID   uuid.UUID `json:"workflow_id"`
-	WorkflowName string    `json:"workflow_name"`
-	Status       string    `json:"status"`
-	TriggerType  string    `json:"trigger_type"`
-	StartedAt    time.Time `json:"started_at"`
+	ID           uuid.UUID  `json:"id"`
+	WorkflowID   uuid.UUID  `json:"workflow_id"`
+	WorkflowName string     `json:"workflow_name"`
+	Status       string     `json:"status"`
+	TriggerType  string     `json:"trigger_type"`
+	StartedAt    time.Time  `json:"started_at"`
 	FinishedAt   *time.Time `json:"finished_at,omitempty"`
-	DurationMs   int64     `json:"duration_ms"`
-	Error        string    `json:"error,omitempty"`
+	DurationMs   int64      `json:"duration_ms"`
+	Error        string     `json:"error,omitempty"`
 }
 
 type WorkflowStats struct {
-	ID              uuid.UUID `json:"id"`
-	Name            string    `json:"name"`
-	ExecutionCount  int64     `json:"execution_count"`
-	SuccessCount    int64     `json:"success_count"`
-	FailureCount    int64     `json:"failure_count"`
-	SuccessRate     float64   `json:"success_rate"`
-	AvgDurationMs   int64     `json:"avg_duration_ms"`
-	LastExecutedAt  *time.Time `json:"last_executed_at,omitempty"`
+	ID             uuid.UUID  `json:"id"`
+	Name           string     `json:"name"`
+	ExecutionCount int64      `json:"execution_count"`
+	SuccessCount   int64      `json:"success_count"`
+	FailureCount   int64      `json:"failure_count"`
+	SuccessRate    float64    `json:"success_rate"`
+	AvgDurationMs  int64      `json:"avg_duration_ms"`
+	LastExecutedAt *time.Time `json:"last_executed_at,omitempty"`
 }
 
 type DailyStats struct {
-	Date        string `json:"date"`
-	Total       int64  `json:"total"`
-	Completed   int64  `json:"completed"`
-	Failed      int64  `json:"failed"`
-	Cancelled   int64  `json:"cancelled"`
+	Date      string `json:"date"`
+	Total     int64  `json:"total"`
+	Completed int64  `json:"completed"`
+	Failed    int64  `json:"failed"`
+	Canceled  int64  `json:"canceled"`
 }
 
 type HourlyStats struct {
@@ -159,7 +159,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// Get workflow stats
 	workflows, totalWf, _ := h.workflowRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
 	response.Summary.TotalWorkflows = totalWf
-	
+
 	activeCount := int64(0)
 	for _, wf := range workflows {
 		if wf.Status == workflow.StatusActive {
@@ -197,7 +197,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 		// Status distribution
 		response.StatusDistribution[string(exec.Status)]++
-		
+
 		// Trigger type stats
 		response.TriggerTypeStats[exec.TriggerType]++
 	}
@@ -218,7 +218,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		if exec.CompletedAt != nil && exec.StartedAt != nil {
 			durationMs = exec.CompletedAt.Sub(*exec.StartedAt).Milliseconds()
 		}
-		
+
 		wfName := ""
 		for _, wf := range workflows {
 			if wf.ID == exec.WorkflowID {
@@ -305,7 +305,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 				case execution.StatusFailed:
 					stats.Failed++
 				case execution.StatusCancelled:
-					stats.Cancelled++
+					stats.Canceled++
 				}
 			}
 		}
@@ -331,7 +331,7 @@ func (h *DashboardHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// Get schedule stats
 	schedules, totalSch, _ := h.scheduleRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
 	response.Summary.TotalSchedules = totalSch
-	
+
 	activeSchCount := int64(0)
 	for _, sch := range schedules {
 		if sch.IsActive {

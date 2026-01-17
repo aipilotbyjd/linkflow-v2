@@ -27,8 +27,8 @@ type ExecutionStarted struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e ExecutionStarted) EventType() string    { return EventExecutionStarted }
-func (e ExecutionStarted) AggregateID() string  { return e.ExecutionID.String() }
+func (e ExecutionStarted) EventType() string     { return EventExecutionStarted }
+func (e ExecutionStarted) AggregateID() string   { return e.ExecutionID.String() }
 func (e ExecutionStarted) OccurredAt() time.Time { return e.Timestamp }
 
 // ExecutionCompleted event
@@ -40,8 +40,8 @@ type ExecutionCompleted struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e ExecutionCompleted) EventType() string    { return EventExecutionCompleted }
-func (e ExecutionCompleted) AggregateID() string  { return e.ExecutionID.String() }
+func (e ExecutionCompleted) EventType() string     { return EventExecutionCompleted }
+func (e ExecutionCompleted) AggregateID() string   { return e.ExecutionID.String() }
 func (e ExecutionCompleted) OccurredAt() time.Time { return e.Timestamp }
 
 // ExecutionFailed event
@@ -55,8 +55,8 @@ type ExecutionFailed struct {
 	Timestamp    time.Time `json:"timestamp"`
 }
 
-func (e ExecutionFailed) EventType() string    { return EventExecutionFailed }
-func (e ExecutionFailed) AggregateID() string  { return e.ExecutionID.String() }
+func (e ExecutionFailed) EventType() string     { return EventExecutionFailed }
+func (e ExecutionFailed) AggregateID() string   { return e.ExecutionID.String() }
 func (e ExecutionFailed) OccurredAt() time.Time { return e.Timestamp }
 
 // ExecutionCancelled event
@@ -64,13 +64,13 @@ type ExecutionCancelled struct {
 	ExecutionID uuid.UUID `json:"execution_id"`
 	WorkflowID  uuid.UUID `json:"workflow_id"`
 	WorkspaceID uuid.UUID `json:"workspace_id"`
-	CancelledBy uuid.UUID `json:"cancelled_by,omitempty"`
+	CancelledBy uuid.UUID `json:"canceled_by,omitempty"`
 	Reason      string    `json:"reason,omitempty"`
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e ExecutionCancelled) EventType() string    { return EventExecutionCancelled }
-func (e ExecutionCancelled) AggregateID() string  { return e.ExecutionID.String() }
+func (e ExecutionCancelled) EventType() string     { return EventExecutionCancelled }
+func (e ExecutionCancelled) AggregateID() string   { return e.ExecutionID.String() }
 func (e ExecutionCancelled) OccurredAt() time.Time { return e.Timestamp }
 
 // NodeStarted event
@@ -82,8 +82,8 @@ type NodeStarted struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e NodeStarted) EventType() string    { return EventNodeStarted }
-func (e NodeStarted) AggregateID() string  { return e.ExecutionID.String() }
+func (e NodeStarted) EventType() string     { return EventNodeStarted }
+func (e NodeStarted) AggregateID() string   { return e.ExecutionID.String() }
 func (e NodeStarted) OccurredAt() time.Time { return e.Timestamp }
 
 // NodeCompleted event
@@ -95,8 +95,8 @@ type NodeCompleted struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e NodeCompleted) EventType() string    { return EventNodeCompleted }
-func (e NodeCompleted) AggregateID() string  { return e.ExecutionID.String() }
+func (e NodeCompleted) EventType() string     { return EventNodeCompleted }
+func (e NodeCompleted) AggregateID() string   { return e.ExecutionID.String() }
 func (e NodeCompleted) OccurredAt() time.Time { return e.Timestamp }
 
 // NodeFailed event
@@ -110,8 +110,8 @@ type NodeFailed struct {
 	Timestamp    time.Time `json:"timestamp"`
 }
 
-func (e NodeFailed) EventType() string    { return EventNodeFailed }
-func (e NodeFailed) AggregateID() string  { return e.ExecutionID.String() }
+func (e NodeFailed) EventType() string     { return EventNodeFailed }
+func (e NodeFailed) AggregateID() string   { return e.ExecutionID.String() }
 func (e NodeFailed) OccurredAt() time.Time { return e.Timestamp }
 
 // NodeSkipped event
@@ -123,6 +123,6 @@ type NodeSkipped struct {
 	Timestamp   time.Time `json:"timestamp"`
 }
 
-func (e NodeSkipped) EventType() string    { return EventNodeSkipped }
-func (e NodeSkipped) AggregateID() string  { return e.ExecutionID.String() }
+func (e NodeSkipped) EventType() string     { return EventNodeSkipped }
+func (e NodeSkipped) AggregateID() string   { return e.ExecutionID.String() }
 func (e NodeSkipped) OccurredAt() time.Time { return e.Timestamp }

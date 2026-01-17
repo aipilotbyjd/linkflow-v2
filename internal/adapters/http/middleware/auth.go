@@ -39,7 +39,7 @@ func Auth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
 
 			// Extract token
 			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 				common.Unauthorized(w, "invalid authorization header format")
 				return
 			}
@@ -68,7 +68,7 @@ func Auth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
 			ctx := context.WithValue(r.Context(), UserContextKey, userClaims)
 			ctx = context.WithValue(ctx, TokenContextKey, token)
 			ctx = context.WithValue(ctx, ClaimsContextKey, claims)
-			
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -85,7 +85,7 @@ func OptionalAuth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
 			}
 
 			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 				next.ServeHTTP(w, r)
 				return
 			}

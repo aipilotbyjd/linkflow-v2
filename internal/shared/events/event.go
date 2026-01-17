@@ -33,10 +33,10 @@ func NewBaseEvent(name string, aggregateID uuid.UUID, aggregateType string) Base
 	}
 }
 
-func (e BaseEvent) EventName() string       { return e.Name }
-func (e BaseEvent) OccurredAt() time.Time   { return e.Timestamp }
-func (e BaseEvent) AggregateID() uuid.UUID  { return e.AggregateUUID }
-func (e BaseEvent) AggregateType() string   { return e.AggregateName }
+func (e BaseEvent) EventName() string      { return e.Name }
+func (e BaseEvent) OccurredAt() time.Time  { return e.Timestamp }
+func (e BaseEvent) AggregateID() uuid.UUID { return e.AggregateUUID }
+func (e BaseEvent) AggregateType() string  { return e.AggregateName }
 
 // Common domain events
 

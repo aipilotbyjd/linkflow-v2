@@ -36,9 +36,9 @@ func ParseType(s string) (Type, bool) {
 type SharingScope string
 
 const (
-	ScopePrivate   SharingScope = "private"
-	ScopWorkspace  SharingScope = "workspace"
-	ScopeSpecific  SharingScope = "specific"
+	ScopePrivate  SharingScope = "private"
+	ScopWorkspace SharingScope = "workspace"
+	ScopeSpecific SharingScope = "specific"
 )
 
 func (s SharingScope) String() string {

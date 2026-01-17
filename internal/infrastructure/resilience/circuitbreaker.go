@@ -36,10 +36,10 @@ func (s State) String() string {
 
 // CircuitBreaker implements the circuit breaker pattern
 type CircuitBreaker struct {
-	name          string
-	maxFailures   int
-	resetTimeout  time.Duration
-	halfOpenMax   int
+	name         string
+	maxFailures  int
+	resetTimeout time.Duration
+	halfOpenMax  int
 
 	mu            sync.Mutex
 	state         State
@@ -159,10 +159,10 @@ func (cb *CircuitBreaker) Stats() map[string]interface{} {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 	return map[string]interface{}{
-		"name":        cb.name,
-		"state":       cb.state.String(),
-		"failures":    cb.failures,
-		"successes":   cb.successes,
+		"name":         cb.name,
+		"state":        cb.state.String(),
+		"failures":     cb.failures,
+		"successes":    cb.successes,
 		"last_failure": cb.lastFailure,
 	}
 }

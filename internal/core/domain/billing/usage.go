@@ -7,16 +7,16 @@ import (
 )
 
 type Usage struct {
-	ID            uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID   uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	PeriodStart   time.Time `gorm:"index;not null" json:"period_start"`
-	PeriodEnd     time.Time `gorm:"index;not null" json:"period_end"`
-	Executions    int64     `gorm:"default:0" json:"executions"`
-	ApiCalls      int64     `gorm:"default:0" json:"api_calls"`
-	StorageBytes  int64     `gorm:"default:0" json:"storage_bytes"`
-	BandwidthBytes int64    `gorm:"default:0" json:"bandwidth_bytes"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
+	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID    uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	PeriodStart    time.Time `gorm:"index;not null" json:"period_start"`
+	PeriodEnd      time.Time `gorm:"index;not null" json:"period_end"`
+	Executions     int64     `gorm:"default:0" json:"executions"`
+	ApiCalls       int64     `gorm:"default:0" json:"api_calls"`
+	StorageBytes   int64     `gorm:"default:0" json:"storage_bytes"`
+	BandwidthBytes int64     `gorm:"default:0" json:"bandwidth_bytes"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (Usage) TableName() string {

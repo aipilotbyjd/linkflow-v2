@@ -92,56 +92,56 @@ func (id *ID) Scan(value interface{}) error {
 
 // Domain-specific ID types
 type (
-	UserID        ID
-	WorkspaceID   ID
-	WorkflowID    ID
-	ExecutionID   ID
-	CredentialID  ID
-	ScheduleID    ID
-	WebhookID     ID
-	SessionID     ID
-	APIKeyID      ID
-	FolderID      ID
-	TemplateID    ID
+	UserID         ID
+	WorkspaceID    ID
+	WorkflowID     ID
+	ExecutionID    ID
+	CredentialID   ID
+	ScheduleID     ID
+	WebhookID      ID
+	SessionID      ID
+	APIKeyID       ID
+	FolderID       ID
+	TemplateID     ID
 	SubscriptionID ID
 )
 
 // Conversion helpers
-func (id UserID) UUID() uuid.UUID        { return uuid.UUID(id) }
-func (id WorkspaceID) UUID() uuid.UUID   { return uuid.UUID(id) }
-func (id WorkflowID) UUID() uuid.UUID    { return uuid.UUID(id) }
-func (id ExecutionID) UUID() uuid.UUID   { return uuid.UUID(id) }
-func (id CredentialID) UUID() uuid.UUID  { return uuid.UUID(id) }
-func (id ScheduleID) UUID() uuid.UUID    { return uuid.UUID(id) }
-func (id WebhookID) UUID() uuid.UUID     { return uuid.UUID(id) }
-func (id SessionID) UUID() uuid.UUID     { return uuid.UUID(id) }
-func (id APIKeyID) UUID() uuid.UUID      { return uuid.UUID(id) }
-func (id FolderID) UUID() uuid.UUID      { return uuid.UUID(id) }
-func (id TemplateID) UUID() uuid.UUID    { return uuid.UUID(id) }
+func (id UserID) UUID() uuid.UUID         { return uuid.UUID(id) }
+func (id WorkspaceID) UUID() uuid.UUID    { return uuid.UUID(id) }
+func (id WorkflowID) UUID() uuid.UUID     { return uuid.UUID(id) }
+func (id ExecutionID) UUID() uuid.UUID    { return uuid.UUID(id) }
+func (id CredentialID) UUID() uuid.UUID   { return uuid.UUID(id) }
+func (id ScheduleID) UUID() uuid.UUID     { return uuid.UUID(id) }
+func (id WebhookID) UUID() uuid.UUID      { return uuid.UUID(id) }
+func (id SessionID) UUID() uuid.UUID      { return uuid.UUID(id) }
+func (id APIKeyID) UUID() uuid.UUID       { return uuid.UUID(id) }
+func (id FolderID) UUID() uuid.UUID       { return uuid.UUID(id) }
+func (id TemplateID) UUID() uuid.UUID     { return uuid.UUID(id) }
 func (id SubscriptionID) UUID() uuid.UUID { return uuid.UUID(id) }
 
-func (id UserID) String() string        { return uuid.UUID(id).String() }
-func (id WorkspaceID) String() string   { return uuid.UUID(id).String() }
-func (id WorkflowID) String() string    { return uuid.UUID(id).String() }
-func (id ExecutionID) String() string   { return uuid.UUID(id).String() }
-func (id CredentialID) String() string  { return uuid.UUID(id).String() }
-func (id ScheduleID) String() string    { return uuid.UUID(id).String() }
-func (id WebhookID) String() string     { return uuid.UUID(id).String() }
-func (id SessionID) String() string     { return uuid.UUID(id).String() }
-func (id APIKeyID) String() string      { return uuid.UUID(id).String() }
-func (id FolderID) String() string      { return uuid.UUID(id).String() }
-func (id TemplateID) String() string    { return uuid.UUID(id).String() }
+func (id UserID) String() string         { return uuid.UUID(id).String() }
+func (id WorkspaceID) String() string    { return uuid.UUID(id).String() }
+func (id WorkflowID) String() string     { return uuid.UUID(id).String() }
+func (id ExecutionID) String() string    { return uuid.UUID(id).String() }
+func (id CredentialID) String() string   { return uuid.UUID(id).String() }
+func (id ScheduleID) String() string     { return uuid.UUID(id).String() }
+func (id WebhookID) String() string      { return uuid.UUID(id).String() }
+func (id SessionID) String() string      { return uuid.UUID(id).String() }
+func (id APIKeyID) String() string       { return uuid.UUID(id).String() }
+func (id FolderID) String() string       { return uuid.UUID(id).String() }
+func (id TemplateID) String() string     { return uuid.UUID(id).String() }
 func (id SubscriptionID) String() string { return uuid.UUID(id).String() }
 
-func (id UserID) IsNil() bool        { return uuid.UUID(id) == uuid.Nil }
-func (id WorkspaceID) IsNil() bool   { return uuid.UUID(id) == uuid.Nil }
-func (id WorkflowID) IsNil() bool    { return uuid.UUID(id) == uuid.Nil }
-func (id ExecutionID) IsNil() bool   { return uuid.UUID(id) == uuid.Nil }
-func (id CredentialID) IsNil() bool  { return uuid.UUID(id) == uuid.Nil }
-func (id ScheduleID) IsNil() bool    { return uuid.UUID(id) == uuid.Nil }
-func (id WebhookID) IsNil() bool     { return uuid.UUID(id) == uuid.Nil }
-func (id SessionID) IsNil() bool     { return uuid.UUID(id) == uuid.Nil }
-func (id APIKeyID) IsNil() bool      { return uuid.UUID(id) == uuid.Nil }
-func (id FolderID) IsNil() bool      { return uuid.UUID(id) == uuid.Nil }
-func (id TemplateID) IsNil() bool    { return uuid.UUID(id) == uuid.Nil }
+func (id UserID) IsNil() bool         { return uuid.UUID(id) == uuid.Nil }
+func (id WorkspaceID) IsNil() bool    { return uuid.UUID(id) == uuid.Nil }
+func (id WorkflowID) IsNil() bool     { return uuid.UUID(id) == uuid.Nil }
+func (id ExecutionID) IsNil() bool    { return uuid.UUID(id) == uuid.Nil }
+func (id CredentialID) IsNil() bool   { return uuid.UUID(id) == uuid.Nil }
+func (id ScheduleID) IsNil() bool     { return uuid.UUID(id) == uuid.Nil }
+func (id WebhookID) IsNil() bool      { return uuid.UUID(id) == uuid.Nil }
+func (id SessionID) IsNil() bool      { return uuid.UUID(id) == uuid.Nil }
+func (id APIKeyID) IsNil() bool       { return uuid.UUID(id) == uuid.Nil }
+func (id FolderID) IsNil() bool       { return uuid.UUID(id) == uuid.Nil }
+func (id TemplateID) IsNil() bool     { return uuid.UUID(id) == uuid.Nil }
 func (id SubscriptionID) IsNil() bool { return uuid.UUID(id) == uuid.Nil }

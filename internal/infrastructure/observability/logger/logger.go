@@ -226,27 +226,27 @@ func NewNoOpLogger() *NoOpLogger {
 	return &NoOpLogger{}
 }
 
-func (l *NoOpLogger) Debug() Event                             { return &NoOpEvent{} }
-func (l *NoOpLogger) Info() Event                              { return &NoOpEvent{} }
-func (l *NoOpLogger) Warn() Event                              { return &NoOpEvent{} }
-func (l *NoOpLogger) Error() Event                             { return &NoOpEvent{} }
-func (l *NoOpLogger) Fatal() Event                             { return &NoOpEvent{} }
-func (l *NoOpLogger) WithContext(ctx context.Context) Logger   { return l }
-func (l *NoOpLogger) WithField(key string, value interface{}) Logger { return l }
+func (l *NoOpLogger) Debug() Event                                    { return &NoOpEvent{} }
+func (l *NoOpLogger) Info() Event                                     { return &NoOpEvent{} }
+func (l *NoOpLogger) Warn() Event                                     { return &NoOpEvent{} }
+func (l *NoOpLogger) Error() Event                                    { return &NoOpEvent{} }
+func (l *NoOpLogger) Fatal() Event                                    { return &NoOpEvent{} }
+func (l *NoOpLogger) WithContext(ctx context.Context) Logger          { return l }
+func (l *NoOpLogger) WithField(key string, value interface{}) Logger  { return l }
 func (l *NoOpLogger) WithFields(fields map[string]interface{}) Logger { return l }
-func (l *NoOpLogger) WithError(err error) Logger               { return l }
+func (l *NoOpLogger) WithError(err error) Logger                      { return l }
 
 type NoOpEvent struct{}
 
-func (e *NoOpEvent) Str(key, value string) Event            { return e }
-func (e *NoOpEvent) Int(key string, value int) Event        { return e }
-func (e *NoOpEvent) Int64(key string, value int64) Event    { return e }
-func (e *NoOpEvent) Float64(key string, value float64) Event { return e }
-func (e *NoOpEvent) Bool(key string, value bool) Event      { return e }
-func (e *NoOpEvent) Err(err error) Event                    { return e }
+func (e *NoOpEvent) Str(key, value string) Event                   { return e }
+func (e *NoOpEvent) Int(key string, value int) Event               { return e }
+func (e *NoOpEvent) Int64(key string, value int64) Event           { return e }
+func (e *NoOpEvent) Float64(key string, value float64) Event       { return e }
+func (e *NoOpEvent) Bool(key string, value bool) Event             { return e }
+func (e *NoOpEvent) Err(err error) Event                           { return e }
 func (e *NoOpEvent) Interface(key string, value interface{}) Event { return e }
-func (e *NoOpEvent) Dur(key string, d time.Duration) Event  { return e }
-func (e *NoOpEvent) Time(key string, t time.Time) Event     { return e }
-func (e *NoOpEvent) Msg(msg string)                         {}
-func (e *NoOpEvent) Msgf(format string, args ...interface{}) {}
-func (e *NoOpEvent) Send()                                   {}
+func (e *NoOpEvent) Dur(key string, d time.Duration) Event         { return e }
+func (e *NoOpEvent) Time(key string, t time.Time) Event            { return e }
+func (e *NoOpEvent) Msg(msg string)                                {}
+func (e *NoOpEvent) Msgf(format string, args ...interface{})       {}
+func (e *NoOpEvent) Send()                                         {}

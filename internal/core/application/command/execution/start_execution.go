@@ -57,7 +57,7 @@ func (h *StartExecutionHandler) Handle(ctx context.Context, cmd StartExecutionCo
 
 	// Create execution
 	exec := execution.NewExecution(cmd.WorkflowID, cmd.WorkspaceID, wf.Version, cmd.TriggerType)
-	
+
 	if cmd.TriggeredBy != nil {
 		exec.WithTriggeredBy(*cmd.TriggeredBy)
 	}

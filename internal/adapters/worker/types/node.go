@@ -25,16 +25,16 @@ type NodePort struct {
 
 // NodeParameter represents a configurable parameter
 type NodeParameter struct {
-	Name         string        `json:"name"`
-	DisplayName  string        `json:"display_name"`
-	Type         string        `json:"type"` // string, number, boolean, options, json, code, credential
-	Default      interface{}   `json:"default,omitempty"`
-	Required     bool          `json:"required,omitempty"`
-	Description  string        `json:"description,omitempty"`
-	Options      []ParamOption `json:"options,omitempty"`
-	Placeholder  string        `json:"placeholder,omitempty"`
-	DependsOn    string        `json:"depends_on,omitempty"`
-	ShowIf       string        `json:"show_if,omitempty"`
+	Name        string        `json:"name"`
+	DisplayName string        `json:"display_name"`
+	Type        string        `json:"type"` // string, number, boolean, options, json, code, credential
+	Default     interface{}   `json:"default,omitempty"`
+	Required    bool          `json:"required,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Options     []ParamOption `json:"options,omitempty"`
+	Placeholder string        `json:"placeholder,omitempty"`
+	DependsOn   string        `json:"depends_on,omitempty"`
+	ShowIf      string        `json:"show_if,omitempty"`
 }
 
 // ParamOption represents a selectable option for a parameter

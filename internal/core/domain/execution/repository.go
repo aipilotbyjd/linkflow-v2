@@ -71,7 +71,7 @@ type Stats struct {
 	Total       int64         `json:"total"`
 	Completed   int64         `json:"completed"`
 	Failed      int64         `json:"failed"`
-	Cancelled   int64         `json:"cancelled"`
+	Canceled    int64         `json:"canceled"`
 	Running     int64         `json:"running"`
 	Queued      int64         `json:"queued"`
 	AvgDuration time.Duration `json:"avg_duration_ms"`

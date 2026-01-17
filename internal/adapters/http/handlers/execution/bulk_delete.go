@@ -41,13 +41,13 @@ func (h *BulkDeleteExecutionsHandler) Handle(w http.ResponseWriter, r *http.Requ
 			if err != nil {
 				continue
 			}
-			
+
 			// Verify execution belongs to workspace
 			exec, err := h.executionRepo.FindByID(r.Context(), id)
 			if err != nil || exec.WorkspaceID != wsCtx.WorkspaceID {
 				continue
 			}
-			
+
 			if err := h.executionRepo.Delete(r.Context(), id); err == nil {
 				deletedCount++
 			}

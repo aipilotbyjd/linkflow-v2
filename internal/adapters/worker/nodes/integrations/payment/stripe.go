@@ -68,7 +68,7 @@ func (n *StripeNode) handleSubscription(ctx context.Context, operation string, p
 		return types.JSON{"id": "", "customer_id": customerId, "price_id": priceId, "status": "active"}, nil
 	case "cancel":
 		subscriptionId, _ := params["subscription_id"].(string)
-		return types.JSON{"id": subscriptionId, "status": "canceled", "cancelled": true}, nil
+		return types.JSON{"id": subscriptionId, "status": "canceled", "canceled": true}, nil
 	default:
 		return nil, fmt.Errorf("unsupported subscription operation: %s", operation)
 	}

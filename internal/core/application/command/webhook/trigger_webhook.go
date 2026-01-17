@@ -10,12 +10,12 @@ import (
 )
 
 type TriggerWebhookCommand struct {
-	Path       string
-	Method     string
-	Headers    map[string]string
-	Body       types.JSON
+	Path        string
+	Method      string
+	Headers     map[string]string
+	Body        types.JSON
 	QueryParams map[string]string
-	IPAddress  string
+	IPAddress   string
 }
 
 type TriggerWebhookResult struct {

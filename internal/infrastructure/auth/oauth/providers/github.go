@@ -78,7 +78,7 @@ func (p *GitHubProvider) Exchange(ctx context.Context, code string) (*oauth.Toke
 }
 
 func (p *GitHubProvider) GetUser(ctx context.Context, token *oauth.Token) (*oauth.UserInfo, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user", http.NoBody)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (p *GitHubProvider) GetUser(ctx context.Context, token *oauth.Token) (*oaut
 }
 
 func (p *GitHubProvider) getPrimaryEmail(ctx context.Context, token *oauth.Token) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user/emails", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.github.com/user/emails", http.NoBody)
 	if err != nil {
 		return "", err
 	}

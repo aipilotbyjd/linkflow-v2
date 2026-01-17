@@ -146,7 +146,7 @@ func (e *Execution) Fail(errorMsg string, errorNodeID *string) {
 	e.ErrorNodeID = errorNodeID
 }
 
-// Cancel marks execution as cancelled
+// Cancel marks execution as canceled
 func (e *Execution) Cancel() {
 	e.Status = StatusCancelled
 	now := time.Now()

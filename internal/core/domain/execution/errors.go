@@ -7,7 +7,7 @@ var (
 	ErrExecutionNotFound     = errors.New("execution not found")
 	ErrExecutionAlreadyDone  = errors.New("execution already completed")
 	ErrExecutionNotRunning   = errors.New("execution is not running")
-	ErrExecutionCancelled    = errors.New("execution was cancelled")
+	ErrExecutionCancelled    = errors.New("execution was canceled")
 	ErrExecutionTimeout      = errors.New("execution timed out")
 	ErrCannotCancel          = errors.New("cannot cancel execution in current state")
 	ErrCannotRetry           = errors.New("cannot retry execution")

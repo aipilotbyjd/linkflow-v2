@@ -31,21 +31,21 @@ const (
 	EventCredentialDeleted = "credential.deleted"
 
 	// Schedule events
-	EventScheduleCreated  = "schedule.created"
-	EventScheduleUpdated  = "schedule.updated"
-	EventScheduleDeleted  = "schedule.deleted"
-	EventSchedulePaused   = "schedule.paused"
-	EventScheduleResumed  = "schedule.resumed"
+	EventScheduleCreated   = "schedule.created"
+	EventScheduleUpdated   = "schedule.updated"
+	EventScheduleDeleted   = "schedule.deleted"
+	EventSchedulePaused    = "schedule.paused"
+	EventScheduleResumed   = "schedule.resumed"
 	EventScheduleTriggered = "schedule.triggered"
 
 	// Webhook events
 	EventWebhookTriggered = "webhook.triggered"
 
 	// Workspace events
-	EventWorkspaceUpdated     = "workspace.updated"
-	EventMemberAdded          = "workspace.member_added"
-	EventMemberRemoved        = "workspace.member_removed"
-	EventMemberRoleChanged    = "workspace.member_role_changed"
+	EventWorkspaceUpdated  = "workspace.updated"
+	EventMemberAdded       = "workspace.member_added"
+	EventMemberRemoved     = "workspace.member_removed"
+	EventMemberRoleChanged = "workspace.member_role_changed"
 
 	// Notification events
 	EventNotification = "notification"

@@ -25,28 +25,28 @@ type Config struct {
 
 // Handlers holds all HTTP handlers
 type Handlers struct {
-	Auth            AuthHandlers
-	User            UserHandlers
-	APIKey          APIKeyHandlers
-	Workflow        WorkflowHandlers
-	Execution       ExecutionHandlers
-	Workspace       WorkspaceHandlers
-	Credential      CredentialHandlers
-	Schedule        ScheduleHandlers
-	Webhook         WebhookHandlers
-	Folder          FolderHandlers
-	Dashboard       DashboardHandlers
-	NodeType        NodeTypeHandlers
-	Health          HealthHandlers
-	Billing         BillingHandlers
-	OAuth           OAuthHandlers
-	Template        TemplateHandlers
-	PinnedData      PinnedDataHandlers
-	WorkflowShare   WorkflowShareHandlers
-	Marketplace     MarketplaceHandlers
-	BinaryData      BinaryDataHandlers
-	Admin           AdminHandlers
-	Analytics       AnalyticsHandlers
+	Auth          AuthHandlers
+	User          UserHandlers
+	APIKey        APIKeyHandlers
+	Workflow      WorkflowHandlers
+	Execution     ExecutionHandlers
+	Workspace     WorkspaceHandlers
+	Credential    CredentialHandlers
+	Schedule      ScheduleHandlers
+	Webhook       WebhookHandlers
+	Folder        FolderHandlers
+	Dashboard     DashboardHandlers
+	NodeType      NodeTypeHandlers
+	Health        HealthHandlers
+	Billing       BillingHandlers
+	OAuth         OAuthHandlers
+	Template      TemplateHandlers
+	PinnedData    PinnedDataHandlers
+	WorkflowShare WorkflowShareHandlers
+	Marketplace   MarketplaceHandlers
+	BinaryData    BinaryDataHandlers
+	Admin         AdminHandlers
+	Analytics     AnalyticsHandlers
 }
 
 // AuthHandlers holds auth-related handlers
@@ -244,41 +244,41 @@ type WorkflowShareHandlers struct {
 
 // MarketplaceHandlers holds marketplace handlers
 type MarketplaceHandlers struct {
-	Browse        http.HandlerFunc
-	Featured      http.HandlerFunc
-	Categories    http.HandlerFunc
-	Search        http.HandlerFunc
-	Get           http.HandlerFunc
-	Use           http.HandlerFunc
-	Publish       http.HandlerFunc
-	MyPublished   http.HandlerFunc
-	Update        http.HandlerFunc
-	Sync          http.HandlerFunc
-	Unpublish     http.HandlerFunc
-	Rate          http.HandlerFunc
-	GetMyRating   http.HandlerFunc
-	ListRatings   http.HandlerFunc
-	RatingStats   http.HandlerFunc
-	DeleteRating  http.HandlerFunc
+	Browse       http.HandlerFunc
+	Featured     http.HandlerFunc
+	Categories   http.HandlerFunc
+	Search       http.HandlerFunc
+	Get          http.HandlerFunc
+	Use          http.HandlerFunc
+	Publish      http.HandlerFunc
+	MyPublished  http.HandlerFunc
+	Update       http.HandlerFunc
+	Sync         http.HandlerFunc
+	Unpublish    http.HandlerFunc
+	Rate         http.HandlerFunc
+	GetMyRating  http.HandlerFunc
+	ListRatings  http.HandlerFunc
+	RatingStats  http.HandlerFunc
+	DeleteRating http.HandlerFunc
 }
 
 // BinaryDataHandlers holds binary data handlers
 type BinaryDataHandlers struct {
-	Upload       http.HandlerFunc
-	List         http.HandlerFunc
-	GetInfo      http.HandlerFunc
-	Download     http.HandlerFunc
-	Delete       http.HandlerFunc
-	GetStats     http.HandlerFunc
-	Cleanup      http.HandlerFunc
+	Upload   http.HandlerFunc
+	List     http.HandlerFunc
+	GetInfo  http.HandlerFunc
+	Download http.HandlerFunc
+	Delete   http.HandlerFunc
+	GetStats http.HandlerFunc
+	Cleanup  http.HandlerFunc
 }
 
 // AdminHandlers holds admin handlers
 type AdminHandlers struct {
-	Metrics           http.HandlerFunc
-	StreamStats       http.HandlerFunc
-	ReplayDLQ         http.HandlerFunc
-	TrimStream        http.HandlerFunc
+	Metrics     http.HandlerFunc
+	StreamStats http.HandlerFunc
+	ReplayDLQ   http.HandlerFunc
+	TrimStream  http.HandlerFunc
 }
 
 // AnalyticsHandlers holds analytics handlers
@@ -333,7 +333,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			r.Post("/reset-password", handlers.Auth.ResetPassword)
 			r.Get("/oauth/{provider}", handlers.Auth.OAuthRedirect)
 			r.Get("/oauth/{provider}/callback", handlers.Auth.OAuthCallback)
-			
+
 			// Protected auth routes
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(cfg.JWTManager))
@@ -511,7 +511,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.Get("/search", handlers.Execution.Search)
 					r.Get("/stats", handlers.Execution.Stats)
 					r.Delete("/bulk", handlers.Execution.BulkDelete)
-					
+
 					r.Route("/{executionId}", func(r chi.Router) {
 						r.Get("/", handlers.Execution.Get)
 						r.Post("/cancel", handlers.Execution.Cancel)

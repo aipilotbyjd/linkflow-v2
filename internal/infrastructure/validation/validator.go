@@ -181,7 +181,7 @@ func (v *Validator) Password(field, value string) *Validator {
 	if value == "" {
 		return v
 	}
-	
+
 	if len(value) < 8 {
 		v.AddError(field, "must be at least 8 characters", "password_length")
 		return v

@@ -50,7 +50,7 @@ func (h *CreateFolderHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	f := folder.NewFolder(wsCtx.WorkspaceID, req.Name, userClaims.UserID)
-	
+
 	if req.ParentID != nil {
 		f = f.WithParent(*req.ParentID)
 	}

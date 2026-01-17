@@ -39,7 +39,7 @@ func (n *JavaScriptNode) Execute(ctx context.Context, runtime *executor.Runtime,
 	go func() {
 		select {
 		case <-ctx.Done():
-			vm.Interrupt("execution cancelled")
+			vm.Interrupt("execution canceled")
 		case <-time.After(n.timeout):
 			vm.Interrupt("execution timeout")
 		case <-done:

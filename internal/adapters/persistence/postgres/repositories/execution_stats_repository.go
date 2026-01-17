@@ -40,7 +40,7 @@ func (r *ExecutionStatsRepository) GetStats(ctx context.Context, workspaceID uui
 
 	if err := postgres.GetTx(ctx, r.db).Model(&execution.Execution{}).
 		Where("workspace_id = ? AND created_at BETWEEN ? AND ? AND status = ?", workspaceID, from, to, execution.StatusCancelled).
-		Count(&stats.Cancelled).Error; err != nil {
+		Count(&stats.Canceled).Error; err != nil {
 		return nil, err
 	}
 

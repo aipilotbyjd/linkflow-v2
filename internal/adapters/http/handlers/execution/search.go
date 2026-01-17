@@ -129,8 +129,8 @@ func (h *SearchExecutionsHandler) Handle(w http.ResponseWriter, r *http.Request)
 }
 
 func containsIgnoreCase(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		(s == substr || 
-		 len(s) > 0 && len(substr) > 0 && 
-		 (s[0] == substr[0] || s[0]+32 == substr[0] || s[0] == substr[0]+32))
+	return len(s) >= len(substr) &&
+		(s == substr ||
+			len(s) > 0 && len(substr) > 0 &&
+				(s[0] == substr[0] || s[0]+32 == substr[0] || s[0] == substr[0]+32))
 }

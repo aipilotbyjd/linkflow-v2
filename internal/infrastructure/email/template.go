@@ -24,10 +24,10 @@ func NewTemplateEngine() (*TemplateEngine, error) {
 
 	// Register built-in templates
 	templates := []struct {
-		name     string
-		subject  string
-		html     string
-		text     string
+		name    string
+		subject string
+		html    string
+		text    string
 	}{
 		{
 			name:    "welcome",

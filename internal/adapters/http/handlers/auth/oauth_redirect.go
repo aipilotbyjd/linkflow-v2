@@ -34,21 +34,21 @@ func NewOAuthRedirectHandler(oauthManager OAuthManager, frontendURL string) *OAu
 
 func (h *OAuthRedirectHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	provider := chi.URLParam(r, "provider")
-	
+
 	validProviders := map[string]bool{
-		"google":   true,
-		"github":   true,
-		"slack":    true,
+		"google":    true,
+		"github":    true,
+		"slack":     true,
 		"microsoft": true,
 	}
-	
+
 	if !validProviders[provider] {
 		common.Error(w, http.StatusBadRequest, "INVALID_PROVIDER", "OAuth provider not supported")
 		return
 	}
 
 	state := uuid.New().String()
-	
+
 	redirectURL := r.URL.Query().Get("redirect_uri")
 	if redirectURL == "" {
 		redirectURL = h.frontendURL + "/auth/callback"

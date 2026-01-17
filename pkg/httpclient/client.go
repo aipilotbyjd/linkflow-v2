@@ -22,12 +22,12 @@ type Client struct {
 
 // Config holds client configuration
 type Config struct {
-	BaseURL       string
-	Timeout       time.Duration
-	Headers       map[string]string
-	Retries       int
-	RetryDelay    time.Duration
-	Transport     http.RoundTripper
+	BaseURL    string
+	Timeout    time.Duration
+	Headers    map[string]string
+	Retries    int
+	RetryDelay time.Duration
+	Transport  http.RoundTripper
 }
 
 // DefaultConfig returns a default configuration

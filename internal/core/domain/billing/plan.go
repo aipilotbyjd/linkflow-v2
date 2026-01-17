@@ -13,11 +13,11 @@ type Plan struct {
 }
 
 type Limits struct {
-	Workflows          int `json:"workflows"`
-	ExecutionsPerMonth int `json:"executions_per_month"`
-	TeamMembers        int `json:"team_members"`
-	Credentials        int `json:"credentials"`
-	RetentionDays      int `json:"retention_days"`
+	Workflows           int `json:"workflows"`
+	ExecutionsPerMonth  int `json:"executions_per_month"`
+	TeamMembers         int `json:"team_members"`
+	Credentials         int `json:"credentials"`
+	RetentionDays       int `json:"retention_days"`
 	WebhooksPerWorkflow int `json:"webhooks_per_workflow"`
 }
 
@@ -30,11 +30,11 @@ var FreePlan = Plan{
 	Currency:     "USD",
 	Features:     []string{"5 workflows", "1,000 executions/month", "Community support"},
 	Limits: Limits{
-		Workflows:          5,
-		ExecutionsPerMonth: 1000,
-		TeamMembers:        1,
-		Credentials:        5,
-		RetentionDays:      7,
+		Workflows:           5,
+		ExecutionsPerMonth:  1000,
+		TeamMembers:         1,
+		Credentials:         5,
+		RetentionDays:       7,
 		WebhooksPerWorkflow: 1,
 	},
 }
@@ -48,11 +48,11 @@ var ProPlan = Plan{
 	Currency:     "USD",
 	Features:     []string{"Unlimited workflows", "50,000 executions/month", "Priority support"},
 	Limits: Limits{
-		Workflows:          -1,
-		ExecutionsPerMonth: 50000,
-		TeamMembers:        10,
-		Credentials:        50,
-		RetentionDays:      30,
+		Workflows:           -1,
+		ExecutionsPerMonth:  50000,
+		TeamMembers:         10,
+		Credentials:         50,
+		RetentionDays:       30,
 		WebhooksPerWorkflow: 10,
 	},
 }
@@ -66,11 +66,11 @@ var EnterprisePlan = Plan{
 	Currency:     "USD",
 	Features:     []string{"Unlimited everything", "SSO", "Dedicated support", "SLA"},
 	Limits: Limits{
-		Workflows:          -1,
-		ExecutionsPerMonth: -1,
-		TeamMembers:        -1,
-		Credentials:        -1,
-		RetentionDays:      365,
+		Workflows:           -1,
+		ExecutionsPerMonth:  -1,
+		TeamMembers:         -1,
+		Credentials:         -1,
+		RetentionDays:       365,
 		WebhooksPerWorkflow: -1,
 	},
 }

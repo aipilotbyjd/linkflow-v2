@@ -44,10 +44,10 @@ func (h *CreateEndpointHandler) Handle(ctx context.Context, cmd CreateEndpointCo
 
 	if h.eventBus != nil {
 		_ = h.eventBus.Publish(ctx, events.WebhookTriggered{
-			BaseEvent:   events.NewBaseEvent("webhook.created", endpoint.ID, "webhook"),
-			EndpointID:  endpoint.ID,
-			WorkflowID:  endpoint.WorkflowID,
-			Method:      endpoint.Method,
+			BaseEvent:  events.NewBaseEvent("webhook.created", endpoint.ID, "webhook"),
+			EndpointID: endpoint.ID,
+			WorkflowID: endpoint.WorkflowID,
+			Method:     endpoint.Method,
 		})
 	}
 

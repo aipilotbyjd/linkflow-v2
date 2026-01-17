@@ -23,7 +23,7 @@ func (h *CancelSubscriptionHandler) Handle(w http.ResponseWriter, r *http.Reques
 	_ = middleware.GetWorkspaceID(r.Context())
 
 	common.Success(w, map[string]interface{}{
-		"message":  "Subscription will be cancelled at the end of the billing period",
+		"message":  "Subscription will be canceled at the end of the billing period",
 		"cancelAt": time.Now().AddDate(0, 0, 15),
 	})
 }

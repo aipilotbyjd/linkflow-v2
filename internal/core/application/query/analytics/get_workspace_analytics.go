@@ -16,14 +16,14 @@ type GetWorkspaceAnalyticsQuery struct {
 }
 
 type WorkspaceAnalyticsResult struct {
-	TotalWorkflows    int64              `json:"total_workflows"`
-	ActiveWorkflows   int64              `json:"active_workflows"`
-	TotalExecutions   int64              `json:"total_executions"`
-	SuccessfulRuns    int64              `json:"successful_runs"`
-	FailedRuns        int64              `json:"failed_runs"`
-	AverageDurationMs float64            `json:"average_duration_ms"`
-	ExecutionsByDay   map[string]int64   `json:"executions_by_day"`
-	TopWorkflows      []WorkflowStats    `json:"top_workflows"`
+	TotalWorkflows    int64            `json:"total_workflows"`
+	ActiveWorkflows   int64            `json:"active_workflows"`
+	TotalExecutions   int64            `json:"total_executions"`
+	SuccessfulRuns    int64            `json:"successful_runs"`
+	FailedRuns        int64            `json:"failed_runs"`
+	AverageDurationMs float64          `json:"average_duration_ms"`
+	ExecutionsByDay   map[string]int64 `json:"executions_by_day"`
+	TopWorkflows      []WorkflowStats  `json:"top_workflows"`
 }
 
 type WorkflowStats struct {

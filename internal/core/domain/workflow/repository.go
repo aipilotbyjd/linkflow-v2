@@ -47,12 +47,12 @@ type FolderRepository interface {
 // ListOptions for workflow queries
 type ListOptions struct {
 	*types.ListOptions
-	Status    *Status
-	Tags      []string
-	FolderID  *uuid.UUID
-	Search    string
+	Status     *Status
+	Tags       []string
+	FolderID   *uuid.UUID
+	Search     string
 	IsFavorite *bool
-	CreatedBy *uuid.UUID
+	CreatedBy  *uuid.UUID
 }
 
 // NewListOptions creates default list options
