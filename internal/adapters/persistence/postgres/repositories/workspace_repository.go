@@ -86,7 +86,7 @@ func (r *WorkspaceRepository) FindByUserID(ctx context.Context, userID uuid.UUID
 
 func (r *WorkspaceRepository) ExistsBySlug(ctx context.Context, slug string) (bool, error) {
 	var count int64
-	err := postgres.GetTx(ctx, r.db).Model(&models.Workspace{}).Where("slug = ?", slug).Count(&count).Error
+	err := postgres.GetTx(ctx, r.db).Model(&models.Workspace{}).Where("slug = ? AND deleted_at IS NULL", slug).Count(&count).Error
 	return count > 0, err
 }
 

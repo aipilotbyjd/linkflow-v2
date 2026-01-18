@@ -174,6 +174,9 @@ func main() {
 
 	// Node registry
 	nodeRegistry := nodes.NewRegistry()
+	if err := nodes.LoadAllNodes(nodeRegistry); err != nil {
+		log.Fatal().Err(err).Msg("Failed to load node types")
+	}
 
 	// Metrics collector
 	metricsCollector := metrics.NewCollector("2.0.0")

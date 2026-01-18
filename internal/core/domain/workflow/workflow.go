@@ -205,10 +205,14 @@ func (w *Workflow) GetMaxRetries() int {
 
 func isTriggerType(nodeType string) bool {
 	triggers := []string{
+		"trigger",
 		"trigger.manual",
 		"trigger.webhook",
 		"trigger.schedule",
 		"trigger.api",
+		"manual_trigger",
+		"webhook",
+		"schedule",
 		"n8n-nodes-base.manualTrigger",
 		"n8n-nodes-base.webhook",
 		"n8n-nodes-base.scheduleTrigger",

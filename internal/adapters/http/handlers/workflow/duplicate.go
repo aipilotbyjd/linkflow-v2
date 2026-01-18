@@ -31,10 +31,8 @@ func (h *DuplicateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	workspaceID := middleware.GetWorkspaceID(r.Context())
 
 	var req DuplicateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
-		return
-	}
+	// Body is optional
+	_ = json.NewDecoder(r.Body).Decode(&req)
 
 	original, err := h.workflowRepo.FindByID(r.Context(), workflowID)
 	if err != nil {
