@@ -8,6 +8,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/folder"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type CreateFolderHandler struct {
@@ -19,7 +20,7 @@ func NewCreateFolderHandler(folderRepo folder.Repository) *CreateFolderHandler {
 }
 
 type CreateFolderRequest struct {
-	Name        string     `json:"name"`
+	Name        string     `json:"name" validate:"required"`
 	Description *string    `json:"description,omitempty"`
 	Color       *string    `json:"color,omitempty"`
 	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
@@ -28,24 +29,28 @@ type CreateFolderRequest struct {
 func (h *CreateFolderHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
 	if wsCtx == nil {
-		common.BadRequest(w, "workspace context required")
+		common.BadRequest(w, "Workspace context required")
 		return
 	}
 
 	userClaims := middleware.GetUserFromContext(r.Context())
 	if userClaims == nil {
-		common.Unauthorized(w, "authentication required")
+		common.Unauthorized(w, "Authentication required")
 		return
 	}
 
 	var req CreateFolderRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.Name == "" {
-		common.BadRequest(w, "name is required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

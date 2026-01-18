@@ -19,7 +19,7 @@ type PinnedDataResponse struct {
 
 // SetPinnedDataRequest represents the request to set pinned data
 type SetPinnedDataRequest struct {
-	Data json.RawMessage `json:"data"`
+	Data json.RawMessage `json:"data" validate:"required"`
 }
 
 // ToPinnedDataResponse converts domain to response

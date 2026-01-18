@@ -52,6 +52,7 @@ var workerInfraSet = wire.NewSet(
 	provideWorkerPostgresClient,
 	provideWorkerRedis,
 	provideWorkerAsynqClient,
+	provideWorkerTaskQueue,
 	provideWorkerEncryptor,
 	provideWorkerEventBus,
 )
@@ -129,6 +130,10 @@ func provideWorkerAsynqClient(cfg *config.Config) (*asynqAdapter.Client, error) 
 		RedisPassword: cfg.Redis.Password,
 		RedisDB:       cfg.Redis.DB,
 	})
+}
+
+func provideWorkerTaskQueue(client *asynqAdapter.Client) executionCmd.TaskQueue {
+	return asynqAdapter.NewTaskQueueAdapter(client)
 }
 
 func provideWorkerEncryptor(cfg *config.Config) (*crypto.Encryptor, error) {

@@ -9,11 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // RateRequest represents rate template request
 type RateRequest struct {
-	Score   int    `json:"score"`
+	Score   int    `json:"score" validate:"required,min=1,max=5"`
 	Comment string `json:"comment,omitempty"`
 }
 
@@ -32,12 +33,16 @@ func (h *RateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var req RateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.Score < 1 || req.Score > 5 {
-		common.BadRequest(w, "score must be between 1 and 5")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

@@ -26,10 +26,10 @@ type ShareResponse struct {
 
 // CreateShareRequest represents request to create a share
 type CreateShareRequest struct {
-	ResourceType    string `json:"resourceType"`
-	ResourceID      string `json:"resourceId"`
-	SharedWithEmail string `json:"sharedWithEmail"`
-	Permission      string `json:"permission"`
+	ResourceType    string `json:"resourceType" validate:"required,oneof=workflow credential folder"`
+	ResourceID      string `json:"resourceId" validate:"required,uuid"`
+	SharedWithEmail string `json:"sharedWithEmail" validate:"required,email"`
+	Permission      string `json:"permission" validate:"required,oneof=view edit admin"`
 	Message         string `json:"message,omitempty"`
 }
 

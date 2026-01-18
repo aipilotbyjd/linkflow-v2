@@ -7,6 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type CreateSubscriptionHandler struct {
@@ -20,7 +21,16 @@ func NewCreateSubscriptionHandler(handler *billingCmd.CreateSubscriptionHandler)
 func (h *CreateSubscriptionHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req CreateSubscriptionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
+		return
+	}
+
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

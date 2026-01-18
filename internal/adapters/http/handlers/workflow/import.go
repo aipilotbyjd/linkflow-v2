@@ -7,6 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type ImportHandler struct {
@@ -32,7 +33,16 @@ func (h *ImportHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var imported ExportedWorkflow
 	if err := json.NewDecoder(r.Body).Decode(&imported); err != nil {
-		common.BadRequest(w, "invalid workflow JSON")
+		common.BadRequest(w, "Invalid workflow JSON")
+		return
+	}
+
+	if errors := validation.Validate(imported); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

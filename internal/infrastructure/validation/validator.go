@@ -2,247 +2,156 @@ package validation
 
 import (
 	"fmt"
-	"net/mail"
-	"net/url"
-	"regexp"
+	"reflect"
 	"strings"
-	"unicode/utf8"
+
+	"github.com/go-playground/validator/v10"
 )
 
-// Validator provides validation functionality
-type Validator struct {
-	errors []ValidationError
-}
-
-// ValidationError represents a validation error
+// ValidationError represents a single field validation error
 type ValidationError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
-	Code    string `json:"code"`
 }
 
-// Error implements the error interface
-func (e ValidationError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+// Validator wraps go-playground/validator with custom error messages
+type Validator struct {
+	validate *validator.Validate
 }
 
-// New creates a new validator
+// New creates a new validator instance
 func New() *Validator {
-	return &Validator{errors: make([]ValidationError, 0)}
-}
+	v := validator.New()
 
-// HasErrors returns true if there are validation errors
-func (v *Validator) HasErrors() bool {
-	return len(v.errors) > 0
-}
-
-// Errors returns all validation errors
-func (v *Validator) Errors() []ValidationError {
-	return v.errors
-}
-
-// Error returns the first error message
-func (v *Validator) Error() string {
-	if len(v.errors) == 0 {
-		return ""
-	}
-	return v.errors[0].Error()
-}
-
-// AddError adds a validation error
-func (v *Validator) AddError(field, message, code string) {
-	v.errors = append(v.errors, ValidationError{
-		Field:   field,
-		Message: message,
-		Code:    code,
-	})
-}
-
-// Required validates that a string is not empty
-func (v *Validator) Required(field, value string) *Validator {
-	if strings.TrimSpace(value) == "" {
-		v.AddError(field, "is required", "required")
-	}
-	return v
-}
-
-// RequiredIf validates that a string is not empty if condition is true
-func (v *Validator) RequiredIf(field, value string, condition bool) *Validator {
-	if condition && strings.TrimSpace(value) == "" {
-		v.AddError(field, "is required", "required")
-	}
-	return v
-}
-
-// MinLength validates minimum string length
-func (v *Validator) MinLength(field, value string, min int) *Validator {
-	if utf8.RuneCountInString(value) < min {
-		v.AddError(field, fmt.Sprintf("must be at least %d characters", min), "min_length")
-	}
-	return v
-}
-
-// MaxLength validates maximum string length
-func (v *Validator) MaxLength(field, value string, max int) *Validator {
-	if utf8.RuneCountInString(value) > max {
-		v.AddError(field, fmt.Sprintf("must be at most %d characters", max), "max_length")
-	}
-	return v
-}
-
-// Email validates an email address
-func (v *Validator) Email(field, value string) *Validator {
-	if value == "" {
-		return v
-	}
-	_, err := mail.ParseAddress(value)
-	if err != nil {
-		v.AddError(field, "must be a valid email address", "email")
-	}
-	return v
-}
-
-// URL validates a URL
-func (v *Validator) URL(field, value string) *Validator {
-	if value == "" {
-		return v
-	}
-	_, err := url.ParseRequestURI(value)
-	if err != nil {
-		v.AddError(field, "must be a valid URL", "url")
-	}
-	return v
-}
-
-// UUID validates a UUID
-func (v *Validator) UUID(field, value string) *Validator {
-	if value == "" {
-		return v
-	}
-	uuidPattern := regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
-	if !uuidPattern.MatchString(value) {
-		v.AddError(field, "must be a valid UUID", "uuid")
-	}
-	return v
-}
-
-// Pattern validates against a regex pattern
-func (v *Validator) Pattern(field, value, pattern, message string) *Validator {
-	if value == "" {
-		return v
-	}
-	matched, err := regexp.MatchString(pattern, value)
-	if err != nil || !matched {
-		v.AddError(field, message, "pattern")
-	}
-	return v
-}
-
-// In validates that value is in allowed list
-func (v *Validator) In(field, value string, allowed []string) *Validator {
-	if value == "" {
-		return v
-	}
-	for _, a := range allowed {
-		if value == a {
-			return v
+	// Use JSON tag names for field names
+	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return fld.Name
 		}
+		return name
+	})
+
+	return &Validator{
+		validate: v,
 	}
-	v.AddError(field, fmt.Sprintf("must be one of: %s", strings.Join(allowed, ", ")), "in")
-	return v
 }
 
-// Min validates minimum numeric value
-func (v *Validator) Min(field string, value, min int) *Validator {
-	if value < min {
-		v.AddError(field, fmt.Sprintf("must be at least %d", min), "min")
+// Validate validates a struct and returns user-friendly errors
+func (v *Validator) Validate(s interface{}) []ValidationError {
+	err := v.validate.Struct(s)
+	if err == nil {
+		return nil
 	}
-	return v
+
+	var errors []ValidationError
+	for _, err := range err.(validator.ValidationErrors) {
+		errors = append(errors, ValidationError{
+			Field:   err.Field(),
+			Message: v.getMessage(err),
+		})
+	}
+	return errors
 }
 
-// Max validates maximum numeric value
-func (v *Validator) Max(field string, value, max int) *Validator {
-	if value > max {
-		v.AddError(field, fmt.Sprintf("must be at most %d", max), "max")
+// getMessage returns a user-friendly message for a validation error
+func (v *Validator) getMessage(err validator.FieldError) string {
+	field := formatFieldName(err.Field())
+
+	// Fall back to tag-specific message
+	switch err.Tag() {
+	case "required":
+		return fmt.Sprintf("%s is required", field)
+	case "email":
+		return "Please enter a valid email address"
+	case "min":
+		if err.Type().Kind() == reflect.String {
+			return fmt.Sprintf("%s must be at least %s characters", field, err.Param())
+		}
+		return fmt.Sprintf("%s must be at least %s", field, err.Param())
+	case "max":
+		if err.Type().Kind() == reflect.String {
+			return fmt.Sprintf("%s must be at most %s characters", field, err.Param())
+		}
+		return fmt.Sprintf("%s must be at most %s", field, err.Param())
+	case "uuid":
+		return fmt.Sprintf("%s must be a valid UUID", field)
+	case "url":
+		return fmt.Sprintf("%s must be a valid URL", field)
+	case "oneof":
+		return fmt.Sprintf("%s must be one of: %s", field, err.Param())
+	case "gte":
+		return fmt.Sprintf("%s must be greater than or equal to %s", field, err.Param())
+	case "lte":
+		return fmt.Sprintf("%s must be less than or equal to %s", field, err.Param())
+	case "alphanum":
+		return fmt.Sprintf("%s must contain only letters and numbers", field)
+	case "containsany":
+		return fmt.Sprintf("%s must contain at least one special character", field)
+	default:
+		return fmt.Sprintf("%s is invalid", field)
 	}
-	return v
 }
 
-// Between validates numeric value is between min and max
-func (v *Validator) Between(field string, value, min, max int) *Validator {
-	if value < min || value > max {
-		v.AddError(field, fmt.Sprintf("must be between %d and %d", min, max), "between")
+// formatFieldName converts camelCase to human readable
+func formatFieldName(field string) string {
+	// Common field name mappings
+	mappings := map[string]string{
+		"first_name":      "First name",
+		"last_name":       "Last name",
+		"firstName":       "First name",
+		"lastName":        "Last name",
+		"email":           "Email",
+		"password":        "Password",
+		"name":            "Name",
+		"description":     "Description",
+		"workflow_id":     "Workflow ID",
+		"workflowId":      "Workflow ID",
+		"workspace_id":    "Workspace ID",
+		"workspaceId":     "Workspace ID",
+		"cron_expression": "Cron expression",
+		"cronExpression":  "Cron expression",
+		"resource_id":     "Resource ID",
+		"resourceId":      "Resource ID",
+		"resource_type":   "Resource type",
+		"resourceType":    "Resource type",
+		"shared_with":     "Shared with email",
+		"sharedWithEmail": "Shared with email",
+		"url":             "URL",
+		"method":          "Method",
+		"path":            "Path",
+		"type":            "Type",
+		"timezone":        "Timezone",
+		"permission":      "Permission",
 	}
-	return v
+
+	if mapped, ok := mappings[field]; ok {
+		return mapped
+	}
+
+	// Default: capitalize first letter
+	if len(field) > 0 {
+		return strings.ToUpper(field[:1]) + field[1:]
+	}
+	return field
 }
 
-// Password validates password strength
-func (v *Validator) Password(field, value string) *Validator {
-	if value == "" {
-		return v
-	}
 
-	if len(value) < 8 {
-		v.AddError(field, "must be at least 8 characters", "password_length")
-		return v
-	}
 
-	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString(value)
-	hasLower := regexp.MustCompile(`[a-z]`).MatchString(value)
-	hasNumber := regexp.MustCompile(`[0-9]`).MatchString(value)
+// Global validator instance
+var defaultValidator = New()
 
-	if !hasUpper || !hasLower || !hasNumber {
-		v.AddError(field, "must contain uppercase, lowercase, and number", "password_strength")
-	}
-	return v
+// Validate validates using the default validator
+func Validate(s interface{}) []ValidationError {
+	return defaultValidator.Validate(s)
 }
 
-// Slug validates a URL-safe slug
-func (v *Validator) Slug(field, value string) *Validator {
-	if value == "" {
-		return v
+// ValidateAndRespond validates and writes error response if invalid, returns true if valid
+func ValidateAndRespond(w interface{ Header() map[string][]string }, s interface{}, writeError func([]ValidationError)) bool {
+	errors := defaultValidator.Validate(s)
+	if len(errors) > 0 {
+		writeError(errors)
+		return false
 	}
-	slugPattern := regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
-	if !slugPattern.MatchString(value) {
-		v.AddError(field, "must be a valid slug (lowercase letters, numbers, hyphens)", "slug")
-	}
-	return v
-}
-
-// CronExpression validates a cron expression
-func (v *Validator) CronExpression(field, value string) *Validator {
-	if value == "" {
-		return v
-	}
-	parts := strings.Fields(value)
-	if len(parts) != 5 && len(parts) != 6 {
-		v.AddError(field, "must be a valid cron expression", "cron")
-	}
-	return v
-}
-
-// Validate is a helper that returns error if validation failed
-func Validate(fn func(*Validator)) error {
-	v := New()
-	fn(v)
-	if v.HasErrors() {
-		return &ValidationErrors{Errors: v.Errors()}
-	}
-	return nil
-}
-
-// ValidationErrors wraps multiple validation errors
-type ValidationErrors struct {
-	Errors []ValidationError
-}
-
-func (e *ValidationErrors) Error() string {
-	if len(e.Errors) == 0 {
-		return ""
-	}
-	msgs := make([]string, len(e.Errors))
-	for i, err := range e.Errors {
-		msgs[i] = err.Error()
-	}
-	return strings.Join(msgs, "; ")
+	return true
 }

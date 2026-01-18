@@ -11,6 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type CreateAPIKeyHandler struct {
@@ -22,7 +23,7 @@ func NewCreateAPIKeyHandler(apiKeyRepo user.APIKeyRepository) *CreateAPIKeyHandl
 }
 
 type CreateAPIKeyRequest struct {
-	Name      string   `json:"name"`
+	Name      string   `json:"name" validate:"required"`
 	ExpiresAt *string  `json:"expires_at,omitempty"`
 	Scopes    []string `json:"scopes,omitempty"`
 }
@@ -40,18 +41,22 @@ type CreateAPIKeyResponse struct {
 func (h *CreateAPIKeyHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userClaims := middleware.GetUserFromContext(r.Context())
 	if userClaims == nil {
-		common.Unauthorized(w, "authentication required")
+		common.Unauthorized(w, "Authentication required")
 		return
 	}
 
 	var req CreateAPIKeyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.Name == "" {
-		common.BadRequest(w, "name is required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

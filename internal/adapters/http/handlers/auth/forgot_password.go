@@ -11,6 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type ForgotPasswordHandler struct {
@@ -33,6 +34,15 @@ func (h *ForgotPasswordHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		common.BadRequest(w, "Invalid request body")
+		return
+	}
+
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

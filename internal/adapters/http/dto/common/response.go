@@ -19,9 +19,15 @@ type Response struct {
 
 // ErrorData represents error information in response
 type ErrorData struct {
-	Code    string            `json:"code"`
-	Message string            `json:"message"`
-	Details map[string]string `json:"details,omitempty"`
+	Code    string             `json:"code"`
+	Message string             `json:"message"`
+	Details []ValidationDetail `json:"details,omitempty"`
+}
+
+// ValidationDetail represents a single field validation error
+type ValidationDetail struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
 }
 
 // MetaData represents pagination/meta information
@@ -95,8 +101,8 @@ func Error(w http.ResponseWriter, status int, codeOrMessage string, messageOptio
 	})
 }
 
-// ErrorWithDetails writes an error response with details
-func ErrorWithDetails(w http.ResponseWriter, status int, code, message string, details map[string]string) {
+// ErrorWithDetails writes an error response with field validation details
+func ErrorWithDetails(w http.ResponseWriter, status int, code, message string, details []ValidationDetail) {
 	JSON(w, status, Response{
 		Success: false,
 		Error: &ErrorData{
@@ -105,6 +111,33 @@ func ErrorWithDetails(w http.ResponseWriter, status int, code, message string, d
 			Details: details,
 		},
 	})
+}
+
+// ValidationErrors writes a validation error response
+func ValidationErrors(w http.ResponseWriter, errors []ValidationDetail) {
+	JSON(w, http.StatusBadRequest, Response{
+		Success: false,
+		Error: &ErrorData{
+			Code:    "VALIDATION_ERROR",
+			Message: "Validation failed",
+			Details: errors,
+		},
+	})
+}
+
+// ValidateRequest validates a request struct and writes error response if invalid
+// Returns true if valid, false if invalid (and response already written)
+func ValidateRequest(w http.ResponseWriter, req interface{}, validate func(interface{}) []struct{ Field, Message string }) bool {
+	errors := validate(req)
+	if len(errors) == 0 {
+		return true
+	}
+	details := make([]ValidationDetail, len(errors))
+	for i, e := range errors {
+		details[i] = ValidationDetail{Field: e.Field, Message: e.Message}
+	}
+	ValidationErrors(w, details)
+	return false
 }
 
 // BadRequest writes a bad request error
@@ -151,9 +184,13 @@ func RateLimited(w http.ResponseWriter) {
 	Error(w, http.StatusTooManyRequests, "RATE_LIMITED", "too many requests")
 }
 
-// ValidationError writes a validation error
+// ValidationError writes a validation error (deprecated, use ValidationErrors)
 func ValidationError(w http.ResponseWriter, message string, details map[string]string) {
-	ErrorWithDetails(w, http.StatusBadRequest, "VALIDATION_ERROR", message, details)
+	detailList := make([]ValidationDetail, 0, len(details))
+	for field, msg := range details {
+		detailList = append(detailList, ValidationDetail{Field: field, Message: msg})
+	}
+	ErrorWithDetails(w, http.StatusBadRequest, "VALIDATION_ERROR", message, detailList)
 }
 
 // HandleError handles an error and writes appropriate response
@@ -166,7 +203,14 @@ func HandleError(w http.ResponseWriter, err error) {
 
 	var domainErr *errors.DomainError
 	if stderrors.As(err, &domainErr) {
-		ErrorWithDetails(w, status, domainErr.Code, domainErr.Message, domainErr.Details)
+		var detailList []ValidationDetail
+		if domainErr.Details != nil {
+			detailList = make([]ValidationDetail, 0, len(domainErr.Details))
+			for field, msg := range domainErr.Details {
+				detailList = append(detailList, ValidationDetail{Field: field, Message: msg})
+			}
+		}
+		ErrorWithDetails(w, status, domainErr.Code, domainErr.Message, detailList)
 		return
 	}
 

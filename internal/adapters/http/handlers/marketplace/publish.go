@@ -8,12 +8,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // PublishRequest represents publish to marketplace request
 type PublishRequest struct {
-	WorkflowID  string   `json:"workflowId"`
-	Name        string   `json:"name"`
+	WorkflowID  string   `json:"workflowId" validate:"required"`
+	Name        string   `json:"name" validate:"required"`
 	Description string   `json:"description"`
 	Category    string   `json:"category"`
 	Tags        []string `json:"tags"`
@@ -34,12 +35,16 @@ func (h *PublishHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var req PublishRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.WorkflowID == "" || req.Name == "" {
-		common.BadRequest(w, "workflow ID and name are required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

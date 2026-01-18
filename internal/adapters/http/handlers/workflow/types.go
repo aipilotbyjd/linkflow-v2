@@ -98,7 +98,7 @@ type ValidationError struct {
 
 // TestNodeRequest represents test node request
 type TestNodeRequest struct {
-	NodeType   string                 `json:"node_type"`
+	NodeType   string                 `json:"node_type" validate:"required"`
 	Parameters map[string]interface{} `json:"parameters"`
 	Input      map[string]interface{} `json:"input,omitempty"`
 }

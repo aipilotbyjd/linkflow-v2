@@ -6,6 +6,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	userCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/user"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // LoginHandler handles user login
@@ -22,17 +23,16 @@ func NewLoginHandler(handler *userCmd.LoginUserHandler) *LoginHandler {
 func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	// Validate required fields
-	if req.Email == "" {
-		common.Error(w, 400, "EMAIL_REQUIRED", "Email is required")
-		return
-	}
-	if req.Password == "" {
-		common.Error(w, 400, "PASSWORD_REQUIRED", "Password is required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

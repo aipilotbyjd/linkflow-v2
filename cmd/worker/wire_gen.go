@@ -58,7 +58,8 @@ func InitializeWorkerApp() (*WorkerApp, error) {
 	credentialRepository := repositories.NewCredentialRepository(db)
 	scheduleRepository := repositories.NewScheduleRepository(db)
 	bus := provideWorkerEventBus()
-	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus)
+	taskQueue := provideWorkerTaskQueue(asynqClient)
+	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue)
 	workerApp := provideWorkerApp(config, logger, client, redisClient, asynqClient, encryptor, workflowRepository, executionRepository, nodeExecutionRepository, credentialRepository, scheduleRepository, startExecutionHandler)
 	return workerApp, nil
 }
@@ -93,6 +94,7 @@ var workerInfraSet = wire.NewSet(
 	provideWorkerPostgresClient,
 	provideWorkerRedis,
 	provideWorkerAsynqClient,
+	provideWorkerTaskQueue,
 	provideWorkerEncryptor,
 	provideWorkerEventBus,
 )
@@ -156,6 +158,10 @@ func provideWorkerAsynqClient(cfg *config.Config) (*asynq.Client, error) {
 		RedisPassword: cfg.Redis.Password,
 		RedisDB:       cfg.Redis.DB,
 	})
+}
+
+func provideWorkerTaskQueue(client *asynq.Client) execution.TaskQueue {
+	return asynq.NewTaskQueueAdapter(client)
 }
 
 func provideWorkerEncryptor(cfg *config.Config) (*crypto.Encryptor, error) {

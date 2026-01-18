@@ -12,9 +12,9 @@ import (
 )
 
 type ExportedWorkflow struct {
-	Name        string          `json:"name"`
+	Name        string          `json:"name" validate:"required"`
 	Description *string         `json:"description,omitempty"`
-	Nodes       types.JSONArray `json:"nodes"`
+	Nodes       types.JSONArray `json:"nodes" validate:"required"`
 	Connections types.JSONArray `json:"connections"`
 	Settings    types.JSON      `json:"settings,omitempty"`
 	Tags        []string        `json:"tags,omitempty"`
