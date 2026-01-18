@@ -467,8 +467,10 @@ func main() {
 			r.Use(middleware.Auth(jwtManager))
 
 			// Current user
-			r.Get("/me", usrGetHandler.Handle)
-			r.Put("/me", usrUpdateHandler.Handle)
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/me", usrGetHandler.Handle)
+				r.Put("/me", usrUpdateHandler.Handle)
+			})
 
 			// Workspaces
 			r.Route("/workspaces", func(r chi.Router) {
