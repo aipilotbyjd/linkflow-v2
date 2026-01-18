@@ -26,6 +26,16 @@ func (h *LoginHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate required fields
+	if req.Email == "" {
+		common.Error(w, 400, "EMAIL_REQUIRED", "Email is required")
+		return
+	}
+	if req.Password == "" {
+		common.Error(w, 400, "PASSWORD_REQUIRED", "Password is required")
+		return
+	}
+
 	// Get client info
 	ipAddress := r.Header.Get("X-Forwarded-For")
 	if ipAddress == "" {

@@ -26,6 +26,28 @@ func (h *RegisterHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate required fields
+	if req.Email == "" {
+		common.Error(w, 400, "EMAIL_REQUIRED", "Email is required")
+		return
+	}
+	if req.Password == "" {
+		common.Error(w, 400, "PASSWORD_REQUIRED", "Password is required")
+		return
+	}
+	if len(req.Password) < 8 {
+		common.Error(w, 400, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters")
+		return
+	}
+	if req.FirstName == "" {
+		common.Error(w, 400, "FIRST_NAME_REQUIRED", "First name is required")
+		return
+	}
+	if req.LastName == "" {
+		common.Error(w, 400, "LAST_NAME_REQUIRED", "Last name is required")
+		return
+	}
+
 	result, err := h.handler.Handle(r.Context(), userCmd.RegisterUserCommand{
 		Email:     req.Email,
 		Password:  req.Password,

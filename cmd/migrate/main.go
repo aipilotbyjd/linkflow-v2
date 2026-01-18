@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 )
 
@@ -79,33 +80,71 @@ func main() {
 }
 
 func runMigrationsUp(db *gorm.DB, steps int) error {
-	log.Info().Int("steps", steps).Msg("Running migrations up")
+	log.Info().Int("steps", steps).Msg("Running GORM AutoMigrate")
 
-	// Enable auto-migrate for development
-	// For production, implement file-based migrations
+	// Enable UUID extension
+	db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
+
+	// AutoMigrate all models from persistence layer
 	if err := db.AutoMigrate(
-	// Add your domain models here for auto-migration
-	// &user.User{},
-	// &workspace.Workspace{},
-	// etc.
+		// User & Auth
+		&models.User{},
+		&models.UserSession{},
+
+		// Workspace
+		&models.Workspace{},
+		&models.WorkspaceMember{},
+
+		// Workflow
+		&models.Workflow{},
+		&models.WorkflowVersion{},
+
+		// Execution
+		&models.Execution{},
+		&models.NodeExecution{},
+
+		// Folder
+		&models.Folder{},
+
+		// Additional models
+		&models.PinnedData{},
+		&models.Share{},
+		&models.BinaryData{},
 	); err != nil {
 		return fmt.Errorf("auto-migrate failed: %w", err)
 	}
 
+	log.Info().Msg("All tables created/updated successfully")
 	return nil
 }
 
 func runMigrationsDown(db *gorm.DB, steps int) error {
 	log.Info().Int("steps", steps).Msg("Running migrations down")
-	// Implement rollback logic using migration files
-	// For now, this is a placeholder
-	log.Warn().Msg("Rollback not implemented - use migration files")
+	log.Warn().Msg("Rollback not implemented - GORM AutoMigrate only adds columns, doesn't remove")
 	return nil
 }
 
 func showMigrationStatus(db *gorm.DB) error {
-	log.Info().Msg("Migration status")
-	// Show current migration version
-	// Implement based on your migration tracking table
+	log.Info().Msg("Migration status - checking tables")
+
+	tables := []string{
+		"users", "user_sessions", "api_keys",
+		"workspaces", "workspace_members",
+		"workflows", "workflow_versions",
+		"executions", "node_executions",
+		"credentials", "schedules", "webhook_endpoints",
+		"templates", "folders", "shares", "pinned_data", "binary_data",
+		"plans", "subscriptions", "usage_records", "invoices",
+	}
+
+	for _, table := range tables {
+		var count int64
+		if err := db.Table(table).Count(&count).Error; err != nil {
+			log.Warn().Str("table", table).Msg("NOT EXISTS")
+		} else {
+			log.Info().Str("table", table).Int64("rows", count).Msg("EXISTS")
+		}
+	}
+
 	return nil
 }

@@ -170,18 +170,51 @@ func HandleError(w http.ResponseWriter, err error) {
 		return
 	}
 
-	switch {
-	case errors.IsNotFoundError(err):
-		NotFound(w, "resource")
-	case errors.IsUnauthorizedError(err):
-		Unauthorized(w, err.Error())
-	case errors.IsForbiddenError(err):
-		Forbidden(w, err.Error())
-	case errors.IsValidationError(err):
-		BadRequest(w, err.Error())
-	case errors.IsConflictError(err):
-		Conflict(w, err.Error())
+	// Map common error messages to proper responses
+	errMsg := err.Error()
+	switch errMsg {
+	// Auth errors
+	case "invalid credentials":
+		Error(w, http.StatusUnauthorized, "INVALID_CREDENTIALS", "Invalid email or password")
+	case "account is locked":
+		Error(w, http.StatusForbidden, "ACCOUNT_LOCKED", "Account is temporarily locked due to too many failed login attempts")
+	case "account is suspended":
+		Error(w, http.StatusForbidden, "ACCOUNT_SUSPENDED", "Account has been suspended")
+	case "email already exists":
+		Error(w, http.StatusConflict, "EMAIL_EXISTS", "An account with this email already exists")
+	case "user not found":
+		Error(w, http.StatusNotFound, "USER_NOT_FOUND", "User not found")
+	case "email not verified":
+		Error(w, http.StatusForbidden, "EMAIL_NOT_VERIFIED", "Please verify your email address")
+	case "MFA verification required":
+		Error(w, http.StatusUnauthorized, "MFA_REQUIRED", "Multi-factor authentication is required")
+	case "invalid MFA code":
+		Error(w, http.StatusUnauthorized, "MFA_INVALID", "Invalid MFA code")
+	case "password is required":
+		Error(w, http.StatusBadRequest, "PASSWORD_REQUIRED", "Password is required")
+	case "password must be at least 8 characters":
+		Error(w, http.StatusBadRequest, "PASSWORD_TOO_SHORT", "Password must be at least 8 characters")
+	case "password does not meet requirements":
+		Error(w, http.StatusBadRequest, "PASSWORD_WEAK", "Password must contain uppercase, lowercase, number, and special character")
+	case "session not found", "session expired", "session revoked":
+		Error(w, http.StatusUnauthorized, "SESSION_INVALID", "Session is invalid or expired")
+	case "too many login attempts":
+		Error(w, http.StatusTooManyRequests, "TOO_MANY_ATTEMPTS", "Too many login attempts. Please try again later")
 	default:
-		InternalError(w, "")
+		// Fall back to generic handling
+		switch {
+		case errors.IsNotFoundError(err):
+			NotFound(w, "resource")
+		case errors.IsUnauthorizedError(err):
+			Unauthorized(w, err.Error())
+		case errors.IsForbiddenError(err):
+			Forbidden(w, err.Error())
+		case errors.IsValidationError(err):
+			BadRequest(w, err.Error())
+		case errors.IsConflictError(err):
+			Conflict(w, err.Error())
+		default:
+			InternalError(w, "")
+		}
 	}
 }

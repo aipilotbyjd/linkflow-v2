@@ -403,6 +403,8 @@ func main() {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", healthHandler.Health)
+		r.Get("/health/live", healthHandler.Liveness)
+		r.Get("/health/ready", healthHandler.Readiness)
 
 		// Auth routes (public)
 		r.Route("/auth", func(r chi.Router) {
