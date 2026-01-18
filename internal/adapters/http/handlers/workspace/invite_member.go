@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
@@ -43,17 +41,12 @@ func NewInviteMemberHandler(
 }
 
 func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceIDStr := chi.URLParam(r, "id")
-	if workspaceIDStr == "" {
-		common.BadRequest(w, "Workspace ID is required")
+	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	if wsCtx == nil {
+		common.BadRequest(w, "workspace context required")
 		return
 	}
-
-	workspaceID, err := uuid.Parse(workspaceIDStr)
-	if err != nil {
-		common.BadRequest(w, "Invalid workspace ID")
-		return
-	}
+	workspaceID := wsCtx.WorkspaceID
 
 	var req InviteMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

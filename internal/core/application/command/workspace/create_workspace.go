@@ -74,6 +74,9 @@ func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspace
 	}
 
 	if err := h.workspaceRepo.Create(ctx, ws); err != nil {
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			return nil, workspace.ErrSlugAlreadyExists
+		}
 		return nil, fmt.Errorf("failed to create workspace: %w", err)
 	}
 

@@ -274,6 +274,7 @@ func main() {
 	wsUpdateHandler := workspaceHandler.NewUpdateHandler(workspaceRepo)
 	wsDeleteHandler := workspaceHandler.NewDeleteHandler(workspaceRepo)
 	wsMembersHandler := workspaceHandler.NewListMembersHandler(listMembersHandler)
+	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, userRepo, emailService, baseURL)
 
 	// Workflow handlers
 	wfCreateHandler := workflowHandler.NewCreateHandler(createWorkflowHandler)
@@ -284,6 +285,10 @@ func main() {
 	wfActivateHandler := workflowHandler.NewActivateHandler(activateWorkflowHandler)
 	wfDeactivateHandler := workflowHandler.NewDeactivateHandler(workflowRepo)
 	wfVersionsHandler := workflowHandler.NewListVersionsHandler(versionRepo)
+	wfCloneHandler := workflowHandler.NewCloneHandler(workflowRepo)
+	wfDuplicateHandler := workflowHandler.NewDuplicateHandler(workflowRepo)
+	wfExportHandler := workflowHandler.NewExportHandler(workflowRepo)
+	wfSearchHandler := workflowHandler.NewSearchHandler(workflowRepo)
 
 	// Execution handlers
 	exStartHandler := executionHandler.NewStartHandler(startExecutionHandler)
@@ -292,6 +297,7 @@ func main() {
 	exCancelHandler := executionHandler.NewCancelHandler(executionRepo)
 	exRetryHandler := executionHandler.NewRetryHandler(startExecutionHandler, executionRepo)
 	exStatsHandler := executionHandler.NewGetExecutionStatsHandler(executionRepo)
+	exSearchHandler := executionHandler.NewSearchExecutionsHandler(executionRepo)
 
 	// Credential handlers
 	crCreateHandler := credentialHandler.NewCreateHandler(createCredentialHandler)
@@ -311,6 +317,8 @@ func main() {
 
 	// Webhook handlers
 	whTriggerHandler := webhookHandler.NewTriggerHandler(triggerWebhookHandler)
+	whListHandler := webhookHandler.NewListEndpointsHandler(webhookRepo, baseURL)
+	whCreateHandler := webhookHandler.NewCreateEndpointHandler(webhookRepo, workflowRepo, baseURL)
 
 	// Billing handlers
 	blGetPlansHandler := billingHandler.NewGetPlansHandler(getPlansHandler)
@@ -337,8 +345,9 @@ func main() {
 	dashHandler := dashboardHandler.NewDashboardHandler(workflowRepo, executionRepo, scheduleRepo)
 	quickStatsHandler := dashboardHandler.NewQuickStatsHandler(workflowRepo, executionRepo, credentialRepo, scheduleRepo)
 
-	// User handler
+	// User handlers
 	usrGetHandler := userHandler.NewGetCurrentUserHandler(getUserHandler)
+	usrUpdateHandler := userHandler.NewUpdateCurrentUserHandler(userRepo)
 
 	// Folder handlers
 	fldCreateHandler := folderHandler.NewCreateFolderHandler(folderRepo)
@@ -459,6 +468,7 @@ func main() {
 
 			// Current user
 			r.Get("/me", usrGetHandler.Handle)
+			r.Put("/me", usrUpdateHandler.Handle)
 
 			// Workspaces
 			r.Route("/workspaces", func(r chi.Router) {
@@ -470,6 +480,7 @@ func main() {
 					r.Put("/", wsUpdateHandler.Handle)
 					r.Delete("/", wsDeleteHandler.Handle)
 					r.Get("/members", wsMembersHandler.Handle)
+					r.Post("/members", wsInviteHandler.Handle)
 
 					// Dashboard
 					r.Get("/dashboard", dashHandler.Handle)
@@ -479,6 +490,7 @@ func main() {
 					r.Route("/workflows", func(r chi.Router) {
 						r.Post("/", wfCreateHandler.Handle)
 						r.Get("/", wfListHandler.Handle)
+						r.Get("/search", wfSearchHandler.Handle)
 						r.Route("/{workflowId}", func(r chi.Router) {
 							r.Get("/", wfGetHandler.Handle)
 							r.Put("/", wfUpdateHandler.Handle)
@@ -486,6 +498,9 @@ func main() {
 							r.Post("/activate", wfActivateHandler.Handle)
 							r.Post("/deactivate", wfDeactivateHandler.Handle)
 							r.Post("/execute", exStartHandler.Handle)
+							r.Post("/clone", wfCloneHandler.Handle)
+							r.Post("/duplicate", wfDuplicateHandler.Handle)
+							r.Get("/export", wfExportHandler.Handle)
 							r.Get("/versions", wfVersionsHandler.Handle)
 						})
 					})
@@ -494,11 +509,18 @@ func main() {
 					r.Route("/executions", func(r chi.Router) {
 						r.Get("/", exListHandler.Handle)
 						r.Get("/stats", exStatsHandler.Handle)
+						r.Get("/search", exSearchHandler.Handle)
 						r.Route("/{executionId}", func(r chi.Router) {
 							r.Get("/", exGetHandler.Handle)
 							r.Post("/cancel", exCancelHandler.Handle)
 							r.Post("/retry", exRetryHandler.Handle)
 						})
+					})
+
+					// Webhooks
+					r.Route("/webhooks", func(r chi.Router) {
+						r.Get("/", whListHandler.Handle)
+						r.Post("/", whCreateHandler.Handle)
 					})
 
 					// Credentials

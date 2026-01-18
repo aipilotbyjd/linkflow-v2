@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/webhook"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
@@ -24,17 +23,12 @@ func NewListEndpointsHandler(webhookRepo webhook.Repository, baseURL string) *Li
 }
 
 func (h *ListEndpointsHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceIDStr := chi.URLParam(r, "id")
-	if workspaceIDStr == "" {
-		common.BadRequest(w, "Workspace ID is required")
+	wsCtx := middleware.GetWorkspaceFromContext(r.Context())
+	if wsCtx == nil {
+		common.BadRequest(w, "workspace context required")
 		return
 	}
-
-	workspaceID, err := uuid.Parse(workspaceIDStr)
-	if err != nil {
-		common.BadRequest(w, "Invalid workspace ID")
-		return
-	}
+	workspaceID := wsCtx.WorkspaceID
 
 	// Parse pagination params
 	page, _ := strconv.Atoi(r.URL.Query().Get("page"))

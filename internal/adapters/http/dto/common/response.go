@@ -182,6 +182,8 @@ func HandleError(w http.ResponseWriter, err error) {
 		Error(w, http.StatusForbidden, "ACCOUNT_SUSPENDED", "Account has been suspended")
 	case "email already exists":
 		Error(w, http.StatusConflict, "EMAIL_EXISTS", "An account with this email already exists")
+	case "workspace slug already exists":
+		Error(w, http.StatusConflict, "SLUG_EXISTS", "A workspace with this name already exists")
 	case "user not found":
 		Error(w, http.StatusNotFound, "USER_NOT_FOUND", "User not found")
 	case "email not verified":
