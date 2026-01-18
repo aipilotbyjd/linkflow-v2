@@ -9,6 +9,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type DuplicateHandler struct {
@@ -32,7 +33,18 @@ func (h *DuplicateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var req DuplicateRequest
 	// Body is optional
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
+			if errors := validation.Validate(req); len(errors) > 0 {
+				details := make([]common.ValidationDetail, len(errors))
+				for i, e := range errors {
+					details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+				}
+				common.ValidationErrors(w, details)
+				return
+			}
+		}
+	}
 
 	original, err := h.workflowRepo.FindByID(r.Context(), workflowID)
 	if err != nil {

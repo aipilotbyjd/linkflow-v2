@@ -35,7 +35,7 @@ type CreateShareRequest struct {
 
 // UpdateShareRequest represents request to update a share
 type UpdateShareRequest struct {
-	Permission string `json:"permission"`
+	Permission string `json:"permission" validate:"required,oneof=view edit admin"`
 }
 
 // ToShareResponse converts domain to response

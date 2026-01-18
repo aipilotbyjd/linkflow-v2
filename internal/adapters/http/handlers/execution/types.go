@@ -78,7 +78,7 @@ type ReplayRequest struct {
 
 // ReplayFromNodeRequest represents replay from node request
 type ReplayFromNodeRequest struct {
-	NodeID string `json:"node_id"`
+	NodeID string `json:"node_id" validate:"required"`
 }
 
 // BulkDeleteRequest represents bulk delete request

@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type UserCreator interface {
@@ -43,6 +44,15 @@ func (h *OAuthCallbackHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			common.Error(w, http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body")
+			return
+		}
+
+		if errors := validation.Validate(req); len(errors) > 0 {
+			details := make([]common.ValidationDetail, len(errors))
+			for i, e := range errors {
+				details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+			}
+			common.ValidationErrors(w, details)
 			return
 		}
 	}

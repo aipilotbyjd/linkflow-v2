@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // TrimStreamRequest represents the trim stream request
 type TrimStreamRequest struct {
-	StreamName string `json:"streamName"`
+	StreamName string `json:"streamName" validate:"required"`
 	MaxLen     int64  `json:"maxLen"`
 }
 
@@ -31,8 +32,12 @@ func (h *TrimStreamHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.StreamName == "" {
-		common.BadRequest(w, "Stream name is required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

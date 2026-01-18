@@ -55,7 +55,7 @@ type CloneRequest struct {
 
 // DuplicateRequest represents workflow duplicate request
 type DuplicateRequest struct {
-	Name        string  `json:"name"`
+	Name        string  `json:"name" validate:"required"`
 	Description *string `json:"description,omitempty"`
 	FolderID    *string `json:"folderId,omitempty"`
 }

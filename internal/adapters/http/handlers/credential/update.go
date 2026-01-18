@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type UpdateHandler struct {
@@ -28,7 +29,16 @@ func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
+		return
+	}
+
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

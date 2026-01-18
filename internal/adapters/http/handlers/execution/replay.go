@@ -11,6 +11,7 @@ import (
 	execCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type ReplayExecutionHandler struct {
@@ -54,6 +55,13 @@ func (h *ReplayExecutionHandler) Handle(w http.ResponseWriter, r *http.Request) 
 	var req ReplayRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		req.UseOriginalInput = true
+	} else if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
+		return
 	}
 
 	// Get original execution

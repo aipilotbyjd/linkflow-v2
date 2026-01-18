@@ -9,10 +9,11 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 type UpdateMemberRequest struct {
-	Role string `json:"role"`
+	Role string `json:"role" validate:"required,oneof=owner admin editor viewer"`
 }
 
 type UpdateMemberHandler struct {
@@ -40,13 +41,22 @@ func (h *UpdateMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var req UpdateMemberRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
+		return
+	}
+
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 
 	role, err := workspace.ParseRole(req.Role)
 	if err != nil {
-		common.BadRequest(w, "invalid role: must be one of owner, admin, editor, viewer")
+		common.BadRequest(w, "Invalid role: must be one of owner, admin, editor, viewer")
 		return
 	}
 
