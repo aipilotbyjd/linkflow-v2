@@ -62,7 +62,7 @@ func InitializeApp() (*App, error) {
 	}
 	cache := provideCache(redisClient)
 	manager := provideJWTManager(config)
-	passwordHasher := provideHasher()
+	v := provideHasher()
 	userRepository := repositories.NewUserRepository(db)
 	sessionRepository := repositories.NewSessionRepository(db)
 	workspaceRepository := repositories.NewWorkspaceRepository(db)
@@ -81,7 +81,8 @@ func InitializeApp() (*App, error) {
 	updateWorkflowHandler := workflow.NewUpdateWorkflowHandler(workflowRepository, versionRepository)
 	activateWorkflowHandler := workflow.NewActivateWorkflowHandler(workflowRepository, bus)
 	createWorkspaceHandler := workspace.NewCreateWorkspaceHandler(workspaceRepository, memberRepository, bus)
-	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus)
+	taskQueue := provideTaskQueue(asynqClient)
+	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue)
 	getUserHandler := user2.NewGetUserHandler(userRepository)
 	getWorkflowHandler := workflow2.NewGetWorkflowHandler(workflowRepository)
 	listWorkflowsHandler := workflow2.NewListWorkflowsHandler(workflowRepository)
@@ -91,7 +92,7 @@ func InitializeApp() (*App, error) {
 	listMembersHandler := workspace2.NewListMembersHandler(memberRepository)
 	getExecutionHandler := execution2.NewGetExecutionHandler(executionRepository)
 	listExecutionsHandler := execution2.NewListExecutionsHandler(executionRepository)
-	app := provideApp(config, logger, client, redisClient, asynqClient, cache, manager, passwordHasher, userRepository, sessionRepository, workspaceRepository, memberRepository, workflowRepository, versionRepository, executionRepository, nodeExecutionRepository, credentialRepository, scheduleRepository, webhookRepository, registerUserHandler, loginUserHandler, createWorkflowHandler, updateWorkflowHandler, activateWorkflowHandler, createWorkspaceHandler, startExecutionHandler, getUserHandler, getWorkflowHandler, listWorkflowsHandler, getVersionsHandler, getWorkspaceHandler, listWorkspacesHandler, listMembersHandler, getExecutionHandler, listExecutionsHandler)
+	app := provideApp(config, logger, client, redisClient, asynqClient, cache, manager, v, userRepository, sessionRepository, workspaceRepository, memberRepository, workflowRepository, versionRepository, executionRepository, nodeExecutionRepository, credentialRepository, scheduleRepository, webhookRepository, registerUserHandler, loginUserHandler, createWorkflowHandler, updateWorkflowHandler, activateWorkflowHandler, createWorkspaceHandler, startExecutionHandler, getUserHandler, getWorkflowHandler, listWorkflowsHandler, getVersionsHandler, getWorkspaceHandler, listWorkspacesHandler, listMembersHandler, getExecutionHandler, listExecutionsHandler)
 	return app, nil
 }
 
@@ -150,6 +151,7 @@ var infraSet = wire.NewSet(
 	providePostgresClient,
 	provideRedis,
 	provideAsynqClient,
+	provideTaskQueue,
 	provideCache,
 	provideJWTManager,
 	provideHasher,
@@ -218,6 +220,10 @@ func provideAsynqClient(cfg *config.Config) (*asynq.Client, error) {
 		RedisPassword: cfg.Redis.Password,
 		RedisDB:       cfg.Redis.DB,
 	})
+}
+
+func provideTaskQueue(client *asynq.Client) execution.TaskQueue {
+	return asynq.NewTaskQueueAdapter(client)
 }
 
 func provideCache(redis2 *redis.Client) cache.Cache {

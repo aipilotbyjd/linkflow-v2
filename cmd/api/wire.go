@@ -89,6 +89,7 @@ var infraSet = wire.NewSet(
 	providePostgresClient,
 	provideRedis,
 	provideAsynqClient,
+	provideTaskQueue,
 	provideCache,
 	provideJWTManager,
 	provideHasher,
@@ -201,6 +202,10 @@ func provideAsynqClient(cfg *config.Config) (*asynq.Client, error) {
 		RedisPassword: cfg.Redis.Password,
 		RedisDB:       cfg.Redis.DB,
 	})
+}
+
+func provideTaskQueue(client *asynq.Client) executionCmd.TaskQueue {
+	return asynq.NewTaskQueueAdapter(client)
 }
 
 func provideCache(redis *redisAdapter.Client) cache.Cache {

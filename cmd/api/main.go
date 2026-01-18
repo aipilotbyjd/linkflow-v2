@@ -203,6 +203,18 @@ func main() {
 		oauthProviders["github"] = &oauthProviderAdapter{githubProvider}
 	}
 
+	// Task queue client
+	asynqClient, err := asynqAdapter.NewClient(asynqAdapter.Config{
+		RedisAddr:     cfg.Redis.GetAddress(),
+		RedisPassword: cfg.Redis.Password,
+		RedisDB:       cfg.Redis.DB,
+	})
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to create asynq client")
+	}
+	defer asynqClient.Close()
+	taskQueue := asynqAdapter.NewTaskQueueAdapter(asynqClient)
+
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
 	loginUserHandler := userCmd.NewLoginUserHandler(userRepo, sessionRepo, jwtManager, eventBus)
@@ -210,7 +222,7 @@ func main() {
 	createWorkflowHandler := workflowCmd.NewCreateWorkflowHandler(workflowRepo, versionRepo, eventBus)
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
 	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, eventBus)
-	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus)
+	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue)
 	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus)
 	updateCredentialHandler := credentialCmd.NewUpdateCredentialHandler(credentialRepo)
 	deleteCredentialHandler := credentialCmd.NewDeleteCredentialHandler(credentialRepo)

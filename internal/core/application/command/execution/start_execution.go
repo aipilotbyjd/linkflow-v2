@@ -22,11 +22,17 @@ type StartExecutionCommand struct {
 	Priority    int
 }
 
+// TaskQueue interface for enqueueing tasks
+type TaskQueue interface {
+	EnqueueWorkflowExecution(ctx context.Context, payload interface{}) error
+}
+
 // StartExecutionHandler handles starting workflow executions
 type StartExecutionHandler struct {
 	workflowRepo  workflow.Repository
 	executionRepo execution.Repository
 	eventBus      events.Bus
+	taskQueue     TaskQueue
 }
 
 // NewStartExecutionHandler creates a new handler
@@ -34,11 +40,13 @@ func NewStartExecutionHandler(
 	workflowRepo workflow.Repository,
 	executionRepo execution.Repository,
 	eventBus events.Bus,
+	taskQueue TaskQueue,
 ) *StartExecutionHandler {
 	return &StartExecutionHandler{
 		workflowRepo:  workflowRepo,
 		executionRepo: executionRepo,
 		eventBus:      eventBus,
+		taskQueue:     taskQueue,
 	}
 }
 
@@ -85,6 +93,18 @@ func (h *StartExecutionHandler) Handle(ctx context.Context, cmd StartExecutionCo
 
 	// Increment workflow execution count
 	_ = h.workflowRepo.IncrementExecutionCount(ctx, cmd.WorkflowID)
+
+	// Enqueue for processing
+	if h.taskQueue != nil {
+		payload := map[string]interface{}{
+			"execution_id": exec.ID.String(),
+			"workflow_id":  exec.WorkflowID.String(),
+			"workspace_id": exec.WorkspaceID.String(),
+			"trigger_type": exec.TriggerType,
+			"input_data":   exec.InputData,
+		}
+		_ = h.taskQueue.EnqueueWorkflowExecution(ctx, payload)
+	}
 
 	// Publish event
 	if h.eventBus != nil {
