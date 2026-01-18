@@ -2,42 +2,65 @@ package share
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/share"
+	"gorm.io/gorm"
 )
-
-// UpdateShareRequest represents update share request
-type UpdateShareRequest struct {
-	Permission string `json:"permission"`
-}
 
 // UpdateHandler handles update share request
 type UpdateHandler struct {
-	repo ShareRepository
+	repo share.Repository
 }
 
 // NewUpdateHandler creates a new handler
-func NewUpdateHandler(repo ShareRepository) *UpdateHandler {
+func NewUpdateHandler(repo share.Repository) *UpdateHandler {
 	return &UpdateHandler{repo: repo}
 }
 
 // Handle handles the update share request
 func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	shareID := chi.URLParam(r, "shareId")
+	userID := middleware.GetUserID(r.Context())
 
-	var req UpdateShareRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+	shareIDStr := chi.URLParam(r, "shareId")
+	shareID, err := uuid.Parse(shareIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid share ID")
 		return
 	}
 
-	share := WorkflowShare{
-		ID:         shareID,
-		Permission: req.Permission,
-		Status:     "accepted",
+	var req UpdateShareRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		common.BadRequest(w, "Invalid request body")
+		return
 	}
 
-	common.Success(w, share)
+	shareObj, err := h.repo.FindByID(r.Context(), shareID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			common.NotFound(w, "Share")
+			return
+		}
+		common.HandleError(w, err)
+		return
+	}
+
+	// Verify user is the owner
+	if shareObj.SharedByID != userID {
+		common.Forbidden(w, "Not authorized to update this share")
+		return
+	}
+
+	shareObj.Permission = share.SharePermission(req.Permission)
+	if err := h.repo.Update(r.Context(), shareObj); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	common.Success(w, ToShareResponse(*shareObj))
 }

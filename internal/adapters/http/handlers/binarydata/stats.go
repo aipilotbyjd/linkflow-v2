@@ -5,31 +5,28 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/binarydata"
 )
 
-// StatsHandler handles get binary data stats request
+// StatsHandler handles storage stats request
 type StatsHandler struct {
-	storage StorageService
+	repo binarydata.Repository
 }
 
 // NewStatsHandler creates a new handler
-func NewStatsHandler(storage StorageService) *StatsHandler {
-	return &StatsHandler{storage: storage}
+func NewStatsHandler(repo binarydata.Repository) *StatsHandler {
+	return &StatsHandler{repo: repo}
 }
 
-// Handle handles the get stats request
+// Handle handles the storage stats request
 func (h *StatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	_ = middleware.GetWorkspaceID(r.Context())
+	workspaceID := middleware.GetWorkspaceID(r.Context())
 
-	stats := BinaryDataStats{
-		TotalFiles:     156,
-		TotalSizeBytes: 52428800,
-		ByMimeType: map[string]MimeTypeStats{
-			"application/json": {Count: 85, Size: 10485760},
-			"image/png":        {Count: 42, Size: 31457280},
-			"text/csv":         {Count: 29, Size: 10485760},
-		},
+	stats, err := h.repo.GetStats(r.Context(), workspaceID)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
-	common.Success(w, stats)
+	common.Success(w, ToStorageStatsResponse(stats))
 }

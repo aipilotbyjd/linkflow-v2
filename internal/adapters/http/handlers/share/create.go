@@ -3,72 +3,65 @@ package share
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/share"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 )
-
-// CreateShareRequest represents create share request
-type CreateShareRequest struct {
-	WorkflowID string     `json:"workflowId"`
-	Email      string     `json:"email,omitempty"`
-	UserID     string     `json:"userId,omitempty"`
-	Permission string     `json:"permission"`
-	ExpiresAt  *time.Time `json:"expiresAt,omitempty"`
-}
 
 // CreateHandler handles create share request
 type CreateHandler struct {
-	repo ShareRepository
+	shareRepo share.Repository
+	userRepo  user.Repository
 }
 
 // NewCreateHandler creates a new handler
-func NewCreateHandler(repo ShareRepository) *CreateHandler {
-	return &CreateHandler{repo: repo}
+func NewCreateHandler(shareRepo share.Repository, userRepo user.Repository) *CreateHandler {
+	return &CreateHandler{shareRepo: shareRepo, userRepo: userRepo}
 }
 
 // Handle handles the create share request
 func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
-	workspaceID := middleware.GetWorkspaceID(r.Context())
+	claims := middleware.GetUserFromContext(r.Context())
 
 	var req CreateShareRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.WorkflowID == "" {
-		common.BadRequest(w, "workflow ID is required")
+	resourceID, err := uuid.Parse(req.ResourceID)
+	if err != nil {
+		common.BadRequest(w, "Invalid resource ID")
 		return
 	}
 
-	if req.Email == "" && req.UserID == "" {
-		common.BadRequest(w, "email or user ID is required")
+	// Find shared with user
+	sharedWithUser, err := h.userRepo.FindByEmail(r.Context(), req.SharedWithEmail)
+	if err != nil {
+		common.NotFound(w, "User with that email")
 		return
 	}
 
-	if req.Permission == "" {
-		req.Permission = "view"
+	newShare := share.NewShare(
+		req.ResourceType,
+		resourceID,
+		req.ResourceType, // Resource name - could be fetched from respective repo
+		userID,
+		claims.Email,
+		sharedWithUser.ID,
+		sharedWithUser.Email,
+		share.SharePermission(req.Permission),
+	)
+	newShare.Message = req.Message
+
+	if err := h.shareRepo.Create(r.Context(), newShare); err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
-	share := WorkflowShare{
-		ID:              uuid.New().String(),
-		WorkflowID:      req.WorkflowID,
-		WorkflowName:    "Sample Workflow",
-		SharedBy:        userID.String(),
-		SharedByName:    "Current User",
-		SharedWith:      req.UserID,
-		SharedWithEmail: req.Email,
-		Permission:      req.Permission,
-		Status:          "pending",
-		CreatedAt:       time.Now(),
-		ExpiresAt:       req.ExpiresAt,
-	}
-
-	_ = workspaceID
-
-	common.Created(w, share)
+	common.Created(w, ToShareResponse(*newShare))
 }

@@ -3,10 +3,12 @@ package pinneddata
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/linkflow-ai/linkflow/internal/core/domain/pinneddata"
 )
 
-// PinnedData represents pinned data for a node
-type PinnedData struct {
+// PinnedDataResponse represents pinned data in API response
+type PinnedDataResponse struct {
 	ID         string          `json:"id"`
 	WorkflowID string          `json:"workflowId"`
 	NodeID     string          `json:"nodeId"`
@@ -15,10 +17,28 @@ type PinnedData struct {
 	UpdatedAt  time.Time       `json:"updatedAt"`
 }
 
-// PinnedDataRepository defines the pinned data repository interface
-type PinnedDataRepository interface {
-	GetByWorkflow(workflowID string) ([]PinnedData, error)
-	GetByNode(workflowID, nodeID string) (*PinnedData, error)
-	Set(workflowID, nodeID string, data json.RawMessage) (*PinnedData, error)
-	Delete(workflowID, nodeID string) error
+// SetPinnedDataRequest represents the request to set pinned data
+type SetPinnedDataRequest struct {
+	Data json.RawMessage `json:"data"`
+}
+
+// ToPinnedDataResponse converts domain to response
+func ToPinnedDataResponse(p pinneddata.PinnedData) PinnedDataResponse {
+	return PinnedDataResponse{
+		ID:         p.ID.String(),
+		WorkflowID: p.WorkflowID.String(),
+		NodeID:     p.NodeID,
+		Data:       p.Data,
+		CreatedAt:  p.CreatedAt,
+		UpdatedAt:  p.UpdatedAt,
+	}
+}
+
+// ToPinnedDataResponseList converts domain list to response list
+func ToPinnedDataResponseList(list []pinneddata.PinnedData) []PinnedDataResponse {
+	result := make([]PinnedDataResponse, len(list))
+	for i, p := range list {
+		result[i] = ToPinnedDataResponse(p)
+	}
+	return result
 }

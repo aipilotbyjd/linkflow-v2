@@ -1,44 +1,40 @@
 package pinneddata
 
 import (
-	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
-	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/pinneddata"
 )
 
 // GetAllHandler handles get all pinned data request
 type GetAllHandler struct {
-	repo PinnedDataRepository
+	repo pinneddata.Repository
 }
 
 // NewGetAllHandler creates a new handler
-func NewGetAllHandler(repo PinnedDataRepository) *GetAllHandler {
+func NewGetAllHandler(repo pinneddata.Repository) *GetAllHandler {
 	return &GetAllHandler{repo: repo}
 }
 
 // Handle handles the get all pinned data request
 func (h *GetAllHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workflowID := chi.URLParam(r, "workflowId")
-	_ = middleware.GetWorkspaceID(r.Context())
+	workflowIDStr := chi.URLParam(r, "workflowId")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workflow ID")
+		return
+	}
 
-	pinnedData := []PinnedData{
-		{
-			ID:         uuid.New().String(),
-			WorkflowID: workflowID,
-			NodeID:     "node-1",
-			Data:       json.RawMessage(`{"key": "sample data"}`),
-			CreatedAt:  time.Now().AddDate(0, 0, -1),
-			UpdatedAt:  time.Now(),
-		},
+	pinnedDataList, err := h.repo.GetByWorkflow(r.Context(), workflowID)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
 	common.Success(w, map[string]interface{}{
-		"pinnedData": pinnedData,
-		"workflowId": workflowID,
+		"pinnedData": ToPinnedDataResponseList(pinnedDataList),
 	})
 }

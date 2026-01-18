@@ -2,51 +2,41 @@ package binarydata
 
 import (
 	"net/http"
-	"time"
+	"strconv"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/binarydata"
 )
 
 // ListHandler handles list binary data request
 type ListHandler struct {
-	storage StorageService
+	repo binarydata.Repository
 }
 
 // NewListHandler creates a new handler
-func NewListHandler(storage StorageService) *ListHandler {
-	return &ListHandler{storage: storage}
+func NewListHandler(repo binarydata.Repository) *ListHandler {
+	return &ListHandler{repo: repo}
 }
 
-// Handle handles the list request
+// Handle handles the list binary data request
 func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	executionID := chi.URLParam(r, "executionId")
+	workspaceID := middleware.GetWorkspaceID(r.Context())
 
-	files := []BinaryData{
-		{
-			ID:          uuid.New().String(),
-			ExecutionID: executionID,
-			NodeID:      "node-1",
-			FileName:    "output.json",
-			MimeType:    "application/json",
-			Size:        1024,
-			CreatedAt:   time.Now().Add(-time.Hour),
-		},
-		{
-			ID:          uuid.New().String(),
-			ExecutionID: executionID,
-			NodeID:      "node-2",
-			FileName:    "image.png",
-			MimeType:    "image/png",
-			Size:        52428,
-			CreatedAt:   time.Now().Add(-30 * time.Minute),
-		},
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+
+	files, total, err := h.repo.FindByWorkspace(r.Context(), workspaceID, limit, offset)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
 	common.Success(w, map[string]interface{}{
-		"files":       files,
-		"executionId": executionID,
-		"total":       len(files),
+		"files": ToBinaryDataResponseList(files),
+		"total": total,
 	})
 }

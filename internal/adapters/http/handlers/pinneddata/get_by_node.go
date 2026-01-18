@@ -1,38 +1,50 @@
 package pinneddata
 
 import (
-	"encoding/json"
+	"errors"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/pinneddata"
+	"gorm.io/gorm"
 )
 
 // GetByNodeHandler handles get pinned data by node request
 type GetByNodeHandler struct {
-	repo PinnedDataRepository
+	repo pinneddata.Repository
 }
 
 // NewGetByNodeHandler creates a new handler
-func NewGetByNodeHandler(repo PinnedDataRepository) *GetByNodeHandler {
+func NewGetByNodeHandler(repo pinneddata.Repository) *GetByNodeHandler {
 	return &GetByNodeHandler{repo: repo}
 }
 
 // Handle handles the get pinned data by node request
 func (h *GetByNodeHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workflowID := chi.URLParam(r, "workflowId")
-	nodeID := chi.URLParam(r, "nodeId")
-
-	pinnedData := PinnedData{
-		ID:         uuid.New().String(),
-		WorkflowID: workflowID,
-		NodeID:     nodeID,
-		Data:       json.RawMessage(`{"key": "sample data for node"}`),
-		CreatedAt:  time.Now().AddDate(0, 0, -1),
-		UpdatedAt:  time.Now(),
+	workflowIDStr := chi.URLParam(r, "workflowId")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workflow ID")
+		return
 	}
 
-	common.Success(w, pinnedData)
+	nodeID := chi.URLParam(r, "nodeId")
+	if nodeID == "" {
+		common.BadRequest(w, "Node ID is required")
+		return
+	}
+
+	data, err := h.repo.GetByNode(r.Context(), workflowID, nodeID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			common.NotFound(w, "Pinned data")
+			return
+		}
+		common.HandleError(w, err)
+		return
+	}
+
+	common.Success(w, ToPinnedDataResponse(*data))
 }

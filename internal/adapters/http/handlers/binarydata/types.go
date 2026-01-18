@@ -1,42 +1,65 @@
 package binarydata
 
 import (
-	"context"
-	"io"
 	"time"
+
+	"github.com/linkflow-ai/linkflow/internal/core/domain/binarydata"
 )
 
-// BinaryData represents binary data metadata
-type BinaryData struct {
-	ID          string     `json:"id"`
-	ExecutionID string     `json:"executionId"`
-	NodeID      string     `json:"nodeId"`
-	FileName    string     `json:"fileName"`
-	MimeType    string     `json:"mimeType"`
-	Size        int64      `json:"size"`
-	StoragePath string     `json:"storagePath,omitempty"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	ExpiresAt   *time.Time `json:"expiresAt,omitempty"`
+// BinaryDataResponse represents binary data in API response
+type BinaryDataResponse struct {
+	ID          string    `json:"id"`
+	WorkspaceID string    `json:"workspaceId"`
+	ExecutionID string    `json:"executionId,omitempty"`
+	NodeID      string    `json:"nodeId,omitempty"`
+	FileName    string    `json:"fileName"`
+	MimeType    string    `json:"mimeType"`
+	Size        int64     `json:"size"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// BinaryDataStats represents binary data statistics
-type BinaryDataStats struct {
-	TotalFiles     int                      `json:"totalFiles"`
-	TotalSizeBytes int64                    `json:"totalSizeBytes"`
-	ByMimeType     map[string]MimeTypeStats `json:"byMimeType"`
+// StorageStatsResponse represents storage stats in API response
+type StorageStatsResponse struct {
+	TotalFiles   int64 `json:"totalFiles"`
+	TotalSize    int64 `json:"totalSize"`
+	UsedStorage  int64 `json:"usedStorage"`
+	MaxStorage   int64 `json:"maxStorage"`
+	UsagePercent int   `json:"usagePercent"`
 }
 
-// MimeTypeStats represents statistics by mime type
-type MimeTypeStats struct {
-	Count int   `json:"count"`
-	Size  int64 `json:"size"`
+// ToBinaryDataResponse converts domain to response
+func ToBinaryDataResponse(b binarydata.BinaryData) BinaryDataResponse {
+	resp := BinaryDataResponse{
+		ID:          b.ID.String(),
+		WorkspaceID: b.WorkspaceID.String(),
+		NodeID:      b.NodeID,
+		FileName:    b.FileName,
+		MimeType:    b.MimeType,
+		Size:        b.Size,
+		CreatedAt:   b.CreatedAt,
+	}
+	if b.ExecutionID.String() != "00000000-0000-0000-0000-000000000000" {
+		resp.ExecutionID = b.ExecutionID.String()
+	}
+	return resp
 }
 
-// StorageService defines the storage service interface
-type StorageService interface {
-	Upload(data io.Reader, fileName, mimeType string) (string, error)
-	Store(ctx context.Context, path string, data io.Reader, contentType string) error
-	Download(path string) (io.ReadCloser, error)
-	Delete(path string) error
-	GetInfo(path string) (*BinaryData, error)
+// ToBinaryDataResponseList converts domain list to response list
+func ToBinaryDataResponseList(list []binarydata.BinaryData) []BinaryDataResponse {
+	result := make([]BinaryDataResponse, len(list))
+	for i, b := range list {
+		result[i] = ToBinaryDataResponse(b)
+	}
+	return result
+}
+
+// ToStorageStatsResponse converts domain to response
+func ToStorageStatsResponse(s *binarydata.StorageStats) StorageStatsResponse {
+	return StorageStatsResponse{
+		TotalFiles:   s.TotalFiles,
+		TotalSize:    s.TotalSize,
+		UsedStorage:  s.UsedStorage,
+		MaxStorage:   s.MaxStorage,
+		UsagePercent: s.UsagePercent,
+	}
 }

@@ -1,54 +1,41 @@
 package binarydata
 
 import (
-	"encoding/json"
 	"net/http"
+	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/binarydata"
 )
 
-// CleanupRequest represents cleanup request
-type CleanupRequest struct {
-	OlderThanDays int    `json:"olderThanDays"`
-	MimeType      string `json:"mimeType,omitempty"`
-}
-
-// CleanupResponse represents cleanup response
-type CleanupResponse struct {
-	DeletedCount int   `json:"deletedCount"`
-	FreedBytes   int64 `json:"freedBytes"`
-}
-
-// CleanupHandler handles binary data cleanup
+// CleanupHandler handles cleanup old files request
 type CleanupHandler struct {
-	storage StorageService
+	repo binarydata.Repository
 }
 
 // NewCleanupHandler creates a new handler
-func NewCleanupHandler(storage StorageService) *CleanupHandler {
-	return &CleanupHandler{storage: storage}
+func NewCleanupHandler(repo binarydata.Repository) *CleanupHandler {
+	return &CleanupHandler{repo: repo}
 }
 
-// Handle handles the cleanup request
+// Handle handles the cleanup old files request
 func (h *CleanupHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	executionID := chi.URLParam(r, "executionId")
-	_ = middleware.GetWorkspaceID(r.Context())
+	workspaceID := middleware.GetWorkspaceID(r.Context())
 
-	var req CleanupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		req.OlderThanDays = 30
+	days, _ := strconv.Atoi(r.URL.Query().Get("days"))
+	if days <= 0 {
+		days = 30 // Default 30 days
 	}
 
-	if req.OlderThanDays <= 0 {
-		req.OlderThanDays = 30
+	deleted, err := h.repo.DeleteOlderThan(r.Context(), workspaceID, days)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
-	_ = executionID
-
-	common.Success(w, CleanupResponse{
-		DeletedCount: 5,
-		FreedBytes:   5242880,
+	common.Success(w, map[string]interface{}{
+		"deleted": deleted,
+		"message": "Cleanup completed successfully",
 	})
 }

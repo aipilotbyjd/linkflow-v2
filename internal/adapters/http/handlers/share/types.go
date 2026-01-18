@@ -1,32 +1,68 @@
 package share
 
-import "time"
+import (
+	"time"
 
-// WorkflowShare represents a workflow share
-type WorkflowShare struct {
+	"github.com/linkflow-ai/linkflow/internal/core/domain/share"
+)
+
+// ShareResponse represents a share in API response
+type ShareResponse struct {
 	ID              string     `json:"id"`
-	WorkflowID      string     `json:"workflowId"`
-	WorkflowName    string     `json:"workflowName"`
-	SharedBy        string     `json:"sharedBy"`
-	SharedByName    string     `json:"sharedByName"`
-	SharedWith      string     `json:"sharedWith"`
-	SharedWithName  string     `json:"sharedWithName,omitempty"`
-	SharedWithEmail string     `json:"sharedWithEmail,omitempty"`
+	ResourceType    string     `json:"resourceType"`
+	ResourceID      string     `json:"resourceId"`
+	ResourceName    string     `json:"resourceName"`
+	SharedByID      string     `json:"sharedById"`
+	SharedByEmail   string     `json:"sharedByEmail"`
+	SharedWithID    string     `json:"sharedWithId"`
+	SharedWithEmail string     `json:"sharedWithEmail"`
 	Permission      string     `json:"permission"`
 	Status          string     `json:"status"`
-	CreatedAt       time.Time  `json:"createdAt"`
-	AcceptedAt      *time.Time `json:"acceptedAt,omitempty"`
+	Message         string     `json:"message,omitempty"`
 	ExpiresAt       *time.Time `json:"expiresAt,omitempty"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
 }
 
-// ShareRepository defines the share repository interface
-type ShareRepository interface {
-	Create(share *WorkflowShare) error
-	GetByID(id string) (*WorkflowShare, error)
-	GetSharedByMe(userID string) ([]WorkflowShare, error)
-	GetSharedWithMe(userID string) ([]WorkflowShare, error)
-	GetPending(userID string) ([]WorkflowShare, error)
-	Accept(id string) error
-	Update(id string, permission string) error
-	Delete(id string) error
+// CreateShareRequest represents request to create a share
+type CreateShareRequest struct {
+	ResourceType    string `json:"resourceType"`
+	ResourceID      string `json:"resourceId"`
+	SharedWithEmail string `json:"sharedWithEmail"`
+	Permission      string `json:"permission"`
+	Message         string `json:"message,omitempty"`
+}
+
+// UpdateShareRequest represents request to update a share
+type UpdateShareRequest struct {
+	Permission string `json:"permission"`
+}
+
+// ToShareResponse converts domain to response
+func ToShareResponse(s share.Share) ShareResponse {
+	return ShareResponse{
+		ID:              s.ID.String(),
+		ResourceType:    s.ResourceType,
+		ResourceID:      s.ResourceID.String(),
+		ResourceName:    s.ResourceName,
+		SharedByID:      s.SharedByID.String(),
+		SharedByEmail:   s.SharedByEmail,
+		SharedWithID:    s.SharedWithID.String(),
+		SharedWithEmail: s.SharedWithEmail,
+		Permission:      string(s.Permission),
+		Status:          string(s.Status),
+		Message:         s.Message,
+		ExpiresAt:       s.ExpiresAt,
+		CreatedAt:       s.CreatedAt,
+		UpdatedAt:       s.UpdatedAt,
+	}
+}
+
+// ToShareResponseList converts domain list to response list
+func ToShareResponseList(list []share.Share) []ShareResponse {
+	result := make([]ShareResponse, len(list))
+	for i, s := range list {
+		result[i] = ToShareResponse(s)
+	}
+	return result
 }

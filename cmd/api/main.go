@@ -21,10 +21,13 @@ import (
 	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
 	apikeyHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/apikey"
+	binarydataHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/binarydata"
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
 	marketplaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/marketplace"
 	nodetypesHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/nodetypes"
+	pinneddataHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/pinneddata"
+	shareHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/share"
 	userHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/user"
 	scheduleHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/schedule"
 	templateHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/template"
@@ -37,6 +40,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
@@ -149,6 +153,15 @@ func main() {
 	statsRepo := repositories.NewExecutionStatsRepository(db)
 	folderRepo := repositories.NewFolderRepository(db)
 	apiKeyRepo := repositories.NewAPIKeyRepository(db)
+	pinnedDataRepo := repositories.NewPinnedDataRepository(db)
+	shareRepo := repositories.NewShareRepository(db)
+	binaryDataRepo := repositories.NewBinaryDataRepository(db)
+
+	// Storage service
+	localStorage, err := storage.NewLocalStorage("./data/uploads")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize local storage")
+	}
 
 	// Node registry
 	nodeRegistry := nodes.NewRegistry()
@@ -305,6 +318,30 @@ func main() {
 	mpRatingStatsHandler := marketplaceHandler.NewRatingStatsHandler()
 	mpDeleteRatingHandler := marketplaceHandler.NewDeleteRatingHandler()
 
+	// Pinned data handlers
+	pdGetAllHandler := pinneddataHandler.NewGetAllHandler(pinnedDataRepo)
+	pdGetByNodeHandler := pinneddataHandler.NewGetByNodeHandler(pinnedDataRepo)
+	pdSetHandler := pinneddataHandler.NewSetHandler(pinnedDataRepo)
+	pdDeleteHandler := pinneddataHandler.NewDeleteHandler(pinnedDataRepo)
+
+	// Share handlers
+	shCreateHandler := shareHandler.NewCreateHandler(shareRepo, userRepo)
+	shSharedByMeHandler := shareHandler.NewSharedByMeHandler(shareRepo)
+	shSharedWithMeHandler := shareHandler.NewSharedWithMeHandler(shareRepo)
+	shPendingHandler := shareHandler.NewPendingHandler(shareRepo)
+	shAcceptHandler := shareHandler.NewAcceptHandler(shareRepo)
+	shUpdateHandler := shareHandler.NewUpdateHandler(shareRepo)
+	shRevokeHandler := shareHandler.NewRevokeHandler(shareRepo)
+
+	// Binary data handlers
+	bdUploadHandler := binarydataHandler.NewUploadHandler(binaryDataRepo, localStorage)
+	bdListHandler := binarydataHandler.NewListHandler(binaryDataRepo)
+	bdGetInfoHandler := binarydataHandler.NewGetInfoHandler(binaryDataRepo)
+	bdDownloadHandler := binarydataHandler.NewDownloadHandler(binaryDataRepo, localStorage)
+	bdDeleteHandler := binarydataHandler.NewDeleteHandler(binaryDataRepo, localStorage)
+	bdStatsHandler := binarydataHandler.NewStatsHandler(binaryDataRepo)
+	bdCleanupHandler := binarydataHandler.NewCleanupHandler(binaryDataRepo)
+
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
@@ -430,6 +467,29 @@ func main() {
 							r.Delete("/", fldDeleteHandler.Handle)
 						})
 					})
+
+					// Pinned Data (per workflow)
+					r.Route("/workflows/{workflowId}/pinned-data", func(r chi.Router) {
+						r.Get("/", pdGetAllHandler.Handle)
+						r.Route("/{nodeId}", func(r chi.Router) {
+							r.Get("/", pdGetByNodeHandler.Handle)
+							r.Put("/", pdSetHandler.Handle)
+							r.Delete("/", pdDeleteHandler.Handle)
+						})
+					})
+
+					// Binary Data (workspace scoped)
+					r.Route("/binary-data", func(r chi.Router) {
+						r.Post("/upload", bdUploadHandler.Handle)
+						r.Get("/", bdListHandler.Handle)
+						r.Get("/stats", bdStatsHandler.Handle)
+						r.Post("/cleanup", bdCleanupHandler.Handle)
+						r.Route("/{fileId}", func(r chi.Router) {
+							r.Get("/", bdGetInfoHandler.Handle)
+							r.Get("/download", bdDownloadHandler.Handle)
+							r.Delete("/", bdDeleteHandler.Handle)
+						})
+					})
 				})
 			})
 
@@ -477,6 +537,17 @@ func main() {
 				r.Get("/{itemId}/ratings", mpListRatingsHandler.Handle)
 				r.Get("/{itemId}/rating-stats", mpRatingStatsHandler.Handle)
 				r.Delete("/{itemId}/rating", mpDeleteRatingHandler.Handle)
+			})
+
+			// Shares (user scoped)
+			r.Route("/shares", func(r chi.Router) {
+				r.Post("/", shCreateHandler.Handle)
+				r.Get("/by-me", shSharedByMeHandler.Handle)
+				r.Get("/with-me", shSharedWithMeHandler.Handle)
+				r.Get("/pending", shPendingHandler.Handle)
+				r.Post("/{shareId}/accept", shAcceptHandler.Handle)
+				r.Put("/{shareId}", shUpdateHandler.Handle)
+				r.Delete("/{shareId}", shRevokeHandler.Handle)
 			})
 		})
 	})

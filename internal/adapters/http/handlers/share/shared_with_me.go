@@ -2,44 +2,33 @@ package share
 
 import (
 	"net/http"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/share"
 )
 
-// SharedWithMeHandler handles get shares shared with user
+// SharedWithMeHandler handles get shares shared with user request
 type SharedWithMeHandler struct {
-	repo ShareRepository
+	repo share.Repository
 }
 
 // NewSharedWithMeHandler creates a new handler
-func NewSharedWithMeHandler(repo ShareRepository) *SharedWithMeHandler {
+func NewSharedWithMeHandler(repo share.Repository) *SharedWithMeHandler {
 	return &SharedWithMeHandler{repo: repo}
 }
 
-// Handle handles the shared with me request
+// Handle handles the get shares shared with user request
 func (h *SharedWithMeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
-	shares := []WorkflowShare{
-		{
-			ID:           uuid.New().String(),
-			WorkflowID:   uuid.New().String(),
-			WorkflowName: "Shared Workflow",
-			SharedBy:     uuid.New().String(),
-			SharedByName: "Jane Smith",
-			SharedWith:   userID.String(),
-			Permission:   "edit",
-			Status:       "accepted",
-			CreatedAt:    time.Now().AddDate(0, 0, -14),
-			AcceptedAt:   func() *time.Time { t := time.Now().AddDate(0, 0, -13); return &t }(),
-		},
+	shares, err := h.repo.FindSharedWithUser(r.Context(), userID)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
 	common.Success(w, map[string]interface{}{
-		"shares": shares,
-		"total":  len(shares),
+		"shares": ToShareResponseList(shares),
 	})
 }

@@ -3,57 +3,49 @@ package pinneddata
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/pinneddata"
 )
-
-// SetPinnedDataRequest represents set pinned data request
-type SetPinnedDataRequest struct {
-	NodeID string          `json:"nodeId"`
-	Data   json.RawMessage `json:"data"`
-}
 
 // SetHandler handles set pinned data request
 type SetHandler struct {
-	repo PinnedDataRepository
+	repo pinneddata.Repository
 }
 
 // NewSetHandler creates a new handler
-func NewSetHandler(repo PinnedDataRepository) *SetHandler {
+func NewSetHandler(repo pinneddata.Repository) *SetHandler {
 	return &SetHandler{repo: repo}
 }
 
 // Handle handles the set pinned data request
 func (h *SetHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workflowID := chi.URLParam(r, "workflowId")
+	workflowIDStr := chi.URLParam(r, "workflowId")
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		common.BadRequest(w, "Invalid workflow ID")
+		return
+	}
+
+	nodeID := chi.URLParam(r, "nodeId")
+	if nodeID == "" {
+		common.BadRequest(w, "Node ID is required")
+		return
+	}
 
 	var req SetPinnedDataRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.NodeID == "" {
-		common.BadRequest(w, "node ID is required")
+	data, err := h.repo.Set(r.Context(), workflowID, nodeID, req.Data)
+	if err != nil {
+		common.HandleError(w, err)
 		return
 	}
 
-	if len(req.Data) == 0 {
-		common.BadRequest(w, "data is required")
-		return
-	}
-
-	pinnedData := PinnedData{
-		ID:         uuid.New().String(),
-		WorkflowID: workflowID,
-		NodeID:     req.NodeID,
-		Data:       req.Data,
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
-	}
-
-	common.Created(w, pinnedData)
+	common.Success(w, ToPinnedDataResponse(*data))
 }
