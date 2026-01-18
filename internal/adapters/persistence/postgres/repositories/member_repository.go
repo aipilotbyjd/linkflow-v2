@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -12,10 +13,16 @@ import (
 
 // MemberModel represents workspace member in database
 type MemberModel struct {
-	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	WorkspaceID uuid.UUID `gorm:"type:uuid;index;not null"`
-	UserID      uuid.UUID `gorm:"type:uuid;index;not null"`
-	Role        string    `gorm:"size:20;not null;default:member"`
+	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	WorkspaceID uuid.UUID      `gorm:"type:uuid;index;not null"`
+	UserID      uuid.UUID      `gorm:"type:uuid;index;not null"`
+	Role        string         `gorm:"size:20;not null;default:member"`
+	InvitedBy   *uuid.UUID     `gorm:"type:uuid"`
+	InvitedAt   *time.Time
+	JoinedAt    *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   gorm.DeletedAt `gorm:"index"`
 }
 
 func (MemberModel) TableName() string {
@@ -31,11 +38,15 @@ func NewMemberRepository(db *gorm.DB) *MemberRepository {
 }
 
 func (r *MemberRepository) Create(ctx context.Context, member *workspace.Member) error {
+	now := time.Now()
 	model := &MemberModel{
 		ID:          member.ID,
 		WorkspaceID: member.WorkspaceID,
 		UserID:      member.UserID,
 		Role:        string(member.Role),
+		JoinedAt:    member.JoinedAt,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	return postgres.GetTx(ctx, r.db).Create(model).Error
 }
@@ -119,8 +130,41 @@ func (r *MemberRepository) CountByWorkspaceID(ctx context.Context, workspaceID u
 }
 
 func (r *MemberRepository) FindWorkspacesByUserID(ctx context.Context, userID uuid.UUID) ([]workspace.Workspace, error) {
-	// This requires joining with workspaces table - simplified for now
-	return nil, nil
+	var results []struct {
+		ID          uuid.UUID
+		Name        string
+		Slug        string
+		Description *string
+		OwnerID     uuid.UUID
+		PlanID      string
+		CreatedAt   time.Time
+		UpdatedAt   time.Time
+	}
+
+	err := postgres.GetTx(ctx, r.db).
+		Table("workspaces").
+		Select("workspaces.id, workspaces.name, workspaces.slug, workspaces.description, workspaces.owner_id, workspaces.plan_id, workspaces.created_at, workspaces.updated_at").
+		Joins("JOIN workspace_members ON workspace_members.workspace_id = workspaces.id").
+		Where("workspace_members.user_id = ? AND workspace_members.deleted_at IS NULL AND workspaces.deleted_at IS NULL", userID).
+		Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	workspaces := make([]workspace.Workspace, len(results))
+	for i, r := range results {
+		workspaces[i] = workspace.Workspace{
+			ID:          r.ID,
+			Name:        r.Name,
+			Slug:        r.Slug,
+			Description: r.Description,
+			OwnerID:     r.OwnerID,
+			PlanID:      r.PlanID,
+			CreatedAt:   r.CreatedAt,
+			UpdatedAt:   r.UpdatedAt,
+		}
+	}
+	return workspaces, nil
 }
 
 func (r *MemberRepository) IsMember(ctx context.Context, workspaceID, userID uuid.UUID) (bool, error) {

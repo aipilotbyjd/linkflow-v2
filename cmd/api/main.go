@@ -291,6 +291,7 @@ func main() {
 	exListHandler := executionHandler.NewListHandler(executionQry.NewListExecutionsHandler(executionRepo))
 	exCancelHandler := executionHandler.NewCancelHandler(executionRepo)
 	exRetryHandler := executionHandler.NewRetryHandler(startExecutionHandler, executionRepo)
+	exStatsHandler := executionHandler.NewGetExecutionStatsHandler(executionRepo)
 
 	// Credential handlers
 	crCreateHandler := credentialHandler.NewCreateHandler(createCredentialHandler)
@@ -298,7 +299,6 @@ func main() {
 	crListHandler := credentialHandler.NewListHandler(listCredentialsHandler)
 	crUpdateHandler := credentialHandler.NewUpdateHandler(updateCredentialHandler)
 	crDeleteHandler := credentialHandler.NewDeleteHandler(deleteCredentialHandler)
-	crRefreshHandler := credentialHandler.NewRefreshHandler(credentialRepo, nil)
 
 	// Schedule handlers
 	schCreateHandler := scheduleHandler.NewCreateHandler(createScheduleHandler)
@@ -333,8 +333,9 @@ func main() {
 	anWorkflowHandler := analyticsHandler.NewWorkflowAnalyticsHandler(getWorkflowAnalyticsHandler)
 	anWorkspaceHandler := analyticsHandler.NewWorkspaceAnalyticsHandler(getWorkspaceAnalyticsHandler)
 
-	// Dashboard handler
+	// Dashboard handlers
 	dashHandler := dashboardHandler.NewDashboardHandler(workflowRepo, executionRepo, scheduleRepo)
+	quickStatsHandler := dashboardHandler.NewQuickStatsHandler(workflowRepo, executionRepo, credentialRepo, scheduleRepo)
 
 	// User handler
 	usrGetHandler := userHandler.NewGetCurrentUserHandler(getUserHandler)
@@ -464,6 +465,7 @@ func main() {
 				r.Post("/", wsCreateHandler.Handle)
 				r.Get("/", wsListHandler.Handle)
 				r.Route("/{workspaceId}", func(r chi.Router) {
+					r.Use(middleware.Tenant(memberRepo, workspaceRepo))
 					r.Get("/", wsGetHandler.Handle)
 					r.Put("/", wsUpdateHandler.Handle)
 					r.Delete("/", wsDeleteHandler.Handle)
@@ -471,6 +473,7 @@ func main() {
 
 					// Dashboard
 					r.Get("/dashboard", dashHandler.Handle)
+					r.Get("/stats", quickStatsHandler.Handle)
 
 					// Workflows
 					r.Route("/workflows", func(r chi.Router) {
@@ -482,14 +485,15 @@ func main() {
 							r.Delete("/", wfDeleteHandler.Handle)
 							r.Post("/activate", wfActivateHandler.Handle)
 							r.Post("/deactivate", wfDeactivateHandler.Handle)
+							r.Post("/execute", exStartHandler.Handle)
 							r.Get("/versions", wfVersionsHandler.Handle)
 						})
 					})
 
 					// Executions
 					r.Route("/executions", func(r chi.Router) {
-						r.Post("/", exStartHandler.Handle)
 						r.Get("/", exListHandler.Handle)
+						r.Get("/stats", exStatsHandler.Handle)
 						r.Route("/{executionId}", func(r chi.Router) {
 							r.Get("/", exGetHandler.Handle)
 							r.Post("/cancel", exCancelHandler.Handle)
