@@ -1,20 +1,15 @@
 package oauth
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 )
 
-// AuthorizeResponse represents authorize response
-type AuthorizeResponse struct {
-	AuthURL string `json:"authUrl"`
-	State   string `json:"state"`
-}
-
-// AuthorizeHandler handles OAuth authorize request
+// AuthorizeHandler handles OAuth authorization redirect
 type AuthorizeHandler struct {
 	providers map[string]OAuthProvider
 }
@@ -24,21 +19,26 @@ func NewAuthorizeHandler(providers map[string]OAuthProvider) *AuthorizeHandler {
 	return &AuthorizeHandler{providers: providers}
 }
 
-// Handle handles the authorize request
+// Handle handles the OAuth authorization request
 func (h *AuthorizeHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	providerName := chi.URLParam(r, "provider")
+	providerID := chi.URLParam(r, "provider")
 
-	provider, ok := h.providers[providerName]
+	provider, ok := h.providers[providerID]
 	if !ok {
-		common.BadRequest(w, "OAuth provider not supported")
+		common.NotFound(w, "OAuth provider")
 		return
 	}
 
-	state := uuid.New().String()
-	authURL := provider.GetAuthURL(state)
+	// Generate state for CSRF protection
+	stateBytes := make([]byte, 16)
+	if _, err := rand.Read(stateBytes); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+	state := hex.EncodeToString(stateBytes)
 
-	common.Success(w, AuthorizeResponse{
-		AuthURL: authURL,
-		State:   state,
-	})
+	// TODO: Store state in session/cache for validation in callback
+
+	authURL := provider.GetAuthURL(state)
+	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }

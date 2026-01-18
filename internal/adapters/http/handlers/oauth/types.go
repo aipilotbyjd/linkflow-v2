@@ -23,10 +23,22 @@ type UserInfo struct {
 	Name  string `json:"name"`
 }
 
-// ProviderInfo represents OAuth provider info
+// ProviderInfo represents OAuth provider info for listing
 type ProviderInfo struct {
 	Name        string `json:"name"`
 	ID          string `json:"id"`
 	DisplayName string `json:"displayName"`
 	Icon        string `json:"icon,omitempty"`
+}
+
+// ProviderDisplayNames maps provider IDs to display names
+var ProviderDisplayNames = map[string]string{
+	"google": "Google",
+	"github": "GitHub",
+}
+
+// ProviderIcons maps provider IDs to icons
+var ProviderIcons = map[string]string{
+	"google": "https://www.google.com/favicon.ico",
+	"github": "https://github.com/favicon.ico",
 }

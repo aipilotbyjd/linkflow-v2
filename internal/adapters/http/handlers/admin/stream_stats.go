@@ -2,8 +2,8 @@ package admin
 
 import (
 	"net/http"
-	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 )
 
@@ -19,17 +19,19 @@ func NewStreamStatsHandler(streams StreamManager) *StreamStatsHandler {
 
 // Handle handles the stream stats request
 func (h *StreamStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	streamName := r.URL.Query().Get("stream")
+	streamName := chi.URLParam(r, "streamName")
 	if streamName == "" {
-		streamName = "webhooks"
+		streamName = r.URL.Query().Get("stream")
+	}
+	if streamName == "" {
+		common.BadRequest(w, "Stream name is required")
+		return
 	}
 
-	stats := StreamStats{
-		Name:          streamName,
-		Length:        1250,
-		Pending:       5,
-		Consumers:     3,
-		LastDelivered: time.Now().Add(-time.Minute).Format(time.RFC3339),
+	stats, err := h.streams.GetStats(streamName)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
 	common.Success(w, stats)

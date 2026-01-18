@@ -7,16 +7,10 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 )
 
-// ReplayDLQRequest represents replay DLQ request
+// ReplayDLQRequest represents the replay DLQ request
 type ReplayDLQRequest struct {
-	Stream string `json:"stream"`
-	Count  int    `json:"count"`
-}
-
-// ReplayDLQResponse represents replay DLQ response
-type ReplayDLQResponse struct {
-	Stream   string `json:"stream"`
-	Replayed int    `json:"replayed"`
+	StreamName string `json:"streamName"`
+	Count      int    `json:"count"`
 }
 
 // ReplayDLQHandler handles replay DLQ request
@@ -33,24 +27,27 @@ func NewReplayDLQHandler(streams StreamManager) *ReplayDLQHandler {
 func (h *ReplayDLQHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req ReplayDLQRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.Stream == "" {
-		req.Stream = "webhooks"
+	if req.StreamName == "" {
+		common.BadRequest(w, "Stream name is required")
+		return
 	}
+
 	if req.Count <= 0 {
-		req.Count = 10
+		req.Count = 100 // Default
 	}
 
-	replayedCount := 5
-	if req.Count < 5 {
-		replayedCount = req.Count
+	replayed, err := h.streams.ReplayDLQ(req.StreamName, req.Count)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
-	common.Success(w, ReplayDLQResponse{
-		Stream:   req.Stream,
-		Replayed: replayedCount,
+	common.Success(w, map[string]interface{}{
+		"replayed": replayed,
+		"message":  "DLQ replay completed successfully",
 	})
 }

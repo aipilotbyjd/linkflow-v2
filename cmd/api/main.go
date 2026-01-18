@@ -20,12 +20,14 @@ import (
 	credentialHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/credential"
 	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
+	adminHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/admin"
 	apikeyHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/apikey"
 	binarydataHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/binarydata"
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
 	marketplaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/marketplace"
 	nodetypesHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/nodetypes"
+	oauthHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/oauth"
 	pinneddataHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/pinneddata"
 	shareHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/share"
 	userHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/user"
@@ -40,7 +42,10 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/metrics"
+	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/streaming"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
@@ -165,6 +170,31 @@ func main() {
 
 	// Node registry
 	nodeRegistry := nodes.NewRegistry()
+
+	// Metrics collector
+	metricsCollector := metrics.NewCollector("2.0.0")
+
+	// Stream manager (for admin)
+	streamManager := streaming.NewManager(redisClient.Redis())
+
+	// OAuth providers
+	oauthProviders := make(map[string]oauthHandler.OAuthProvider)
+	if cfg.OAuth.Google.ClientID != "" {
+		googleProvider := infraOAuth.NewGoogleProvider(
+			cfg.OAuth.Google.ClientID,
+			cfg.OAuth.Google.ClientSecret,
+			cfg.OAuth.Google.RedirectURL,
+		)
+		oauthProviders["google"] = &oauthProviderAdapter{googleProvider}
+	}
+	if cfg.OAuth.GitHub.ClientID != "" {
+		githubProvider := infraOAuth.NewGitHubProvider(
+			cfg.OAuth.GitHub.ClientID,
+			cfg.OAuth.GitHub.ClientSecret,
+			cfg.OAuth.GitHub.RedirectURL,
+		)
+		oauthProviders["github"] = &oauthProviderAdapter{githubProvider}
+	}
 
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
@@ -341,6 +371,17 @@ func main() {
 	bdDeleteHandler := binarydataHandler.NewDeleteHandler(binaryDataRepo, localStorage)
 	bdStatsHandler := binarydataHandler.NewStatsHandler(binaryDataRepo)
 	bdCleanupHandler := binarydataHandler.NewCleanupHandler(binaryDataRepo)
+
+	// Admin handlers
+	admMetricsHandler := adminHandler.NewMetricsHandler(&metricsAdapter{metricsCollector})
+	admStreamStatsHandler := adminHandler.NewStreamStatsHandler(&streamAdapter{streamManager})
+	admReplayDLQHandler := adminHandler.NewReplayDLQHandler(&streamAdapter{streamManager})
+	admTrimStreamHandler := adminHandler.NewTrimStreamHandler(&streamAdapter{streamManager})
+
+	// OAuth handlers
+	oaListProvidersHandler := oauthHandler.NewListProvidersHandler(oauthProviders)
+	oaAuthorizeHandler := oauthHandler.NewAuthorizeHandler(oauthProviders)
+	oaCallbackHandler := oauthHandler.NewCallbackHandler(oauthProviders)
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
@@ -549,6 +590,22 @@ func main() {
 				r.Put("/{shareId}", shUpdateHandler.Handle)
 				r.Delete("/{shareId}", shRevokeHandler.Handle)
 			})
+
+			// Admin (requires admin role)
+			r.Route("/admin", func(r chi.Router) {
+				// TODO: Add admin role check middleware
+				r.Get("/metrics", admMetricsHandler.Handle)
+				r.Get("/streams/{streamName}", admStreamStatsHandler.Handle)
+				r.Post("/streams/replay-dlq", admReplayDLQHandler.Handle)
+				r.Post("/streams/trim", admTrimStreamHandler.Handle)
+			})
+
+			// OAuth (credential OAuth)
+			r.Route("/oauth", func(r chi.Router) {
+				r.Get("/providers", oaListProvidersHandler.Handle)
+				r.Get("/{provider}/authorize", oaAuthorizeHandler.Handle)
+				r.Get("/{provider}/callback", oaCallbackHandler.Handle)
+			})
 		})
 	})
 
@@ -589,4 +646,86 @@ func main() {
 		appLogger.Error().Err(err).Msg("Server shutdown error")
 	}
 	appLogger.Info().Msg("Server stopped")
+}
+
+// Adapters for handler interfaces
+
+// metricsAdapter adapts metrics.Collector to adminHandler.MetricsCollector
+type metricsAdapter struct {
+	collector *metrics.Collector
+}
+
+func (a *metricsAdapter) CollectMetrics() map[string]interface{} {
+	return a.collector.CollectMetrics()
+}
+
+// streamAdapter adapts streaming.Manager to adminHandler.StreamManager
+type streamAdapter struct {
+	manager *streaming.Manager
+}
+
+func (a *streamAdapter) GetStats(streamName string) (*adminHandler.StreamStats, error) {
+	stats, err := a.manager.GetStats(streamName)
+	if err != nil {
+		return nil, err
+	}
+	return &adminHandler.StreamStats{
+		Name:          stats.Name,
+		Length:        stats.Length,
+		Pending:       stats.Pending,
+		Consumers:     stats.Consumers,
+		LastDelivered: stats.LastDelivered,
+	}, nil
+}
+
+func (a *streamAdapter) ReplayDLQ(streamName string, count int) (int, error) {
+	return a.manager.ReplayDLQ(streamName, count)
+}
+
+func (a *streamAdapter) TrimStream(streamName string, maxLen int64) (int64, error) {
+	return a.manager.TrimStream(streamName, maxLen)
+}
+
+// oauthProviderAdapter adapts infraOAuth.Provider to oauthHandler.OAuthProvider
+type oauthProviderAdapter struct {
+	provider *infraOAuth.Provider
+}
+
+func (a *oauthProviderAdapter) Name() string {
+	return a.provider.Name()
+}
+
+func (a *oauthProviderAdapter) GetAuthURL(state string) string {
+	return a.provider.GetAuthURL(state)
+}
+
+func (a *oauthProviderAdapter) ExchangeCode(code string) (oauthHandler.Token, error) {
+	token, err := a.provider.ExchangeCode(code)
+	if err != nil {
+		return oauthHandler.Token{}, err
+	}
+	return oauthHandler.Token{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresIn:    token.ExpiresIn,
+	}, nil
+}
+
+func (a *oauthProviderAdapter) GetUserInfo(token oauthHandler.Token) (oauthHandler.UserInfo, error) {
+	infraToken := infraOAuth.Token{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresIn:    token.ExpiresIn,
+	}
+	userInfo, err := a.provider.GetUserInfo(infraToken)
+	if err != nil {
+		return oauthHandler.UserInfo{}, err
+	}
+	return oauthHandler.UserInfo{
+		ID:    userInfo.ID,
+		Email: userInfo.Email,
+		Name:  userInfo.Name,
+	}, nil
 }

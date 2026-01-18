@@ -7,17 +7,10 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 )
 
-// TrimStreamRequest represents trim stream request
+// TrimStreamRequest represents the trim stream request
 type TrimStreamRequest struct {
-	Stream string `json:"stream"`
-	MaxLen int64  `json:"maxLen"`
-}
-
-// TrimStreamResponse represents trim stream response
-type TrimStreamResponse struct {
-	Stream  string `json:"stream"`
-	Trimmed int64  `json:"trimmed"`
-	NewLen  int64  `json:"newLen"`
+	StreamName string `json:"streamName"`
+	MaxLen     int64  `json:"maxLen"`
 }
 
 // TrimStreamHandler handles trim stream request
@@ -34,20 +27,27 @@ func NewTrimStreamHandler(streams StreamManager) *TrimStreamHandler {
 func (h *TrimStreamHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var req TrimStreamRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+		common.BadRequest(w, "Invalid request body")
 		return
 	}
 
-	if req.Stream == "" {
-		req.Stream = "webhooks"
-	}
-	if req.MaxLen <= 0 {
-		req.MaxLen = 1000
+	if req.StreamName == "" {
+		common.BadRequest(w, "Stream name is required")
+		return
 	}
 
-	common.Success(w, TrimStreamResponse{
-		Stream:  req.Stream,
-		Trimmed: 250,
-		NewLen:  req.MaxLen,
+	if req.MaxLen <= 0 {
+		req.MaxLen = 10000 // Default
+	}
+
+	trimmed, err := h.streams.TrimStream(req.StreamName, req.MaxLen)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	common.Success(w, map[string]interface{}{
+		"trimmed": trimmed,
+		"message": "Stream trimmed successfully",
 	})
 }

@@ -1,28 +1,13 @@
 package oauth
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
-	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 )
 
-// CallbackRequest represents OAuth callback request
-type CallbackRequest struct {
-	Code  string `json:"code"`
-	State string `json:"state"`
-}
-
-// CallbackResponse represents OAuth callback response
-type CallbackResponse struct {
-	CredentialID string `json:"credentialId"`
-	Provider     string `json:"provider"`
-}
-
-// CallbackHandler handles OAuth callback request
+// CallbackHandler handles OAuth callback
 type CallbackHandler struct {
 	providers map[string]OAuthProvider
 }
@@ -34,49 +19,46 @@ func NewCallbackHandler(providers map[string]OAuthProvider) *CallbackHandler {
 
 // Handle handles the OAuth callback request
 func (h *CallbackHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	providerName := chi.URLParam(r, "provider")
-	workspaceID := middleware.GetWorkspaceID(r.Context())
+	providerID := chi.URLParam(r, "provider")
 
-	provider, ok := h.providers[providerName]
+	provider, ok := h.providers[providerID]
 	if !ok {
-		common.BadRequest(w, "OAuth provider not supported")
+		common.NotFound(w, "OAuth provider")
 		return
 	}
 
-	var req CallbackRequest
-
-	if r.Method == http.MethodGet {
-		req.Code = r.URL.Query().Get("code")
-		req.State = r.URL.Query().Get("state")
-	} else {
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			common.BadRequest(w, "invalid request body")
-			return
-		}
-	}
-
-	if req.Code == "" {
+	code := r.URL.Query().Get("code")
+	if code == "" {
 		errorMsg := r.URL.Query().Get("error")
 		if errorMsg != "" {
-			common.BadRequest(w, errorMsg)
+			common.BadRequest(w, "OAuth error: "+errorMsg)
 			return
 		}
-		common.BadRequest(w, "authorization code is required")
+		common.BadRequest(w, "Authorization code not provided")
 		return
 	}
 
-	token, err := provider.ExchangeCode(req.Code)
+	// TODO: Validate state parameter
+
+	// Exchange code for token
+	token, err := provider.ExchangeCode(code)
 	if err != nil {
-		common.BadRequest(w, "token exchange failed: "+err.Error())
+		common.HandleError(w, err)
 		return
 	}
 
-	credentialID := uuid.New().String()
-	_ = workspaceID
-	_ = token
+	// Get user info
+	userInfo, err := provider.GetUserInfo(token)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
-	common.Success(w, CallbackResponse{
-		CredentialID: credentialID,
-		Provider:     providerName,
+	// TODO: Create/update user and generate JWT tokens
+	// For now, return the user info
+	common.Success(w, map[string]interface{}{
+		"provider": providerID,
+		"user":     userInfo,
+		"message":  "OAuth authentication successful",
 	})
 }

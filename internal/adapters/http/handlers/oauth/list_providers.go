@@ -18,16 +18,23 @@ func NewListProvidersHandler(providers map[string]OAuthProvider) *ListProvidersH
 
 // Handle handles the list providers request
 func (h *ListProvidersHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	providers := []ProviderInfo{
-		{ID: "google", Name: "google", DisplayName: "Google"},
-		{ID: "github", Name: "github", DisplayName: "GitHub"},
-		{ID: "slack", Name: "slack", DisplayName: "Slack"},
-		{ID: "microsoft", Name: "microsoft", DisplayName: "Microsoft"},
-		{ID: "salesforce", Name: "salesforce", DisplayName: "Salesforce"},
-		{ID: "hubspot", Name: "hubspot", DisplayName: "HubSpot"},
+	providerList := make([]ProviderInfo, 0, len(h.providers))
+
+	for id, provider := range h.providers {
+		displayName := ProviderDisplayNames[id]
+		if displayName == "" {
+			displayName = provider.Name()
+		}
+
+		providerList = append(providerList, ProviderInfo{
+			ID:          id,
+			Name:        provider.Name(),
+			DisplayName: displayName,
+			Icon:        ProviderIcons[id],
+		})
 	}
 
 	common.Success(w, map[string]interface{}{
-		"providers": providers,
+		"providers": providerList,
 	})
 }
