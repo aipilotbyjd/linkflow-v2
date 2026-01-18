@@ -3,52 +3,39 @@ package billing
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 )
 
-// CreateSubscriptionRequest represents subscription creation request
-type CreateSubscriptionRequest struct {
-	PlanID string `json:"planId"`
-}
-
-// CreateSubscriptionHandler handles create subscription request
 type CreateSubscriptionHandler struct {
-	service BillingService
+	handler *billingCmd.CreateSubscriptionHandler
 }
 
-// NewCreateSubscriptionHandler creates a new handler
-func NewCreateSubscriptionHandler(service BillingService) *CreateSubscriptionHandler {
-	return &CreateSubscriptionHandler{service: service}
+func NewCreateSubscriptionHandler(handler *billingCmd.CreateSubscriptionHandler) *CreateSubscriptionHandler {
+	return &CreateSubscriptionHandler{handler: handler}
 }
 
-// Handle handles the create subscription request
 func (h *CreateSubscriptionHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workspaceID := middleware.GetWorkspaceID(r.Context())
-
 	var req CreateSubscriptionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		common.BadRequest(w, "invalid request body")
 		return
 	}
 
-	if req.PlanID == "" {
-		common.BadRequest(w, "plan ID is required")
+	workspaceID := middleware.GetWorkspaceID(r.Context())
+	userID := middleware.GetUserID(r.Context())
+
+	sub, err := h.handler.Handle(r.Context(), billingCmd.CreateSubscriptionCommand{
+		WorkspaceID: workspaceID,
+		PlanID:      req.PlanID,
+		CreatedBy:   userID,
+	})
+	if err != nil {
+		common.HandleError(w, err)
 		return
 	}
 
-	subscription := Subscription{
-		ID:     "sub-" + workspaceID.String()[:8],
-		PlanID: req.PlanID,
-		Status: "active",
-		CurrentPeriod: Period{
-			Start: time.Now(),
-			End:   time.Now().AddDate(0, 1, 0),
-		},
-		CreatedAt: time.Now(),
-	}
-
-	common.Created(w, subscription)
+	common.Created(w, ToSubscriptionResponse(sub))
 }

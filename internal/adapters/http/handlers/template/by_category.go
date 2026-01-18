@@ -6,52 +6,42 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	templateQry "github.com/linkflow-ai/linkflow/internal/core/application/query/template"
 )
 
-// ByCategoryHandler handles get templates by category request
 type ByCategoryHandler struct {
-	repo TemplateRepository
+	handler *templateQry.GetByCategoryHandler
 }
 
-// NewByCategoryHandler creates a new handler
-func NewByCategoryHandler(repo TemplateRepository) *ByCategoryHandler {
-	return &ByCategoryHandler{repo: repo}
+func NewByCategoryHandler(handler *templateQry.GetByCategoryHandler) *ByCategoryHandler {
+	return &ByCategoryHandler{handler: handler}
 }
 
-// Handle handles the get templates by category request
 func (h *ByCategoryHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	category := chi.URLParam(r, "category")
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	if category == "" {
+		common.BadRequest(w, "category is required")
+		return
+	}
 
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	if limit <= 0 {
 		limit = 20
 	}
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	templates := GetStaticTemplates()
-	filtered := []Template{}
-	for _, t := range templates {
-		if t.Category == category {
-			filtered = append(filtered, t)
-		}
-	}
-
-	total := int64(len(filtered))
-	if offset < len(filtered) {
-		end := offset + limit
-		if end > len(filtered) {
-			end = len(filtered)
-		}
-		filtered = filtered[offset:end]
-	} else {
-		filtered = []Template{}
+	templates, total, err := h.handler.Handle(r.Context(), templateQry.GetByCategoryQuery{
+		Category: category,
+		Limit:    limit,
+		Offset:   offset,
+	})
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
 	common.Success(w, map[string]interface{}{
-		"templates": filtered,
-		"category":  category,
+		"templates": ToTemplateResponses(templates),
 		"total":     total,
-		"limit":     limit,
-		"offset":    offset,
 	})
 }

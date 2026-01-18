@@ -14,12 +14,17 @@ import (
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 
-	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	analyticsHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/analytics"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/auth"
+	billingHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/billing"
 	credentialHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/credential"
+	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
+	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
+	userHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/user"
 	scheduleHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/schedule"
+	templateHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/template"
 	webhookHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/webhook"
 	workflowHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workflow"
 	workspaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workspace"
@@ -28,6 +33,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	scheduleCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/schedule"
@@ -35,7 +41,11 @@ import (
 	webhookCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/webhook"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 	workspaceCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workspace"
+	analyticsQry "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
+	billingQry "github.com/linkflow-ai/linkflow/internal/core/application/query/billing"
 	credentialQry "github.com/linkflow-ai/linkflow/internal/core/application/query/credential"
+	templateQry "github.com/linkflow-ai/linkflow/internal/core/application/query/template"
+	userQry "github.com/linkflow-ai/linkflow/internal/core/application/query/user"
 	executionQry "github.com/linkflow-ai/linkflow/internal/core/application/query/execution"
 	scheduleQry "github.com/linkflow-ai/linkflow/internal/core/application/query/schedule"
 	workflowQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workflow"
@@ -128,6 +138,12 @@ func main() {
 	credentialRepo := repositories.NewCredentialRepository(db)
 	scheduleRepo := repositories.NewScheduleRepository(db)
 	webhookRepo := repositories.NewWebhookRepository(db)
+	subscriptionRepo := repositories.NewSubscriptionRepository(db)
+	usageRepo := repositories.NewUsageRepository(db)
+	invoiceRepo := repositories.NewInvoiceRepository(db)
+	templateRepo := repositories.NewTemplateRepository(db)
+	statsRepo := repositories.NewExecutionStatsRepository(db)
+	folderRepo := repositories.NewFolderRepository(db)
 
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
@@ -142,6 +158,8 @@ func main() {
 	deleteCredentialHandler := credentialCmd.NewDeleteCredentialHandler(credentialRepo)
 	createScheduleHandler := scheduleCmd.NewCreateScheduleHandler(scheduleRepo, eventBus)
 	triggerWebhookHandler := webhookCmd.NewTriggerWebhookHandler(webhookRepo, nil)
+	createSubscriptionHandler := billingCmd.NewCreateSubscriptionHandler(subscriptionRepo, eventBus)
+	cancelSubscriptionHandler := billingCmd.NewCancelSubscriptionHandler(subscriptionRepo)
 
 	// Query handlers
 	getWorkspaceHandler := workspaceQry.NewGetWorkspaceHandler(workspaceRepo)
@@ -153,6 +171,18 @@ func main() {
 	listCredentialsHandler := credentialQry.NewListCredentialsHandler(credentialRepo)
 	getScheduleHandler := scheduleQry.NewGetScheduleHandler(scheduleRepo)
 	listSchedulesHandler := scheduleQry.NewListSchedulesHandler(scheduleRepo)
+	getPlansHandler := billingQry.NewGetPlansHandler()
+	getSubscriptionHandler := billingQry.NewGetSubscriptionHandler(subscriptionRepo)
+	getUsageHandler := billingQry.NewGetUsageHandler(usageRepo)
+	getInvoicesHandler := billingQry.NewGetInvoicesHandler(invoiceRepo)
+	listTemplatesHandler := templateQry.NewListTemplatesHandler(templateRepo)
+	getTemplateHandler := templateQry.NewGetTemplateHandler(templateRepo)
+	getFeaturedTemplatesHandler := templateQry.NewGetFeaturedHandler(templateRepo)
+	getByCategoryHandler := templateQry.NewGetByCategoryHandler(templateRepo)
+	searchTemplatesHandler := templateQry.NewSearchTemplatesHandler(templateRepo)
+	getWorkflowAnalyticsHandler := analyticsQry.NewGetWorkflowAnalyticsHandler(statsRepo)
+	getWorkspaceAnalyticsHandler := analyticsQry.NewGetWorkspaceAnalyticsHandler(statsRepo)
+	getUserHandler := userQry.NewGetUserHandler(userRepo)
 
 	// HTTP handlers
 	registerHandler := auth.NewRegisterHandler(registerUserHandler)
@@ -205,6 +235,41 @@ func main() {
 	// Webhook handlers
 	whTriggerHandler := webhookHandler.NewTriggerHandler(triggerWebhookHandler)
 
+	// Billing handlers
+	blGetPlansHandler := billingHandler.NewGetPlansHandler(getPlansHandler)
+	blGetSubscriptionHandler := billingHandler.NewGetSubscriptionHandler(getSubscriptionHandler)
+	blCreateSubscriptionHandler := billingHandler.NewCreateSubscriptionHandler(createSubscriptionHandler)
+	blCancelSubscriptionHandler := billingHandler.NewCancelSubscriptionHandler(cancelSubscriptionHandler)
+	blGetUsageHandler := billingHandler.NewGetUsageHandler(getUsageHandler)
+	blGetInvoicesHandler := billingHandler.NewGetInvoicesHandler(getInvoicesHandler)
+
+	// Template handlers
+	tplListHandler := templateHandler.NewListHandler(listTemplatesHandler)
+	tplGetHandler := templateHandler.NewGetHandler(getTemplateHandler)
+	tplFeaturedHandler := templateHandler.NewFeaturedHandler(getFeaturedTemplatesHandler)
+	tplCategoriesHandler := templateHandler.NewCategoriesHandler()
+	tplByCategoryHandler := templateHandler.NewByCategoryHandler(getByCategoryHandler)
+	tplSearchHandler := templateHandler.NewSearchHandler(searchTemplatesHandler)
+	tplUseHandler := templateHandler.NewUseHandler(templateRepo, workflowRepo)
+
+	// Analytics handlers
+	anWorkflowHandler := analyticsHandler.NewWorkflowAnalyticsHandler(getWorkflowAnalyticsHandler)
+	anWorkspaceHandler := analyticsHandler.NewWorkspaceAnalyticsHandler(getWorkspaceAnalyticsHandler)
+
+	// Dashboard handler
+	dashHandler := dashboardHandler.NewDashboardHandler(workflowRepo, executionRepo, scheduleRepo)
+
+	// User handler
+	usrGetHandler := userHandler.NewGetCurrentUserHandler(getUserHandler)
+
+	// Folder handlers
+	fldCreateHandler := folderHandler.NewCreateFolderHandler(folderRepo)
+	fldGetHandler := folderHandler.NewGetFolderHandler(folderRepo)
+	fldListHandler := folderHandler.NewListFoldersHandler(folderRepo)
+	fldUpdateHandler := folderHandler.NewUpdateFolderHandler(folderRepo)
+	fldDeleteHandler := folderHandler.NewDeleteFolderHandler(folderRepo)
+	fldTreeHandler := folderHandler.NewGetTreeHandler(folderRepo)
+
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.RealIP)
@@ -242,17 +307,7 @@ func main() {
 			r.Use(middleware.Auth(jwtManager))
 
 			// Current user
-			r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-				claims := middleware.GetUserFromContext(r.Context())
-				if claims == nil {
-					common.Unauthorized(w, "not authenticated")
-					return
-				}
-				common.Success(w, map[string]interface{}{
-					"user_id": claims.UserID.String(),
-					"email":   claims.Email,
-				})
-			})
+			r.Get("/me", usrGetHandler.Handle)
 
 			// Workspaces
 			r.Route("/workspaces", func(r chi.Router) {
@@ -263,6 +318,9 @@ func main() {
 					r.Put("/", wsUpdateHandler.Handle)
 					r.Delete("/", wsDeleteHandler.Handle)
 					r.Get("/members", wsMembersHandler.Handle)
+
+					// Dashboard
+					r.Get("/dashboard", dashHandler.Handle)
 
 					// Workflows
 					r.Route("/workflows", func(r chi.Router) {
@@ -312,9 +370,41 @@ func main() {
 							r.Post("/resume", schResumeHandler.Handle)
 						})
 					})
+
+					// Billing (workspace scoped)
+					r.Route("/billing", func(r chi.Router) {
+						r.Get("/subscription", blGetSubscriptionHandler.Handle)
+						r.Post("/subscription", blCreateSubscriptionHandler.Handle)
+						r.Delete("/subscription", blCancelSubscriptionHandler.Handle)
+						r.Get("/usage", blGetUsageHandler.Handle)
+						r.Get("/invoices", blGetInvoicesHandler.Handle)
+					})
+
+					// Analytics (workspace scoped)
+					r.Get("/analytics", anWorkspaceHandler.Handle)
+					r.Get("/workflows/{workflowId}/analytics", anWorkflowHandler.Handle)
 				})
 			})
+
+			// Billing plans (not workspace scoped)
+			r.Get("/billing/plans", blGetPlansHandler.Handle)
+
+			// Templates (not workspace scoped for browsing)
+			r.Route("/templates", func(r chi.Router) {
+				r.Get("/", tplListHandler.Handle)
+				r.Get("/featured", tplFeaturedHandler.Handle)
+				r.Get("/categories", tplCategoriesHandler.Handle)
+				r.Get("/categories/{category}", tplByCategoryHandler.Handle)
+				r.Get("/search", tplSearchHandler.Handle)
+				r.Get("/{templateId}", tplGetHandler.Handle)
+			})
 		})
+	})
+
+	// Template use (requires workspace context) - add under workspace routes
+	r.Route("/api/v1/workspaces/{workspaceId}/templates/{templateId}/use", func(r chi.Router) {
+		r.Use(middleware.Auth(jwtManager))
+		r.Post("/", tplUseHandler.Handle)
 	})
 
 	// Webhook trigger endpoint (public)

@@ -2,28 +2,32 @@ package billing
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 )
 
-// CancelSubscriptionHandler handles cancel subscription request
 type CancelSubscriptionHandler struct {
-	service BillingService
+	handler *billingCmd.CancelSubscriptionHandler
 }
 
-// NewCancelSubscriptionHandler creates a new handler
-func NewCancelSubscriptionHandler(service BillingService) *CancelSubscriptionHandler {
-	return &CancelSubscriptionHandler{service: service}
+func NewCancelSubscriptionHandler(handler *billingCmd.CancelSubscriptionHandler) *CancelSubscriptionHandler {
+	return &CancelSubscriptionHandler{handler: handler}
 }
 
-// Handle handles the cancel subscription request
 func (h *CancelSubscriptionHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	_ = middleware.GetWorkspaceID(r.Context())
+	workspaceID := middleware.GetWorkspaceID(r.Context())
 
-	common.Success(w, map[string]interface{}{
-		"message":  "Subscription will be canceled at the end of the billing period",
-		"cancelAt": time.Now().AddDate(0, 0, 15),
+	err := h.handler.Handle(r.Context(), billingCmd.CancelSubscriptionCommand{
+		WorkspaceID: workspaceID,
+	})
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	common.Success(w, map[string]string{
+		"message": "subscription cancelled",
 	})
 }

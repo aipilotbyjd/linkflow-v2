@@ -8,40 +8,24 @@ import (
 )
 
 type ListTemplatesQuery struct {
-	Category string
-	Search   string
-	Featured *bool
-	Page     int
-	PageSize int
-}
-
-type ListTemplatesResult struct {
-	Templates []template.Template
-	Total     int64
+	Limit  int
+	Offset int
 }
 
 type ListTemplatesHandler struct {
-	templateRepo template.Repository
+	repo template.Repository
 }
 
-func NewListTemplatesHandler(templateRepo template.Repository) *ListTemplatesHandler {
-	return &ListTemplatesHandler{templateRepo: templateRepo}
+func NewListTemplatesHandler(repo template.Repository) *ListTemplatesHandler {
+	return &ListTemplatesHandler{repo: repo}
 }
 
-func (h *ListTemplatesHandler) Handle(ctx context.Context, query ListTemplatesQuery) (*ListTemplatesResult, error) {
+func (h *ListTemplatesHandler) Handle(ctx context.Context, q ListTemplatesQuery) ([]template.Template, int64, error) {
 	opts := &template.ListOptions{
-		ListOptions: types.NewListOptions(query.Page, query.PageSize),
-		Category:    query.Category,
-		IsFeatured:  query.Featured,
+		ListOptions: &types.ListOptions{
+			Limit:  q.Limit,
+			Offset: q.Offset,
+		},
 	}
-
-	templates, total, err := h.templateRepo.FindAll(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ListTemplatesResult{
-		Templates: templates,
-		Total:     total,
-	}, nil
+	return h.repo.FindAll(ctx, opts)
 }

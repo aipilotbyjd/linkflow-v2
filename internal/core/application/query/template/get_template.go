@@ -12,13 +12,13 @@ type GetTemplateQuery struct {
 }
 
 type GetTemplateHandler struct {
-	templateRepo template.Repository
+	repo template.Repository
 }
 
-func NewGetTemplateHandler(templateRepo template.Repository) *GetTemplateHandler {
-	return &GetTemplateHandler{templateRepo: templateRepo}
+func NewGetTemplateHandler(repo template.Repository) *GetTemplateHandler {
+	return &GetTemplateHandler{repo: repo}
 }
 
-func (h *GetTemplateHandler) Handle(ctx context.Context, query GetTemplateQuery) (*template.Template, error) {
-	return h.templateRepo.FindByID(ctx, query.TemplateID)
+func (h *GetTemplateHandler) Handle(ctx context.Context, q GetTemplateQuery) (*template.Template, error) {
+	return h.repo.FindByID(ctx, q.TemplateID)
 }

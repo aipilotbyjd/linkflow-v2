@@ -1,59 +1,70 @@
 package template
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	templateDomain "github.com/linkflow-ai/linkflow/internal/core/domain/template"
+	workflowDomain "github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
 )
 
-// UseTemplateRequest represents use template request
-type UseTemplateRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	FolderID    string `json:"folderId,omitempty"`
-}
-
-// UseTemplateResponse represents use template response
-type UseTemplateResponse struct {
-	WorkflowID string `json:"workflowId"`
-	Name       string `json:"name"`
-}
-
-// UseHandler handles use template request
 type UseHandler struct {
-	repo TemplateRepository
+	templateRepo templateDomain.Repository
+	workflowRepo workflowDomain.Repository
 }
 
-// NewUseHandler creates a new handler
-func NewUseHandler(repo TemplateRepository) *UseHandler {
-	return &UseHandler{repo: repo}
+func NewUseHandler(templateRepo templateDomain.Repository, workflowRepo workflowDomain.Repository) *UseHandler {
+	return &UseHandler{
+		templateRepo: templateRepo,
+		workflowRepo: workflowRepo,
+	}
 }
 
-// Handle handles the use template request
 func (h *UseHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	templateID := chi.URLParam(r, "templateId")
-	workspaceID := middleware.GetWorkspaceID(r.Context())
-
-	var req UseTemplateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		common.BadRequest(w, "invalid request body")
+	idStr := chi.URLParam(r, "templateId")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		common.BadRequest(w, "invalid template ID")
 		return
 	}
 
-	if req.Name == "" {
-		req.Name = "Workflow from template"
+	workspaceID := middleware.GetWorkspaceID(r.Context())
+	claims := middleware.GetUserFromContext(r.Context())
+
+	// Get template
+	tmpl, err := h.templateRepo.FindByID(r.Context(), id)
+	if err != nil {
+		common.HandleError(w, err)
+		return
 	}
 
-	workflowID := uuid.New().String()
-	_ = templateID
-	_ = workspaceID
+	if tmpl == nil {
+		common.NotFound(w, "template")
+		return
+	}
 
-	common.Success(w, UseTemplateResponse{
-		WorkflowID: workflowID,
-		Name:       req.Name,
+	// Create workflow from template
+	name := tmpl.Name + " (from template)"
+	workflow := workflowDomain.NewWorkflow(workspaceID, claims.UserID, name)
+	if tmpl.Description != nil {
+		workflow.Description = tmpl.Description
+	}
+	workflow.Nodes = tmpl.Nodes
+	workflow.Connections = tmpl.Connections
+
+	if err := h.workflowRepo.Create(r.Context(), workflow); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Increment template usage
+	_ = h.templateRepo.IncrementUsage(r.Context(), id)
+
+	common.Created(w, map[string]interface{}{
+		"workflow_id": workflow.ID.String(),
+		"message":     "Workflow created from template",
 	})
 }

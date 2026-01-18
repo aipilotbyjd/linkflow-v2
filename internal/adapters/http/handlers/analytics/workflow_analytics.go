@@ -7,14 +7,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
-	analyticsQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
+	analyticsQry "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
 )
 
 type WorkflowAnalyticsHandler struct {
-	handler *analyticsQuery.GetWorkflowAnalyticsHandler
+	handler *analyticsQry.GetWorkflowAnalyticsHandler
 }
 
-func NewWorkflowAnalyticsHandler(handler *analyticsQuery.GetWorkflowAnalyticsHandler) *WorkflowAnalyticsHandler {
+func NewWorkflowAnalyticsHandler(handler *analyticsQry.GetWorkflowAnalyticsHandler) *WorkflowAnalyticsHandler {
 	return &WorkflowAnalyticsHandler{handler: handler}
 }
 
@@ -30,19 +30,19 @@ func (h *WorkflowAnalyticsHandler) Handle(w http.ResponseWriter, r *http.Request
 
 	startDate := time.Now().AddDate(0, 0, -30)
 	if s := query.Get("start_date"); s != "" {
-		if parsed, err := time.Parse("2006-01-02", s); err == nil {
+		if parsed, err := time.Parse(time.DateOnly, s); err == nil {
 			startDate = parsed
 		}
 	}
 
 	endDate := time.Now()
 	if e := query.Get("end_date"); e != "" {
-		if parsed, err := time.Parse("2006-01-02", e); err == nil {
+		if parsed, err := time.Parse(time.DateOnly, e); err == nil {
 			endDate = parsed
 		}
 	}
 
-	result, err := h.handler.Handle(r.Context(), analyticsQuery.GetWorkflowAnalyticsQuery{
+	stats, err := h.handler.Handle(r.Context(), analyticsQry.GetWorkflowAnalyticsQuery{
 		WorkflowID: workflowID,
 		StartDate:  startDate,
 		EndDate:    endDate,
@@ -52,5 +52,5 @@ func (h *WorkflowAnalyticsHandler) Handle(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	common.Success(w, result)
+	common.Success(w, ToStatsResponse(stats))
 }

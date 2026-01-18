@@ -4,30 +4,39 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	templateQry "github.com/linkflow-ai/linkflow/internal/core/application/query/template"
 )
 
-// GetHandler handles get template request
 type GetHandler struct {
-	repo TemplateRepository
+	handler *templateQry.GetTemplateHandler
 }
 
-// NewGetHandler creates a new handler
-func NewGetHandler(repo TemplateRepository) *GetHandler {
-	return &GetHandler{repo: repo}
+func NewGetHandler(handler *templateQry.GetTemplateHandler) *GetHandler {
+	return &GetHandler{handler: handler}
 }
 
-// Handle handles the get template request
 func (h *GetHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	templateID := chi.URLParam(r, "templateId")
-
-	templates := GetStaticTemplates()
-	for _, t := range templates {
-		if t.ID == templateID {
-			common.Success(w, t)
-			return
-		}
+	idStr := chi.URLParam(r, "templateId")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		common.BadRequest(w, "invalid template ID")
+		return
 	}
 
-	common.NotFound(w, "template")
+	tmpl, err := h.handler.Handle(r.Context(), templateQry.GetTemplateQuery{
+		TemplateID: id,
+	})
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	if tmpl == nil {
+		common.NotFound(w, "template")
+		return
+	}
+
+	common.Success(w, ToTemplateDetailResponse(tmpl))
 }

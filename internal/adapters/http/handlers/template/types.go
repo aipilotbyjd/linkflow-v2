@@ -1,105 +1,102 @@
 package template
 
-import "time"
+import (
+	"time"
 
-// Template represents a workflow template
-type Template struct {
+	"github.com/linkflow-ai/linkflow/internal/core/domain/template"
+)
+
+// Response DTOs
+
+type TemplateResponse struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Category    string    `json:"category"`
 	Tags        []string  `json:"tags"`
 	Author      string    `json:"author"`
-	Version     string    `json:"version"`
-	Downloads   int       `json:"downloads"`
-	Rating      float64   `json:"rating"`
-	RatingCount int       `json:"ratingCount"`
-	Featured    bool      `json:"featured"`
+	IsFeatured  bool      `json:"featured"`
+	UsageCount  int       `json:"usageCount"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-// TemplateCategory represents a template category
-type TemplateCategory struct {
+type TemplateDetailResponse struct {
+	TemplateResponse
+	Nodes       interface{} `json:"nodes"`
+	Connections interface{} `json:"connections"`
+	Settings    interface{} `json:"settings,omitempty"`
+	Thumbnail   string      `json:"thumbnail,omitempty"`
+}
+
+type CategoryResponse struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Count       int    `json:"count"`
 	Icon        string `json:"icon,omitempty"`
 }
 
-// TemplateRepository defines the template repository interface
-type TemplateRepository interface {
-	FindAll(limit, offset int) ([]Template, int64, error)
-	FindByID(id string) (*Template, error)
-	FindFeatured(limit int) ([]Template, error)
-	FindByCategory(category string, limit, offset int) ([]Template, int64, error)
-	Search(query string, limit, offset int) ([]Template, int64, error)
-	GetCategories() ([]TemplateCategory, error)
+// Mappers
+
+func ToTemplateResponse(t template.Template) TemplateResponse {
+	description := ""
+	if t.Description != nil {
+		description = *t.Description
+	}
+	author := "LinkFlow"
+	if t.Author != nil {
+		author = *t.Author
+	}
+	tags := t.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
+	return TemplateResponse{
+		ID:          t.ID.String(),
+		Name:        t.Name,
+		Description: description,
+		Category:    t.Category,
+		Tags:        tags,
+		Author:      author,
+		IsFeatured:  t.IsFeatured,
+		UsageCount:  t.UsageCount,
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
+	}
 }
 
-// GetStaticTemplates returns sample templates for demo purposes
-func GetStaticTemplates() []Template {
-	return []Template{
-		{
-			ID:          "tpl-1",
-			Name:        "Slack to Email Notifier",
-			Description: "Forward important Slack messages to email",
-			Category:    "communication",
-			Tags:        []string{"slack", "email", "notifications"},
-			Author:      "LinkFlow",
-			Version:     "1.0.0",
-			Downloads:   1250,
-			Rating:      4.8,
-			RatingCount: 45,
-			Featured:    true,
-			CreatedAt:   time.Now().AddDate(0, -3, 0),
-			UpdatedAt:   time.Now().AddDate(0, 0, -7),
-		},
-		{
-			ID:          "tpl-2",
-			Name:        "GitHub to Slack Reporter",
-			Description: "Get Slack notifications for GitHub events",
-			Category:    "devops",
-			Tags:        []string{"github", "slack", "ci-cd"},
-			Author:      "LinkFlow",
-			Version:     "1.2.0",
-			Downloads:   980,
-			Rating:      4.6,
-			RatingCount: 32,
-			Featured:    true,
-			CreatedAt:   time.Now().AddDate(0, -6, 0),
-			UpdatedAt:   time.Now().AddDate(0, -1, 0),
-		},
-		{
-			ID:          "tpl-3",
-			Name:        "CRM Lead Sync",
-			Description: "Sync leads between Salesforce and HubSpot",
-			Category:    "crm",
-			Tags:        []string{"salesforce", "hubspot", "leads"},
-			Author:      "LinkFlow",
-			Version:     "2.0.0",
-			Downloads:   750,
-			Rating:      4.5,
-			RatingCount: 28,
-			Featured:    true,
-			CreatedAt:   time.Now().AddDate(0, -4, 0),
-			UpdatedAt:   time.Now().AddDate(0, 0, -14),
-		},
-		{
-			ID:          "tpl-4",
-			Name:        "Data Backup to S3",
-			Description: "Automatically backup data to AWS S3",
-			Category:    "data",
-			Tags:        []string{"aws", "s3", "backup"},
-			Author:      "LinkFlow",
-			Version:     "1.1.0",
-			Downloads:   620,
-			Rating:      4.7,
-			RatingCount: 21,
-			Featured:    false,
-			CreatedAt:   time.Now().AddDate(0, -2, 0),
-			UpdatedAt:   time.Now().AddDate(0, 0, -3),
-		},
+func ToTemplateResponses(templates []template.Template) []TemplateResponse {
+	responses := make([]TemplateResponse, len(templates))
+	for i, t := range templates {
+		responses[i] = ToTemplateResponse(t)
+	}
+	return responses
+}
+
+func ToTemplateDetailResponse(t *template.Template) TemplateDetailResponse {
+	base := ToTemplateResponse(*t)
+	thumbnail := ""
+	if t.Thumbnail != nil {
+		thumbnail = *t.Thumbnail
+	}
+
+	return TemplateDetailResponse{
+		TemplateResponse: base,
+		Nodes:            t.Nodes,
+		Connections:      t.Connections,
+		Settings:         t.Settings,
+		Thumbnail:        thumbnail,
+	}
+}
+
+func GetCategories() []CategoryResponse {
+	return []CategoryResponse{
+		{ID: "communication", Name: "Communication", Description: "Email, Slack, Teams integrations", Icon: "💬"},
+		{ID: "devops", Name: "DevOps", Description: "CI/CD, GitHub, GitLab workflows", Icon: "🔧"},
+		{ID: "crm", Name: "CRM", Description: "Salesforce, HubSpot integrations", Icon: "👥"},
+		{ID: "data", Name: "Data", Description: "ETL, backup, sync workflows", Icon: "📊"},
+		{ID: "marketing", Name: "Marketing", Description: "Marketing automation workflows", Icon: "📣"},
+		{ID: "ecommerce", Name: "E-Commerce", Description: "Shopify, WooCommerce integrations", Icon: "🛒"},
 	}
 }
