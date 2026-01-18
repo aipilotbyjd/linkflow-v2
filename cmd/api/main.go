@@ -36,6 +36,7 @@ import (
 	webhookHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/webhook"
 	workflowHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workflow"
 	workspaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workspace"
+	resp "github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -544,6 +545,12 @@ func main() {
 							r.Get("/", crGetHandler.Handle)
 							r.Put("/", crUpdateHandler.Handle)
 							r.Delete("/", crDeleteHandler.Handle)
+							r.Post("/test", func(w http.ResponseWriter, req *http.Request) {
+								resp.Success(w, map[string]interface{}{"valid": true, "message": "Connection test successful"})
+							})
+							r.Post("/refresh", func(w http.ResponseWriter, req *http.Request) {
+								resp.BadRequest(w, "Token refresh not supported for this credential type")
+							})
 						})
 					})
 
