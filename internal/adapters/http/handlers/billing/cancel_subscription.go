@@ -28,6 +28,6 @@ func (h *CancelSubscriptionHandler) Handle(w http.ResponseWriter, r *http.Reques
 	}
 
 	common.Success(w, map[string]string{
-		"message": "subscription cancelled",
+		"message": "subscription canceled",
 	})
 }

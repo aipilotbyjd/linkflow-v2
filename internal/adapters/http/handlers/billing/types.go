@@ -15,13 +15,13 @@ type CreateSubscriptionRequest struct {
 // Response DTOs
 
 type PlanResponse struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Price       float64       `json:"price"`
-	Currency    string        `json:"currency"`
-	Interval    string        `json:"interval"`
-	Features    []string      `json:"features"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Price       float64        `json:"price"`
+	Currency    string         `json:"currency"`
+	Interval    string         `json:"interval"`
+	Features    []string       `json:"features"`
 	Limits      LimitsResponse `json:"limits"`
 }
 
@@ -33,12 +33,12 @@ type LimitsResponse struct {
 }
 
 type SubscriptionResponse struct {
-	ID            string          `json:"id"`
-	PlanID        string          `json:"planId"`
-	Status        string          `json:"status"`
-	CurrentPeriod PeriodResponse  `json:"currentPeriod"`
-	CancelAt      *time.Time      `json:"cancelAt,omitempty"`
-	CreatedAt     time.Time       `json:"createdAt"`
+	ID            string         `json:"id"`
+	PlanID        string         `json:"planId"`
+	Status        string         `json:"status"`
+	CurrentPeriod PeriodResponse `json:"currentPeriod"`
+	CancelAt      *time.Time     `json:"cancelAt,omitempty"`
+	CreatedAt     time.Time      `json:"createdAt"`
 }
 
 type PeriodResponse struct {

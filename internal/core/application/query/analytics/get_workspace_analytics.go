@@ -15,7 +15,7 @@ type GetWorkspaceAnalyticsQuery struct {
 }
 
 type WorkspaceAnalyticsResult struct {
-	Stats      *execution.Stats     `json:"stats"`
+	Stats      *execution.Stats      `json:"stats"`
 	DailyStats []execution.DailyStat `json:"daily_stats"`
 }
 

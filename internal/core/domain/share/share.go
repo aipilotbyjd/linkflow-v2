@@ -26,20 +26,20 @@ const (
 
 // Share represents a shared credential or resource
 type Share struct {
-	ID             uuid.UUID       `json:"id"`
-	ResourceType   string          `json:"resourceType"` // "credential", "workflow"
-	ResourceID     uuid.UUID       `json:"resourceId"`
-	ResourceName   string          `json:"resourceName"`
-	SharedByID     uuid.UUID       `json:"sharedById"`
-	SharedByEmail  string          `json:"sharedByEmail"`
-	SharedWithID   uuid.UUID       `json:"sharedWithId"`
-	SharedWithEmail string         `json:"sharedWithEmail"`
-	Permission     SharePermission `json:"permission"`
-	Status         ShareStatus     `json:"status"`
-	Message        string          `json:"message,omitempty"`
-	ExpiresAt      *time.Time      `json:"expiresAt,omitempty"`
-	CreatedAt      time.Time       `json:"createdAt"`
-	UpdatedAt      time.Time       `json:"updatedAt"`
+	ID              uuid.UUID       `json:"id"`
+	ResourceType    string          `json:"resourceType"` // "credential", "workflow"
+	ResourceID      uuid.UUID       `json:"resourceId"`
+	ResourceName    string          `json:"resourceName"`
+	SharedByID      uuid.UUID       `json:"sharedById"`
+	SharedByEmail   string          `json:"sharedByEmail"`
+	SharedWithID    uuid.UUID       `json:"sharedWithId"`
+	SharedWithEmail string          `json:"sharedWithEmail"`
+	Permission      SharePermission `json:"permission"`
+	Status          ShareStatus     `json:"status"`
+	Message         string          `json:"message,omitempty"`
+	ExpiresAt       *time.Time      `json:"expiresAt,omitempty"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
 }
 
 // NewShare creates a new share

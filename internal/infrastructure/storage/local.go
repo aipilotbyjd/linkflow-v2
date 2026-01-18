@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -56,10 +57,10 @@ func (s *LocalStorage) Upload(ctx context.Context, workspaceID uuid.UUID, fileNa
 // Download downloads a file from local storage
 func (s *LocalStorage) Download(ctx context.Context, storagePath string) (io.ReadCloser, error) {
 	fullPath := filepath.Join(s.basePath, storagePath)
-	
+
 	// Prevent path traversal
 	cleanPath := filepath.Clean(fullPath)
-	if !filepath.HasPrefix(cleanPath, s.basePath) {
+	if !strings.HasPrefix(cleanPath, s.basePath) {
 		return nil, fmt.Errorf("invalid storage path")
 	}
 
@@ -73,10 +74,10 @@ func (s *LocalStorage) Download(ctx context.Context, storagePath string) (io.Rea
 // Delete deletes a file from local storage
 func (s *LocalStorage) Delete(ctx context.Context, storagePath string) error {
 	fullPath := filepath.Join(s.basePath, storagePath)
-	
+
 	// Prevent path traversal
 	cleanPath := filepath.Clean(fullPath)
-	if !filepath.HasPrefix(cleanPath, s.basePath) {
+	if !strings.HasPrefix(cleanPath, s.basePath) {
 		return fmt.Errorf("invalid storage path")
 	}
 
