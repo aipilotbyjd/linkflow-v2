@@ -212,10 +212,26 @@ func HandleError(w http.ResponseWriter, err error) {
 		Error(w, http.StatusBadRequest, "WORKFLOW_INACTIVE", "Workflow is not active")
 	case "workflow is already active":
 		Error(w, http.StatusConflict, "WORKFLOW_ALREADY_ACTIVE", "Workflow is already active")
+	case "version not found":
+		Error(w, http.StatusNotFound, "VERSION_NOT_FOUND", "Workflow version not found")
 
 	// Webhook errors
 	case "webhook path already exists":
 		Error(w, http.StatusConflict, "WEBHOOK_PATH_EXISTS", "A webhook with this path already exists")
+	case "webhook endpoint not found":
+		Error(w, http.StatusNotFound, "WEBHOOK_NOT_FOUND", "Webhook endpoint not found")
+	case "webhook endpoint is not active", "webhook endpoint is inactive":
+		Error(w, http.StatusGone, "WEBHOOK_INACTIVE", "Webhook endpoint is inactive")
+	case "method not allowed":
+		Error(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "Method not allowed for this webhook")
+
+	// Billing errors
+	case "subscription not found":
+		Error(w, http.StatusNotFound, "SUBSCRIPTION_NOT_FOUND", "No subscription found for this workspace")
+	case "usage record not found":
+		Error(w, http.StatusNotFound, "USAGE_NOT_FOUND", "Usage record not found")
+	case "invoice not found":
+		Error(w, http.StatusNotFound, "INVOICE_NOT_FOUND", "Invoice not found")
 
 	// Execution errors
 	case "execution not found":

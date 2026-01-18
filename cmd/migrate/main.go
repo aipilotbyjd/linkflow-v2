@@ -10,6 +10,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 )
 
@@ -110,6 +111,11 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&models.PinnedData{},
 		&models.Share{},
 		&models.BinaryData{},
+
+		// Billing
+		&billing.Subscription{},
+		&billing.Usage{},
+		&billing.Invoice{},
 	); err != nil {
 		return fmt.Errorf("auto-migrate failed: %w", err)
 	}

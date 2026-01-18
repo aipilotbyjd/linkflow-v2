@@ -287,6 +287,9 @@ func main() {
 	wfActivateHandler := workflowHandler.NewActivateHandler(activateWorkflowHandler)
 	wfDeactivateHandler := workflowHandler.NewDeactivateHandler(workflowRepo)
 	wfVersionsHandler := workflowHandler.NewListVersionsHandler(versionRepo)
+	wfGetVersionHandler := workflowHandler.NewGetVersionHandler(versionRepo)
+	wfRollbackHandler := workflowHandler.NewRollbackHandler(workflowRepo, versionRepo)
+	wfCompareVersionsHandler := workflowHandler.NewCompareVersionsHandler(versionRepo)
 	wfCloneHandler := workflowHandler.NewCloneHandler(workflowRepo)
 	wfDuplicateHandler := workflowHandler.NewDuplicateHandler(workflowRepo)
 	wfExportHandler := workflowHandler.NewExportHandler(workflowRepo)
@@ -305,6 +308,10 @@ func main() {
 	exSearchHandler := executionHandler.NewSearchExecutionsHandler(executionRepo)
 	exListNodesHandler := executionHandler.NewGetExecutionNodesHandler(executionRepo, nodeExecutionRepo)
 	exGetNodeHandler := executionHandler.NewGetNodeExecutionHandler(executionRepo, nodeExecutionRepo)
+	exReplayHandler := executionHandler.NewReplayExecutionHandler(executionRepo, workflowRepo, startExecutionHandler)
+	exResumeHandler := executionHandler.NewResumeHandler(executionRepo)
+	exListWaitingHandler := executionHandler.NewListWaitingHandler(executionRepo)
+	exBulkDeleteHandler := executionHandler.NewBulkDeleteExecutionsHandler(executionRepo)
 
 	// Credential handlers
 	crCreateHandler := credentialHandler.NewCreateHandler(createCredentialHandler)
@@ -514,6 +521,9 @@ func main() {
 							r.Post("/duplicate", wfDuplicateHandler.Handle)
 							r.Get("/export", wfExportHandler.Handle)
 							r.Get("/versions", wfVersionsHandler.Handle)
+							r.Get("/versions/{version}", wfGetVersionHandler.Handle)
+							r.Post("/versions/{version}/rollback", wfRollbackHandler.Handle)
+							r.Get("/compare-versions", wfCompareVersionsHandler.Handle)
 						})
 					})
 
@@ -522,14 +532,20 @@ func main() {
 						r.Get("/", exListHandler.Handle)
 						r.Get("/stats", exStatsHandler.Handle)
 						r.Get("/search", exSearchHandler.Handle)
+						r.Delete("/bulk", exBulkDeleteHandler.Handle)
 						r.Route("/{executionId}", func(r chi.Router) {
 							r.Get("/", exGetHandler.Handle)
 							r.Get("/nodes", exListNodesHandler.Handle)
 							r.Get("/nodes/{nodeId}", exGetNodeHandler.Handle)
 							r.Post("/cancel", exCancelHandler.Handle)
 							r.Post("/retry", exRetryHandler.Handle)
+							r.Post("/replay", exReplayHandler.Handle)
+							r.Post("/resume", exResumeHandler.Handle)
 						})
 					})
+
+					// Waiting Executions
+					r.Get("/waiting-executions", exListWaitingHandler.Handle)
 
 					// Webhooks
 					r.Route("/webhooks", func(r chi.Router) {
@@ -705,8 +721,8 @@ func main() {
 	})
 
 	// Webhook trigger endpoint (public)
-	r.Post("/webhooks/{endpointId}", whTriggerHandler.Handle)
-	r.Get("/webhooks/{endpointId}", whTriggerHandler.Handle)
+	r.Post("/webhooks/*", whTriggerHandler.Handle)
+	r.Get("/webhooks/*", whTriggerHandler.Handle)
 
 	server := &http.Server{
 		Addr:         cfg.Server.GetAddress(),

@@ -21,7 +21,12 @@ func NewTriggerHandler(handler *webhookCmd.TriggerWebhookHandler) *TriggerHandle
 func (h *TriggerHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	path := chi.URLParam(r, "*")
 	if path == "" {
-		path = chi.URLParam(r, "path")
+		common.BadRequest(w, "webhook path is required")
+		return
+	}
+	// Ensure path starts with /
+	if path[0] != '/' {
+		path = "/" + path
 	}
 
 	headers := make(map[string]string)

@@ -47,11 +47,13 @@ func (h *TriggerWebhookHandler) Handle(ctx context.Context, cmd TriggerWebhookCo
 		return nil, fmt.Errorf("method not allowed")
 	}
 
-	// Log the webhook event
-	event := webhook.NewEvent(endpoint.ID, cmd.Method, endpoint.Path)
-	event.WithIPAddress(cmd.IPAddress)
-	if err := h.eventRepo.Create(ctx, event); err != nil {
-		// Non-fatal, continue
+	// Log the webhook event (if event repo is available)
+	if h.eventRepo != nil {
+		event := webhook.NewEvent(endpoint.ID, cmd.Method, endpoint.Path)
+		event.WithIPAddress(cmd.IPAddress)
+		if err := h.eventRepo.Create(ctx, event); err != nil {
+			// Non-fatal, continue
+		}
 	}
 
 	// Record the call
