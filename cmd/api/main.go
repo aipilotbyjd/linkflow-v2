@@ -150,6 +150,7 @@ func main() {
 	workflowRepo := repositories.NewWorkflowRepository(db)
 	versionRepo := repositories.NewVersionRepository(db)
 	executionRepo := repositories.NewExecutionRepository(db)
+	nodeExecutionRepo := repositories.NewNodeExecutionRepository(db)
 	credentialRepo := repositories.NewCredentialRepository(db)
 	scheduleRepo := repositories.NewScheduleRepository(db)
 	webhookRepo := repositories.NewWebhookRepository(db)
@@ -288,6 +289,9 @@ func main() {
 	wfCloneHandler := workflowHandler.NewCloneHandler(workflowRepo)
 	wfDuplicateHandler := workflowHandler.NewDuplicateHandler(workflowRepo)
 	wfExportHandler := workflowHandler.NewExportHandler(workflowRepo)
+	wfImportHandler := workflowHandler.NewImportHandler(workflowRepo)
+	wfValidateHandler := workflowHandler.NewValidateWorkflowHandler(nodeRegistry)
+	wfTestNodeHandler := workflowHandler.NewTestNodeHandler(nodeRegistry, appLogger)
 	wfSearchHandler := workflowHandler.NewSearchHandler(workflowRepo)
 
 	// Execution handlers
@@ -298,6 +302,8 @@ func main() {
 	exRetryHandler := executionHandler.NewRetryHandler(startExecutionHandler, executionRepo)
 	exStatsHandler := executionHandler.NewGetExecutionStatsHandler(executionRepo)
 	exSearchHandler := executionHandler.NewSearchExecutionsHandler(executionRepo)
+	exListNodesHandler := executionHandler.NewGetExecutionNodesHandler(executionRepo, nodeExecutionRepo)
+	exGetNodeHandler := executionHandler.NewGetNodeExecutionHandler(executionRepo, nodeExecutionRepo)
 
 	// Credential handlers
 	crCreateHandler := credentialHandler.NewCreateHandler(createCredentialHandler)
@@ -493,6 +499,9 @@ func main() {
 						r.Post("/", wfCreateHandler.Handle)
 						r.Get("/", wfListHandler.Handle)
 						r.Get("/search", wfSearchHandler.Handle)
+						r.Post("/import", wfImportHandler.Handle)
+						r.Post("/validate", wfValidateHandler.Handle)
+						r.Post("/test-node", wfTestNodeHandler.Handle)
 						r.Route("/{workflowId}", func(r chi.Router) {
 							r.Get("/", wfGetHandler.Handle)
 							r.Put("/", wfUpdateHandler.Handle)
@@ -514,6 +523,8 @@ func main() {
 						r.Get("/search", exSearchHandler.Handle)
 						r.Route("/{executionId}", func(r chi.Router) {
 							r.Get("/", exGetHandler.Handle)
+							r.Get("/nodes", exListNodesHandler.Handle)
+							r.Get("/nodes/{nodeId}", exGetNodeHandler.Handle)
 							r.Post("/cancel", exCancelHandler.Handle)
 							r.Post("/retry", exRetryHandler.Handle)
 						})

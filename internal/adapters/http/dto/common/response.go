@@ -202,6 +202,33 @@ func HandleError(w http.ResponseWriter, err error) {
 		Error(w, http.StatusUnauthorized, "SESSION_INVALID", "Session is invalid or expired")
 	case "too many login attempts":
 		Error(w, http.StatusTooManyRequests, "TOO_MANY_ATTEMPTS", "Too many login attempts. Please try again later")
+
+	// Workflow errors
+	case "workflow has no nodes":
+		Error(w, http.StatusBadRequest, "WORKFLOW_EMPTY", "Workflow must have at least one node before activation")
+	case "workflow requires a trigger node":
+		Error(w, http.StatusBadRequest, "WORKFLOW_NO_TRIGGER", "Workflow must have a trigger node to be activated")
+	case "workflow is not active":
+		Error(w, http.StatusBadRequest, "WORKFLOW_INACTIVE", "Workflow is not active")
+	case "workflow is already active":
+		Error(w, http.StatusConflict, "WORKFLOW_ALREADY_ACTIVE", "Workflow is already active")
+
+	// Webhook errors
+	case "webhook path already exists":
+		Error(w, http.StatusConflict, "WEBHOOK_PATH_EXISTS", "A webhook with this path already exists")
+
+	// Execution errors
+	case "execution not found":
+		Error(w, http.StatusNotFound, "EXECUTION_NOT_FOUND", "Execution not found")
+	case "execution already completed":
+		Error(w, http.StatusBadRequest, "EXECUTION_COMPLETED", "Execution has already completed")
+	case "execution is not running":
+		Error(w, http.StatusBadRequest, "EXECUTION_NOT_RUNNING", "Execution is not running")
+	case "cannot cancel execution":
+		Error(w, http.StatusBadRequest, "CANNOT_CANCEL", "Cannot cancel this execution")
+	case "cannot retry execution":
+		Error(w, http.StatusBadRequest, "CANNOT_RETRY", "Cannot retry this execution")
+
 	default:
 		// Fall back to generic handling
 		switch {

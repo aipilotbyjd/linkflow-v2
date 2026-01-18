@@ -47,7 +47,7 @@ func (r *APIKeyRepository) FindByKeyHash(ctx context.Context, keyHash string) (*
 func (r *APIKeyRepository) FindByUserID(ctx context.Context, userID uuid.UUID) ([]user.APIKey, error) {
 	var keys []user.APIKey
 	if err := postgres.GetTx(ctx, r.db).
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND revoked_at IS NULL", userID).
 		Order("created_at DESC").
 		Find(&keys).Error; err != nil {
 		return nil, err
