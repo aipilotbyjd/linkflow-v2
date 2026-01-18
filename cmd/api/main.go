@@ -20,8 +20,11 @@ import (
 	credentialHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/credential"
 	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
+	apikeyHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/apikey"
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
+	marketplaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/marketplace"
+	nodetypesHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/nodetypes"
 	userHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/user"
 	scheduleHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/schedule"
 	templateHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/template"
@@ -33,6 +36,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
@@ -144,6 +148,10 @@ func main() {
 	templateRepo := repositories.NewTemplateRepository(db)
 	statsRepo := repositories.NewExecutionStatsRepository(db)
 	folderRepo := repositories.NewFolderRepository(db)
+	apiKeyRepo := repositories.NewAPIKeyRepository(db)
+
+	// Node registry
+	nodeRegistry := nodes.NewRegistry()
 
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
@@ -268,7 +276,34 @@ func main() {
 	fldListHandler := folderHandler.NewListFoldersHandler(folderRepo)
 	fldUpdateHandler := folderHandler.NewUpdateFolderHandler(folderRepo)
 	fldDeleteHandler := folderHandler.NewDeleteFolderHandler(folderRepo)
-	fldTreeHandler := folderHandler.NewGetTreeHandler(folderRepo)
+	fldTreeHandler := folderHandler.NewGetFolderTreeHandler(folderRepo, workflowRepo)
+
+	// API Key handlers
+	akCreateHandler := apikeyHandler.NewCreateAPIKeyHandler(apiKeyRepo)
+	akListHandler := apikeyHandler.NewListAPIKeysHandler(apiKeyRepo)
+	akRevokeHandler := apikeyHandler.NewRevokeAPIKeyHandler(apiKeyRepo)
+
+	// Node types handlers
+	ntListHandler := nodetypesHandler.NewListNodeTypesHandler(nodeRegistry)
+	ntCategoriesHandler := nodetypesHandler.NewListCategoriesHandler(nodeRegistry)
+	ntGetHandler := nodetypesHandler.NewGetNodeTypeHandler(nodeRegistry)
+
+	// Marketplace handlers
+	mpBrowseHandler := marketplaceHandler.NewBrowseHandler()
+	mpFeaturedHandler := marketplaceHandler.NewFeaturedHandler()
+	mpCategoriesHandler := marketplaceHandler.NewCategoriesHandler()
+	mpSearchHandler := marketplaceHandler.NewSearchHandler()
+	mpGetHandler := marketplaceHandler.NewGetHandler()
+	mpUseHandler := marketplaceHandler.NewUseHandler()
+	mpPublishHandler := marketplaceHandler.NewPublishHandler()
+	mpMyPublishedHandler := marketplaceHandler.NewMyPublishedHandler()
+	mpUpdateHandler := marketplaceHandler.NewUpdateHandler()
+	mpUnpublishHandler := marketplaceHandler.NewUnpublishHandler()
+	mpRateHandler := marketplaceHandler.NewRateHandler()
+	mpGetMyRatingHandler := marketplaceHandler.NewGetMyRatingHandler()
+	mpListRatingsHandler := marketplaceHandler.NewListRatingsHandler()
+	mpRatingStatsHandler := marketplaceHandler.NewRatingStatsHandler()
+	mpDeleteRatingHandler := marketplaceHandler.NewDeleteRatingHandler()
 
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
@@ -383,6 +418,18 @@ func main() {
 					// Analytics (workspace scoped)
 					r.Get("/analytics", anWorkspaceHandler.Handle)
 					r.Get("/workflows/{workflowId}/analytics", anWorkflowHandler.Handle)
+
+					// Folders
+					r.Route("/folders", func(r chi.Router) {
+						r.Post("/", fldCreateHandler.Handle)
+						r.Get("/", fldListHandler.Handle)
+						r.Get("/tree", fldTreeHandler.Handle)
+						r.Route("/{folderId}", func(r chi.Router) {
+							r.Get("/", fldGetHandler.Handle)
+							r.Put("/", fldUpdateHandler.Handle)
+							r.Delete("/", fldDeleteHandler.Handle)
+						})
+					})
 				})
 			})
 
@@ -397,6 +444,39 @@ func main() {
 				r.Get("/categories/{category}", tplByCategoryHandler.Handle)
 				r.Get("/search", tplSearchHandler.Handle)
 				r.Get("/{templateId}", tplGetHandler.Handle)
+			})
+
+			// API Keys
+			r.Route("/api-keys", func(r chi.Router) {
+				r.Post("/", akCreateHandler.Handle)
+				r.Get("/", akListHandler.Handle)
+				r.Delete("/{keyId}", akRevokeHandler.Handle)
+			})
+
+			// Node Types
+			r.Route("/node-types", func(r chi.Router) {
+				r.Get("/", ntListHandler.Handle)
+				r.Get("/categories", ntCategoriesHandler.Handle)
+				r.Get("/{nodeType}", ntGetHandler.Handle)
+			})
+
+			// Marketplace
+			r.Route("/marketplace", func(r chi.Router) {
+				r.Get("/", mpBrowseHandler.Handle)
+				r.Get("/featured", mpFeaturedHandler.Handle)
+				r.Get("/categories", mpCategoriesHandler.Handle)
+				r.Get("/search", mpSearchHandler.Handle)
+				r.Get("/my-published", mpMyPublishedHandler.Handle)
+				r.Get("/{itemId}", mpGetHandler.Handle)
+				r.Post("/{itemId}/use", mpUseHandler.Handle)
+				r.Post("/publish", mpPublishHandler.Handle)
+				r.Put("/{itemId}", mpUpdateHandler.Handle)
+				r.Delete("/{itemId}", mpUnpublishHandler.Handle)
+				r.Post("/{itemId}/rate", mpRateHandler.Handle)
+				r.Get("/{itemId}/my-rating", mpGetMyRatingHandler.Handle)
+				r.Get("/{itemId}/ratings", mpListRatingsHandler.Handle)
+				r.Get("/{itemId}/rating-stats", mpRatingStatsHandler.Handle)
+				r.Delete("/{itemId}/rating", mpDeleteRatingHandler.Handle)
 			})
 		})
 	})
