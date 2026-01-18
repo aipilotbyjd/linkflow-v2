@@ -60,7 +60,9 @@ import (
 	workflowQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workflow"
 	workspaceQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/metrics"
 	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
@@ -235,11 +237,34 @@ func main() {
 	getWorkspaceAnalyticsHandler := analyticsQry.NewGetWorkspaceAnalyticsHandler(statsRepo)
 	getUserHandler := userQry.NewGetUserHandler(userRepo)
 
+	// Cache and email service
+	cacheService := cache.NewMemoryCache()
+	emailService, err := email.NewService(email.Config{
+		Provider:    cfg.Email.Provider,
+		DefaultFrom: cfg.Email.From,
+		SMTPHost:    cfg.Email.SMTPHost,
+		SMTPPort:    cfg.Email.SMTPPort,
+		SMTPUser:    cfg.Email.SMTPUser,
+		SMTPPass:    cfg.Email.SMTPPass,
+	})
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to initialize email service, using noop")
+		emailService, _ = email.NewService(email.Config{Provider: "noop"})
+	}
+
 	// HTTP handlers
 	registerHandler := auth.NewRegisterHandler(registerUserHandler)
 	loginHandler := auth.NewLoginHandler(loginUserHandler)
 	refreshHandler := auth.NewRefreshHandler(jwtManager)
 	logoutHandler := auth.NewLogoutHandler(sessionRepo, jwtBlacklist)
+	baseURL := "http://localhost:3000" // Frontend URL for password reset links
+	forgotPasswordHandler := auth.NewForgotPasswordHandler(userRepo, cacheService, emailService, baseURL)
+	resetPasswordHandler := auth.NewResetPasswordHandler(userRepo, sessionRepo, cacheService)
+	setupMFAHandler := auth.NewSetupMFAHandler(userRepo, cacheService)
+	verifyMFAHandler := auth.NewVerifyMFAHandler(userRepo, cacheService)
+	disableMFAHandler := auth.NewDisableMFAHandler(userRepo)
+	authOAuthRedirectHandler := auth.NewOAuthRedirectHandler(nil, baseURL)
+	authOAuthCallbackHandler := auth.NewOAuthCallbackHandler(nil, nil, nil)
 	healthHandler := health.NewHandler()
 
 	// Workspace handlers
@@ -273,6 +298,7 @@ func main() {
 	crListHandler := credentialHandler.NewListHandler(listCredentialsHandler)
 	crUpdateHandler := credentialHandler.NewUpdateHandler(updateCredentialHandler)
 	crDeleteHandler := credentialHandler.NewDeleteHandler(deleteCredentialHandler)
+	crRefreshHandler := credentialHandler.NewRefreshHandler(credentialRepo, nil)
 
 	// Schedule handlers
 	schCreateHandler := scheduleHandler.NewCreateHandler(createScheduleHandler)
@@ -411,9 +437,18 @@ func main() {
 			r.Post("/register", registerHandler.Handle)
 			r.Post("/login", loginHandler.Handle)
 			r.Post("/refresh", refreshHandler.Handle)
+			r.Post("/forgot-password", forgotPasswordHandler.Handle)
+			r.Post("/reset-password", resetPasswordHandler.Handle)
+			r.Get("/oauth/{provider}", authOAuthRedirectHandler.Handle)
+			r.Get("/oauth/{provider}/callback", authOAuthCallbackHandler.Handle)
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.Auth(jwtManager))
 				r.Post("/logout", logoutHandler.Handle)
+				r.Route("/mfa", func(r chi.Router) {
+					r.Post("/setup", setupMFAHandler.Handle)
+					r.Post("/verify", verifyMFAHandler.Handle)
+					r.Delete("/", disableMFAHandler.Handle)
+				})
 			})
 		})
 
@@ -532,6 +567,12 @@ func main() {
 							r.Get("/download", bdDownloadHandler.Handle)
 							r.Delete("/", bdDeleteHandler.Handle)
 						})
+					})
+
+					// Workspace OAuth (for credential integrations)
+					r.Route("/oauth", func(r chi.Router) {
+						r.Get("/authorize/{provider}", oaAuthorizeHandler.Handle)
+						r.Get("/callback/{provider}", oaCallbackHandler.Handle)
 					})
 				})
 			})
