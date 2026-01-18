@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -31,6 +32,17 @@ func New() *Validator {
 		}
 		return name
 	})
+
+	// Register custom validator for json.RawMessage
+	v.RegisterCustomTypeFunc(func(field reflect.Value) interface{} {
+		if val, ok := field.Interface().(json.RawMessage); ok {
+			if len(val) == 0 {
+				return nil // nil fails required validation
+			}
+			return string(val)
+		}
+		return nil
+	}, json.RawMessage{})
 
 	return &Validator{
 		validate: v,
@@ -84,6 +96,8 @@ func (v *Validator) getMessage(err validator.FieldError) string {
 		return fmt.Sprintf("%s must be greater than or equal to %s", field, err.Param())
 	case "lte":
 		return fmt.Sprintf("%s must be less than or equal to %s", field, err.Param())
+	case "len":
+		return fmt.Sprintf("%s must be exactly %s characters", field, err.Param())
 	case "alphanum":
 		return fmt.Sprintf("%s must contain only letters and numbers", field)
 	case "containsany":
@@ -123,6 +137,25 @@ func formatFieldName(field string) string {
 		"type":            "Type",
 		"timezone":        "Timezone",
 		"permission":      "Permission",
+		"code":            "Code",
+		"node_id":         "Node ID",
+		"nodeId":          "Node ID",
+		"node_type":       "Node type",
+		"nodeType":        "Node type",
+		"role":            "Role",
+		"planId":          "Plan ID",
+		"plan_id":         "Plan ID",
+		"streamName":      "Stream name",
+		"score":           "Score",
+		"data":            "Data",
+		"refresh_token":   "Refresh token",
+		"refreshToken":    "Refresh token",
+		"token":           "Token",
+		"new_password":    "New password",
+		"newPassword":     "New password",
+		"ids":             "IDs",
+		"execution_ids":   "Execution IDs",
+		"executionIds":    "Execution IDs",
 	}
 
 	if mapped, ok := mappings[field]; ok {
