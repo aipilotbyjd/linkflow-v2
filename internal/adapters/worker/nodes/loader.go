@@ -5,6 +5,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/email"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/http"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/transform"
+	ainodes "github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/ai"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/ai"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/cloud"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/communication"
@@ -110,11 +111,43 @@ func LoadAllNodes(registry *Registry) error {
 		return err
 	}
 
-	// AI integrations
+	// Legacy AI integrations (kept for backward compatibility)
 	if err := registry.Register("integration.openai", func() Node { return ai.NewOpenAINode() }); err != nil {
 		return err
 	}
 	if err := registry.Register("integration.anthropic", func() Node { return ai.NewAnthropicNode() }); err != nil {
+		return err
+	}
+
+	// Advanced AI nodes
+	if err := registry.Register("ai.chat", func() Node { return ainodes.NewChatNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.generate", func() Node { return ainodes.NewGenerateNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.embeddings", func() Node { return ainodes.NewEmbeddingsNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.vision", func() Node { return ainodes.NewVisionNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.image", func() Node { return ainodes.NewImageNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.speech", func() Node { return ainodes.NewSpeechNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.structured", func() Node { return ainodes.NewStructuredNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.router", func() Node { return ainodes.NewRouterNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.agent", func() Node { return ainodes.NewAgentNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.evaluate", func() Node { return ainodes.NewEvaluateNode() }); err != nil {
 		return err
 	}
 

@@ -116,6 +116,11 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&billing.Subscription{},
 		&billing.Usage{},
 		&billing.Invoice{},
+
+		// AI Integration
+		&models.AIUsage{},
+		&models.PromptTemplate{},
+		&models.AICache{},
 	); err != nil {
 		return fmt.Errorf("auto-migrate failed: %w", err)
 	}
