@@ -40,5 +40,11 @@ func (h *AuthorizeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	// TODO: Store state in session/cache for validation in callback
 
 	authURL := provider.GetAuthURL(state)
-	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
+
+	// Return JSON with authorization URL instead of redirect
+	common.Success(w, map[string]interface{}{
+		"provider": providerID,
+		"auth_url": authURL,
+		"state":    state,
+	})
 }

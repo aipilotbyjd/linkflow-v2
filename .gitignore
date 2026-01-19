@@ -54,6 +54,8 @@ security-report.*
 *.pfx
 secrets/
 credentials/
+deploy/config/*.env
+!deploy/config/*.env.example
 
 # -----------------------------------------------------------------------------
 # Configuration Overrides

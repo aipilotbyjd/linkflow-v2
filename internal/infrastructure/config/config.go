@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -227,6 +228,9 @@ type RateLimiterConfig struct {
 
 // Load loads configuration from file and environment
 func Load(configPath string) (*Config, error) {
+	// Load .env file if it exists (ignore error if not found)
+	_ = godotenv.Load()
+
 	v := viper.New()
 
 	// Set defaults
@@ -245,6 +249,17 @@ func Load(configPath string) (*Config, error) {
 	// Environment variables
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	v.AutomaticEnv()
+
+	// Bind OAuth environment variables explicitly
+	_ = v.BindEnv("oauth.google.client_id", "OAUTH_GOOGLE_CLIENT_ID")
+	_ = v.BindEnv("oauth.google.client_secret", "OAUTH_GOOGLE_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.google.redirect_url", "OAUTH_GOOGLE_REDIRECT_URL")
+	_ = v.BindEnv("oauth.github.client_id", "OAUTH_GITHUB_CLIENT_ID")
+	_ = v.BindEnv("oauth.github.client_secret", "OAUTH_GITHUB_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.github.redirect_url", "OAUTH_GITHUB_REDIRECT_URL")
+	_ = v.BindEnv("oauth.microsoft.client_id", "OAUTH_MICROSOFT_CLIENT_ID")
+	_ = v.BindEnv("oauth.microsoft.client_secret", "OAUTH_MICROSOFT_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.microsoft.redirect_url", "OAUTH_MICROSOFT_REDIRECT_URL")
 
 	// Read config file
 	if err := v.ReadInConfig(); err != nil {
