@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/webhook"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/security"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
 
@@ -14,6 +15,7 @@ type TriggerWebhookCommand struct {
 	Method      string
 	Headers     map[string]string
 	Body        types.JSON
+	RawBody     string
 	QueryParams map[string]string
 	IPAddress   string
 }
@@ -25,12 +27,17 @@ type TriggerWebhookResult struct {
 }
 
 type TriggerWebhookHandler struct {
-	webhookRepo webhook.Repository
-	eventRepo   webhook.EventRepository
+	webhookRepo       webhook.Repository
+	eventRepo         webhook.EventRepository
+	securityValidator *security.WebhookValidator
 }
 
 func NewTriggerWebhookHandler(webhookRepo webhook.Repository, eventRepo webhook.EventRepository) *TriggerWebhookHandler {
-	return &TriggerWebhookHandler{webhookRepo: webhookRepo, eventRepo: eventRepo}
+	return &TriggerWebhookHandler{
+		webhookRepo:       webhookRepo,
+		eventRepo:         eventRepo,
+		securityValidator: security.NewWebhookValidator(),
+	}
 }
 
 func (h *TriggerWebhookHandler) Handle(ctx context.Context, cmd TriggerWebhookCommand) (*TriggerWebhookResult, error) {
@@ -45,6 +52,42 @@ func (h *TriggerWebhookHandler) Handle(ctx context.Context, cmd TriggerWebhookCo
 
 	if endpoint.Method != "" && endpoint.Method != cmd.Method {
 		return nil, fmt.Errorf("method not allowed")
+	}
+
+	// Security validation
+	if endpoint.IsSecured() {
+		secConfig := &security.WebhookSecurityConfig{
+			AllowedIPs:         endpoint.GetAllowedIPsList(),
+			RequireTimestamp:   endpoint.RequireTimestamp,
+			TimestampHeader:    endpoint.TimestampHeader,
+			TimestampMaxAgeSec: int64(endpoint.TimestampMaxAgeSec),
+			RequireNonce:       endpoint.RequireNonce,
+			NonceHeader:        endpoint.NonceHeader,
+		}
+
+		// Add signature config if secret is set
+		if endpoint.RequireSignature && endpoint.HasSecret() {
+			secConfig.Secret = *endpoint.Secret
+			secConfig.SignatureHeader = endpoint.SignatureHeader
+		}
+
+		secReq := &security.WebhookRequest{
+			Headers:   cmd.Headers,
+			RawBody:   cmd.RawBody,
+			IPAddress: cmd.IPAddress,
+		}
+
+		result := h.securityValidator.Validate(secConfig, secReq)
+		if !result.Valid {
+			// Log the security failure
+			if h.eventRepo != nil {
+				event := webhook.NewEvent(endpoint.ID, cmd.Method, endpoint.Path)
+				event.WithIPAddress(cmd.IPAddress)
+				event.MarkFailed(fmt.Sprintf("security validation failed: %s", result.ErrorCode))
+				h.eventRepo.Create(ctx, event)
+			}
+			return nil, fmt.Errorf("webhook security validation failed: %s", result.Error)
+		}
 	}
 
 	// Log the webhook event (if event repo is available)

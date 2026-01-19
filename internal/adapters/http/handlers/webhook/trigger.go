@@ -37,10 +37,12 @@ func (h *TriggerHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body types.JSON
+	var rawBody string
 	if r.Body != nil {
 		data, err := io.ReadAll(r.Body)
 		if err == nil && len(data) > 0 {
-			body = types.JSON{"raw": string(data)}
+			rawBody = string(data)
+			body = types.JSON{"raw": rawBody}
 		}
 	}
 
@@ -54,6 +56,7 @@ func (h *TriggerHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		Method:    r.Method,
 		Headers:   headers,
 		Body:      body,
+		RawBody:   rawBody,
 		IPAddress: ipAddress,
 	})
 	if err != nil {

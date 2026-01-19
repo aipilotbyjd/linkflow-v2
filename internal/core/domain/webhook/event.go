@@ -73,3 +73,9 @@ func (e *Event) IsSuccess() bool {
 func (e *Event) Duration() time.Duration {
 	return time.Duration(e.DurationMs) * time.Millisecond
 }
+
+// MarkFailed marks the event as failed with an error message
+func (e *Event) MarkFailed(errorMsg string) {
+	e.StatusCode = 403 // Forbidden for security failures
+	e.Response = &errorMsg
+}
