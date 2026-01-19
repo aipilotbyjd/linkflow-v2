@@ -145,3 +145,211 @@ func (r *WorkflowRepository) CountActiveByWorkspaceID(ctx context.Context, works
 		Count(&count).Error
 	return count, err
 }
+
+// AdvancedSearch performs advanced search on workflows
+func (r *WorkflowRepository) AdvancedSearch(ctx context.Context, workspaceID uuid.UUID, opts *workflow.AdvancedSearchOptions) ([]workflow.Workflow, int64, error) {
+	var modelList []models.Workflow
+	var total int64
+
+	query := postgres.GetTx(ctx, r.db).Model(&models.Workflow{}).Where("workspace_id = ?", workspaceID)
+
+	// Text search
+	if opts.Query != "" {
+		searchQuery := "%" + opts.Query + "%"
+		searchConditions := r.db.Where("1 = 0") // Start with false
+
+		for _, field := range opts.SearchIn {
+			switch field {
+			case "name":
+				searchConditions = searchConditions.Or("name ILIKE ?", searchQuery)
+			case "description":
+				searchConditions = searchConditions.Or("description ILIKE ?", searchQuery)
+			case "tags":
+				searchConditions = searchConditions.Or("? = ANY(tags)", opts.Query)
+			case "nodes":
+				// Search in nodes JSON array for node names or types
+				searchConditions = searchConditions.Or("nodes::text ILIKE ?", searchQuery)
+			}
+		}
+		query = query.Where(searchConditions)
+	}
+
+	// Status filter (multiple)
+	if len(opts.Status) > 0 {
+		query = query.Where("status IN ?", opts.Status)
+	}
+
+	// Tags filter (match any)
+	if len(opts.Tags) > 0 {
+		query = query.Where("tags && ?", "{"+joinStrings(opts.Tags, ",")+"}")
+	}
+
+	// Tags filter (match all)
+	if len(opts.TagsAll) > 0 {
+		query = query.Where("tags @> ?", "{"+joinStrings(opts.TagsAll, ",")+"}")
+	}
+
+	// Node types filter
+	if len(opts.NodeTypes) > 0 {
+		nodeConditions := r.db.Where("1 = 0")
+		for _, nodeType := range opts.NodeTypes {
+			// Search for node type in the nodes JSON array
+			nodeConditions = nodeConditions.Or("nodes @> ?", `[{"type":"`+nodeType+`"}]`)
+		}
+		query = query.Where(nodeConditions)
+	}
+
+	// Category filter
+	if opts.Category != "" {
+		query = query.Where("category = ?", opts.Category)
+	}
+
+	// Favorite filter
+	if opts.IsFavorite != nil {
+		query = query.Where("is_favorite = ?", *opts.IsFavorite)
+	}
+
+	// Folder filter
+	if opts.FolderID != nil {
+		query = query.Where("project_id = ?", *opts.FolderID)
+	}
+
+	// Created by filter
+	if opts.CreatedBy != nil {
+		query = query.Where("created_by = ?", *opts.CreatedBy)
+	}
+
+	// Date filters
+	if opts.CreatedAfter != nil {
+		query = query.Where("created_at >= to_timestamp(?)", *opts.CreatedAfter)
+	}
+	if opts.CreatedBefore != nil {
+		query = query.Where("created_at <= to_timestamp(?)", *opts.CreatedBefore)
+	}
+	if opts.UpdatedAfter != nil {
+		query = query.Where("updated_at >= to_timestamp(?)", *opts.UpdatedAfter)
+	}
+	if opts.UpdatedBefore != nil {
+		query = query.Where("updated_at <= to_timestamp(?)", *opts.UpdatedBefore)
+	}
+	if opts.ExecutedAfter != nil {
+		query = query.Where("last_executed_at >= to_timestamp(?)", *opts.ExecutedAfter)
+	}
+	if opts.ExecutedBefore != nil {
+		query = query.Where("last_executed_at <= to_timestamp(?)", *opts.ExecutedBefore)
+	}
+
+	// Execution count filters
+	if opts.MinExecutions != nil {
+		query = query.Where("execution_count >= ?", *opts.MinExecutions)
+	}
+	if opts.MaxExecutions != nil {
+		query = query.Where("execution_count <= ?", *opts.MaxExecutions)
+	}
+
+	// Has error workflow filter
+	if opts.HasErrors != nil {
+		if *opts.HasErrors {
+			query = query.Where("error_workflow_id IS NOT NULL")
+		} else {
+			query = query.Where("error_workflow_id IS NULL")
+		}
+	}
+
+	// Count total before pagination
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Sorting
+	sortBy := opts.SortBy
+	if sortBy == "" {
+		sortBy = "updated_at"
+	}
+	sortOrder := opts.SortOrder
+	if sortOrder != "asc" && sortOrder != "desc" {
+		sortOrder = "desc"
+	}
+
+	// Validate sort column to prevent SQL injection
+	validSortColumns := map[string]bool{
+		"name": true, "created_at": true, "updated_at": true,
+		"execution_count": true, "last_executed_at": true, "status": true,
+	}
+	if !validSortColumns[sortBy] {
+		sortBy = "updated_at"
+	}
+
+	query = query.Order(sortBy + " " + sortOrder)
+
+	// Pagination
+	if opts.ListOptions != nil {
+		query = query.Offset(opts.Offset).Limit(opts.Limit)
+	}
+
+	if err := query.Find(&modelList).Error; err != nil {
+		return nil, 0, err
+	}
+
+	workflows := make([]workflow.Workflow, len(modelList))
+	for i, m := range modelList {
+		workflows[i] = *mappers.WorkflowToDomain(&m)
+	}
+
+	return workflows, total, nil
+}
+
+// GetNodeTypesInWorkspace returns all unique node types used in workflows
+func (r *WorkflowRepository) GetNodeTypesInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error) {
+	var results []string
+
+	// Extract unique node types from all workflows in the workspace
+	err := postgres.GetTx(ctx, r.db).Raw(`
+		SELECT DISTINCT jsonb_array_elements(nodes)->>'type' as node_type
+		FROM workflows
+		WHERE workspace_id = ? AND deleted_at IS NULL
+		AND jsonb_array_elements(nodes)->>'type' IS NOT NULL
+		ORDER BY node_type
+	`, workspaceID).Pluck("node_type", &results).Error
+
+	return results, err
+}
+
+// GetTagsInWorkspace returns all unique tags used in workflows
+func (r *WorkflowRepository) GetTagsInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error) {
+	var results []string
+
+	err := postgres.GetTx(ctx, r.db).Raw(`
+		SELECT DISTINCT unnest(tags) as tag
+		FROM workflows
+		WHERE workspace_id = ? AND deleted_at IS NULL AND tags IS NOT NULL
+		ORDER BY tag
+	`, workspaceID).Pluck("tag", &results).Error
+
+	return results, err
+}
+
+// GetCategoriesInWorkspace returns all unique categories used in workflows
+func (r *WorkflowRepository) GetCategoriesInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error) {
+	var results []string
+
+	err := postgres.GetTx(ctx, r.db).Model(&models.Workflow{}).
+		Where("workspace_id = ? AND category IS NOT NULL AND category != ''", workspaceID).
+		Distinct("category").
+		Order("category").
+		Pluck("category", &results).Error
+
+	return results, err
+}
+
+// Helper to join strings
+func joinStrings(strs []string, sep string) string {
+	if len(strs) == 0 {
+		return ""
+	}
+	result := strs[0]
+	for i := 1; i < len(strs); i++ {
+		result += sep + strs[i]
+	}
+	return result
+}

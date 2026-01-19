@@ -61,3 +61,58 @@ func NewListOptions(page, perPage int) *ListOptions {
 		ListOptions: types.NewListOptions(page, perPage),
 	}
 }
+
+// AdvancedSearchOptions for advanced workflow search
+type AdvancedSearchOptions struct {
+	*types.ListOptions
+
+	// Text search
+	Query       string   // Search in name, description
+	SearchIn    []string // Fields to search: name, description, nodes, tags
+
+	// Filters
+	Status      []Status  // Multiple statuses
+	Tags        []string  // Match any tag
+	TagsAll     []string  // Match all tags
+	NodeTypes   []string  // Workflows containing these node types
+	Category    string
+	IsFavorite  *bool
+	FolderID    *uuid.UUID
+	CreatedBy   *uuid.UUID
+
+	// Date filters
+	CreatedAfter  *int64 // Unix timestamp
+	CreatedBefore *int64
+	UpdatedAfter  *int64
+	UpdatedBefore *int64
+	ExecutedAfter *int64
+	ExecutedBefore *int64
+
+	// Execution filters
+	MinExecutions *int
+	MaxExecutions *int
+	HasErrors     *bool // Has error workflow configured
+
+	// Sorting
+	SortBy    string // name, created_at, updated_at, execution_count, last_executed_at
+	SortOrder string // asc, desc
+}
+
+// NewAdvancedSearchOptions creates default advanced search options
+func NewAdvancedSearchOptions(page, perPage int) *AdvancedSearchOptions {
+	return &AdvancedSearchOptions{
+		ListOptions: types.NewListOptions(page, perPage),
+		SearchIn:    []string{"name", "description"},
+		SortBy:      "updated_at",
+		SortOrder:   "desc",
+	}
+}
+
+// SearchRepository extends Repository with advanced search
+type SearchRepository interface {
+	Repository
+	AdvancedSearch(ctx context.Context, workspaceID uuid.UUID, opts *AdvancedSearchOptions) ([]Workflow, int64, error)
+	GetNodeTypesInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error)
+	GetTagsInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error)
+	GetCategoriesInWorkspace(ctx context.Context, workspaceID uuid.UUID) ([]string, error)
+}
