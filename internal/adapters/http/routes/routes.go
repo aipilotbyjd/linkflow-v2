@@ -83,6 +83,8 @@ type WorkflowHandlers struct {
 	Get             http.HandlerFunc
 	List            http.HandlerFunc
 	Search          http.HandlerFunc
+	AdvancedSearch  http.HandlerFunc
+	SearchFilters   http.HandlerFunc
 	Update          http.HandlerFunc
 	Delete          http.HandlerFunc
 	Activate        http.HandlerFunc
@@ -469,6 +471,9 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Route("/workflows", func(r chi.Router) {
 					r.Get("/", handlers.Workflow.List)
 					r.Post("/", handlers.Workflow.Create)
+					r.Get("/search/advanced", handlers.Workflow.AdvancedSearch)
+					r.Post("/search/advanced", handlers.Workflow.AdvancedSearch)
+					r.Get("/search/filters", handlers.Workflow.SearchFilters)
 					r.Post("/validate", handlers.Workflow.Validate)
 					r.Post("/test-node", handlers.Workflow.TestNode)
 					r.Post("/import", handlers.Workflow.Import)

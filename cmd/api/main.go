@@ -312,6 +312,8 @@ func main() {
 	wfValidateHandler := workflowHandler.NewValidateWorkflowHandler(nodeRegistry)
 	wfTestNodeHandler := workflowHandler.NewTestNodeHandler(nodeRegistry, appLogger)
 	wfSearchHandler := workflowHandler.NewSearchHandler(workflowRepo)
+	wfAdvancedSearchHandler := workflowHandler.NewAdvancedSearchHandler(workflowRepo)
+	wfSearchFiltersHandler := workflowHandler.NewSearchFiltersHandler(workflowRepo)
 
 	// Execution handlers
 	exStartHandler := executionHandler.NewStartHandler(startExecutionHandler)
@@ -522,6 +524,9 @@ func main() {
 						r.Post("/", wfCreateHandler.Handle)
 						r.Get("/", wfListHandler.Handle)
 						r.Get("/search", wfSearchHandler.Handle)
+						r.Get("/search/advanced", wfAdvancedSearchHandler.Handle)
+						r.Post("/search/advanced", wfAdvancedSearchHandler.Handle)
+						r.Get("/search/filters", wfSearchFiltersHandler.Handle)
 						r.Post("/import", wfImportHandler.Handle)
 						r.Post("/validate", wfValidateHandler.Handle)
 						r.Post("/test-node", wfTestNodeHandler.Handle)
