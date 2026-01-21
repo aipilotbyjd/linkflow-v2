@@ -177,3 +177,29 @@ func (s *Schedule) Resume() {
 func (s *Schedule) Enabled() bool {
 	return s.IsActive
 }
+
+// ValidateCronMinInterval validates that a cron expression doesn't run more frequently than minIntervalMinutes
+func ValidateCronMinInterval(cronExpr string, minIntervalMinutes int) error {
+	if minIntervalMinutes <= 0 {
+		return nil // No restriction
+	}
+
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	schedule, err := parser.Parse(cronExpr)
+	if err != nil {
+		return fmt.Errorf("invalid cron expression: %w", err)
+	}
+
+	// Calculate the interval between two consecutive runs
+	now := time.Now()
+	next1 := schedule.Next(now)
+	next2 := schedule.Next(next1)
+
+	intervalMinutes := int(next2.Sub(next1).Minutes())
+
+	if intervalMinutes < minIntervalMinutes {
+		return fmt.Errorf("cron interval %d minutes is less than minimum %d minutes", intervalMinutes, minIntervalMinutes)
+	}
+
+	return nil
+}

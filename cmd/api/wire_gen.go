@@ -79,7 +79,7 @@ func InitializeApp() (*App, error) {
 	loginUserHandler := user.NewLoginUserHandler(userRepository, sessionRepository, manager, bus)
 	createWorkflowHandler := workflow.NewCreateWorkflowHandler(workflowRepository, versionRepository, bus)
 	updateWorkflowHandler := workflow.NewUpdateWorkflowHandler(workflowRepository, versionRepository)
-	activateWorkflowHandler := workflow.NewActivateWorkflowHandler(workflowRepository, bus)
+	activateWorkflowHandler := workflow.NewActivateWorkflowHandler(workflowRepository, nil, bus)
 	createWorkspaceHandler := workspace.NewCreateWorkspaceHandler(workspaceRepository, memberRepository, bus)
 	taskQueue := provideTaskQueue(asynqClient)
 	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue)

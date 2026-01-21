@@ -16,6 +16,7 @@ type Executor struct {
 	executionRepo execution.Repository
 	nodeExecRepo  execution.NodeExecutionRepository
 	processor     *Processor
+	usageTracker  *UsageTracker
 	logger        logger.Logger
 }
 
@@ -24,6 +25,7 @@ func NewExecutor(
 	executionRepo execution.Repository,
 	nodeExecRepo execution.NodeExecutionRepository,
 	processor *Processor,
+	usageTracker *UsageTracker,
 	log logger.Logger,
 ) *Executor {
 	return &Executor{
@@ -31,6 +33,7 @@ func NewExecutor(
 		executionRepo: executionRepo,
 		nodeExecRepo:  nodeExecRepo,
 		processor:     processor,
+		usageTracker:  usageTracker,
 		logger:        log,
 	}
 }
@@ -44,6 +47,21 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 	wf, err := e.workflowRepo.FindByID(ctx, exec.WorkflowID)
 	if err != nil {
 		return fmt.Errorf("workflow not found: %w", err)
+	}
+
+	// Pre-execution billing check
+	if e.usageTracker != nil {
+		estimatedOps := int64(len(wf.Nodes))
+		if estimatedOps < 1 {
+			estimatedOps = 1
+		}
+		if err := e.usageTracker.PreExecutionCheck(ctx, exec.WorkspaceID, estimatedOps); err != nil {
+			exec.Fail(err.Error(), nil)
+			if updateErr := e.executionRepo.Update(ctx, exec); updateErr != nil {
+				e.logger.Error().Err(updateErr).Msg("Failed to update execution after billing check failure")
+			}
+			return fmt.Errorf("billing check failed: %w", err)
+		}
 	}
 
 	exec.Start()
@@ -94,6 +112,14 @@ func (e *Executor) executeWorkflow(ctx context.Context, runtime *Runtime) error 
 func (e *Executor) executeNode(ctx context.Context, runtime *Runtime, node map[string]interface{}) error {
 	nodeID, _ := node["id"].(string)
 	nodeType, _ := node["type"].(string)
+
+	// Track node execution for billing
+	if e.usageTracker != nil {
+		if err := e.usageTracker.TrackNodeExecution(ctx, runtime.Execution.WorkspaceID, runtime.Execution.ID, nodeType); err != nil {
+			e.logger.Warn().Err(err).Str("node_type", nodeType).Msg("Usage limit exceeded during node execution")
+			return fmt.Errorf("usage limit exceeded: %w", err)
+		}
+	}
 
 	nodeExec := execution.NewNodeExecution(runtime.Execution.ID, nodeID, nodeType, nil)
 	nodeExec.Start()

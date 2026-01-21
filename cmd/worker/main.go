@@ -18,6 +18,7 @@ import (
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
@@ -107,6 +108,12 @@ func main() {
 	executionRepo := repositories.NewExecutionRepository(db)
 	nodeExecRepo := repositories.NewNodeExecutionRepository(db)
 	workflowRepo := repositories.NewWorkflowRepository(db)
+	usageRepo := repositories.NewUsageRepository(db)
+	subscriptionRepo := repositories.NewSubscriptionRepository(db)
+
+	// Initialize billing service and usage tracker
+	usageService := billingapp.NewUsageService(usageRepo, subscriptionRepo)
+	usageTracker := executor.NewUsageTracker(usageService)
 
 	// Initialize node registry and load all nodes
 	nodeRegistry := nodes.NewRegistry()
@@ -122,12 +129,13 @@ func main() {
 		processor.RegisterHandler(nodeType, &nodeAdapter{node: node})
 	}
 
-	// Initialize executor
+	// Initialize executor with usage tracking
 	workflowExecutor := executor.NewExecutor(
 		workflowRepo,
 		executionRepo,
 		nodeExecRepo,
 		processor,
+		usageTracker,
 		appLogger,
 	)
 

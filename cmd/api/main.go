@@ -51,6 +51,7 @@ import (
 	webhookCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/webhook"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 	workspaceCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workspace"
+	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	analyticsQry "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
 	billingQry "github.com/linkflow-ai/linkflow/internal/core/application/query/billing"
 	credentialQry "github.com/linkflow-ai/linkflow/internal/core/application/query/credential"
@@ -215,18 +216,21 @@ func main() {
 	defer asynqClient.Close()
 	taskQueue := asynqAdapter.NewTaskQueueAdapter(asynqClient)
 
+	// Billing service for usage tracking
+	usageService := billingapp.NewUsageService(usageRepo, subscriptionRepo)
+
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
 	loginUserHandler := userCmd.NewLoginUserHandler(userRepo, sessionRepo, jwtManager, eventBus)
 	createWorkspaceHandler := workspaceCmd.NewCreateWorkspaceHandler(workspaceRepo, memberRepo, eventBus)
 	createWorkflowHandler := workflowCmd.NewCreateWorkflowHandler(workflowRepo, versionRepo, eventBus)
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
-	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, eventBus)
+	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, usageService, eventBus)
 	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue)
 	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus)
 	updateCredentialHandler := credentialCmd.NewUpdateCredentialHandler(credentialRepo)
 	deleteCredentialHandler := credentialCmd.NewDeleteCredentialHandler(credentialRepo)
-	createScheduleHandler := scheduleCmd.NewCreateScheduleHandler(scheduleRepo, eventBus)
+	createScheduleHandler := scheduleCmd.NewCreateScheduleHandler(scheduleRepo, usageService, eventBus)
 	triggerWebhookHandler := webhookCmd.NewTriggerWebhookHandler(webhookRepo, nil)
 	createSubscriptionHandler := billingCmd.NewCreateSubscriptionHandler(subscriptionRepo, eventBus)
 	cancelSubscriptionHandler := billingCmd.NewCancelSubscriptionHandler(subscriptionRepo)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/schedule"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
@@ -23,11 +24,12 @@ type CreateScheduleCommand struct {
 
 type CreateScheduleHandler struct {
 	scheduleRepo schedule.Repository
+	usageService *billingapp.UsageService
 	eventBus     events.Bus
 }
 
-func NewCreateScheduleHandler(scheduleRepo schedule.Repository, eventBus events.Bus) *CreateScheduleHandler {
-	return &CreateScheduleHandler{scheduleRepo: scheduleRepo, eventBus: eventBus}
+func NewCreateScheduleHandler(scheduleRepo schedule.Repository, usageService *billingapp.UsageService, eventBus events.Bus) *CreateScheduleHandler {
+	return &CreateScheduleHandler{scheduleRepo: scheduleRepo, usageService: usageService, eventBus: eventBus}
 }
 
 func (h *CreateScheduleHandler) Handle(ctx context.Context, cmd CreateScheduleCommand) (*schedule.Schedule, error) {
@@ -36,6 +38,19 @@ func (h *CreateScheduleHandler) Handle(ctx context.Context, cmd CreateScheduleCo
 	}
 	if cmd.CronExpression == "" {
 		return nil, fmt.Errorf("cron expression is required")
+	}
+
+	// Check minimum interval from billing plan
+	if h.usageService != nil {
+		minInterval, err := h.usageService.GetMinInterval(ctx, cmd.WorkspaceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get plan limits: %w", err)
+		}
+
+		// Validate cron expression against minimum interval
+		if err := schedule.ValidateCronMinInterval(cmd.CronExpression, minInterval); err != nil {
+			return nil, fmt.Errorf("schedule interval too frequent: minimum allowed is %d minutes on your plan", minInterval)
+		}
 	}
 
 	sched := schedule.NewSchedule(cmd.WorkflowID, cmd.WorkspaceID, cmd.CreatedBy, cmd.Name, cmd.CronExpression)
