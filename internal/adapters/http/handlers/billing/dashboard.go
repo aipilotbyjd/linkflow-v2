@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
@@ -104,16 +105,5 @@ type PeriodInfo struct {
 
 func formatCents(cents int64) string {
 	dollars := float64(cents) / 100
-	if dollars == 0 {
-		return "$0.00"
-	}
-	return "$" + formatFloat(dollars)
-}
-
-func formatFloat(f float64) string {
-	if f == float64(int64(f)) {
-		return string(rune(int64(f))) + ".00"
-	}
-	// Simple formatting - in production use strconv or fmt
-	return string(rune(int64(f*100)/100)) + "." + string(rune(int64(f*100)%100))
+	return fmt.Sprintf("$%.2f", dollars)
 }

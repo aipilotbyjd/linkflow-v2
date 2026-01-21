@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
@@ -104,7 +105,7 @@ func (s *AlertService) ResetPeriod(workspaceID uuid.UUID) {
 }
 
 func (s *AlertService) alertKey(workspaceID uuid.UUID, alertType billing.UsageAlertType, threshold int) string {
-	return workspaceID.String() + ":" + string(alertType) + ":" + string(rune(threshold))
+	return fmt.Sprintf("%s:%s:%d", workspaceID.String(), alertType, threshold)
 }
 
 func (s *AlertService) queueAlert(workspaceID uuid.UUID, alertType billing.UsageAlertType, threshold int, current, limit int64, percentage float64, isOverage bool) {
