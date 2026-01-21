@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -19,7 +20,7 @@ type OpenAINode struct {
 
 func NewOpenAINode() *OpenAINode {
 	return &OpenAINode{
-		client: &http.Client{},
+		client: &http.Client{Timeout: 120 * time.Second},
 	}
 }
 

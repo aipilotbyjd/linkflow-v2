@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -24,7 +25,7 @@ type SpeechNode struct {
 func NewSpeechNode() *SpeechNode {
 	return &SpeechNode{
 		factory:    providers.NewFactory(),
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: 60 * time.Second},
 	}
 }
 

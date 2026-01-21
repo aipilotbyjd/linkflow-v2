@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // SendGridProvider implements the Provider interface using SendGrid
@@ -111,7 +112,7 @@ func (p *SendGridProvider) Send(ctx context.Context, msg *Message) error {
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	// Send request
-	client := &http.Client{}
+	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("failed to send request: %w", err)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -18,7 +19,7 @@ type SlackNode struct {
 
 func NewSlackNode() *SlackNode {
 	return &SlackNode{
-		client: &http.Client{},
+		client: &http.Client{Timeout: 30 * time.Second},
 	}
 }
 

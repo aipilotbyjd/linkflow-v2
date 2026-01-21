@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -25,7 +26,7 @@ type VisionNode struct {
 func NewVisionNode() *VisionNode {
 	return &VisionNode{
 		factory:    providers.NewFactory(),
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: 60 * time.Second},
 	}
 }
 

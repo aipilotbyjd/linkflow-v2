@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -18,7 +19,7 @@ type DiscordNode struct {
 }
 
 func NewDiscordNode() *DiscordNode {
-	return &DiscordNode{httpClient: &http.Client{}}
+	return &DiscordNode{httpClient: &http.Client{Timeout: 30 * time.Second}}
 }
 
 func (n *DiscordNode) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {

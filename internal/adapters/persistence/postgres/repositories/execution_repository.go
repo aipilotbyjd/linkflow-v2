@@ -111,7 +111,7 @@ func (r *ExecutionRepository) FindByWorkspaceID(ctx context.Context, workspaceID
 
 func (r *ExecutionRepository) FindByBatchID(ctx context.Context, batchID uuid.UUID) ([]execution.Execution, error) {
 	var modelList []models.Execution
-	if err := postgres.GetTx(ctx, r.db).Where("batch_id = ?", batchID).Find(&modelList).Error; err != nil {
+	if err := postgres.GetTx(ctx, r.db).Where("batch_id = ?", batchID).Limit(1000).Find(&modelList).Error; err != nil {
 		return nil, err
 	}
 
@@ -125,7 +125,7 @@ func (r *ExecutionRepository) FindByBatchID(ctx context.Context, batchID uuid.UU
 
 func (r *ExecutionRepository) FindRunning(ctx context.Context) ([]execution.Execution, error) {
 	var modelList []models.Execution
-	if err := postgres.GetTx(ctx, r.db).Where("status = ?", execution.StatusRunning).Find(&modelList).Error; err != nil {
+	if err := postgres.GetTx(ctx, r.db).Where("status = ?", execution.StatusRunning).Limit(1000).Find(&modelList).Error; err != nil {
 		return nil, err
 	}
 
@@ -142,6 +142,7 @@ func (r *ExecutionRepository) FindStale(ctx context.Context, timeout time.Durati
 	staleTime := time.Now().Add(-timeout)
 	if err := postgres.GetTx(ctx, r.db).
 		Where("status = ? AND started_at < ?", execution.StatusRunning, staleTime).
+		Limit(1000).
 		Find(&modelList).Error; err != nil {
 		return nil, err
 	}
