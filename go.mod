@@ -39,6 +39,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/wire v0.7.0
 	github.com/jackc/pgx/v5 v5.5.5
+	github.com/joho/godotenv v1.5.1
 	github.com/prometheus/client_golang v1.23.2
 	golang.org/x/time v0.5.0
 )
@@ -76,7 +77,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

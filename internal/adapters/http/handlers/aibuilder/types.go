@@ -1,8 +1,12 @@
 package aibuilder
 
 import (
-	"github.com/linkflow-ai/linkflow/internal/core/domain/ai"
+	"context"
+
+	"github.com/google/uuid"
 	appbuilder "github.com/linkflow-ai/linkflow/internal/core/application/aibuilder"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/ai"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/aibuilder"
 )
 
 // GenerateRequest represents a workflow generation request
@@ -46,9 +50,9 @@ type ExplainResponse struct {
 
 // Service interface for dependency injection
 type Service interface {
-	GenerateWorkflow(ctx interface{}, workspaceID, userID interface{}, prompt string, genCtx interface{}) (interface{}, error)
-	SuggestImprovements(ctx interface{}, workflowJSON string) ([]string, error)
-	ExplainWorkflow(ctx interface{}, workflowJSON string) (string, error)
+	GenerateWorkflow(ctx context.Context, workspaceID, userID uuid.UUID, prompt string, genCtx *aibuilder.Context) (*aibuilder.Result, error)
+	SuggestImprovements(ctx context.Context, workflowJSON string) ([]string, error)
+	ExplainWorkflow(ctx context.Context, workflowJSON string) (string, error)
 }
 
 // AIBuilderService is the actual service type

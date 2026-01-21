@@ -1,6 +1,7 @@
 package billing
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -212,18 +213,18 @@ func formatResourceName(alertType UsageAlertType) string {
 
 // UsageAlertRepository defines the interface for alert persistence
 type UsageAlertRepository interface {
-	Create(ctx interface{}, alert *UsageAlert) error
-	Update(ctx interface{}, alert *UsageAlert) error
-	Delete(ctx interface{}, id uuid.UUID) error
-	FindByID(ctx interface{}, id uuid.UUID) (*UsageAlert, error)
-	FindByWorkspaceID(ctx interface{}, workspaceID uuid.UUID) ([]*UsageAlert, error)
-	FindByWorkspaceAndType(ctx interface{}, workspaceID uuid.UUID, alertType UsageAlertType) ([]*UsageAlert, error)
+	Create(ctx context.Context, alert *UsageAlert) error
+	Update(ctx context.Context, alert *UsageAlert) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	FindByID(ctx context.Context, id uuid.UUID) (*UsageAlert, error)
+	FindByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) ([]*UsageAlert, error)
+	FindByWorkspaceAndType(ctx context.Context, workspaceID uuid.UUID, alertType UsageAlertType) ([]*UsageAlert, error)
 }
 
 // UsageAlertLogRepository defines the interface for alert log persistence
 type UsageAlertLogRepository interface {
-	Create(ctx interface{}, log *UsageAlertLog) error
-	FindByWorkspaceID(ctx interface{}, workspaceID uuid.UUID, limit, offset int) ([]*UsageAlertLog, int64, error)
-	FindUnacknowledged(ctx interface{}, workspaceID uuid.UUID) ([]*UsageAlertLog, error)
-	Acknowledge(ctx interface{}, id, userID uuid.UUID) error
+	Create(ctx context.Context, log *UsageAlertLog) error
+	FindByWorkspaceID(ctx context.Context, workspaceID uuid.UUID, limit, offset int) ([]*UsageAlertLog, int64, error)
+	FindUnacknowledged(ctx context.Context, workspaceID uuid.UUID) ([]*UsageAlertLog, error)
+	Acknowledge(ctx context.Context, id, userID uuid.UUID) error
 }

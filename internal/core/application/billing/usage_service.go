@@ -187,7 +187,10 @@ func (s *UsageService) CheckAndConsumeAICredits(ctx context.Context, workspaceID
 
 // isBYOKActive checks if workspace has active BYOK for the model's provider
 func (s *UsageService) isBYOKActive(workspaceID uuid.UUID, model string) bool {
+	s.mu.RLock()
 	configs := s.byokCache[workspaceID]
+	s.mu.RUnlock()
+	
 	if len(configs) == 0 {
 		return false
 	}
@@ -195,11 +198,11 @@ func (s *UsageService) isBYOKActive(workspaceID uuid.UUID, model string) bool {
 	// Determine provider from model
 	var provider billing.AIProvider
 	switch {
-	case contains(model, "gpt", "dall-e", "whisper", "tts"):
+	case containsPrefix(model, "gpt", "dall-e", "whisper", "tts", "o1"):
 		provider = billing.ProviderOpenAI
-	case contains(model, "claude"):
+	case containsPrefix(model, "claude"):
 		provider = billing.ProviderAnthropic
-	case contains(model, "gemini"):
+	case containsPrefix(model, "gemini"):
 		provider = billing.ProviderGoogle
 	default:
 		return false
@@ -208,9 +211,9 @@ func (s *UsageService) isBYOKActive(workspaceID uuid.UUID, model string) bool {
 	return billing.IsBYOKEnabled(configs, provider)
 }
 
-func contains(s string, substrs ...string) bool {
-	for _, sub := range substrs {
-		if len(s) >= len(sub) && s[:len(sub)] == sub {
+func containsPrefix(s string, prefixes ...string) bool {
+	for _, prefix := range prefixes {
+		if len(s) >= len(prefix) && s[:len(prefix)] == prefix {
 			return true
 		}
 	}
@@ -532,11 +535,12 @@ func (s *UsageService) GetUsageDashboard(ctx context.Context, workspaceID uuid.U
 
 	// Calculate rollover available
 	var rolloverOps, rolloverAI int
-	if rollovers := s.rolloverCache[workspaceID]; len(rollovers) > 0 {
-		for _, r := range rollovers {
-			rolloverOps += r.RemainingCredits()
-			rolloverAI += r.RemainingAICredits()
-		}
+	s.mu.RLock()
+	rollovers := s.rolloverCache[workspaceID]
+	s.mu.RUnlock()
+	for _, r := range rollovers {
+		rolloverOps += r.RemainingCredits()
+		rolloverAI += r.RemainingAICredits()
 	}
 
 	// Calculate overage

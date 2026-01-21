@@ -1,6 +1,7 @@
 package topup
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -11,9 +12,9 @@ import (
 
 // AutoTopUpRepository interface
 type AutoTopUpRepository interface {
-	FindByWorkspaceID(ctx interface{}, workspaceID uuid.UUID) (*billing.AutoTopUp, error)
-	Create(ctx interface{}, topup *billing.AutoTopUp) error
-	Update(ctx interface{}, topup *billing.AutoTopUp) error
+	FindByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) (*billing.AutoTopUp, error)
+	Create(ctx context.Context, topup *billing.AutoTopUp) error
+	Update(ctx context.Context, topup *billing.AutoTopUp) error
 }
 
 // GetSettingsHandler handles getting auto top-up settings

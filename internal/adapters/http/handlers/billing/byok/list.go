@@ -1,8 +1,10 @@
 package byok
 
 import (
+	"context"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
@@ -10,12 +12,12 @@ import (
 
 // BYOKRepository interface for BYOK data access
 type BYOKRepository interface {
-	Create(ctx interface{}, config *billing.BYOKConfig) error
-	Update(ctx interface{}, config *billing.BYOKConfig) error
-	Delete(ctx interface{}, id interface{}) error
-	FindByID(ctx interface{}, id interface{}) (*billing.BYOKConfig, error)
-	FindByWorkspaceID(ctx interface{}, workspaceID interface{}) ([]*billing.BYOKConfig, error)
-	FindByWorkspaceAndProvider(ctx interface{}, workspaceID interface{}, provider billing.AIProvider) (*billing.BYOKConfig, error)
+	Create(ctx context.Context, config *billing.BYOKConfig) error
+	Update(ctx context.Context, config *billing.BYOKConfig) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	FindByID(ctx context.Context, id uuid.UUID) (*billing.BYOKConfig, error)
+	FindByWorkspaceID(ctx context.Context, workspaceID uuid.UUID) ([]*billing.BYOKConfig, error)
+	FindByWorkspaceAndProvider(ctx context.Context, workspaceID uuid.UUID, provider billing.AIProvider) (*billing.BYOKConfig, error)
 }
 
 // ListHandler handles listing BYOK configurations

@@ -1,6 +1,8 @@
 package variable
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	domainvar "github.com/linkflow-ai/linkflow/internal/core/domain/variable"
 )
@@ -74,22 +76,22 @@ type ResolveResponse struct {
 // Service interface for dependency injection
 type Service interface {
 	// Variables
-	CreateVariable(ctx interface{}, workspaceID, userID uuid.UUID, req VariableRequest) (*domainvar.Variable, error)
-	UpdateVariable(ctx interface{}, id uuid.UUID, req VariableRequest) (*domainvar.Variable, error)
-	DeleteVariable(ctx interface{}, id uuid.UUID) error
-	GetVariable(ctx interface{}, id uuid.UUID) (*domainvar.Variable, error)
-	ListVariables(ctx interface{}, workspaceID uuid.UUID) ([]domainvar.Variable, error)
+	CreateVariable(ctx context.Context, workspaceID, userID uuid.UUID, req VariableRequest) (*domainvar.Variable, error)
+	UpdateVariable(ctx context.Context, id uuid.UUID, req VariableRequest) (*domainvar.Variable, error)
+	DeleteVariable(ctx context.Context, id uuid.UUID) error
+	GetVariable(ctx context.Context, id uuid.UUID) (*domainvar.Variable, error)
+	ListVariables(ctx context.Context, workspaceID uuid.UUID) ([]domainvar.Variable, error)
 
 	// Environments
-	CreateEnvironment(ctx interface{}, workspaceID, userID uuid.UUID, req EnvironmentRequest) (*domainvar.Environment, error)
-	UpdateEnvironment(ctx interface{}, id uuid.UUID, req EnvironmentRequest) (*domainvar.Environment, error)
-	DeleteEnvironment(ctx interface{}, id uuid.UUID) error
-	GetEnvironment(ctx interface{}, id uuid.UUID) (*domainvar.Environment, error)
-	ListEnvironments(ctx interface{}, workspaceID uuid.UUID) ([]domainvar.Environment, error)
-	SetEnvironmentVariable(ctx interface{}, envID, varID uuid.UUID, value string) error
+	CreateEnvironment(ctx context.Context, workspaceID, userID uuid.UUID, req EnvironmentRequest) (*domainvar.Environment, error)
+	UpdateEnvironment(ctx context.Context, id uuid.UUID, req EnvironmentRequest) (*domainvar.Environment, error)
+	DeleteEnvironment(ctx context.Context, id uuid.UUID) error
+	GetEnvironment(ctx context.Context, id uuid.UUID) (*domainvar.Environment, error)
+	ListEnvironments(ctx context.Context, workspaceID uuid.UUID) ([]domainvar.Environment, error)
+	SetEnvironmentVariable(ctx context.Context, envID, varID uuid.UUID, value string) error
 
 	// Resolution
-	ResolveVariables(ctx interface{}, workspaceID uuid.UUID, env string, workflowID *uuid.UUID) (*domainvar.VariableSet, error)
+	ResolveVariables(ctx context.Context, workspaceID uuid.UUID, env string, workflowID *uuid.UUID) (*domainvar.VariableSet, error)
 }
 
 // ToVariableResponse converts domain variable to response

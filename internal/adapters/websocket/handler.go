@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -74,5 +75,5 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok","connections":` + string(rune(h.hub.ClientCount())) + `}`))
+	w.Write([]byte(`{"status":"ok","connections":` + strconv.Itoa(h.hub.ClientCount()) + `}`))
 }

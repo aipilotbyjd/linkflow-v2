@@ -1,6 +1,8 @@
 package observability
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/observability"
 )
@@ -69,10 +71,10 @@ type AlertResponse struct {
 
 // Service interface
 type Service interface {
-	GetWorkflowMetrics(ctx interface{}, workflowID uuid.UUID, period string) (*observability.WorkflowMetrics, error)
-	GetWorkspaceMetrics(ctx interface{}, workspaceID uuid.UUID, period string) (*observability.WorkspaceMetrics, error)
-	GetExecutionHeatmap(ctx interface{}, workspaceID uuid.UUID, period string) (*observability.ExecutionHeatmap, error)
-	CreateAlertRule(ctx interface{}, workspaceID uuid.UUID, req AlertRuleRequest) (*observability.AlertRule, error)
-	ListAlertRules(ctx interface{}, workspaceID uuid.UUID) ([]observability.AlertRule, error)
-	ListAlerts(ctx interface{}, workspaceID uuid.UUID, status string) ([]observability.Alert, error)
+	GetWorkflowMetrics(ctx context.Context, workflowID uuid.UUID, period string) (*observability.WorkflowMetrics, error)
+	GetWorkspaceMetrics(ctx context.Context, workspaceID uuid.UUID, period string) (*observability.WorkspaceMetrics, error)
+	GetExecutionHeatmap(ctx context.Context, workspaceID uuid.UUID, period string) (*observability.ExecutionHeatmap, error)
+	CreateAlertRule(ctx context.Context, workspaceID uuid.UUID, req AlertRuleRequest) (*observability.AlertRule, error)
+	ListAlertRules(ctx context.Context, workspaceID uuid.UUID) ([]observability.AlertRule, error)
+	ListAlerts(ctx context.Context, workspaceID uuid.UUID, status string) ([]observability.Alert, error)
 }
