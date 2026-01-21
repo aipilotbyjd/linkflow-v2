@@ -70,7 +70,11 @@ func (h *QuickStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	response := QuickStatsResponse{}
 
 	// Get workflow stats
-	workflows, total, _ := h.workflowRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	workflows, total, err := h.workflowRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	response.Workflows.Total = total
 	for _, wf := range workflows {
 		if wf.Status == workflow.StatusActive {
@@ -79,7 +83,11 @@ func (h *QuickStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get execution stats
-	executions, _, _ := h.executionRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	executions, _, err := h.executionRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	for _, exec := range executions {
 		switch exec.Status {
 		case execution.StatusRunning:
@@ -90,11 +98,19 @@ func (h *QuickStatsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get credential stats
-	_, credTotal, _ := h.credentialRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	_, credTotal, err := h.credentialRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	response.Credentials.Total = credTotal
 
 	// Get schedule stats
-	schedules, schTotal, _ := h.scheduleRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	schedules, schTotal, err := h.scheduleRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	response.Schedules.Total = schTotal
 	for _, sch := range schedules {
 		if sch.IsActive {

@@ -70,7 +70,11 @@ func (h *BulkDeleteExecutionsHandler) Handle(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		executions, _, _ := h.executionRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+		executions, _, err := h.executionRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+		if err != nil {
+			common.HandleError(w, err)
+			return
+		}
 		for _, exec := range executions {
 			if exec.StartedAt.Before(olderThan) {
 				// Check status filter

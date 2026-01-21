@@ -3,6 +3,8 @@ package redis
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -25,7 +27,7 @@ type Client struct {
 // NewClient creates a new Redis client
 func NewClient(cfg Config) (*Client, error) {
 	opts := &redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Addr:     net.JoinHostPort(cfg.Host, strconv.Itoa(cfg.Port)),
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	}

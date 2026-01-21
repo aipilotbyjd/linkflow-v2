@@ -50,7 +50,11 @@ func (h *GetFolderTreeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	workflows, _, _ := h.workflowRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	workflows, _, err := h.workflowRepo.FindByWorkspaceID(r.Context(), wsCtx.WorkspaceID, nil)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	// Build folder map
 	folderMap := make(map[uuid.UUID]*FolderTreeNode)

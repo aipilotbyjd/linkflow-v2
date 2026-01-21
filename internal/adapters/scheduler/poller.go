@@ -35,7 +35,9 @@ func (p *Poller) Poll(ctx context.Context) ([]*schedule.Schedule, error) {
 
 // UpdateNextRun calculates and updates the next run time for a schedule
 func (p *Poller) UpdateNextRun(ctx context.Context, sched *schedule.Schedule) error {
-	_, _ = sched.CalculateNextRun()
+	if _, err := sched.CalculateNextRun(); err != nil {
+		return err
+	}
 	return p.scheduleRepo.Update(ctx, sched)
 }
 
