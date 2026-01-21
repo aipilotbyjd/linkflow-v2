@@ -113,13 +113,66 @@ func (n *JavaScriptNode) Metadata() wtypes.NodeMetadata {
 	return wtypes.NodeMetadata{
 		Type:        "action.code",
 		Name:        "JavaScript",
-		Description: "Execute JavaScript code",
+		Description: "Execute custom JavaScript code to transform data, perform calculations, or implement custom logic",
 		Category:    "action",
 		Version:     "1.0.0",
-		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
-		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
+		Icon:        "code",
+		Color:       "#F7DF1E",
+		Inputs: []wtypes.NodePort{
+			{Name: "main", Type: "any", Description: "Input data available as $input variable"},
+		},
+		Outputs: []wtypes.NodePort{
+			{Name: "main", Type: "any", Description: "The value returned by your code"},
+		},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "code", DisplayName: "Code", Type: "code", Required: true},
+			{
+				Name:        "code",
+				DisplayName: "JavaScript Code",
+				Type:        "code",
+				Required:    true,
+				Description: "JavaScript code to execute. Access input data via $input. Return value becomes node output.",
+				Placeholder: `// Access input data with $input
+const items = $input.items || [];
+
+// Transform data
+const result = items.map(item => ({
+  ...item,
+  processed: true,
+  timestamp: new Date().toISOString()
+}));
+
+// Return the result
+return result;`,
+			},
+			{
+				Name:        "mode",
+				DisplayName: "Execution Mode",
+				Type:        "options",
+				Required:    false,
+				Default:     "expression",
+				Description: "How to execute the code",
+				Options: []wtypes.ParamOption{
+					{Name: "Expression", Value: "expression", Description: "Last expression value is returned"},
+					{Name: "Function", Value: "function", Description: "Must use return statement"},
+					{Name: "Each Item", Value: "each_item", Description: "Run code for each item in array"},
+				},
+			},
+			{
+				Name:        "timeout",
+				DisplayName: "Timeout (seconds)",
+				Type:        "number",
+				Required:    false,
+				Default:     30,
+				Description: "Maximum execution time in seconds",
+			},
+			{
+				Name:        "continue_on_error",
+				DisplayName: "Continue on Error",
+				Type:        "boolean",
+				Required:    false,
+				Default:     false,
+				Description: "Continue workflow even if code throws an error",
+			},
 		},
 	}
 }
