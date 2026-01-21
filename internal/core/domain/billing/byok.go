@@ -4,13 +4,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // BYOKConfig - Bring Your Own Key configuration for AI providers
 type BYOKConfig struct {
-	ID          uuid.UUID    `gorm:"type:uuid;primaryKey" json:"id"`
+	ID          uuid.UUID    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
 	WorkspaceID uuid.UUID    `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	Provider    AIProvider   `gorm:"size:50;not null" json:"provider"`
+	Provider    AIProvider   `gorm:"size:50;not null;index" json:"provider"`
+	Name        string       `gorm:"size:100" json:"name"` // User-friendly name
 	
 	// Encrypted API key (stored encrypted in DB)
 	APIKeyEncrypted string `gorm:"size:500" json:"-"`
@@ -21,18 +23,25 @@ type BYOKConfig struct {
 	BaseURL        string `gorm:"size:255" json:"base_url,omitempty"` // For custom endpoints
 	
 	// Status
-	IsActive     bool       `gorm:"default:true" json:"is_active"`
-	IsValid      bool       `gorm:"default:false" json:"is_valid"` // Set after validation
+	IsActive      bool       `gorm:"default:true" json:"is_active"`
+	IsValid       bool       `gorm:"default:false" json:"is_valid"` // Set after validation
 	LastValidated *time.Time `json:"last_validated,omitempty"`
-	LastUsed     *time.Time `json:"last_used,omitempty"`
-	ErrorMessage string     `gorm:"size:500" json:"error_message,omitempty"`
+	LastUsed      *time.Time `json:"last_used,omitempty"`
+	ErrorMessage  string     `gorm:"size:500" json:"error_message,omitempty"`
 	
 	// Usage tracking (even with BYOK, track for analytics)
 	TotalRequests   int64 `gorm:"default:0" json:"total_requests"`
 	TotalTokensUsed int64 `gorm:"default:0" json:"total_tokens_used"`
 	
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	// Audit
+	CreatedBy uuid.UUID      `gorm:"type:uuid" json:"created_by"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+func (BYOKConfig) TableName() string {
+	return "byok_configs"
 }
 
 type AIProvider string
