@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/browser"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/code"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/email"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/crm"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/database"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/payment"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/interaction"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/logic"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/triggers"
 )
@@ -75,6 +77,9 @@ func LoadAllNodes(registry *Registry) error {
 	if err := registry.Register("action.email", func() Node { return email.NewSendEmailNode() }); err != nil {
 		return err
 	}
+	if err := registry.Register("action.browser", func() Node { return browser.NewBrowserNode() }); err != nil {
+		return err
+	}
 	if err := registry.Register("action.code", func() Node { return code.NewJavaScriptNode() }); err != nil {
 		return err
 	}
@@ -99,6 +104,11 @@ func LoadAllNodes(registry *Registry) error {
 		return err
 	}
 	if err := registry.Register("logic.wait_for_event", func() Node { return logic.NewWaitForEventNode() }); err != nil {
+		return err
+	}
+
+	// Interaction nodes
+	if err := registry.Register("interaction.human_task", func() Node { return interaction.NewHumanTaskNode() }); err != nil {
 		return err
 	}
 
@@ -175,6 +185,9 @@ func LoadAllNodes(registry *Registry) error {
 		return err
 	}
 	if err := registry.Register("ai.evaluate", func() Node { return ainodes.NewEvaluateNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("ai.vector_store", func() Node { return ainodes.NewVectorStoreNode() }); err != nil {
 		return err
 	}
 
