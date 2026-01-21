@@ -26,10 +26,19 @@ type PlanResponse struct {
 }
 
 type LimitsResponse struct {
-	Workflows     int `json:"workflows"`
-	Executions    int `json:"executionsPerMonth"`
-	TeamMembers   int `json:"teamMembers"`
-	DataRetention int `json:"dataRetentionDays"`
+	OperationsPerMonth   int  `json:"operationsPerMonth"`
+	AICreditsPerMonth    int  `json:"aiCreditsPerMonth"`
+	ActiveScenarios      int  `json:"activeScenarios"`
+	TeamMembers          int  `json:"teamMembers"`
+	MinIntervalMinutes   int  `json:"minIntervalMinutes"`
+	DataTransferMB       int  `json:"dataTransferMB"`
+	FileStorageMB        int  `json:"fileStorageMB"`
+	RetentionDays        int  `json:"retentionDays"`
+	HasAPIAccess         bool `json:"hasApiAccess"`
+	HasPriorityExecution bool `json:"hasPriorityExecution"`
+	HasCustomVariables   bool `json:"hasCustomVariables"`
+	HasTeamRoles         bool `json:"hasTeamRoles"`
+	HasSSO               bool `json:"hasSso"`
 }
 
 type SubscriptionResponse struct {
@@ -93,10 +102,19 @@ func ToPlanResponse(p billing.Plan) PlanResponse {
 		Interval:    "month",
 		Features:    p.Features,
 		Limits: LimitsResponse{
-			Workflows:     p.Limits.Workflows,
-			Executions:    p.Limits.ExecutionsPerMonth,
-			TeamMembers:   p.Limits.TeamMembers,
-			DataRetention: p.Limits.RetentionDays,
+			OperationsPerMonth:   p.Limits.OperationsPerMonth,
+			AICreditsPerMonth:    p.Limits.AICreditsPerMonth,
+			ActiveScenarios:      p.Limits.ActiveScenarios,
+			TeamMembers:          p.Limits.TeamMembers,
+			MinIntervalMinutes:   p.Limits.MinIntervalMinutes,
+			DataTransferMB:       p.Limits.DataTransferMB,
+			FileStorageMB:        p.Limits.FileStorageMB,
+			RetentionDays:        p.Limits.RetentionDays,
+			HasAPIAccess:         p.Limits.HasAPIAccess,
+			HasPriorityExecution: p.Limits.HasPriorityExecution,
+			HasCustomVariables:   p.Limits.HasCustomVariables,
+			HasTeamRoles:         p.Limits.HasTeamRoles,
+			HasSSO:               p.Limits.HasSSO,
 		},
 	}
 }

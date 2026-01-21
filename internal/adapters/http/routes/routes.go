@@ -47,6 +47,8 @@ type Handlers struct {
 	BinaryData    BinaryDataHandlers
 	Admin         AdminHandlers
 	Analytics     AnalyticsHandlers
+	AIBuilder     AIBuilderHandlers
+	Variable      VariableHandlers
 }
 
 // AuthHandlers holds auth-related handlers
@@ -289,6 +291,23 @@ type AnalyticsHandlers struct {
 	WorkspaceAnalytics http.HandlerFunc
 }
 
+// AIBuilderHandlers holds AI workflow builder handlers
+type AIBuilderHandlers struct {
+	Generate http.HandlerFunc
+	Suggest  http.HandlerFunc
+	Explain  http.HandlerFunc
+}
+
+// VariableHandlers holds variable and environment handlers
+type VariableHandlers struct {
+	List             http.HandlerFunc
+	Create           http.HandlerFunc
+	Update           http.HandlerFunc
+	Delete           http.HandlerFunc
+	ListEnvironments http.HandlerFunc
+	Resolve          http.HandlerFunc
+}
+
 // NewRouter creates a new HTTP router
 func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 	r := chi.NewRouter()
@@ -466,6 +485,23 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 						r.Delete("/", handlers.Folder.Delete)
 					})
 				})
+
+				// AI Workflow Builder
+				r.Route("/ai-builder", func(r chi.Router) {
+					r.Post("/generate", handlers.AIBuilder.Generate)
+					r.Post("/suggest", handlers.AIBuilder.Suggest)
+					r.Post("/explain", handlers.AIBuilder.Explain)
+				})
+
+				// Variables & Environments
+				r.Route("/variables", func(r chi.Router) {
+					r.Get("/", handlers.Variable.List)
+					r.Post("/", handlers.Variable.Create)
+					r.Get("/resolve", handlers.Variable.Resolve)
+					r.Put("/{variableId}", handlers.Variable.Update)
+					r.Delete("/{variableId}", handlers.Variable.Delete)
+				})
+				r.Get("/environments", handlers.Variable.ListEnvironments)
 
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {

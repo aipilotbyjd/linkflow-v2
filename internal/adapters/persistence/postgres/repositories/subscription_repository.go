@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
@@ -61,4 +62,18 @@ func (r *SubscriptionRepository) FindByStripeSubscriptionID(ctx context.Context,
 		return nil, err
 	}
 	return &subscription, nil
+}
+
+func (r *SubscriptionRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	return postgres.GetTx(ctx, r.db).Delete(&billing.Subscription{}, "id = ?", id).Error
+}
+
+func (r *SubscriptionRepository) FindExpiring(ctx context.Context, before time.Time) ([]billing.Subscription, error) {
+	var subscriptions []billing.Subscription
+	if err := postgres.GetTx(ctx, r.db).
+		Where("current_period_end < ? AND status = ?", before, billing.StatusActive).
+		Find(&subscriptions).Error; err != nil {
+		return nil, err
+	}
+	return subscriptions, nil
 }

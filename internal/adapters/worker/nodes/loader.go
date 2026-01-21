@@ -1,10 +1,14 @@
 package nodes
 
 import (
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/code"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/email"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/http"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/actions/transform"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/devtools"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/marketing"
+	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/productivity"
 	ainodes "github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/ai"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/ai"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes/integrations/cloud"
@@ -72,6 +76,29 @@ func LoadAllNodes(registry *Registry) error {
 		return err
 	}
 	if err := registry.Register("action.code", func() Node { return code.NewJavaScriptNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("action.python", func() Node { return code.NewPythonNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("action.typescript", func() Node { return code.NewTypeScriptNode() }); err != nil {
+		return err
+	}
+
+	// Advanced logic nodes
+	if err := registry.Register("logic.execute_workflow", func() Node { return logic.NewExecuteWorkflowNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("logic.try_catch", func() Node { return logic.NewTryCatchNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("logic.error_throw", func() Node { return logic.NewErrorThrowNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("logic.approval", func() Node { return logic.NewApprovalNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("logic.wait_for_event", func() Node { return logic.NewWaitForEventNode() }); err != nil {
 		return err
 	}
 
@@ -167,6 +194,64 @@ func LoadAllNodes(registry *Registry) error {
 
 	// Payment integrations
 	if err := registry.Register("integration.stripe", func() Node { return payment.NewStripeNode() }); err != nil {
+		return err
+	}
+
+	// Transform nodes
+	if err := registry.Register("transform.json_parse", func() Node { return transform.NewJSONParseNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.json_stringify", func() Node { return transform.NewJSONStringifyNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.csv_parse", func() Node { return transform.NewCSVParseNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.csv_stringify", func() Node { return transform.NewCSVStringifyNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.string", func() Node { return transform.NewStringOperationNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.join", func() Node { return transform.NewJoinNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.math", func() Node { return transform.NewMathOperationNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.aggregate_numbers", func() Node { return transform.NewAggregateNumbersNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("transform.datetime", func() Node { return transform.NewDateTimeNode() }); err != nil {
+		return err
+	}
+
+	// Productivity integrations
+	if err := registry.Register("integration.google_sheets", func() Node { return productivity.NewGoogleSheetsNode() }); err != nil {
+		return err
+	}
+
+	// DevTools integrations
+	if err := registry.Register("integration.github", func() Node { return devtools.NewGitHubNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("integration.jira", func() Node { return devtools.NewJiraNode() }); err != nil {
+		return err
+	}
+
+	// Marketing integrations
+	if err := registry.Register("integration.mailchimp", func() Node { return marketing.NewMailchimpNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("integration.sendgrid", func() Node { return marketing.NewSendGridNode() }); err != nil {
+		return err
+	}
+
+	// Webhook response nodes
+	if err := registry.Register("action.webhook_response", func() Node { return actions.NewWebhookResponseNode() }); err != nil {
+		return err
+	}
+	if err := registry.Register("action.respond_to_webhook", func() Node { return actions.NewRespondToWebhookNode() }); err != nil {
 		return err
 	}
 

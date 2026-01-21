@@ -24,4 +24,6 @@ var (
 	ErrFolderHasWorkflows      = errors.New("folder contains workflows")
 	ErrCannotArchiveActive     = errors.New("cannot archive active workflow")
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
+	ErrInsufficientVariants    = errors.New("experiment must have at least 2 variants")
+	ErrExperimentNotRunning    = errors.New("experiment is not running")
 )

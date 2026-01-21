@@ -140,6 +140,57 @@ func (r *Runtime) SetCredentialValues(credType string, values map[string]string)
 	}
 }
 
+// SubWorkflowResult represents the result of a sub-workflow execution
+type SubWorkflowResult struct {
+	ExecutionID string
+	Status      string
+	Output      map[string]interface{}
+	StartedAt   string
+	CompletedAt string
+}
+
+// ApprovalRequest represents a request for human approval
+type ApprovalRequest struct {
+	Title       string
+	Description string
+	Approvers   []string
+	TimeoutAt   interface{}
+	NotifyVia   []string
+	RequireAll  bool
+	Data        map[string]interface{}
+}
+
+// EventListener represents an event listener registration
+type EventListener struct {
+	EventType string
+	Filter    map[string]interface{}
+	TimeoutAt interface{}
+}
+
+// ExecuteSubWorkflow executes another workflow as a sub-workflow
+func (r *Runtime) ExecuteSubWorkflow(ctx interface{}, workflowID interface{}, input map[string]interface{}, wait bool) (*SubWorkflowResult, error) {
+	// This is a stub - actual implementation requires workflow service injection
+	return &SubWorkflowResult{
+		ExecutionID: "sub-exec-placeholder",
+		Status:      "completed",
+		Output:      input,
+		StartedAt:   "",
+		CompletedAt: "",
+	}, nil
+}
+
+// CreateApprovalRequest creates an approval request and returns approval ID and resume URL
+func (r *Runtime) CreateApprovalRequest(ctx interface{}, req ApprovalRequest) (string, string, error) {
+	// This is a stub - actual implementation requires approval service injection
+	return "approval-placeholder", "https://app.example.com/approve/placeholder", nil
+}
+
+// RegisterEventListener registers an event listener and returns listener ID and webhook URL
+func (r *Runtime) RegisterEventListener(ctx interface{}, listener EventListener) (string, string, error) {
+	// This is a stub - actual implementation requires event service injection
+	return "listener-placeholder", "https://app.example.com/webhook/placeholder", nil
+}
+
 // Node represents a workflow node
 type Node struct {
 	ID         string                 `json:"id"`
