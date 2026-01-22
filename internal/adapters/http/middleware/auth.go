@@ -29,6 +29,11 @@ type UserClaims struct {
 
 // Auth creates an authentication middleware
 func Auth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
+	return AuthWithBlacklist(jwtManager, nil)
+}
+
+// AuthWithBlacklist creates an authentication middleware with token blacklist checking
+func AuthWithBlacklist(jwtManager *jwt.Manager, blacklist *jwt.Blacklist) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Get token from header
@@ -58,6 +63,23 @@ func Auth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
 					common.Unauthorized(w, "authentication failed")
 				}
 				return
+			}
+
+			// Check if token is blacklisted
+			if blacklist != nil {
+				isBlacklisted, err := blacklist.IsBlacklisted(r.Context(), token)
+				if err == nil && isBlacklisted {
+					common.Unauthorized(w, "token has been revoked")
+					return
+				}
+				// Also check user-level blacklist
+				if claims.IssuedAt != nil {
+					isUserBlacklisted, err := blacklist.IsUserBlacklisted(r.Context(), claims.UserID.String(), claims.IssuedAt.Time)
+					if err == nil && isUserBlacklisted {
+						common.Unauthorized(w, "session has been revoked")
+						return
+					}
+				}
 			}
 
 			// Set user and token in context

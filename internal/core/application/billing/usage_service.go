@@ -408,17 +408,15 @@ type OverageDetails struct {
 // Internal helpers
 
 func (s *UsageService) getUsageAndLimits(ctx context.Context, workspaceID uuid.UUID) (*billing.Usage, *billing.Limits, error) {
-	// Get subscription
+	// Get subscription - use free plan if no subscription exists
+	planID := "free"
 	sub, err := s.subscriptionRepo.FindByWorkspaceID(ctx, workspaceID)
-	if err != nil {
-		return nil, nil, ErrNoActiveSubscription
-	}
-	if !sub.IsActive() {
-		return nil, nil, ErrNoActiveSubscription
+	if err == nil && sub != nil && sub.IsActive() {
+		planID = sub.PlanID
 	}
 
-	// Get plan limits
-	plan := billing.GetPlan(sub.PlanID)
+	// Get plan limits (defaults to free plan if not found)
+	plan := billing.GetPlan(planID)
 	limits := &plan.Limits
 
 	// Get or create usage for current period
@@ -466,17 +464,15 @@ func (s *UsageService) updateCacheWithPlan(workspaceID uuid.UUID, usage *billing
 }
 
 func (s *UsageService) getUsageAndLimitsWithPlan(ctx context.Context, workspaceID uuid.UUID) (*billing.Usage, *billing.Limits, string, error) {
-	// Get subscription
+	// Get subscription - use free plan if no subscription exists
+	planID := "free"
 	sub, err := s.subscriptionRepo.FindByWorkspaceID(ctx, workspaceID)
-	if err != nil {
-		return nil, nil, "", ErrNoActiveSubscription
-	}
-	if !sub.IsActive() {
-		return nil, nil, "", ErrNoActiveSubscription
+	if err == nil && sub != nil && sub.IsActive() {
+		planID = sub.PlanID
 	}
 
-	// Get plan limits
-	plan := billing.GetPlan(sub.PlanID)
+	// Get plan limits (defaults to free plan if not found)
+	plan := billing.GetPlan(planID)
 	limits := &plan.Limits
 
 	// Get or create usage for current period
@@ -493,7 +489,7 @@ func (s *UsageService) getUsageAndLimitsWithPlan(ctx context.Context, workspaceI
 		}
 	}
 
-	return usage, limits, sub.PlanID, nil
+	return usage, limits, planID, nil
 }
 
 // SetBYOKConfig caches BYOK configuration for a workspace

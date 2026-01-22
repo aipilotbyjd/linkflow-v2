@@ -15,6 +15,7 @@ import (
 // Config holds router configuration
 type Config struct {
 	JWTManager    *jwt.Manager
+	JWTBlacklist  *jwt.Blacklist
 	MemberRepo    workspace.MemberRepository
 	WorkspaceRepo workspace.Repository
 	Logger        logger.Logger
@@ -362,7 +363,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 			// Protected auth routes
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(cfg.JWTManager))
+				r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
 				r.Post("/logout", handlers.Auth.Logout)
 				r.Post("/mfa/setup", handlers.Auth.SetupMFA)
 				r.Post("/mfa/verify", handlers.Auth.VerifyMFA)
@@ -403,7 +404,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 			// Protected marketplace routes
 			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(cfg.JWTManager))
+				r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
 				r.Post("/{templateId}/ratings", handlers.Marketplace.Rate)
 				r.Get("/{templateId}/ratings/me", handlers.Marketplace.GetMyRating)
 				r.Delete("/{templateId}/ratings", handlers.Marketplace.DeleteRating)
@@ -416,7 +417,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 		// Protected routes
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.Auth(cfg.JWTManager))
+			r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
 
 			// User profile
 			r.Get("/users/me", handlers.User.GetCurrentUser)

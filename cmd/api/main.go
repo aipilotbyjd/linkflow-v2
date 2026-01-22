@@ -699,6 +699,7 @@ func main() {
 	// Create router using routes.NewRouter
 	r := routes.NewRouter(routes.Config{
 		JWTManager:    jwtManager,
+		JWTBlacklist:  jwtBlacklist,
 		MemberRepo:    memberRepo,
 		WorkspaceRepo: workspaceRepo,
 		Logger:        appLogger,
