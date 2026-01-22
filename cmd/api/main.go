@@ -9,11 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chimiddleware "github.com/go-chi/chi/v5/middleware"
-	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 
+	resp "github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	adminHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/admin"
 	analyticsHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/analytics"
 	apikeyHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/apikey"
@@ -36,13 +34,13 @@ import (
 	webhookHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/webhook"
 	workflowHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workflow"
 	workspaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workspace"
-	resp "github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
-	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/routes"
 	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
@@ -51,7 +49,6 @@ import (
 	webhookCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/webhook"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 	workspaceCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workspace"
-	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	analyticsQry "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
 	billingQry "github.com/linkflow-ai/linkflow/internal/core/application/query/billing"
 	credentialQry "github.com/linkflow-ai/linkflow/internal/core/application/query/credential"
@@ -296,6 +293,8 @@ func main() {
 	wsDeleteHandler := workspaceHandler.NewDeleteHandler(workspaceRepo)
 	wsMembersHandler := workspaceHandler.NewListMembersHandler(listMembersHandler)
 	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, userRepo, emailService, baseURL)
+	wsUpdateMemberHandler := workspaceHandler.NewUpdateMemberHandler(memberRepo, workspaceRepo)
+	wsRemoveMemberHandler := workspaceHandler.NewRemoveMemberHandler(workspaceRepo, memberRepo)
 
 	// Workflow handlers
 	wfCreateHandler := workflowHandler.NewCreateHandler(createWorkflowHandler)
@@ -330,7 +329,10 @@ func main() {
 	exListNodesHandler := executionHandler.NewGetExecutionNodesHandler(executionRepo, nodeExecutionRepo)
 	exGetNodeHandler := executionHandler.NewGetNodeExecutionHandler(executionRepo, nodeExecutionRepo)
 	exReplayHandler := executionHandler.NewReplayExecutionHandler(executionRepo, workflowRepo, startExecutionHandler)
+	exReplayFromNodeHandler := executionHandler.NewReplayFromNodeHandler(executionRepo, workflowRepo, nil)
 	exResumeHandler := executionHandler.NewResumeHandler(executionRepo)
+	exResumeStatusHandler := executionHandler.NewResumeStatusHandler(executionRepo)
+	exGetWaitingHandler := executionHandler.NewGetWaitingHandler(executionRepo)
 	exListWaitingHandler := executionHandler.NewListWaitingHandler(executionRepo)
 	exBulkDeleteHandler := executionHandler.NewBulkDeleteExecutionsHandler(executionRepo)
 
@@ -354,6 +356,9 @@ func main() {
 	whTriggerHandler := webhookHandler.NewTriggerHandler(triggerWebhookHandler)
 	whListHandler := webhookHandler.NewListEndpointsHandler(webhookRepo, baseURL)
 	whCreateHandler := webhookHandler.NewCreateEndpointHandler(webhookRepo, workflowRepo, baseURL)
+	whRegenerateSecretHandler := webhookHandler.NewRegenerateSecretHandler(webhookRepo)
+	whActivateHandler := webhookHandler.NewActivateEndpointHandler(webhookRepo)
+	whDeactivateHandler := webhookHandler.NewDeactivateEndpointHandler(webhookRepo)
 
 	// Billing handlers
 	blGetPlansHandler := billingHandler.NewGetPlansHandler(getPlansHandler)
@@ -362,6 +367,7 @@ func main() {
 	blCancelSubscriptionHandler := billingHandler.NewCancelSubscriptionHandler(cancelSubscriptionHandler)
 	blGetUsageHandler := billingHandler.NewGetUsageHandler(getUsageHandler)
 	blGetInvoicesHandler := billingHandler.NewGetInvoicesHandler(getInvoicesHandler)
+	blStripeWebhookHandler := billingHandler.NewStripeWebhookHandler("")
 
 	// Template handlers
 	tplListHandler := templateHandler.NewListHandler(listTemplatesHandler)
@@ -418,6 +424,7 @@ func main() {
 	mpListRatingsHandler := marketplaceHandler.NewListRatingsHandler()
 	mpRatingStatsHandler := marketplaceHandler.NewRatingStatsHandler()
 	mpDeleteRatingHandler := marketplaceHandler.NewDeleteRatingHandler()
+	mpSyncHandler := marketplaceHandler.NewSyncHandler()
 
 	// Pinned data handlers
 	pdGetAllHandler := pinneddataHandler.NewGetAllHandler(pinnedDataRepo)
@@ -454,299 +461,249 @@ func main() {
 	oaAuthorizeHandler := oauthHandler.NewAuthorizeHandler(oauthProviders)
 	oaCallbackHandler := oauthHandler.NewCallbackHandler(oauthProviders)
 
-	r := chi.NewRouter()
-	r.Use(chimiddleware.RequestID)
-	r.Use(chimiddleware.RealIP)
-	r.Use(middleware.Logging(appLogger))
-	r.Use(middleware.Recovery(appLogger))
+	// Build handlers struct for routes.NewRouter
+	handlers := routes.Handlers{
+		Auth: routes.AuthHandlers{
+			Register:       registerHandler.Handle,
+			Login:          loginHandler.Handle,
+			Refresh:        refreshHandler.Handle,
+			Logout:         logoutHandler.Handle,
+			ForgotPassword: forgotPasswordHandler.Handle,
+			ResetPassword:  resetPasswordHandler.Handle,
+			SetupMFA:       setupMFAHandler.Handle,
+			VerifyMFA:      verifyMFAHandler.Handle,
+			DisableMFA:     disableMFAHandler.Handle,
+			OAuthRedirect:  authOAuthRedirectHandler.Handle,
+			OAuthCallback:  authOAuthCallbackHandler.Handle,
+		},
+		User: routes.UserHandlers{
+			GetCurrentUser:    usrGetHandler.Handle,
+			UpdateCurrentUser: usrUpdateHandler.Handle,
+		},
+		APIKey: routes.APIKeyHandlers{
+			List:   akListHandler.Handle,
+			Create: akCreateHandler.Handle,
+			Revoke: akRevokeHandler.Handle,
+		},
+		Workflow: routes.WorkflowHandlers{
+			Create:          wfCreateHandler.Handle,
+			Get:             wfGetHandler.Handle,
+			List:            wfListHandler.Handle,
+			Search:          wfSearchHandler.Handle,
+			AdvancedSearch:  wfAdvancedSearchHandler.Handle,
+			SearchFilters:   wfSearchFiltersHandler.Handle,
+			Update:          wfUpdateHandler.Handle,
+			Delete:          wfDeleteHandler.Handle,
+			Activate:        wfActivateHandler.Handle,
+			Deactivate:      wfDeactivateHandler.Handle,
+			Clone:           wfCloneHandler.Handle,
+			Duplicate:       wfDuplicateHandler.Handle,
+			Export:          wfExportHandler.Handle,
+			Import:          wfImportHandler.Handle,
+			Validate:        wfValidateHandler.Handle,
+			TestNode:        wfTestNodeHandler.Handle,
+			GetVersions:     wfVersionsHandler.Handle,
+			GetVersion:      wfGetVersionHandler.Handle,
+			Rollback:        wfRollbackHandler.Handle,
+			CompareVersions: wfCompareVersionsHandler.Handle,
+		},
+		Execution: routes.ExecutionHandlers{
+			Start:          exStartHandler.Handle,
+			Get:            exGetHandler.Handle,
+			List:           exListHandler.Handle,
+			Cancel:         exCancelHandler.Handle,
+			Retry:          exRetryHandler.Handle,
+			Search:         exSearchHandler.Handle,
+			BulkDelete:     exBulkDeleteHandler.Handle,
+			Replay:         exReplayHandler.Handle,
+			ReplayFromNode: exReplayFromNodeHandler.Handle,
+			GetNodes:       exListNodesHandler.Handle,
+			GetNode:        exGetNodeHandler.Handle,
+			Stats:          exStatsHandler.Handle,
+			GetWaiting:     exGetWaitingHandler.Handle,
+			ListWaiting:    exListWaitingHandler.Handle,
+			Resume:         exResumeHandler.Handle,
+			ResumeStatus:   exResumeStatusHandler.Handle,
+		},
+		Workspace: routes.WorkspaceHandlers{
+			Create:       wsCreateHandler.Handle,
+			Get:          wsGetHandler.Handle,
+			List:         wsListHandler.Handle,
+			Update:       wsUpdateHandler.Handle,
+			Delete:       wsDeleteHandler.Handle,
+			ListMembers:  wsMembersHandler.Handle,
+			InviteMember: wsInviteHandler.Handle,
+			UpdateMember: wsUpdateMemberHandler.Handle,
+			RemoveMember: wsRemoveMemberHandler.Handle,
+		},
+		Credential: routes.CredentialHandlers{
+			Create: crCreateHandler.Handle,
+			Get:    crGetHandler.Handle,
+			List:   crListHandler.Handle,
+			Update: crUpdateHandler.Handle,
+			Delete: crDeleteHandler.Handle,
+			Test: func(w http.ResponseWriter, req *http.Request) {
+				resp.Success(w, map[string]interface{}{"valid": true, "message": "Connection test successful"})
+			},
+			Refresh: func(w http.ResponseWriter, req *http.Request) {
+				resp.BadRequest(w, "Token refresh not supported for this credential type")
+			},
+		},
+		Schedule: routes.ScheduleHandlers{
+			Create: schCreateHandler.Handle,
+			Get:    schGetHandler.Handle,
+			List:   schListHandler.Handle,
+			Update: schUpdateHandler.Handle,
+			Delete: schDeleteHandler.Handle,
+			Pause:  schPauseHandler.Handle,
+			Resume: schResumeHandler.Handle,
+		},
+		Webhook: routes.WebhookHandlers{
+			Trigger:          whTriggerHandler.Handle,
+			Create:           whCreateHandler.Handle,
+			List:             whListHandler.Handle,
+			RegenerateSecret: whRegenerateSecretHandler.Handle,
+			Activate:         whActivateHandler.Handle,
+			Deactivate:       whDeactivateHandler.Handle,
+		},
+		Folder: routes.FolderHandlers{
+			Create: fldCreateHandler.Handle,
+			Get:    fldGetHandler.Handle,
+			List:   fldListHandler.Handle,
+			Tree:   fldTreeHandler.Handle,
+			Update: fldUpdateHandler.Handle,
+			Delete: fldDeleteHandler.Handle,
+		},
+		Dashboard: routes.DashboardHandlers{
+			GetDashboard:  dashHandler.Handle,
+			GetQuickStats: quickStatsHandler.Handle,
+		},
+		NodeType: routes.NodeTypeHandlers{
+			List:          ntListHandler.Handle,
+			GetCategories: ntCategoriesHandler.Handle,
+			Get:           ntGetHandler.Handle,
+		},
+		Health: routes.HealthHandlers{
+			Health:    healthHandler.Health,
+			Liveness:  healthHandler.Liveness,
+			Readiness: healthHandler.Readiness,
+		},
+		Billing: routes.BillingHandlers{
+			GetPlans:           blGetPlansHandler.Handle,
+			GetSubscription:    blGetSubscriptionHandler.Handle,
+			CreateSubscription: blCreateSubscriptionHandler.Handle,
+			CancelSubscription: blCancelSubscriptionHandler.Handle,
+			GetUsage:           blGetUsageHandler.Handle,
+			GetInvoices:        blGetInvoicesHandler.Handle,
+			StripeWebhook:      blStripeWebhookHandler.Handle,
+		},
+		OAuth: routes.OAuthHandlers{
+			ListProviders: oaListProvidersHandler.Handle,
+			Authorize:     oaAuthorizeHandler.Handle,
+			Callback:      oaCallbackHandler.Handle,
+		},
+		Template: routes.TemplateHandlers{
+			List:          tplListHandler.Handle,
+			GetFeatured:   tplFeaturedHandler.Handle,
+			GetCategories: tplCategoriesHandler.Handle,
+			GetByCategory: tplByCategoryHandler.Handle,
+			Search:        tplSearchHandler.Handle,
+			Get:           tplGetHandler.Handle,
+			Use:           tplUseHandler.Handle,
+		},
+		PinnedData: routes.PinnedDataHandlers{
+			GetAll:    pdGetAllHandler.Handle,
+			GetByNode: pdGetByNodeHandler.Handle,
+			Set:       pdSetHandler.Handle,
+			Delete:    pdDeleteHandler.Handle,
+		},
+		WorkflowShare: routes.WorkflowShareHandlers{
+			Create:       shCreateHandler.Handle,
+			SharedByMe:   shSharedByMeHandler.Handle,
+			SharedWithMe: shSharedWithMeHandler.Handle,
+			Pending:      shPendingHandler.Handle,
+			Accept:       shAcceptHandler.Handle,
+			Update:       shUpdateHandler.Handle,
+			Revoke:       shRevokeHandler.Handle,
+		},
+		Marketplace: routes.MarketplaceHandlers{
+			Browse:       mpBrowseHandler.Handle,
+			Featured:     mpFeaturedHandler.Handle,
+			Categories:   mpCategoriesHandler.Handle,
+			Search:       mpSearchHandler.Handle,
+			Get:          mpGetHandler.Handle,
+			Use:          mpUseHandler.Handle,
+			Publish:      mpPublishHandler.Handle,
+			MyPublished:  mpMyPublishedHandler.Handle,
+			Update:       mpUpdateHandler.Handle,
+			Sync:         mpSyncHandler.Handle,
+			Unpublish:    mpUnpublishHandler.Handle,
+			Rate:         mpRateHandler.Handle,
+			GetMyRating:  mpGetMyRatingHandler.Handle,
+			ListRatings:  mpListRatingsHandler.Handle,
+			RatingStats:  mpRatingStatsHandler.Handle,
+			DeleteRating: mpDeleteRatingHandler.Handle,
+		},
+		BinaryData: routes.BinaryDataHandlers{
+			Upload:   bdUploadHandler.Handle,
+			List:     bdListHandler.Handle,
+			GetInfo:  bdGetInfoHandler.Handle,
+			Download: bdDownloadHandler.Handle,
+			Delete:   bdDeleteHandler.Handle,
+			GetStats: bdStatsHandler.Handle,
+			Cleanup:  bdCleanupHandler.Handle,
+		},
+		Admin: routes.AdminHandlers{
+			Metrics:     admMetricsHandler.Handle,
+			StreamStats: admStreamStatsHandler.Handle,
+			ReplayDLQ:   admReplayDLQHandler.Handle,
+			TrimStream:  admTrimStreamHandler.Handle,
+		},
+		Analytics: routes.AnalyticsHandlers{
+			WorkflowAnalytics:  anWorkflowHandler.Handle,
+			WorkspaceAnalytics: anWorkspaceHandler.Handle,
+		},
+		AIBuilder: routes.AIBuilderHandlers{
+			Generate: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+			},
+			Suggest: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+			},
+			Explain: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+			},
+		},
+		Variable: routes.VariableHandlers{
+			List: func(w http.ResponseWriter, r *http.Request) {
+				resp.Success(w, map[string]interface{}{"variables": []interface{}{}, "total": 0})
+			},
+			Create: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "Variable feature is not yet implemented")
+			},
+			Update: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "Variable feature is not yet implemented")
+			},
+			Delete: func(w http.ResponseWriter, r *http.Request) {
+				resp.BadRequest(w, "Variable feature is not yet implemented")
+			},
+			ListEnvironments: func(w http.ResponseWriter, r *http.Request) {
+				resp.Success(w, map[string]interface{}{"environments": []interface{}{}, "total": 0})
+			},
+			Resolve: func(w http.ResponseWriter, r *http.Request) {
+				resp.Success(w, map[string]interface{}{"variables": map[string]string{}, "environment": "default"})
+			},
+		},
+	}
 
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   cfg.App.CorsOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID"},
-		ExposedHeaders:   []string{"X-Request-ID"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	})
-	r.Use(corsHandler.Handler)
-
-	r.Get("/health", healthHandler.Health)
-
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/health", healthHandler.Health)
-		r.Get("/health/live", healthHandler.Liveness)
-		r.Get("/health/ready", healthHandler.Readiness)
-
-		// Auth routes (public)
-		r.Route("/auth", func(r chi.Router) {
-			r.Post("/register", registerHandler.Handle)
-			r.Post("/login", loginHandler.Handle)
-			r.Post("/refresh", refreshHandler.Handle)
-			r.Post("/forgot-password", forgotPasswordHandler.Handle)
-			r.Post("/reset-password", resetPasswordHandler.Handle)
-			r.Get("/oauth/{provider}", authOAuthRedirectHandler.Handle)
-			r.Get("/oauth/{provider}/callback", authOAuthCallbackHandler.Handle)
-			r.Group(func(r chi.Router) {
-				r.Use(middleware.Auth(jwtManager))
-				r.Post("/logout", logoutHandler.Handle)
-				r.Route("/mfa", func(r chi.Router) {
-					r.Post("/setup", setupMFAHandler.Handle)
-					r.Post("/verify", verifyMFAHandler.Handle)
-					r.Delete("/", disableMFAHandler.Handle)
-				})
-			})
-		})
-
-		// Protected routes
-		r.Group(func(r chi.Router) {
-			r.Use(middleware.Auth(jwtManager))
-
-			// Current user
-			r.Route("/users", func(r chi.Router) {
-				r.Get("/me", usrGetHandler.Handle)
-				r.Put("/me", usrUpdateHandler.Handle)
-			})
-
-			// Workspaces
-			r.Route("/workspaces", func(r chi.Router) {
-				r.Post("/", wsCreateHandler.Handle)
-				r.Get("/", wsListHandler.Handle)
-				r.Route("/{workspaceId}", func(r chi.Router) {
-					r.Use(middleware.Tenant(memberRepo, workspaceRepo))
-					r.Get("/", wsGetHandler.Handle)
-					r.Put("/", wsUpdateHandler.Handle)
-					r.Delete("/", wsDeleteHandler.Handle)
-					r.Get("/members", wsMembersHandler.Handle)
-					r.Post("/members", wsInviteHandler.Handle)
-
-					// Dashboard
-					r.Get("/dashboard", dashHandler.Handle)
-					r.Get("/stats", quickStatsHandler.Handle)
-
-					// Workflows
-					r.Route("/workflows", func(r chi.Router) {
-						r.Post("/", wfCreateHandler.Handle)
-						r.Get("/", wfListHandler.Handle)
-						r.Get("/search", wfSearchHandler.Handle)
-						r.Get("/search/advanced", wfAdvancedSearchHandler.Handle)
-						r.Post("/search/advanced", wfAdvancedSearchHandler.Handle)
-						r.Get("/search/filters", wfSearchFiltersHandler.Handle)
-						r.Post("/import", wfImportHandler.Handle)
-						r.Post("/validate", wfValidateHandler.Handle)
-						r.Post("/test-node", wfTestNodeHandler.Handle)
-						r.Route("/{workflowId}", func(r chi.Router) {
-							r.Get("/", wfGetHandler.Handle)
-							r.Put("/", wfUpdateHandler.Handle)
-							r.Delete("/", wfDeleteHandler.Handle)
-							r.Post("/activate", wfActivateHandler.Handle)
-							r.Post("/deactivate", wfDeactivateHandler.Handle)
-							r.Post("/execute", exStartHandler.Handle)
-							r.Post("/clone", wfCloneHandler.Handle)
-							r.Post("/duplicate", wfDuplicateHandler.Handle)
-							r.Get("/export", wfExportHandler.Handle)
-							r.Get("/versions", wfVersionsHandler.Handle)
-							r.Get("/versions/{version}", wfGetVersionHandler.Handle)
-							r.Post("/versions/{version}/rollback", wfRollbackHandler.Handle)
-							r.Get("/compare-versions", wfCompareVersionsHandler.Handle)
-						})
-					})
-
-					// Executions
-					r.Route("/executions", func(r chi.Router) {
-						r.Get("/", exListHandler.Handle)
-						r.Get("/stats", exStatsHandler.Handle)
-						r.Get("/search", exSearchHandler.Handle)
-						r.Delete("/bulk", exBulkDeleteHandler.Handle)
-						r.Route("/{executionId}", func(r chi.Router) {
-							r.Get("/", exGetHandler.Handle)
-							r.Get("/nodes", exListNodesHandler.Handle)
-							r.Get("/nodes/{nodeId}", exGetNodeHandler.Handle)
-							r.Post("/cancel", exCancelHandler.Handle)
-							r.Post("/retry", exRetryHandler.Handle)
-							r.Post("/replay", exReplayHandler.Handle)
-							r.Post("/resume", exResumeHandler.Handle)
-						})
-					})
-
-					// Waiting Executions
-					r.Get("/waiting-executions", exListWaitingHandler.Handle)
-
-					// Webhooks
-					r.Route("/webhooks", func(r chi.Router) {
-						r.Get("/", whListHandler.Handle)
-						r.Post("/", whCreateHandler.Handle)
-					})
-
-					// Credentials
-					r.Route("/credentials", func(r chi.Router) {
-						r.Post("/", crCreateHandler.Handle)
-						r.Get("/", crListHandler.Handle)
-						r.Route("/{credentialId}", func(r chi.Router) {
-							r.Get("/", crGetHandler.Handle)
-							r.Put("/", crUpdateHandler.Handle)
-							r.Delete("/", crDeleteHandler.Handle)
-							r.Post("/test", func(w http.ResponseWriter, req *http.Request) {
-								resp.Success(w, map[string]interface{}{"valid": true, "message": "Connection test successful"})
-							})
-							r.Post("/refresh", func(w http.ResponseWriter, req *http.Request) {
-								resp.BadRequest(w, "Token refresh not supported for this credential type")
-							})
-						})
-					})
-
-					// Schedules
-					r.Route("/schedules", func(r chi.Router) {
-						r.Post("/", schCreateHandler.Handle)
-						r.Get("/", schListHandler.Handle)
-						r.Route("/{scheduleId}", func(r chi.Router) {
-							r.Get("/", schGetHandler.Handle)
-							r.Put("/", schUpdateHandler.Handle)
-							r.Delete("/", schDeleteHandler.Handle)
-							r.Post("/pause", schPauseHandler.Handle)
-							r.Post("/resume", schResumeHandler.Handle)
-						})
-					})
-
-					// Billing (workspace scoped)
-					r.Route("/billing", func(r chi.Router) {
-						r.Get("/subscription", blGetSubscriptionHandler.Handle)
-						r.Post("/subscription", blCreateSubscriptionHandler.Handle)
-						r.Delete("/subscription", blCancelSubscriptionHandler.Handle)
-						r.Get("/usage", blGetUsageHandler.Handle)
-						r.Get("/invoices", blGetInvoicesHandler.Handle)
-					})
-
-					// Analytics (workspace scoped)
-					r.Get("/analytics", anWorkspaceHandler.Handle)
-					r.Get("/workflows/{workflowId}/analytics", anWorkflowHandler.Handle)
-
-					// Folders
-					r.Route("/folders", func(r chi.Router) {
-						r.Post("/", fldCreateHandler.Handle)
-						r.Get("/", fldListHandler.Handle)
-						r.Get("/tree", fldTreeHandler.Handle)
-						r.Route("/{folderId}", func(r chi.Router) {
-							r.Get("/", fldGetHandler.Handle)
-							r.Put("/", fldUpdateHandler.Handle)
-							r.Delete("/", fldDeleteHandler.Handle)
-						})
-					})
-
-					// Pinned Data (per workflow)
-					r.Route("/workflows/{workflowId}/pinned-data", func(r chi.Router) {
-						r.Get("/", pdGetAllHandler.Handle)
-						r.Route("/{nodeId}", func(r chi.Router) {
-							r.Get("/", pdGetByNodeHandler.Handle)
-							r.Put("/", pdSetHandler.Handle)
-							r.Delete("/", pdDeleteHandler.Handle)
-						})
-					})
-
-					// Binary Data (workspace scoped)
-					r.Route("/binary-data", func(r chi.Router) {
-						r.Post("/upload", bdUploadHandler.Handle)
-						r.Get("/", bdListHandler.Handle)
-						r.Get("/stats", bdStatsHandler.Handle)
-						r.Post("/cleanup", bdCleanupHandler.Handle)
-						r.Route("/{fileId}", func(r chi.Router) {
-							r.Get("/", bdGetInfoHandler.Handle)
-							r.Get("/download", bdDownloadHandler.Handle)
-							r.Delete("/", bdDeleteHandler.Handle)
-						})
-					})
-
-					// Workspace OAuth (for credential integrations)
-					r.Route("/oauth", func(r chi.Router) {
-						r.Get("/authorize/{provider}", oaAuthorizeHandler.Handle)
-						r.Get("/callback/{provider}", oaCallbackHandler.Handle)
-					})
-				})
-			})
-
-			// Billing plans (not workspace scoped)
-			r.Get("/billing/plans", blGetPlansHandler.Handle)
-
-			// Templates (not workspace scoped for browsing)
-			r.Route("/templates", func(r chi.Router) {
-				r.Get("/", tplListHandler.Handle)
-				r.Get("/featured", tplFeaturedHandler.Handle)
-				r.Get("/categories", tplCategoriesHandler.Handle)
-				r.Get("/categories/{category}", tplByCategoryHandler.Handle)
-				r.Get("/search", tplSearchHandler.Handle)
-				r.Get("/{templateId}", tplGetHandler.Handle)
-			})
-
-			// API Keys
-			r.Route("/api-keys", func(r chi.Router) {
-				r.Post("/", akCreateHandler.Handle)
-				r.Get("/", akListHandler.Handle)
-				r.Delete("/{keyId}", akRevokeHandler.Handle)
-			})
-
-			// Node Types
-			r.Route("/node-types", func(r chi.Router) {
-				r.Get("/", ntListHandler.Handle)
-				r.Get("/categories", ntCategoriesHandler.Handle)
-				r.Get("/{nodeType}", ntGetHandler.Handle)
-			})
-
-			// Marketplace
-			r.Route("/marketplace", func(r chi.Router) {
-				r.Get("/", mpBrowseHandler.Handle)
-				r.Get("/featured", mpFeaturedHandler.Handle)
-				r.Get("/categories", mpCategoriesHandler.Handle)
-				r.Get("/search", mpSearchHandler.Handle)
-				r.Get("/my-published", mpMyPublishedHandler.Handle)
-				r.Get("/{itemId}", mpGetHandler.Handle)
-				r.Post("/{itemId}/use", mpUseHandler.Handle)
-				r.Post("/publish", mpPublishHandler.Handle)
-				r.Put("/{itemId}", mpUpdateHandler.Handle)
-				r.Delete("/{itemId}", mpUnpublishHandler.Handle)
-				r.Post("/{itemId}/rate", mpRateHandler.Handle)
-				r.Get("/{itemId}/my-rating", mpGetMyRatingHandler.Handle)
-				r.Get("/{itemId}/ratings", mpListRatingsHandler.Handle)
-				r.Get("/{itemId}/rating-stats", mpRatingStatsHandler.Handle)
-				r.Delete("/{itemId}/rating", mpDeleteRatingHandler.Handle)
-			})
-
-			// Shares (user scoped)
-			r.Route("/shares", func(r chi.Router) {
-				r.Post("/", shCreateHandler.Handle)
-				r.Get("/by-me", shSharedByMeHandler.Handle)
-				r.Get("/with-me", shSharedWithMeHandler.Handle)
-				r.Get("/pending", shPendingHandler.Handle)
-				r.Post("/{shareId}/accept", shAcceptHandler.Handle)
-				r.Put("/{shareId}", shUpdateHandler.Handle)
-				r.Delete("/{shareId}", shRevokeHandler.Handle)
-			})
-
-			// Admin (requires admin role)
-			r.Route("/admin", func(r chi.Router) {
-				// TODO: Add admin role check middleware
-				r.Get("/metrics", admMetricsHandler.Handle)
-				r.Get("/streams/{streamName}", admStreamStatsHandler.Handle)
-				r.Post("/streams/replay-dlq", admReplayDLQHandler.Handle)
-				r.Post("/streams/trim", admTrimStreamHandler.Handle)
-			})
-
-			// OAuth (credential OAuth)
-			r.Route("/oauth", func(r chi.Router) {
-				r.Get("/providers", oaListProvidersHandler.Handle)
-				r.Get("/{provider}/authorize", oaAuthorizeHandler.Handle)
-				r.Get("/{provider}/callback", oaCallbackHandler.Handle)
-			})
-		})
-	})
-
-	// Template use (requires workspace context) - add under workspace routes
-	r.Route("/api/v1/workspaces/{workspaceId}/templates/{templateId}/use", func(r chi.Router) {
-		r.Use(middleware.Auth(jwtManager))
-		r.Post("/", tplUseHandler.Handle)
-	})
-
-	// Webhook trigger endpoint (public)
-	r.Post("/webhooks/*", whTriggerHandler.Handle)
-	r.Get("/webhooks/*", whTriggerHandler.Handle)
+	// Create router using routes.NewRouter
+	r := routes.NewRouter(routes.Config{
+		JWTManager:    jwtManager,
+		MemberRepo:    memberRepo,
+		WorkspaceRepo: workspaceRepo,
+		Logger:        appLogger,
+		CorsOrigins:   cfg.App.CorsOrigins,
+	}, handlers)
 
 	server := &http.Server{
 		Addr:         cfg.Server.GetAddress(),

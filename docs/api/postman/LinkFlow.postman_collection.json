@@ -1687,9 +1687,277 @@
 						},
 						"description": "List billing invoices"
 					}
+				},
+				{
+					"name": "Get Usage Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "dashboard"]
+						},
+						"description": "Get comprehensive usage dashboard with plan info, operations, AI credits, overage charges, and billing period details.\n\nReturns:\n- **Plan**: Current plan ID and name\n- **Operations**: Used, limit, percent, projected, rollover, remaining\n- **AI Credits**: Used, limit, percent, projected, rollover, remaining\n- **Overage**: Operations/AI credits overage and charges\n- **Period**: Start/end dates and days remaining"
+					}
+				},
+				{
+					"name": "Get Usage Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/usage-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "usage-status"]
+						},
+						"description": "Get current usage status with limits and overage rates.\n\nReturns:\n- Operations: used, limit, percent, exceeded, remaining\n- AI Credits: used, limit, percent, exceeded, remaining\n- Data Transfer: usedMB, limitMB, exceeded\n- Overage Rates: per 1000 operations and per AI credit"
+					}
 				}
 			],
 			"description": "Subscription and billing management"
+		},
+		{
+			"name": "🔔 Usage Alerts",
+			"item": [
+				{
+					"name": "List Usage Alerts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts"]
+						},
+						"description": "List all usage alerts configured for the workspace"
+					}
+				},
+				{
+					"name": "Create Usage Alert",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('alert_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"alert_type\": \"operations\",\n    \"threshold\": 75,\n    \"channels\": {\n        \"email\": true,\n        \"email_addresses\": [\"admin@example.com\"],\n        \"slack\": true,\n        \"slack_webhook\": \"https://hooks.slack.com/services/xxx\",\n        \"in_app\": true\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts"]
+						},
+						"description": "Create a new usage alert.\n\nAlert types: operations, ai_credits, storage, data_transfer\nThresholds: 50, 75, 90, 100 (percent)\nChannels: email, slack, webhook, in_app, sms"
+					}
+				},
+				{
+					"name": "Update Usage Alert",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"enabled\": true,\n    \"channels\": {\n        \"email\": true,\n        \"email_addresses\": [\"admin@example.com\", \"billing@example.com\"],\n        \"slack\": false,\n        \"in_app\": true\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_id}}"]
+						},
+						"description": "Update an existing usage alert"
+					}
+				},
+				{
+					"name": "Delete Usage Alert",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_id}}"]
+						},
+						"description": "Delete a usage alert"
+					}
+				},
+				{
+					"name": "Get Alert History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/history?limit=50",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "history"],
+							"query": [
+								{ "key": "limit", "value": "50" }
+							]
+						},
+						"description": "Get history of triggered alerts"
+					}
+				},
+				{
+					"name": "Acknowledge Alert",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_log_id}}/acknowledge",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_log_id}}", "acknowledge"]
+						},
+						"description": "Acknowledge a triggered alert"
+					}
+				}
+			],
+			"description": "Usage alerts for operations, AI credits, storage thresholds"
+		},
+		{
+			"name": "🔑 BYOK (Bring Your Own Key)",
+			"item": [
+				{
+					"name": "List BYOK Providers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok/providers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok", "providers"]
+						},
+						"description": "List supported AI providers for BYOK.\n\nReturns provider ID, name, description, docs URL, supported models, and whether org ID is supported."
+					}
+				},
+				{
+					"name": "List BYOK Configurations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok"]
+						},
+						"description": "List all BYOK API key configurations for the workspace"
+					}
+				},
+				{
+					"name": "Add BYOK API Key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('byok_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"provider\": \"openai\",\n    \"name\": \"My OpenAI Key\",\n    \"api_key\": \"sk-xxxxxxxxxxxxx\",\n    \"organization_id\": \"org-xxxxx\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok"]
+						},
+						"description": "Add your own AI provider API key.\n\nSupported providers: openai, anthropic, google, azure, cohere, mistral\n\nUsing BYOK bypasses AI credit consumption."
+					}
+				},
+				{
+					"name": "Delete BYOK Configuration",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok/{{byok_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok", "{{byok_id}}"]
+						},
+						"description": "Remove a BYOK API key configuration"
+					}
+				}
+			],
+			"description": "Bring Your Own Key - Use your own AI provider API keys"
+		},
+		{
+			"name": "💰 Credit Top-Up",
+			"item": [
+				{
+					"name": "List Credit Packs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/packs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "packs"]
+						},
+						"description": "List available credit packs for purchase"
+					}
+				},
+				{
+					"name": "Get Auto Top-Up Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/settings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "settings"]
+						},
+						"description": "Get current auto top-up configuration"
+					}
+				},
+				{
+					"name": "Update Auto Top-Up Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"enabled\": true,\n    \"trigger_threshold\": 10,\n    \"purchase_type\": \"operations\",\n    \"credit_amount\": 10000,\n    \"max_purchases_per_month\": 5,\n    \"max_spend_per_month_cents\": 50000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/settings",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "settings"]
+						},
+						"description": "Configure automatic credit top-up.\n\nOptions:\n- `enabled`: Turn auto top-up on/off\n- `trigger_threshold`: Percent remaining to trigger (e.g., 10 = when 10% left)\n- `purchase_type`: operations or ai_credits\n- `credit_amount`: Amount to purchase\n- `max_purchases_per_month`: Safety limit\n- `max_spend_per_month_cents`: Maximum monthly spend"
+					}
+				}
+			],
+			"description": "Credit pack purchases and auto top-up configuration"
 		},
 		{
 			"name": "🔗 Webhooks",
@@ -2382,9 +2650,83 @@
 						},
 						"description": "Deactivate a webhook endpoint"
 					}
+				},
+				{
+					"name": "Update Webhook Security",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"require_signature\": true,\n    \"signature_header\": \"X-Signature-256\",\n    \"allowed_ips\": [\"192.168.1.0/24\", \"10.0.0.1\"],\n    \"require_timestamp\": true,\n    \"timestamp_header\": \"X-Timestamp\",\n    \"timestamp_max_age_sec\": 300,\n    \"require_nonce\": false,\n    \"nonce_header\": \"X-Nonce\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/webhooks/{{webhook_id}}/security",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "webhooks", "{{webhook_id}}", "security"]
+						},
+						"description": "Update webhook security settings.\n\nOptions:\n- `require_signature`: Require HMAC signature validation\n- `signature_header`: Header name for signature (default: X-Signature-256)\n- `allowed_ips`: Whitelist of allowed IP addresses/CIDRs\n- `require_timestamp`: Require timestamp for replay protection\n- `timestamp_header`: Header name for timestamp\n- `timestamp_max_age_sec`: Max age of timestamp (default: 300)\n- `require_nonce`: Require nonce for replay protection\n- `nonce_header`: Header name for nonce"
+					}
 				}
 			],
 			"description": "Webhook URL generation and management"
+		},
+		{
+			"name": "🔄 Debug Replay",
+			"item": [
+				{
+					"name": "Create Replay Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('replay_session_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"execution_id\": \"{{execution_id}}\",\n    \"mode\": \"step\",\n    \"start_from_node_id\": null,\n    \"end_at_node_id\": null,\n    \"skip_nodes\": [],\n    \"modify_inputs\": {},\n    \"modify_node_params\": {},\n    \"breakpoints\": [\"http_request_1\", \"transform_1\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "replay"]
+						},
+						"description": "Create a debug replay session for step-by-step execution debugging.\n\nModes:\n- `full`: Complete replay from start\n- `from_node`: Start from a specific node\n- `step`: Step-by-step execution\n- `breakpoint`: Run until breakpoint\n\nOptions:\n- `start_from_node_id`: Node to start replay from\n- `end_at_node_id`: Node to stop at\n- `skip_nodes`: Nodes to skip during replay\n- `modify_inputs`: Override workflow inputs\n- `modify_node_params`: Override specific node parameters\n- `breakpoints`: Nodes to pause at"
+					}
+				},
+				{
+					"name": "Get Replay Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay/{{replay_session_id}}/events?limit=100",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "replay", "{{replay_session_id}}", "events"],
+							"query": [
+								{ "key": "limit", "value": "100" }
+							]
+						},
+						"description": "Get event log for a replay session. Shows detailed execution events including node starts, completions, input/output data, and errors."
+					}
+				}
+			],
+			"description": "Advanced execution debugging with step-by-step replay"
 		},
 		{
 			"name": "🔄 Workflow Sharing",
@@ -2756,6 +3098,284 @@
 			"description": "Template marketplace - browse, publish, and rate workflow templates"
 		},
 		{
+			"name": "🤖 AI Workflow Builder",
+			"item": [
+				{
+					"name": "Generate Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"prompt\": \"Create a workflow that monitors a Google Sheet and sends a Slack notification when a new row is added\",\n    \"preferred_trigger\": \"schedule\",\n    \"available_credentials\": [\"google_sheets\", \"slack\"],\n    \"constraints\": {\n        \"max_nodes\": \"10\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/generate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "generate"]
+						},
+						"description": "Generate a complete workflow from a natural language prompt using AI.\n\nParameters:\n- `prompt` (required): Natural language description of the desired workflow (10-2000 chars)\n- `preferred_trigger`: Preferred trigger type (manual, webhook, schedule)\n- `available_credentials`: List of credential types available in the workspace\n- `constraints`: Additional constraints like max_nodes\n\nReturns:\n- Generated workflow with nodes and connections\n- AI explanation of the workflow\n- Suggestions for improvements"
+					}
+				},
+				{
+					"name": "Get Workflow Suggestions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"workflow_json\": \"{\\\"nodes\\\":[{\\\"id\\\":\\\"trigger_1\\\",\\\"type\\\":\\\"trigger.manual\\\"}],\\\"connections\\\":[]}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/suggest",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "suggest"]
+						},
+						"description": "Get AI-powered suggestions to improve an existing workflow.\n\nParameters:\n- `workflow_json` (required): JSON string of the current workflow\n\nReturns:\n- Array of improvement suggestions"
+					}
+				},
+				{
+					"name": "Explain Workflow",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"workflow_json\": \"{\\\"nodes\\\":[{\\\"id\\\":\\\"trigger_1\\\",\\\"type\\\":\\\"trigger.webhook\\\"},{\\\"id\\\":\\\"http_1\\\",\\\"type\\\":\\\"action.http\\\"}],\\\"connections\\\":[{\\\"source\\\":\\\"trigger_1\\\",\\\"target\\\":\\\"http_1\\\"}]}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/explain",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "explain"]
+						},
+						"description": "Get an AI-generated explanation of what a workflow does.\n\nParameters:\n- `workflow_json` (required): JSON string of the workflow to explain\n\nReturns:\n- Human-readable explanation of the workflow's purpose and logic"
+					}
+				}
+			],
+			"description": "AI-powered workflow generation and assistance"
+		},
+		{
+			"name": "🔧 Variables & Environments",
+			"item": [
+				{
+					"name": "List Variables",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables"]
+						},
+						"description": "List all variables in the workspace"
+					}
+				},
+				{
+					"name": "Create Variable",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('variable_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"API_BASE_URL\",\n    \"value\": \"https://api.example.com\",\n    \"description\": \"Base URL for external API calls\",\n    \"is_secret\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables"]
+						},
+						"description": "Create a new workspace variable.\n\nParameters:\n- `key` (required): Variable name (max 100 chars)\n- `value` (required): Variable value\n- `description`: Optional description\n- `is_secret`: If true, value is masked in responses"
+					}
+				},
+				{
+					"name": "Update Variable",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"API_BASE_URL\",\n    \"value\": \"https://api-v2.example.com\",\n    \"description\": \"Updated base URL\",\n    \"is_secret\": false\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/{{variable_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "{{variable_id}}"]
+						},
+						"description": "Update an existing variable"
+					}
+				},
+				{
+					"name": "Delete Variable",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/{{variable_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "{{variable_id}}"]
+						},
+						"description": "Delete a variable"
+					}
+				},
+				{
+					"name": "List Environments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/environments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "environments"]
+						},
+						"description": "List all environments in the workspace (e.g., development, staging, production)"
+					}
+				},
+				{
+					"name": "Resolve Variables",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/resolve?environment=production&workflow_id={{workflow_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "resolve"],
+							"query": [
+								{ "key": "environment", "value": "production", "description": "Environment name" },
+								{ "key": "workflow_id", "value": "{{workflow_id}}", "description": "Optional workflow ID for workflow-specific vars" }
+							]
+						},
+						"description": "Resolve all variables for a specific environment.\n\nReturns merged variables with environment-specific overrides applied."
+					}
+				}
+			],
+			"description": "Workspace variables and environment management for configuration"
+		},
+		{
+			"name": "📊 Analytics",
+			"item": [
+				{
+					"name": "Get Workspace Analytics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/analytics?period=30d",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "analytics"],
+							"query": [
+								{ "key": "period", "value": "30d", "description": "Time period: 7d, 30d, 90d" }
+							]
+						},
+						"description": "Get comprehensive analytics for the workspace.\n\nReturns:\n- **Stats**: Total executions, completed, failed, canceled, running, queued, avg duration, success rate\n- **Daily Stats**: Execution counts per day for charting"
+					}
+				},
+				{
+					"name": "Get Workflow Analytics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/analytics?period=30d",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "analytics"],
+							"query": [
+								{ "key": "period", "value": "30d", "description": "Time period: 7d, 30d, 90d" }
+							]
+						},
+						"description": "Get analytics for a specific workflow.\n\nReturns execution statistics and daily breakdown for the selected workflow."
+					}
+				}
+			],
+			"description": "Execution analytics and statistics"
+		},
+		{
+			"name": "🔍 Advanced Search",
+			"item": [
+				{
+					"name": "Advanced Workflow Search (GET)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/advanced?q=slack&status=active&tags=marketing,automation&sort=-updated_at&page=1&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "advanced"],
+							"query": [
+								{ "key": "q", "value": "slack", "description": "Search query" },
+								{ "key": "status", "value": "active", "description": "Filter by status: draft, active, inactive" },
+								{ "key": "tags", "value": "marketing,automation", "description": "Filter by tags (comma-separated)" },
+								{ "key": "folder_id", "value": "", "disabled": true, "description": "Filter by folder" },
+								{ "key": "has_trigger", "value": "", "disabled": true, "description": "Filter by trigger type" },
+								{ "key": "created_after", "value": "", "disabled": true, "description": "Created after date (RFC3339)" },
+								{ "key": "created_before", "value": "", "disabled": true, "description": "Created before date" },
+								{ "key": "sort", "value": "-updated_at", "description": "Sort: name, -name, created_at, -created_at, updated_at, -updated_at" },
+								{ "key": "page", "value": "1" },
+								{ "key": "per_page", "value": "20" }
+							]
+						},
+						"description": "Advanced search for workflows with multiple filter criteria.\n\nFilters:\n- `q`: Full-text search in name and description\n- `status`: draft, active, inactive\n- `tags`: Comma-separated tag list\n- `folder_id`: Filter by folder\n- `has_trigger`: Filter by trigger type (webhook, schedule, manual)\n- `created_after/before`: Date range filters\n\nSort options: name, created_at, updated_at (prefix with - for descending)"
+					}
+				},
+				{
+					"name": "Advanced Workflow Search (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"query\": \"slack notification\",\n    \"filters\": {\n        \"status\": [\"active\"],\n        \"tags\": [\"marketing\", \"automation\"],\n        \"has_trigger\": [\"webhook\", \"schedule\"],\n        \"created_after\": \"2024-01-01T00:00:00Z\"\n    },\n    \"sort\": \"-updated_at\",\n    \"page\": 1,\n    \"per_page\": 20\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/advanced",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "advanced"]
+						},
+						"description": "Advanced search with complex filter combinations using POST body.\n\nUse POST when you need to send complex filter arrays or when query string would be too long."
+					}
+				},
+				{
+					"name": "Get Search Filters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/filters",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "filters"]
+						},
+						"description": "Get available filter options for workflow search.\n\nReturns:\n- Available statuses\n- All tags used in workspace\n- Trigger types present\n- Folders\n- Categories"
+					}
+				}
+			],
+			"description": "Advanced workflow search with multiple filters"
+		},
+		{
 			"name": "📁 Binary Data",
 			"item": [
 				{
@@ -2916,6 +3536,26 @@
 		},
 		{
 			"key": "binary_id",
+			"value": ""
+		},
+		{
+			"key": "variable_id",
+			"value": ""
+		},
+		{
+			"key": "alert_id",
+			"value": ""
+		},
+		{
+			"key": "alert_log_id",
+			"value": ""
+		},
+		{
+			"key": "byok_id",
+			"value": ""
+		},
+		{
+			"key": "replay_session_id",
 			"value": ""
 		}
 	]
