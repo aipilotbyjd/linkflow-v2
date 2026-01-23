@@ -5,18 +5,25 @@ import (
 	"encoding/hex"
 	"net/http"
 
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 )
 
 // AuthorizeHandler handles OAuth authorization redirect
 type AuthorizeHandler struct {
 	providers map[string]OAuthProvider
+	cache     cache.Cache
 }
 
 // NewAuthorizeHandler creates a new handler
-func NewAuthorizeHandler(providers map[string]OAuthProvider) *AuthorizeHandler {
-	return &AuthorizeHandler{providers: providers}
+func NewAuthorizeHandler(providers map[string]OAuthProvider, cache cache.Cache) *AuthorizeHandler {
+	return &AuthorizeHandler{
+		providers: providers,
+		cache:     cache,
+	}
 }
 
 // Handle handles the OAuth authorization request
@@ -37,7 +44,11 @@ func (h *AuthorizeHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	state := hex.EncodeToString(stateBytes)
 
-	// TODO: Store state in session/cache for validation in callback
+	// Store state in cache for validation in callback (10 minutes TTL)
+	if err := h.cache.Set(r.Context(), "oauth_state:"+state, []byte(providerID), 10*time.Minute); err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	authURL := provider.GetAuthURL(state)
 

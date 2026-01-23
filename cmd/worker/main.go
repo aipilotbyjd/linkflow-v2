@@ -20,6 +20,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
 	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
@@ -115,6 +116,20 @@ func main() {
 	usageService := billingapp.NewUsageService(usageRepo, subscriptionRepo)
 	usageTracker := executor.NewUsageTracker(usageService)
 
+	// Initialize email service
+	emailService, err := email.NewService(email.Config{
+		Provider:    cfg.Email.Provider,
+		DefaultFrom: cfg.Email.From,
+		SMTPHost:    cfg.Email.SMTPHost,
+		SMTPPort:    cfg.Email.SMTPPort,
+		SMTPUser:    cfg.Email.SMTPUser,
+		SMTPPass:    cfg.Email.SMTPPass,
+	})
+	if err != nil {
+		appLogger.Warn().Err(err).Msg("Failed to initialize email service, using noop")
+		emailService, _ = email.NewService(email.Config{Provider: "noop"})
+	}
+
 	// Initialize node registry and load all nodes
 	nodeRegistry := nodes.NewRegistry()
 	if err := nodes.LoadAllNodes(nodeRegistry); err != nil {
@@ -181,8 +196,16 @@ func main() {
 			Str("subject", payload.Subject).
 			Msg("Sending email")
 
-		// TODO: Implement email sending via email service
-		return nil
+		if payload.Template != "" {
+			return emailService.SendTemplate(ctx, []string{payload.To}, payload.Template, payload.Data)
+		}
+
+		// Fallback for non-template emails (if payload supports it in future)
+		return emailService.Send(ctx, &email.Message{
+			To:       []string{payload.To},
+			Subject:  payload.Subject,
+			TextBody: fmt.Sprintf("%v", payload.Data), // Simple fallback
+		})
 	})
 
 	// Keep references

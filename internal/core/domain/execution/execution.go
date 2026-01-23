@@ -44,7 +44,20 @@ func (Execution) TableName() string {
 }
 
 // NewExecution creates a new execution
-func NewExecution(workflowID, workspaceID uuid.UUID, version int, triggerType string) *Execution {
+func NewExecution(workflowID, workspaceID uuid.UUID, version int, triggerType string) (*Execution, error) {
+	if workflowID == uuid.Nil {
+		return nil, ErrWorkflowIDRequired
+	}
+	if workspaceID == uuid.Nil {
+		return nil, ErrWorkspaceIDRequired
+	}
+	if version <= 0 {
+		return nil, ErrVersionRequired
+	}
+	if triggerType == "" {
+		return nil, ErrTriggerTypeRequired
+	}
+
 	now := time.Now()
 	return &Execution{
 		ID:              uuid.New(),
@@ -58,7 +71,7 @@ func NewExecution(workflowID, workspaceID uuid.UUID, version int, triggerType st
 		MaxRetries:      3,
 		TimeoutSeconds:  3600,
 		CreatedAt:       now,
-	}
+	}, nil
 }
 
 // GetWorkspaceID implements the WorkspaceOwned interface

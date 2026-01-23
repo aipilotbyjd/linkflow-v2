@@ -13,6 +13,7 @@ import (
 
 	resp "github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	adminHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/admin"
+	aibuilderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/aibuilder"
 	analyticsHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/analytics"
 	apikeyHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/apikey"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/auth"
@@ -31,6 +32,7 @@ import (
 	shareHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/share"
 	templateHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/template"
 	userHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/user"
+	variableHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/variable"
 	webhookHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/webhook"
 	workflowHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workflow"
 	workspaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/workspace"
@@ -40,6 +42,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
+	appbuilder "github.com/linkflow-ai/linkflow/internal/core/application/aibuilder"
 	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
 	billingCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/billing"
 	credentialCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/credential"
@@ -58,6 +61,8 @@ import (
 	userQry "github.com/linkflow-ai/linkflow/internal/core/application/query/user"
 	workflowQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workflow"
 	workspaceQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workspace"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/ai"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/ai/providers/openai"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
@@ -161,8 +166,10 @@ func main() {
 	statsRepo := repositories.NewExecutionStatsRepository(db)
 	folderRepo := repositories.NewFolderRepository(db)
 	apiKeyRepo := repositories.NewAPIKeyRepository(db)
+	oauthRepo := repositories.NewOAuthRepository(db)
 	pinnedDataRepo := repositories.NewPinnedDataRepository(db)
 	shareRepo := repositories.NewShareRepository(db)
+	variableRepo := repositories.NewVariableRepository(db)
 	binaryDataRepo := repositories.NewBinaryDataRepository(db)
 
 	// Storage service
@@ -189,8 +196,26 @@ func main() {
 	// Stream manager (for admin)
 	streamManager := streaming.NewManager(redisClient.Redis())
 
+	// AI Provider
+	var aiProvider ai.ProviderAdapter
+	if cfg.AI.OpenAI.APIKey != "" {
+		aiProvider = openai.NewAdapter(&ai.ProviderConfig{
+			APIKey: cfg.AI.OpenAI.APIKey,
+		})
+	}
+
+	// AI Service
+	var aiService *appbuilder.Service
+	if aiProvider != nil {
+		aiService = appbuilder.NewService(aiProvider)
+	} else {
+		appLogger.Warn().Msg("AI provider not configured, AI Builder features will be disabled")
+	}
+
 	// OAuth providers
 	oauthProviders := make(map[string]oauthHandler.OAuthProvider)
+	refreshProviders := make(map[string]*infraOAuth.Provider)
+
 	if cfg.OAuth.Google.ClientID != "" {
 		googleProvider := infraOAuth.NewGoogleProvider(
 			cfg.OAuth.Google.ClientID,
@@ -198,6 +223,7 @@ func main() {
 			cfg.OAuth.Google.RedirectURL,
 		)
 		oauthProviders["google"] = &oauthProviderAdapter{googleProvider}
+		refreshProviders["google"] = googleProvider
 	}
 	if cfg.OAuth.GitHub.ClientID != "" {
 		githubProvider := infraOAuth.NewGitHubProvider(
@@ -206,6 +232,7 @@ func main() {
 			cfg.OAuth.GitHub.RedirectURL,
 		)
 		oauthProviders["github"] = &oauthProviderAdapter{githubProvider}
+		refreshProviders["github"] = githubProvider
 	}
 
 	// Task queue client
@@ -238,6 +265,7 @@ func main() {
 	triggerWebhookHandler := webhookCmd.NewTriggerWebhookHandler(webhookRepo, nil)
 	createSubscriptionHandler := billingCmd.NewCreateSubscriptionHandler(subscriptionRepo, eventBus)
 	cancelSubscriptionHandler := billingCmd.NewCancelSubscriptionHandler(subscriptionRepo)
+	refreshService := credentialCmd.NewRefreshService(encryptor, refreshProviders)
 
 	// Query handlers
 	getWorkspaceHandler := workspaceQry.NewGetWorkspaceHandler(workspaceRepo)
@@ -288,8 +316,8 @@ func main() {
 	setupMFAHandler := auth.NewSetupMFAHandler(userRepo, cacheService)
 	verifyMFAHandler := auth.NewVerifyMFAHandler(userRepo, cacheService)
 	disableMFAHandler := auth.NewDisableMFAHandler(userRepo)
-	authOAuthRedirectHandler := auth.NewOAuthRedirectHandler(nil, baseURL)
-	authOAuthCallbackHandler := auth.NewOAuthCallbackHandler(nil, nil, nil)
+	authOAuthRedirectHandler := oauthHandler.NewAuthorizeHandler(oauthProviders, cacheService)
+	authOAuthCallbackHandler := oauthHandler.NewCallbackHandler(oauthProviders, cacheService, userRepo, oauthRepo, jwtManager)
 	healthHandler := health.NewHandler()
 
 	// Workspace handlers
@@ -349,6 +377,7 @@ func main() {
 	crListHandler := credentialHandler.NewListHandler(listCredentialsHandler)
 	crUpdateHandler := credentialHandler.NewUpdateHandler(updateCredentialHandler)
 	crDeleteHandler := credentialHandler.NewDeleteHandler(deleteCredentialHandler)
+	crRefreshHandler := credentialHandler.NewRefreshHandler(credentialRepo, refreshService)
 
 	// Schedule handlers
 	schCreateHandler := scheduleHandler.NewCreateHandler(createScheduleHandler)
@@ -457,6 +486,14 @@ func main() {
 	bdStatsHandler := binarydataHandler.NewStatsHandler(binaryDataRepo)
 	bdCleanupHandler := binarydataHandler.NewCleanupHandler(binaryDataRepo)
 
+	// Variable handlers
+	varListHandler := variableHandler.NewListHandler(variableRepo)
+	varCreateHandler := variableHandler.NewCreateHandler(variableRepo)
+	varUpdateHandler := variableHandler.NewUpdateHandler(variableRepo)
+	varDeleteHandler := variableHandler.NewDeleteHandler(variableRepo)
+	varListEnvHandler := variableHandler.NewListEnvironmentsHandler(variableRepo)
+	varResolveHandler := variableHandler.NewResolveHandler(variableRepo)
+
 	// Admin handlers
 	admMetricsHandler := adminHandler.NewMetricsHandler(&metricsAdapter{metricsCollector})
 	admStreamStatsHandler := adminHandler.NewStreamStatsHandler(&streamAdapter{streamManager})
@@ -465,8 +502,19 @@ func main() {
 
 	// OAuth handlers
 	oaListProvidersHandler := oauthHandler.NewListProvidersHandler(oauthProviders)
-	oaAuthorizeHandler := oauthHandler.NewAuthorizeHandler(oauthProviders)
-	oaCallbackHandler := oauthHandler.NewCallbackHandler(oauthProviders)
+	oaAuthorizeHandler := oauthHandler.NewAuthorizeHandler(oauthProviders, cacheService)
+	oaCallbackHandler := oauthHandler.NewCallbackHandler(oauthProviders, cacheService, userRepo, oauthRepo, jwtManager)
+
+	// AI Builder handlers
+	var aiGenerateHandler *aibuilderHandler.GenerateHandler
+	var aiSuggestHandler *aibuilderHandler.SuggestHandler
+	var aiExplainHandler *aibuilderHandler.ExplainHandler
+
+	if aiService != nil {
+		aiGenerateHandler = aibuilderHandler.NewGenerateHandler(aiService)
+		aiSuggestHandler = aibuilderHandler.NewSuggestHandler(aiService)
+		aiExplainHandler = aibuilderHandler.NewExplainHandler(aiService)
+	}
 
 	// Build handlers struct for routes.NewRouter
 	handlers := routes.Handlers{
@@ -552,9 +600,7 @@ func main() {
 			Test: func(w http.ResponseWriter, req *http.Request) {
 				resp.Success(w, map[string]interface{}{"valid": true, "message": "Connection test successful"})
 			},
-			Refresh: func(w http.ResponseWriter, req *http.Request) {
-				resp.BadRequest(w, "Token refresh not supported for this credential type")
-			},
+			Refresh: crRefreshHandler.Handle,
 		},
 		Schedule: routes.ScheduleHandlers{
 			Create: schCreateHandler.Handle,
@@ -672,34 +718,34 @@ func main() {
 		},
 		AIBuilder: routes.AIBuilderHandlers{
 			Generate: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				if aiGenerateHandler != nil {
+					aiGenerateHandler.Handle(w, r)
+				} else {
+					resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				}
 			},
 			Suggest: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				if aiSuggestHandler != nil {
+					aiSuggestHandler.Handle(w, r)
+				} else {
+					resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				}
 			},
 			Explain: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				if aiExplainHandler != nil {
+					aiExplainHandler.Handle(w, r)
+				} else {
+					resp.BadRequest(w, "AI Builder feature requires AI provider configuration")
+				}
 			},
 		},
 		Variable: routes.VariableHandlers{
-			List: func(w http.ResponseWriter, r *http.Request) {
-				resp.Success(w, map[string]interface{}{"variables": []interface{}{}, "total": 0})
-			},
-			Create: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "Variable feature is not yet implemented")
-			},
-			Update: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "Variable feature is not yet implemented")
-			},
-			Delete: func(w http.ResponseWriter, r *http.Request) {
-				resp.BadRequest(w, "Variable feature is not yet implemented")
-			},
-			ListEnvironments: func(w http.ResponseWriter, r *http.Request) {
-				resp.Success(w, map[string]interface{}{"environments": []interface{}{}, "total": 0})
-			},
-			Resolve: func(w http.ResponseWriter, r *http.Request) {
-				resp.Success(w, map[string]interface{}{"variables": map[string]string{}, "environment": "default"})
-			},
+			List:             varListHandler.Handle,
+			Create:           varCreateHandler.Handle,
+			Update:           varUpdateHandler.Handle,
+			Delete:           varDeleteHandler.Handle,
+			ListEnvironments: varListEnvHandler.Handle,
+			Resolve:          varResolveHandler.Handle,
 		},
 	}
 
@@ -795,6 +841,19 @@ func (a *oauthProviderAdapter) GetAuthURL(state string) string {
 
 func (a *oauthProviderAdapter) ExchangeCode(code string) (oauthHandler.Token, error) {
 	token, err := a.provider.ExchangeCode(code)
+	if err != nil {
+		return oauthHandler.Token{}, err
+	}
+	return oauthHandler.Token{
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
+		TokenType:    token.TokenType,
+		ExpiresIn:    token.ExpiresIn,
+	}, nil
+}
+
+func (a *oauthProviderAdapter) RefreshToken(refreshToken string) (oauthHandler.Token, error) {
+	token, err := a.provider.RefreshToken(refreshToken)
 	if err != nil {
 		return oauthHandler.Token{}, err
 	}

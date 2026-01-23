@@ -66,12 +66,29 @@ func (p *Provider) GetAuthURL(state string) string {
 
 // ExchangeCode exchanges authorization code for tokens
 func (p *Provider) ExchangeCode(code string) (Token, error) {
+	return p.makeTokenRequest(map[string]string{
+		"grant_type": "authorization_code",
+		"code":       code,
+	})
+}
+
+// RefreshToken refreshes the access token using a refresh token
+func (p *Provider) RefreshToken(refreshToken string) (Token, error) {
+	return p.makeTokenRequest(map[string]string{
+		"grant_type":    "refresh_token",
+		"refresh_token": refreshToken,
+	})
+}
+
+func (p *Provider) makeTokenRequest(params map[string]string) (Token, error) {
 	data := url.Values{}
 	data.Set("client_id", p.config.ClientID)
 	data.Set("client_secret", p.config.ClientSecret)
-	data.Set("code", code)
-	data.Set("grant_type", "authorization_code")
-	data.Set("redirect_uri", p.config.RedirectURL)
+	data.Set("redirect_uri", p.config.RedirectURL) // Some providers need this even for refresh
+
+	for k, v := range params {
+		data.Set(k, v)
+	}
 
 	req, err := http.NewRequestWithContext(context.Background(), "POST", p.config.TokenURL, strings.NewReader(data.Encode()))
 	if err != nil {
@@ -82,7 +99,7 @@ func (p *Provider) ExchangeCode(code string) (Token, error) {
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Token{}, fmt.Errorf("failed to exchange code: %w", err)
+		return Token{}, fmt.Errorf("failed to exchange token: %w", err)
 	}
 	defer resp.Body.Close()
 

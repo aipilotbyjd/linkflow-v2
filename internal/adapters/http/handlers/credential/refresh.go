@@ -13,7 +13,7 @@ import (
 )
 
 type TokenRefresher interface {
-	RefreshToken(ctx context.Context, credType credential.Type) (newEncryptedData string, expiresAt *time.Time, err error)
+	RefreshToken(ctx context.Context, cred *credential.Credential) (newEncryptedData string, expiresAt *time.Time, err error)
 }
 
 type RefreshHandler struct {
@@ -58,7 +58,7 @@ func (h *RefreshHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	var expiresAt *time.Time
 	if h.refresher != nil {
-		newData, exp, err := h.refresher.RefreshToken(r.Context(), cred.Type)
+		newData, exp, err := h.refresher.RefreshToken(r.Context(), cred)
 		if err != nil {
 			common.Error(w, http.StatusBadRequest, "REFRESH_FAILED", "Failed to refresh token: "+err.Error())
 			return

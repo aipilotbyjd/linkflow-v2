@@ -31,7 +31,21 @@ func (Template) TableName() string {
 	return "templates"
 }
 
-func NewTemplate(name, category string, nodes, connections types.JSONArray) *Template {
+func NewTemplate(name, category string, nodes, connections types.JSONArray) (*Template, error) {
+	if name == "" {
+		return nil, ErrNameRequired
+	}
+	if len(name) > 100 {
+		return nil, ErrNameTooLong
+	}
+	if category == "" {
+		return nil, ErrCategoryRequired
+	}
+	if len(nodes) == 0 {
+		return nil, ErrNodesRequired
+	}
+	// Connections can be empty
+
 	now := time.Now()
 	return &Template{
 		ID:          uuid.New(),
@@ -43,7 +57,7 @@ func NewTemplate(name, category string, nodes, connections types.JSONArray) *Tem
 		IsPublic:    true,
 		CreatedAt:   now,
 		UpdatedAt:   now,
-	}
+	}, nil
 }
 
 func (t *Template) IncrementUsage() {

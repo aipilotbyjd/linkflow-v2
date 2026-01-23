@@ -29,7 +29,10 @@ func (h *ShareCredentialHandler) Handle(ctx context.Context, cmd ShareCredential
 		return nil, credential.ErrCredentialNotFound
 	}
 
-	share := credential.NewShare(cred.ID, cmd.UserID, cmd.SharedBy, cmd.Permission)
+	share, err := credential.NewShare(cred.ID, cmd.UserID, cmd.SharedBy, cmd.Permission)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := h.shareRepo.Create(ctx, share); err != nil {
 		return nil, err

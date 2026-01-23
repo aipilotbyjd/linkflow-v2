@@ -64,7 +64,10 @@ func (h *StartExecutionHandler) Handle(ctx context.Context, cmd StartExecutionCo
 	}
 
 	// Create execution
-	exec := execution.NewExecution(cmd.WorkflowID, cmd.WorkspaceID, wf.Version, cmd.TriggerType)
+	exec, err := execution.NewExecution(cmd.WorkflowID, cmd.WorkspaceID, wf.Version, cmd.TriggerType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create execution entity: %w", err)
+	}
 
 	if cmd.TriggeredBy != nil {
 		exec.WithTriggeredBy(*cmd.TriggeredBy)

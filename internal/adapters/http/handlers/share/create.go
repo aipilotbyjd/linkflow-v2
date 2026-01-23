@@ -56,7 +56,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newShare := share.NewShare(
+	newShare, err := share.NewShare(
 		req.ResourceType,
 		resourceID,
 		req.ResourceType, // Resource name - could be fetched from respective repo
@@ -66,6 +66,10 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		sharedWithUser.Email,
 		share.SharePermission(req.Permission),
 	)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	newShare.Message = req.Message
 
 	if err := h.shareRepo.Create(r.Context(), newShare); err != nil {

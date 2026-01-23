@@ -26,4 +26,9 @@ var (
 	ErrInvalidCreatedBy       = errors.New("valid creator ID is required")
 	ErrDataRequired           = errors.New("credential data is required")
 	ErrInvalidSharingScope    = errors.New("invalid sharing scope")
+
+	// Share validation errors
+	ErrInvalidUserID     = errors.New("valid user ID is required")
+	ErrInvalidSharedBy   = errors.New("valid shared by ID is required")
+	ErrInvalidPermission = errors.New("invalid permission")
 )

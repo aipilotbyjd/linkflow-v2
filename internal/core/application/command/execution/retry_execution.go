@@ -2,6 +2,7 @@ package execution
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
@@ -38,12 +39,15 @@ func (h *RetryExecutionHandler) Handle(ctx context.Context, cmd RetryExecutionCo
 	}
 
 	// Create new execution based on original
-	newExec := execution.NewExecution(
+	newExec, err := execution.NewExecution(
 		original.WorkflowID,
 		original.WorkspaceID,
 		original.WorkflowVersion,
 		"retry",
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create execution entity: %w", err)
+	}
 	newExec.TriggerData = original.TriggerData
 	newExec.InputData = original.InputData
 	newExec.ParentExecutionID = &original.ID

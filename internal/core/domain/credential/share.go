@@ -25,7 +25,20 @@ func (Share) TableName() string {
 }
 
 // NewShare creates a new credential share
-func NewShare(credentialID, userID, sharedBy uuid.UUID, permission Permission) *Share {
+func NewShare(credentialID, userID, sharedBy uuid.UUID, permission Permission) (*Share, error) {
+	if credentialID == uuid.Nil {
+		return nil, ErrCredentialNotFound
+	}
+	if userID == uuid.Nil {
+		return nil, ErrInvalidUserID
+	}
+	if sharedBy == uuid.Nil {
+		return nil, ErrInvalidSharedBy
+	}
+	if !permission.IsValid() {
+		return nil, ErrInvalidPermission
+	}
+
 	return &Share{
 		ID:           uuid.New(),
 		CredentialID: credentialID,
@@ -33,7 +46,7 @@ func NewShare(credentialID, userID, sharedBy uuid.UUID, permission Permission) *
 		Permission:   permission,
 		SharedBy:     sharedBy,
 		CreatedAt:    time.Now(),
-	}
+	}, nil
 }
 
 // Permission represents the permission level for a shared credential

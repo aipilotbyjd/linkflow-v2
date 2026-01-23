@@ -23,6 +23,7 @@ type Config struct {
 	Scheduler  SchedulerConfig  `mapstructure:"scheduler"`
 	WebSocket  WebSocketConfig  `mapstructure:"websocket"`
 	Crypto     CryptoConfig     `mapstructure:"crypto"`
+	AI         AIConfig         `mapstructure:"ai"`
 	Features   FeaturesConfig   `mapstructure:"features"`
 	Metrics    MetricsConfig    `mapstructure:"metrics"`
 	Resilience ResilienceConfig `mapstructure:"resilience"`
@@ -195,6 +196,18 @@ type CryptoConfig struct {
 	SigningKey    string `mapstructure:"signing_key"`
 }
 
+// AIConfig holds AI provider settings
+type AIConfig struct {
+	OpenAI    AIProviderConfig `mapstructure:"openai"`
+	Anthropic AIProviderConfig `mapstructure:"anthropic"`
+}
+
+// AIProviderConfig holds AI provider configuration
+type AIProviderConfig struct {
+	APIKey string `mapstructure:"api_key"`
+	Model  string `mapstructure:"model"`
+}
+
 // ResilienceConfig holds resilience settings
 type ResilienceConfig struct {
 	CircuitBreaker CircuitBreakerConfig `mapstructure:"circuit_breaker"`
@@ -260,6 +273,10 @@ func Load(configPath string) (*Config, error) {
 	_ = v.BindEnv("oauth.microsoft.client_id", "OAUTH_MICROSOFT_CLIENT_ID")
 	_ = v.BindEnv("oauth.microsoft.client_secret", "OAUTH_MICROSOFT_CLIENT_SECRET")
 	_ = v.BindEnv("oauth.microsoft.redirect_url", "OAUTH_MICROSOFT_REDIRECT_URL")
+
+	// Bind AI environment variables
+	_ = v.BindEnv("ai.openai.api_key", "AI_OPENAI_API_KEY")
+	_ = v.BindEnv("ai.anthropic.api_key", "AI_ANTHROPIC_API_KEY")
 
 	// Read config file
 	if err := v.ReadInConfig(); err != nil {

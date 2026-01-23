@@ -11,6 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 )
 
@@ -91,6 +92,9 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		// User & Auth
 		&models.User{},
 		&models.UserSession{},
+		&user.APIKey{},
+		&user.OAuthConnection{},
+		&user.PasswordResetToken{},
 
 		// Workspace
 		&models.Workspace{},
@@ -111,6 +115,9 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&models.PinnedData{},
 		&models.Share{},
 		&models.BinaryData{},
+		&models.Variable{},
+		&models.Environment{},
+		&models.EnvironmentVariable{},
 
 		// Billing
 		&billing.Subscription{},
@@ -139,12 +146,13 @@ func showMigrationStatus(db *gorm.DB) error {
 	log.Info().Msg("Migration status - checking tables")
 
 	tables := []string{
-		"users", "user_sessions", "api_keys",
+		"users", "user_sessions", "api_keys", "oauth_connections", "password_reset_tokens",
 		"workspaces", "workspace_members",
 		"workflows", "workflow_versions",
 		"executions", "node_executions",
 		"credentials", "schedules", "webhook_endpoints",
 		"templates", "folders", "shares", "pinned_data", "binary_data",
+		"variables", "environments", "environment_variables",
 		"plans", "subscriptions", "usage_records", "invoices",
 	}
 

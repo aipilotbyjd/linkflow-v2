@@ -43,7 +43,32 @@ type Share struct {
 }
 
 // NewShare creates a new share
-func NewShare(resourceType string, resourceID uuid.UUID, resourceName string, sharedByID uuid.UUID, sharedByEmail string, sharedWithID uuid.UUID, sharedWithEmail string, permission SharePermission) *Share {
+func NewShare(resourceType string, resourceID uuid.UUID, resourceName string, sharedByID uuid.UUID, sharedByEmail string, sharedWithID uuid.UUID, sharedWithEmail string, permission SharePermission) (*Share, error) {
+	if resourceType == "" {
+		return nil, ErrResourceTypeRequired
+	}
+	if resourceID == uuid.Nil {
+		return nil, ErrResourceIDRequired
+	}
+	if resourceName == "" {
+		return nil, ErrResourceNameRequired
+	}
+	if sharedByID == uuid.Nil {
+		return nil, ErrSharedByRequired
+	}
+	if sharedByEmail == "" {
+		return nil, ErrSharedByEmailRequired
+	}
+	if sharedWithID == uuid.Nil {
+		return nil, ErrSharedWithRequired
+	}
+	if sharedWithEmail == "" {
+		return nil, ErrSharedWithEmailRequired
+	}
+	if permission == "" {
+		permission = PermissionView
+	}
+
 	now := time.Now()
 	return &Share{
 		ID:              uuid.New(),
@@ -58,7 +83,7 @@ func NewShare(resourceType string, resourceID uuid.UUID, resourceName string, sh
 		Status:          StatusPending,
 		CreatedAt:       now,
 		UpdatedAt:       now,
-	}
+	}, nil
 }
 
 // Accept marks the share as accepted

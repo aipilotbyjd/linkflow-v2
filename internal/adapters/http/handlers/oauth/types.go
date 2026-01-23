@@ -5,6 +5,7 @@ type OAuthProvider interface {
 	Name() string
 	GetAuthURL(state string) string
 	ExchangeCode(code string) (Token, error)
+	RefreshToken(refreshToken string) (Token, error)
 	GetUserInfo(token Token) (UserInfo, error)
 }
 

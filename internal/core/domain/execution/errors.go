@@ -19,4 +19,10 @@ var (
 	ErrQueueFull              = errors.New("execution queue is full")
 	ErrWorkflowNotActive      = errors.New("workflow is not active")
 	ErrInvalidStateTransition = errors.New("invalid execution state transition")
+
+	// Validation errors
+	ErrWorkflowIDRequired  = errors.New("workflow ID is required")
+	ErrWorkspaceIDRequired = errors.New("workspace ID is required")
+	ErrVersionRequired     = errors.New("workflow version is required")
+	ErrTriggerTypeRequired = errors.New("trigger type is required")
 )
