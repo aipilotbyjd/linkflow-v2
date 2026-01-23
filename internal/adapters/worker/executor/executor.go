@@ -56,7 +56,9 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 			estimatedOps = 1
 		}
 		if err := e.usageTracker.PreExecutionCheck(ctx, exec.WorkspaceID, estimatedOps); err != nil {
-			exec.Fail(err.Error(), nil)
+			if failErr := exec.Fail(err.Error(), nil); failErr != nil {
+				e.logger.Error().Err(failErr).Msg("Failed to mark execution as failed during billing check")
+			}
 			if updateErr := e.executionRepo.Update(ctx, exec); updateErr != nil {
 				e.logger.Error().Err(updateErr).Msg("Failed to update execution after billing check failure")
 			}
@@ -64,7 +66,9 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 		}
 	}
 
-	exec.Start()
+	if err := exec.Start(); err != nil {
+		return fmt.Errorf("failed to start execution: %w", err)
+	}
 	if err := e.executionRepo.Update(ctx, exec); err != nil {
 		return fmt.Errorf("failed to update execution: %w", err)
 	}
@@ -79,12 +83,17 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 	err = e.executeWorkflow(ctx, runtime)
 
 	if err != nil {
-		exec.Fail(err.Error(), nil)
+		if failErr := exec.Fail(err.Error(), nil); failErr != nil {
+			e.logger.Error().Err(failErr).Str("execution_id", executionID.String()).Msg("Failed to mark execution as failed")
+		}
 		e.logger.Error().Err(err).
 			Str("execution_id", executionID.String()).
 			Msg("Workflow execution failed")
 	} else {
-		exec.Complete(runtime.GetOutputData())
+		if completeErr := exec.Complete(runtime.GetOutputData()); completeErr != nil {
+			e.logger.Error().Err(completeErr).Str("execution_id", executionID.String()).Msg("Failed to mark execution as completed")
+			return fmt.Errorf("failed to complete execution: %w", completeErr)
+		}
 		e.logger.Info().
 			Str("execution_id", executionID.String()).
 			Dur("duration", time.Since(*exec.StartedAt)).

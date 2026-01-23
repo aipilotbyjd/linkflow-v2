@@ -39,7 +39,9 @@ func (h *CancelExecutionHandler) Handle(ctx context.Context, cmd CancelExecution
 	}
 
 	// Cancel the execution
-	exec.Cancel()
+	if err := exec.Cancel(); err != nil {
+		return nil, err
+	}
 	if cmd.Reason != "" {
 		exec.ErrorMessage = &cmd.Reason
 	}

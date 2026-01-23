@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -86,6 +87,9 @@ func (w *Workflow) CanActivate() error {
 	}
 	if !w.HasTriggerNode() {
 		return ErrNoTriggerNode
+	}
+	if err := w.ValidateGraph(); err != nil {
+		return err
 	}
 	return nil
 }
@@ -223,4 +227,79 @@ func isTriggerType(nodeType string) bool {
 		}
 	}
 	return false
+}
+
+// GetNodes parses and returns the nodes as typed structs
+func (w *Workflow) GetNodes() ([]Node, error) {
+	data, err := json.Marshal(w.Nodes)
+	if err != nil {
+		return nil, err
+	}
+	return NodesFromJSON(data)
+}
+
+// GetConnections parses and returns the connections as typed structs
+func (w *Workflow) GetConnections() ([]Connection, error) {
+	data, err := json.Marshal(w.Connections)
+	if err != nil {
+		return nil, err
+	}
+	return ConnectionsFromJSON(data)
+}
+
+// ValidateGraph checks if the workflow graph is valid (no cycles)
+func (w *Workflow) ValidateGraph() error {
+	nodes, err := w.GetNodes()
+	if err != nil {
+		return err
+	}
+
+	connections, err := w.GetConnections()
+	if err != nil {
+		return err
+	}
+
+	// Build adjacency list
+	adj := make(map[string][]string)
+	for _, conn := range connections {
+		adj[conn.SourceNode] = append(adj[conn.SourceNode], conn.TargetNode)
+	}
+
+	// Cycle detection using DFS
+	visited := make(map[string]bool)
+	recursionStack := make(map[string]bool)
+	nodesMap := make(map[string]bool)
+
+	for _, n := range nodes {
+		nodesMap[n.ID] = true
+	}
+
+	var hasCycle func(nodeID string) bool
+	hasCycle = func(nodeID string) bool {
+		visited[nodeID] = true
+		recursionStack[nodeID] = true
+
+		for _, neighbor := range adj[nodeID] {
+			if !visited[neighbor] {
+				if hasCycle(neighbor) {
+					return true
+				}
+			} else if recursionStack[neighbor] {
+				return true
+			}
+		}
+
+		recursionStack[nodeID] = false
+		return false
+	}
+
+	for nodeID := range nodesMap {
+		if !visited[nodeID] {
+			if hasCycle(nodeID) {
+				return ErrWorkflowHasCycle
+			}
+		}
+	}
+
+	return nil
 }

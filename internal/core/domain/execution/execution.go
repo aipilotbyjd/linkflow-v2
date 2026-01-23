@@ -122,58 +122,110 @@ func (e *Execution) WithBatchID(batchID uuid.UUID) *Execution {
 	return e
 }
 
+// CanTransitionTo checks if transition to target status is valid
+func (e *Execution) CanTransitionTo(target Status) bool {
+	// Terminal states cannot transition to anything
+	if e.Status.IsTerminal() {
+		return false
+	}
+
+	switch target {
+	case StatusRunning:
+		return e.Status == StatusQueued || e.Status == StatusWaiting
+	case StatusCompleted, StatusFailed, StatusTimeout:
+		return e.Status == StatusRunning
+	case StatusCancelled:
+		return e.Status == StatusQueued || e.Status == StatusRunning || e.Status == StatusWaiting
+	case StatusWaiting:
+		return e.Status == StatusRunning
+	default:
+		return false
+	}
+}
+
 // Start marks execution as started
-func (e *Execution) Start() {
+func (e *Execution) Start() error {
+	if !e.CanTransitionTo(StatusRunning) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusRunning
 	now := time.Now()
-	e.StartedAt = &now
+	// Only set StartedAt if it's the first start (not resume)
+	if e.StartedAt == nil {
+		e.StartedAt = &now
+	}
+	return nil
 }
 
 // Complete marks execution as completed
-func (e *Execution) Complete(outputData types.JSON) {
+func (e *Execution) Complete(outputData types.JSON) error {
+	if !e.CanTransitionTo(StatusCompleted) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusCompleted
 	now := time.Now()
 	e.CompletedAt = &now
 	e.OutputData = outputData
+	return nil
 }
 
 // Fail marks execution as failed
-func (e *Execution) Fail(errorMsg string, errorNodeID *string) {
+func (e *Execution) Fail(errorMsg string, errorNodeID *string) error {
+	if !e.CanTransitionTo(StatusFailed) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusFailed
 	now := time.Now()
 	e.CompletedAt = &now
 	e.ErrorMessage = &errorMsg
 	e.ErrorNodeID = errorNodeID
+	return nil
 }
 
 // Cancel marks execution as canceled
-func (e *Execution) Cancel() {
+func (e *Execution) Cancel() error {
+	if !e.CanTransitionTo(StatusCancelled) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusCancelled
 	now := time.Now()
 	e.CompletedAt = &now
+	return nil
 }
 
 // Timeout marks execution as timed out
-func (e *Execution) Timeout() {
+func (e *Execution) Timeout() error {
+	if !e.CanTransitionTo(StatusTimeout) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusTimeout
 	now := time.Now()
 	e.CompletedAt = &now
 	msg := "execution timed out"
 	e.ErrorMessage = &msg
+	return nil
 }
 
 // Pause marks execution as waiting (paused)
-func (e *Execution) Pause() {
+func (e *Execution) Pause() error {
+	if !e.CanTransitionTo(StatusWaiting) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusWaiting
 	now := time.Now()
 	e.PausedAt = &now
+	return nil
 }
 
 // Resume resumes a paused execution
-func (e *Execution) Resume() {
+func (e *Execution) Resume() error {
+	if !e.CanTransitionTo(StatusRunning) {
+		return ErrInvalidStateTransition
+	}
 	e.Status = StatusRunning
 	now := time.Now()
 	e.ResumedAt = &now
+	return nil
 }
 
 // IncrementRetry increments the retry count

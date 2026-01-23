@@ -26,4 +26,5 @@ var (
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 	ErrInsufficientVariants    = errors.New("experiment must have at least 2 variants")
 	ErrExperimentNotRunning    = errors.New("experiment is not running")
+	ErrWorkflowHasCycle        = errors.New("workflow has infinite loop (cycle) detected")
 )
