@@ -15,7 +15,7 @@ type CreateAlertRequest struct {
 
 // UpdateAlertRequest for updating an alert
 type UpdateAlertRequest struct {
-	Enabled  *bool          `json:"enabled,omitempty"`
+	Enabled  *bool           `json:"enabled,omitempty"`
 	Channels *ChannelsConfig `json:"channels,omitempty"`
 }
 
@@ -34,14 +34,14 @@ type ChannelsConfig struct {
 
 // AlertResponse for API responses
 type AlertResponse struct {
-	ID          string         `json:"id"`
-	AlertType   string         `json:"alert_type"`
-	Threshold   int            `json:"threshold"`
-	Severity    string         `json:"severity"`
-	Enabled     bool           `json:"enabled"`
-	Channels    ChannelsConfig `json:"channels"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID        string         `json:"id"`
+	AlertType string         `json:"alert_type"`
+	Threshold int            `json:"threshold"`
+	Severity  string         `json:"severity"`
+	Enabled   bool           `json:"enabled"`
+	Channels  ChannelsConfig `json:"channels"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 // AlertLogResponse for alert history

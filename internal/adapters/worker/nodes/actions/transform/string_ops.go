@@ -2,7 +2,6 @@ package transform
 
 import (
 	"context"
-	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -61,9 +60,6 @@ func (n *StringOperationNode) Execute(ctx context.Context, runtime *executor.Run
 			return types.JSON{"error": err.Error(), "success": false}, nil
 		}
 		result = string(decoded)
-	case "md5":
-		hash := md5.Sum([]byte(str))
-		result = hex.EncodeToString(hash[:])
 	case "sha256":
 		hash := sha256.Sum256([]byte(str))
 		result = hex.EncodeToString(hash[:])

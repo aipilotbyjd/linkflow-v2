@@ -24,7 +24,7 @@ func NewUpdateHandler(repo billing.UsageAlertRepository) *UpdateHandler {
 func (h *UpdateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	workspaceID := middleware.GetWorkspaceID(ctx)
-	
+
 	alertID, err := uuid.Parse(chi.URLParam(r, "alertId"))
 	if err != nil {
 		common.BadRequest(w, "Invalid alert ID")

@@ -39,8 +39,8 @@ func (n *StripeNode) handleCustomer(ctx context.Context, operation string, param
 		name, _ := params["name"].(string)
 		return types.JSON{"id": "", "email": email, "name": name}, nil
 	case "get":
-		customerId, _ := params["customer_id"].(string)
-		return types.JSON{"id": customerId, "customer": nil}, nil
+		customerID, _ := params["customer_id"].(string)
+		return types.JSON{"id": customerID, "customer": nil}, nil
 	default:
 		return nil, fmt.Errorf("unsupported customer operation: %s", operation)
 	}
@@ -53,8 +53,8 @@ func (n *StripeNode) handlePaymentIntent(ctx context.Context, operation string, 
 		currency, _ := params["currency"].(string)
 		return types.JSON{"id": "", "amount": int(amount), "currency": currency, "status": "requires_payment_method"}, nil
 	case "confirm":
-		paymentIntentId, _ := params["payment_intent_id"].(string)
-		return types.JSON{"id": paymentIntentId, "status": "succeeded", "success": true}, nil
+		paymentIntentID, _ := params["payment_intent_id"].(string)
+		return types.JSON{"id": paymentIntentID, "status": "succeeded", "success": true}, nil
 	default:
 		return nil, fmt.Errorf("unsupported payment_intent operation: %s", operation)
 	}
@@ -63,12 +63,12 @@ func (n *StripeNode) handlePaymentIntent(ctx context.Context, operation string, 
 func (n *StripeNode) handleSubscription(ctx context.Context, operation string, params map[string]interface{}) (types.JSON, error) {
 	switch operation {
 	case "create":
-		customerId, _ := params["customer_id"].(string)
-		priceId, _ := params["price_id"].(string)
-		return types.JSON{"id": "", "customer_id": customerId, "price_id": priceId, "status": "active"}, nil
+		customerID, _ := params["customer_id"].(string)
+		priceID, _ := params["price_id"].(string)
+		return types.JSON{"id": "", "customer_id": customerID, "price_id": priceID, "status": "active"}, nil
 	case "cancel":
-		subscriptionId, _ := params["subscription_id"].(string)
-		return types.JSON{"id": subscriptionId, "status": "canceled", "canceled": true}, nil
+		subscriptionID, _ := params["subscription_id"].(string)
+		return types.JSON{"id": subscriptionID, "status": "canceled", "canceled": true}, nil
 	default:
 		return nil, fmt.Errorf("unsupported subscription operation: %s", operation)
 	}

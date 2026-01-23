@@ -8,14 +8,14 @@ import (
 
 // Execution streaming events
 const (
-	EventExecutionProgress    = "execution.progress"
-	EventExecutionNodeOutput  = "execution.node_output"
-	EventExecutionLog         = "execution.log"
-	EventExecutionMetrics     = "execution.metrics"
-	EventExecutionWaiting     = "execution.waiting"
-	EventExecutionResumed     = "execution.resumed"
-	EventApprovalRequired     = "execution.approval_required"
-	EventApprovalReceived     = "execution.approval_received"
+	EventExecutionProgress   = "execution.progress"
+	EventExecutionNodeOutput = "execution.node_output"
+	EventExecutionLog        = "execution.log"
+	EventExecutionMetrics    = "execution.metrics"
+	EventExecutionWaiting    = "execution.waiting"
+	EventExecutionResumed    = "execution.resumed"
+	EventApprovalRequired    = "execution.approval_required"
+	EventApprovalReceived    = "execution.approval_received"
 )
 
 // ExecutionProgressData represents real-time execution progress
@@ -25,7 +25,7 @@ type ExecutionProgressData struct {
 	CurrentNodeID   string    `json:"current_node_id"`
 	CurrentNodeName string    `json:"current_node_name"`
 	CurrentNodeType string    `json:"current_node_type"`
-	Progress        float64   `json:"progress"`           // 0-100 percentage
+	Progress        float64   `json:"progress"` // 0-100 percentage
 	NodesCompleted  int       `json:"nodes_completed"`
 	NodesTotal      int       `json:"nodes_total"`
 	Status          string    `json:"status"`
@@ -59,23 +59,23 @@ type NodeErrorData struct {
 
 // ExecutionLogData represents execution log entry
 type ExecutionLogData struct {
-	ExecutionID uuid.UUID `json:"execution_id"`
-	NodeID      string    `json:"node_id,omitempty"`
-	Level       string    `json:"level"` // debug, info, warn, error
-	Message     string    `json:"message"`
+	ExecutionID uuid.UUID   `json:"execution_id"`
+	NodeID      string      `json:"node_id,omitempty"`
+	Level       string      `json:"level"` // debug, info, warn, error
+	Message     string      `json:"message"`
 	Data        interface{} `json:"data,omitempty"`
-	Timestamp   time.Time `json:"timestamp"`
+	Timestamp   time.Time   `json:"timestamp"`
 }
 
 // ExecutionMetricsData represents real-time execution metrics
 type ExecutionMetricsData struct {
-	ExecutionID     uuid.UUID `json:"execution_id"`
-	MemoryUsageMB   float64   `json:"memory_usage_mb"`
-	CPUPercent      float64   `json:"cpu_percent"`
-	DataProcessed   int64     `json:"data_processed_bytes"`
-	APICallsCount   int       `json:"api_calls_count"`
-	CreditsUsed     float64   `json:"credits_used"`
-	EstimatedCost   float64   `json:"estimated_cost_usd"`
+	ExecutionID   uuid.UUID `json:"execution_id"`
+	MemoryUsageMB float64   `json:"memory_usage_mb"`
+	CPUPercent    float64   `json:"cpu_percent"`
+	DataProcessed int64     `json:"data_processed_bytes"`
+	APICallsCount int       `json:"api_calls_count"`
+	CreditsUsed   float64   `json:"credits_used"`
+	EstimatedCost float64   `json:"estimated_cost_usd"`
 }
 
 // ApprovalRequiredData represents approval request notification

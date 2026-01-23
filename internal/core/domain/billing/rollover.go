@@ -8,40 +8,40 @@ import (
 
 // CreditRollover tracks rolled over credits from previous periods
 type CreditRollover struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	WorkspaceID     uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	WorkspaceID uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
+
 	// Rolled over amounts
-	RolledCredits   int       `gorm:"default:0" json:"rolled_credits"`
-	RolledAICredits int       `gorm:"default:0" json:"rolled_ai_credits"`
-	
+	RolledCredits   int `gorm:"default:0" json:"rolled_credits"`
+	RolledAICredits int `gorm:"default:0" json:"rolled_ai_credits"`
+
 	// Source period
 	FromPeriodStart time.Time `json:"from_period_start"`
 	FromPeriodEnd   time.Time `json:"from_period_end"`
-	
+
 	// Expiry
-	ExpiresAt       time.Time `json:"expires_at"`
-	Expired         bool      `gorm:"default:false" json:"expired"`
-	
+	ExpiresAt time.Time `json:"expires_at"`
+	Expired   bool      `gorm:"default:false" json:"expired"`
+
 	// Consumption tracking
-	UsedCredits     int       `gorm:"default:0" json:"used_credits"`
-	UsedAICredits   int       `gorm:"default:0" json:"used_ai_credits"`
-	
-	CreatedAt       time.Time `json:"created_at"`
+	UsedCredits   int `gorm:"default:0" json:"used_credits"`
+	UsedAICredits int `gorm:"default:0" json:"used_ai_credits"`
+
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // RolloverSettings configures credit rollover behavior
 type RolloverSettings struct {
 	// Whether rollover is enabled for this plan
 	Enabled bool `json:"enabled"`
-	
+
 	// Maximum percentage of unused credits that roll over
 	MaxRolloverPercent int `json:"max_rollover_percent"` // e.g., 20 = 20%
-	
+
 	// Maximum absolute credits that can roll over
 	MaxRolloverCredits int `json:"max_rollover_credits"`
 	MaxRolloverAI      int `json:"max_rollover_ai_credits"`
-	
+
 	// How long rolled credits last (months)
 	ExpiryMonths int `json:"expiry_months"` // e.g., 3 = expires after 3 months
 }
@@ -87,32 +87,32 @@ func CalculateRollover(planID string, unusedCredits, unusedAI, planCredits, plan
 	if !ok || !settings.Enabled {
 		return 0, 0
 	}
-	
+
 	// Calculate percentage-based limit
 	maxByPercent := planCredits * settings.MaxRolloverPercent / 100
 	maxAIByPercent := planAI * settings.MaxRolloverPercent / 100
-	
-	// Take minimum of unused, percentage limit, and absolute limit
-	rollCredits = min(unusedCredits, maxByPercent)
+
+	// Take minValueimum of unused, percentage limit, and absolute limit
+	rollCredits = minValue(unusedCredits, maxByPercent)
 	if settings.MaxRolloverCredits > 0 {
-		rollCredits = min(rollCredits, settings.MaxRolloverCredits)
+		rollCredits = minValue(rollCredits, settings.MaxRolloverCredits)
 	}
-	
-	rollAI = min(unusedAI, maxAIByPercent)
+
+	rollAI = minValue(unusedAI, maxAIByPercent)
 	if settings.MaxRolloverAI > 0 {
-		rollAI = min(rollAI, settings.MaxRolloverAI)
+		rollAI = minValue(rollAI, settings.MaxRolloverAI)
 	}
-	
+
 	return rollCredits, rollAI
 }
 
 // NewCreditRollover creates a new rollover record
 func NewCreditRollover(workspaceID uuid.UUID, planID string, unusedCredits, unusedAI, planCredits, planAI int, periodStart, periodEnd time.Time) *CreditRollover {
 	rollCredits, rollAI := CalculateRollover(planID, unusedCredits, unusedAI, planCredits, planAI)
-	
+
 	settings := PlanRolloverSettings[planID]
 	expiresAt := periodEnd.AddDate(0, settings.ExpiryMonths, 0)
-	
+
 	return &CreditRollover{
 		ID:              uuid.New(),
 		WorkspaceID:     workspaceID,
@@ -145,9 +145,9 @@ func (r *CreditRollover) ConsumeCredits(amount int) int {
 	if r.IsExpired() || r.Expired {
 		return 0
 	}
-	
+
 	available := r.RemainingCredits()
-	consume := min(amount, available)
+	consume := minValue(amount, available)
 	r.UsedCredits += consume
 	return consume
 }
@@ -157,14 +157,14 @@ func (r *CreditRollover) ConsumeAICredits(amount int) int {
 	if r.IsExpired() || r.Expired {
 		return 0
 	}
-	
+
 	available := r.RemainingAICredits()
-	consume := min(amount, available)
+	consume := minValue(amount, available)
 	r.UsedAICredits += consume
 	return consume
 }
 
-func min(a, b int) int {
+func minValue(a, b int) int {
 	if a < b {
 		return a
 	}

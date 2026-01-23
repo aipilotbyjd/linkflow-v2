@@ -16,28 +16,28 @@ type MetricsRequest struct {
 
 // WorkflowMetricsResponse represents workflow metrics response
 type WorkflowMetricsResponse struct {
-	Metrics      observability.WorkflowMetrics `json:"metrics"`
-	NodeMetrics  []observability.NodeMetrics   `json:"node_metrics,omitempty"`
-	Trend        []observability.TrendPoint    `json:"trend,omitempty"`
+	Metrics     observability.WorkflowMetrics `json:"metrics"`
+	NodeMetrics []observability.NodeMetrics   `json:"node_metrics,omitempty"`
+	Trend       []observability.TrendPoint    `json:"trend,omitempty"`
 }
 
 // WorkspaceMetricsResponse represents workspace metrics response
 type WorkspaceMetricsResponse struct {
-	Metrics observability.WorkspaceMetrics `json:"metrics"`
+	Metrics observability.WorkspaceMetrics  `json:"metrics"`
 	Heatmap *observability.ExecutionHeatmap `json:"heatmap,omitempty"`
 }
 
 // AlertRuleRequest represents an alert rule create/update request
 type AlertRuleRequest struct {
-	Name        string    `json:"name" validate:"required"`
-	Description string    `json:"description,omitempty"`
-	WorkflowID  *string   `json:"workflow_id,omitempty"`
-	Metric      string    `json:"metric" validate:"required"`
-	Operator    string    `json:"operator" validate:"required"`
-	Threshold   float64   `json:"threshold" validate:"required"`
-	Window      string    `json:"window" validate:"required"`
-	Channels    []string  `json:"channels" validate:"required"`
-	Enabled     bool      `json:"enabled"`
+	Name        string   `json:"name" validate:"required"`
+	Description string   `json:"description,omitempty"`
+	WorkflowID  *string  `json:"workflow_id,omitempty"`
+	Metric      string   `json:"metric" validate:"required"`
+	Operator    string   `json:"operator" validate:"required"`
+	Threshold   float64  `json:"threshold" validate:"required"`
+	Window      string   `json:"window" validate:"required"`
+	Channels    []string `json:"channels" validate:"required"`
+	Enabled     bool     `json:"enabled"`
 }
 
 // AlertRuleResponse represents an alert rule response
@@ -58,15 +58,15 @@ type AlertRuleResponse struct {
 
 // AlertResponse represents an alert response
 type AlertResponse struct {
-	ID          string   `json:"id"`
-	RuleID      string   `json:"rule_id"`
-	WorkflowID  *string  `json:"workflow_id,omitempty"`
-	Metric      string   `json:"metric"`
-	Value       float64  `json:"value"`
-	Threshold   float64  `json:"threshold"`
-	Message     string   `json:"message"`
-	Status      string   `json:"status"`
-	TriggeredAt string   `json:"triggered_at"`
+	ID          string  `json:"id"`
+	RuleID      string  `json:"rule_id"`
+	WorkflowID  *string `json:"workflow_id,omitempty"`
+	Metric      string  `json:"metric"`
+	Value       float64 `json:"value"`
+	Threshold   float64 `json:"threshold"`
+	Message     string  `json:"message"`
+	Status      string  `json:"status"`
+	TriggeredAt string  `json:"triggered_at"`
 }
 
 // Service interface

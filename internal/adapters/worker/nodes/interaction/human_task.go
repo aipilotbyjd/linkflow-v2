@@ -42,7 +42,7 @@ func (n *HumanTaskNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 	assignees, _ := params["assignees"].([]interface{})
 	timeoutHours, _ := params["timeout_hours"].(float64)
 	notifyVia, _ := params["notify_via"].([]interface{})
-	
+
 	// Form configuration
 	var formFields []map[string]interface{}
 	if fields, ok := params["form_fields"].([]interface{}); ok {
@@ -65,19 +65,19 @@ func (n *HumanTaskNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 
 	// In a real implementation, we would call a service to create the task record
 	// For now, we simulate the request creation via runtime or just return the wait signal
-	
+
 	// Generate a unique ID for this task (in reality, the backend would do this)
 	// We'll rely on the runtime to handle the "wait" state and persistence
-	
+
 	return types.JSON{
 		"_wait_for_human_task": true,
 		"task_config": map[string]interface{}{
-			"title":       title,
-			"description": description,
-			"assignees":   assignees,
-			"form_fields": formFields,
-			"timeout_at":  timeout.Format(time.RFC3339),
-			"notify_via":  notifyVia,
+			"title":        title,
+			"description":  description,
+			"assignees":    assignees,
+			"form_fields":  formFields,
+			"timeout_at":   timeout.Format(time.RFC3339),
+			"notify_via":   notifyVia,
 			"data_context": inputData,
 		},
 		"status": "waiting",
@@ -92,7 +92,7 @@ func (n *HumanTaskNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pause workflow and request human input via a form",
 		Category:    "interaction",
 		Version:     "1.0.0",
-		Icon:        "user-check", 
+		Icon:        "user-check",
 		Color:       "#EC4899", // Pink/Magenta
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}, {Name: "timeout", Type: "any"}},

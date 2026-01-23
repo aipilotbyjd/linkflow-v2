@@ -40,7 +40,7 @@ func (s *AlertService) CheckThresholds(workspaceID uuid.UUID, alertType billing.
 	defer s.mu.Unlock()
 
 	thresholds := []int{50, 75, 90, 100}
-	
+
 	for _, threshold := range thresholds {
 		if percentage >= float64(threshold) {
 			key := s.alertKey(workspaceID, alertType, threshold)
@@ -56,7 +56,7 @@ func (s *AlertService) CheckThresholds(workspaceID uuid.UUID, alertType billing.
 func (s *AlertService) TriggerAlert(workspaceID uuid.UUID, alertType billing.UsageAlertType, threshold int, current, limit int64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	percentage := float64(current) / float64(limit) * 100
 	s.queueAlert(workspaceID, alertType, threshold, current, limit, percentage, false)
 }
@@ -65,7 +65,7 @@ func (s *AlertService) TriggerAlert(workspaceID uuid.UUID, alertType billing.Usa
 func (s *AlertService) TriggerOverageAlert(workspaceID uuid.UUID, alertType billing.UsageAlertType, overageAmount int64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	key := s.alertKey(workspaceID, alertType, 999) // Special key for overage
 	if !s.triggeredAlerts[key] {
 		s.triggeredAlerts[key] = true
@@ -84,7 +84,7 @@ func (s *AlertService) TriggerOverageAlert(workspaceID uuid.UUID, alertType bill
 func (s *AlertService) GetPendingAlerts() []AlertEvent {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	alerts := s.alertQueue
 	s.alertQueue = make([]AlertEvent, 0)
 	return alerts
@@ -94,7 +94,7 @@ func (s *AlertService) GetPendingAlerts() []AlertEvent {
 func (s *AlertService) ResetPeriod(workspaceID uuid.UUID) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	// Clear all alerts for this workspace
 	for key := range s.triggeredAlerts {
 		// Keys start with workspace ID
@@ -110,7 +110,7 @@ func (s *AlertService) alertKey(workspaceID uuid.UUID, alertType billing.UsageAl
 
 func (s *AlertService) queueAlert(workspaceID uuid.UUID, alertType billing.UsageAlertType, threshold int, current, limit int64, percentage float64, isOverage bool) {
 	message := s.generateMessage(alertType, threshold, percentage)
-	
+
 	s.alertQueue = append(s.alertQueue, AlertEvent{
 		WorkspaceID: workspaceID,
 		AlertType:   alertType,
@@ -125,7 +125,7 @@ func (s *AlertService) queueAlert(workspaceID uuid.UUID, alertType billing.Usage
 
 func (s *AlertService) generateMessage(alertType billing.UsageAlertType, threshold int, percentage float64) string {
 	resource := string(alertType)
-	
+
 	switch threshold {
 	case 50:
 		return "You've used 50% of your monthly " + resource + ". Keep an eye on your usage."

@@ -84,7 +84,9 @@ func (h *TriggerWebhookHandler) Handle(ctx context.Context, cmd TriggerWebhookCo
 				event := webhook.NewEvent(endpoint.ID, cmd.Method, endpoint.Path)
 				event.WithIPAddress(cmd.IPAddress)
 				event.MarkFailed(fmt.Sprintf("security validation failed: %s", result.ErrorCode))
-				h.eventRepo.Create(ctx, event)
+				if err := h.eventRepo.Create(ctx, event); err != nil {
+					// Non-fatal, continue
+				}
 			}
 			return nil, fmt.Errorf("webhook security validation failed: %s", result.Error)
 		}

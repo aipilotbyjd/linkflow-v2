@@ -29,10 +29,10 @@ type ChatRequest struct {
 	ProviderConfig *ProviderConfig `json:"-"`
 
 	// Metadata
-	User       string            `json:"user,omitempty"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
-	WorkspaceID string           `json:"-"`
-	ExecutionID string           `json:"-"`
+	User        string            `json:"user,omitempty"`
+	Metadata    map[string]string `json:"metadata,omitempty"`
+	WorkspaceID string            `json:"-"`
+	ExecutionID string            `json:"-"`
 }
 
 // ResponseFormat specifies the output format
@@ -73,9 +73,9 @@ type ImageRequest struct {
 	Prompt         string `json:"prompt"`
 	Model          string `json:"model,omitempty"`
 	N              int    `json:"n,omitempty"`
-	Size           string `json:"size,omitempty"`   // 256x256, 512x512, 1024x1024, etc.
-	Quality        string `json:"quality,omitempty"` // standard, hd
-	Style          string `json:"style,omitempty"`   // vivid, natural
+	Size           string `json:"size,omitempty"`            // 256x256, 512x512, 1024x1024, etc.
+	Quality        string `json:"quality,omitempty"`         // standard, hd
+	Style          string `json:"style,omitempty"`           // vivid, natural
 	ResponseFormat string `json:"response_format,omitempty"` // url, b64_json
 
 	ProviderConfig *ProviderConfig `json:"-"`
@@ -96,10 +96,10 @@ type VisionRequest struct {
 
 // TTSRequest represents a text-to-speech request
 type TTSRequest struct {
-	Input          string `json:"input"`
-	Model          string `json:"model"`
-	Voice          string `json:"voice"`
-	ResponseFormat string `json:"response_format,omitempty"` // mp3, opus, aac, flac
+	Input          string  `json:"input"`
+	Model          string  `json:"model"`
+	Voice          string  `json:"voice"`
+	ResponseFormat string  `json:"response_format,omitempty"` // mp3, opus, aac, flac
 	Speed          float64 `json:"speed,omitempty"`
 
 	ProviderConfig *ProviderConfig `json:"-"`

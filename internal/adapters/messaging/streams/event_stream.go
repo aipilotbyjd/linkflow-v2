@@ -161,9 +161,6 @@ func (s *EventStream) Read(ctx context.Context, streamName string, startID strin
 	if startID == "" {
 		startID = "0"
 	}
-	if count <= 0 {
-		count = 100
-	}
 
 	result, err := s.client.XRange(ctx, s.prefix+streamName, startID, "+").Result()
 	if err != nil {

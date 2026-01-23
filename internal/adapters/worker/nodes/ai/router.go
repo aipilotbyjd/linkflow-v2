@@ -110,13 +110,13 @@ func (n *RouterNode) Execute(ctx context.Context, runtime *executor.Runtime, nod
 		"reason":            resp.Reason,
 		"alternatives":      alternatives,
 		"model_info": map[string]interface{}{
-			"context_window":     resp.SelectedModel.ContextWindow,
-			"max_output_tokens":  resp.SelectedModel.MaxOutputTokens,
-			"input_price_per_1m": resp.SelectedModel.InputPricePer1M,
+			"context_window":      resp.SelectedModel.ContextWindow,
+			"max_output_tokens":   resp.SelectedModel.MaxOutputTokens,
+			"input_price_per_1m":  resp.SelectedModel.InputPricePer1M,
 			"output_price_per_1m": resp.SelectedModel.OutputPricePer1M,
-			"supports_vision":    resp.SelectedModel.SupportsVision,
-			"supports_tools":     resp.SelectedModel.SupportsTools,
-			"supports_json":      resp.SelectedModel.SupportsJSON,
+			"supports_vision":     resp.SelectedModel.SupportsVision,
+			"supports_tools":      resp.SelectedModel.SupportsTools,
+			"supports_json":       resp.SelectedModel.SupportsJSON,
 		},
 	}, nil
 }

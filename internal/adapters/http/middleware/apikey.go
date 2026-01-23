@@ -32,9 +32,7 @@ func APIKey(apiKeyRepo user.APIKeyRepository) func(http.Handler) http.Handler {
 			}
 
 			// Remove "Bearer " prefix if present
-			if strings.HasPrefix(apiKey, "Bearer ") {
-				apiKey = apiKey[7:]
-			}
+			apiKey = strings.TrimPrefix(apiKey, "Bearer ")
 
 			// Hash the key using SHA256 and look it up
 			// The API key is stored as a hash in the database

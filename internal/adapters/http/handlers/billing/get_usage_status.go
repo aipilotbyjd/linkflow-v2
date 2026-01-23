@@ -30,18 +30,18 @@ func (h *GetUsageStatusHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	common.Success(w, UsageStatusResponse{
 		Operations: UsageMetricResponse{
-			Used:       status.OperationsUsed,
-			Limit:      status.OperationsLimit,
-			Percent:    status.OperationsPercent,
-			Exceeded:   status.OperationsExceeded,
-			Remaining:  status.OperationsLimit - status.OperationsUsed,
+			Used:      status.OperationsUsed,
+			Limit:     status.OperationsLimit,
+			Percent:   status.OperationsPercent,
+			Exceeded:  status.OperationsExceeded,
+			Remaining: status.OperationsLimit - status.OperationsUsed,
 		},
 		AICredits: UsageMetricResponse{
-			Used:       status.AICreditsUsed,
-			Limit:      status.AICreditsLimit,
-			Percent:    status.AICreditsPercent,
-			Exceeded:   status.AICreditsExceeded,
-			Remaining:  status.AICreditsLimit - status.AICreditsUsed,
+			Used:      status.AICreditsUsed,
+			Limit:     status.AICreditsLimit,
+			Percent:   status.AICreditsPercent,
+			Exceeded:  status.AICreditsExceeded,
+			Remaining: status.AICreditsLimit - status.AICreditsUsed,
 		},
 		DataTransfer: DataTransferResponse{
 			UsedMB:   status.DataTransferUsed,
@@ -58,10 +58,10 @@ func (h *GetUsageStatusHandler) Handle(w http.ResponseWriter, r *http.Request) {
 // Response types
 
 type UsageStatusResponse struct {
-	Operations   UsageMetricResponse   `json:"operations"`
-	AICredits    UsageMetricResponse   `json:"aiCredits"`
-	DataTransfer DataTransferResponse  `json:"dataTransfer"`
-	OverageRates OverageRatesResponse  `json:"overageRates"`
+	Operations   UsageMetricResponse  `json:"operations"`
+	AICredits    UsageMetricResponse  `json:"aiCredits"`
+	DataTransfer DataTransferResponse `json:"dataTransfer"`
+	OverageRates OverageRatesResponse `json:"overageRates"`
 }
 
 type UsageMetricResponse struct {

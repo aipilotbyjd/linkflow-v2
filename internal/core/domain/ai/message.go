@@ -22,11 +22,11 @@ func (r Role) String() string {
 type ContentType string
 
 const (
-	ContentTypeText     ContentType = "text"
-	ContentTypeImage    ContentType = "image"
-	ContentTypeAudio    ContentType = "audio"
-	ContentTypeDocument ContentType = "document"
-	ContentTypeToolCall ContentType = "tool_call"
+	ContentTypeText       ContentType = "text"
+	ContentTypeImage      ContentType = "image"
+	ContentTypeAudio      ContentType = "audio"
+	ContentTypeDocument   ContentType = "document"
+	ContentTypeToolCall   ContentType = "tool_call"
 	ContentTypeToolResult ContentType = "tool_result"
 )
 

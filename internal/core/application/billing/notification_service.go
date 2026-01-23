@@ -14,10 +14,10 @@ import (
 
 // NotificationService handles sending usage alerts via various channels
 type NotificationService struct {
-	emailSender    EmailSender
-	slackClient    SlackClient
-	webhookClient  *http.Client
-	alertLogRepo   billing.UsageAlertLogRepository
+	emailSender   EmailSender
+	slackClient   SlackClient
+	webhookClient *http.Client
+	alertLogRepo  billing.UsageAlertLogRepository
 }
 
 // EmailSender interface for sending emails

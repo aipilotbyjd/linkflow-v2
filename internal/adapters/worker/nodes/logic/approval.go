@@ -140,9 +140,9 @@ func (n *WaitForEventNode) Execute(ctx context.Context, runtime *executor.Runtim
 
 	// Register event listener through runtime
 	listenerID, webhookURL, err := runtime.RegisterEventListener(ctx, executor.EventListener{
-		EventType:  eventType,
-		Filter:     eventFilter,
-		TimeoutAt:  timeout,
+		EventType: eventType,
+		Filter:    eventFilter,
+		TimeoutAt: timeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to register event listener: %w", err)

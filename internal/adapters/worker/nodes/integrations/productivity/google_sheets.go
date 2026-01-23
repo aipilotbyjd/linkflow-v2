@@ -23,7 +23,7 @@ func (n *GoogleSheetsNode) Execute(ctx context.Context, runtime *executor.Runtim
 	operation, _ := params["operation"].(string)
 	spreadsheetID, _ := params["spreadsheet_id"].(string)
 	sheetName, _ := params["sheet_name"].(string)
-	
+
 	// Get OAuth credentials from runtime
 	accessToken := runtime.GetCredentialValue("google_sheets", "access_token")
 	if accessToken == "" {

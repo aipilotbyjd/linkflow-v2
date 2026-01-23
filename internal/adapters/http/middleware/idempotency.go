@@ -17,12 +17,6 @@ const (
 	idempotencyTTL       = 24 * time.Hour
 )
 
-type cachedResponse struct {
-	StatusCode int               `json:"status_code"`
-	Headers    map[string]string `json:"headers"`
-	Body       []byte            `json:"body"`
-}
-
 type idempotencyResponseWriter struct {
 	http.ResponseWriter
 	statusCode int

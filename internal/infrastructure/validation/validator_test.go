@@ -73,16 +73,16 @@ func TestValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			errors := Validate(tt.req)
-			
+
 			t.Logf("Test: %s", tt.name)
 			for _, e := range errors {
 				t.Logf("  Field: %s, Message: %s", e.Field, e.Message)
 			}
-			
+
 			if len(tt.expected) == 0 && len(errors) > 0 {
 				t.Errorf("Expected no errors but got %d", len(errors))
 			}
-			
+
 			for field, substr := range tt.expected {
 				found := false
 				for _, e := range errors {
@@ -102,7 +102,7 @@ func TestValidation(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr)))
 }
 

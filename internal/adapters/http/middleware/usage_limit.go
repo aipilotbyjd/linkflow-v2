@@ -26,12 +26,12 @@ func (m *UsageLimitMiddleware) CheckOperations(operationsNeeded int64) func(http
 			if err := m.usageService.CheckOperationsAvailable(ctx, workspaceID, operationsNeeded); err != nil {
 				if err == billingapp.ErrOperationsExceeded {
 					w.Header().Set("X-RateLimit-Exceeded", "operations")
-					common.Error(w, http.StatusPaymentRequired, "OPERATIONS_EXCEEDED", 
+					common.Error(w, http.StatusPaymentRequired, "OPERATIONS_EXCEEDED",
 						"You have exceeded your operations limit. Please upgrade your plan or wait for the next billing cycle.")
 					return
 				}
 				if err == billingapp.ErrNoActiveSubscription {
-					common.Error(w, http.StatusPaymentRequired, "NO_SUBSCRIPTION", 
+					common.Error(w, http.StatusPaymentRequired, "NO_SUBSCRIPTION",
 						"No active subscription found. Please subscribe to a plan.")
 					return
 				}
@@ -54,7 +54,7 @@ func (m *UsageLimitMiddleware) CheckAICredits(creditsNeeded int64) func(http.Han
 			if err := m.usageService.CheckAICreditsAvailable(ctx, workspaceID, creditsNeeded); err != nil {
 				if err == billingapp.ErrAICreditsExceeded {
 					w.Header().Set("X-RateLimit-Exceeded", "ai_credits")
-					common.Error(w, http.StatusPaymentRequired, "AI_CREDITS_EXCEEDED", 
+					common.Error(w, http.StatusPaymentRequired, "AI_CREDITS_EXCEEDED",
 						"You have exceeded your AI credits limit. Please upgrade your plan or purchase additional credits.")
 					return
 				}
@@ -76,7 +76,7 @@ func (m *UsageLimitMiddleware) RequireFeature(feature string) func(http.Handler)
 
 			if err := m.usageService.CheckFeatureAccess(ctx, workspaceID, feature); err != nil {
 				if err == billingapp.ErrFeatureNotAvailable {
-					common.Error(w, http.StatusForbidden, "FEATURE_NOT_AVAILABLE", 
+					common.Error(w, http.StatusForbidden, "FEATURE_NOT_AVAILABLE",
 						"This feature is not available on your current plan. Please upgrade to access it.")
 					return
 				}
@@ -98,7 +98,7 @@ func (m *UsageLimitMiddleware) CheckScenarioLimit(currentActive int) func(http.H
 
 			if err := m.usageService.CheckActiveScenarios(ctx, workspaceID, currentActive); err != nil {
 				if err == billingapp.ErrScenariosExceeded {
-					common.Error(w, http.StatusForbidden, "SCENARIOS_EXCEEDED", 
+					common.Error(w, http.StatusForbidden, "SCENARIOS_EXCEEDED",
 						"You have reached your active scenarios limit. Please deactivate a scenario or upgrade your plan.")
 					return
 				}

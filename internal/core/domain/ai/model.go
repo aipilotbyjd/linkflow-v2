@@ -186,10 +186,10 @@ var (
 // ModelRegistry holds all available models
 var ModelRegistry = map[string]Model{
 	// OpenAI
-	"gpt-4o":          ModelGPT4o,
-	"gpt-4o-mini":     ModelGPT4oMini,
-	"o1":              ModelO1,
-	"o1-mini":         ModelO1Mini,
+	"gpt-4o":      ModelGPT4o,
+	"gpt-4o-mini": ModelGPT4oMini,
+	"o1":          ModelO1,
+	"o1-mini":     ModelO1Mini,
 
 	// Anthropic
 	"claude-3-5-sonnet-20241022": ModelClaude35Sonnet,
@@ -197,8 +197,8 @@ var ModelRegistry = map[string]Model{
 	"claude-3-opus-20240229":     ModelClaude3Opus,
 
 	// Google
-	"gemini-1.5-pro":      ModelGemini15Pro,
-	"gemini-1.5-flash":    ModelGemini15Flash,
+	"gemini-1.5-pro":       ModelGemini15Pro,
+	"gemini-1.5-flash":     ModelGemini15Flash,
 	"gemini-2.0-flash-exp": ModelGemini20Flash,
 }
 

@@ -167,9 +167,9 @@ func (n *VisionNode) Execute(ctx context.Context, runtime *executor.Runtime, nod
 	}
 
 	return types.JSON{
-		"analysis":  resp.GetText(),
-		"model":     resp.Model,
-		"provider":  resp.Provider.String(),
+		"analysis": resp.GetText(),
+		"model":    resp.Model,
+		"provider": resp.Provider.String(),
 		"usage": map[string]interface{}{
 			"input_tokens":  resp.Usage.InputTokens,
 			"output_tokens": resp.Usage.OutputTokens,

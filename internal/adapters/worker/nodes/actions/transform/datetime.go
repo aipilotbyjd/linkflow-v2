@@ -54,7 +54,7 @@ func (n *DateTimeNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 			format = time.RFC3339
 		}
 		format = convertFormat(format)
-		
+
 		t, err := time.ParseInLocation(format, dateStr, loc)
 		if err != nil {
 			return types.JSON{"error": err.Error(), "success": false}, nil
@@ -72,7 +72,7 @@ func (n *DateTimeNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 			format = "2006-01-02 15:04:05"
 		}
 		format = convertFormat(format)
-		
+
 		t := time.Unix(unix, 0).In(loc)
 		return types.JSON{
 			"formatted": t.Format(format),
@@ -83,7 +83,7 @@ func (n *DateTimeNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 		unix := int64(toFloat(params["unix"]))
 		amount := int(toFloat(params["amount"]))
 		unit, _ := params["unit"].(string)
-		
+
 		t := time.Unix(unix, 0).In(loc)
 		switch unit {
 		case "seconds":
@@ -109,11 +109,11 @@ func (n *DateTimeNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 		unix1 := int64(toFloat(params["unix1"]))
 		unix2 := int64(toFloat(params["unix2"]))
 		unit, _ := params["unit"].(string)
-		
+
 		t1 := time.Unix(unix1, 0)
 		t2 := time.Unix(unix2, 0)
 		diff := t2.Sub(t1)
-		
+
 		var result float64
 		switch unit {
 		case "seconds":
@@ -136,7 +136,7 @@ func (n *DateTimeNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 	case "start_of":
 		unix := int64(toFloat(params["unix"]))
 		unit, _ := params["unit"].(string)
-		
+
 		t := time.Unix(unix, 0).In(loc)
 		switch unit {
 		case "day":

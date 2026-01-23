@@ -36,38 +36,38 @@ func (n *AirtableNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 }
 
 func (n *AirtableNode) listRecords(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	baseId, _ := params["base_id"].(string)
-	tableId, _ := params["table_id"].(string)
-	return types.JSON{"base_id": baseId, "table_id": tableId, "records": []interface{}{}}, nil
+	baseID, _ := params["base_id"].(string)
+	tableID, _ := params["table_id"].(string)
+	return types.JSON{"base_id": baseID, "table_id": tableID, "records": []interface{}{}}, nil
 }
 
 func (n *AirtableNode) getRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	baseId, _ := params["base_id"].(string)
-	tableId, _ := params["table_id"].(string)
-	recordId, _ := params["record_id"].(string)
-	return types.JSON{"base_id": baseId, "table_id": tableId, "record_id": recordId, "record": nil}, nil
+	baseID, _ := params["base_id"].(string)
+	tableID, _ := params["table_id"].(string)
+	recordID, _ := params["record_id"].(string)
+	return types.JSON{"base_id": baseID, "table_id": tableID, "record_id": recordID, "record": nil}, nil
 }
 
 func (n *AirtableNode) createRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	baseId, _ := params["base_id"].(string)
-	tableId, _ := params["table_id"].(string)
+	baseID, _ := params["base_id"].(string)
+	tableID, _ := params["table_id"].(string)
 	fields, _ := params["fields"].(map[string]interface{})
-	return types.JSON{"base_id": baseId, "table_id": tableId, "fields": fields, "id": "", "success": true}, nil
+	return types.JSON{"base_id": baseID, "table_id": tableID, "fields": fields, "id": "", "success": true}, nil
 }
 
 func (n *AirtableNode) updateRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	baseId, _ := params["base_id"].(string)
-	tableId, _ := params["table_id"].(string)
-	recordId, _ := params["record_id"].(string)
+	baseID, _ := params["base_id"].(string)
+	tableID, _ := params["table_id"].(string)
+	recordID, _ := params["record_id"].(string)
 	fields, _ := params["fields"].(map[string]interface{})
-	return types.JSON{"base_id": baseId, "table_id": tableId, "record_id": recordId, "fields": fields, "success": true}, nil
+	return types.JSON{"base_id": baseID, "table_id": tableID, "record_id": recordID, "fields": fields, "success": true}, nil
 }
 
 func (n *AirtableNode) deleteRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
-	baseId, _ := params["base_id"].(string)
-	tableId, _ := params["table_id"].(string)
-	recordId, _ := params["record_id"].(string)
-	return types.JSON{"base_id": baseId, "table_id": tableId, "record_id": recordId, "deleted": true}, nil
+	baseID, _ := params["base_id"].(string)
+	tableID, _ := params["table_id"].(string)
+	recordID, _ := params["record_id"].(string)
+	return types.JSON{"base_id": baseID, "table_id": tableID, "record_id": recordID, "deleted": true}, nil
 }
 
 func (n *AirtableNode) Metadata() wtypes.NodeMetadata {

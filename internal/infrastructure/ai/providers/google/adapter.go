@@ -240,9 +240,9 @@ func (a *Adapter) Embed(ctx context.Context, req *ai.EmbeddingRequest) (*ai.Embe
 		if err != nil {
 			return nil, fmt.Errorf("request failed: %w", err)
 		}
-		defer resp.Body.Close()
 
 		respBody, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
 		if err != nil {
 			return nil, fmt.Errorf("failed to read response: %w", err)
 		}

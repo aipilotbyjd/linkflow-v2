@@ -8,21 +8,21 @@ import (
 
 // ReplaySession represents a replay/time-travel debugging session
 type ReplaySession struct {
-	ID              uuid.UUID              `json:"id"`
-	WorkspaceID     uuid.UUID              `json:"workspace_id"`
-	OriginalExecID  uuid.UUID              `json:"original_execution_id"`
-	WorkflowID      uuid.UUID              `json:"workflow_id"`
-	UserID          uuid.UUID              `json:"user_id"`
-	Status          ReplayStatus           `json:"status"`
-	Mode            ReplayMode             `json:"mode"`
-	Options         ReplayOptions          `json:"options"`
-	CurrentNodeID   *string                `json:"current_node_id,omitempty"`
-	Breakpoints     []string               `json:"breakpoints"`
-	ModifiedInputs  map[string]interface{} `json:"modified_inputs,omitempty"`
-	NewExecutionID  *uuid.UUID             `json:"new_execution_id,omitempty"`
-	CreatedAt       time.Time              `json:"created_at"`
-	StartedAt       *time.Time             `json:"started_at,omitempty"`
-	CompletedAt     *time.Time             `json:"completed_at,omitempty"`
+	ID             uuid.UUID              `json:"id"`
+	WorkspaceID    uuid.UUID              `json:"workspace_id"`
+	OriginalExecID uuid.UUID              `json:"original_execution_id"`
+	WorkflowID     uuid.UUID              `json:"workflow_id"`
+	UserID         uuid.UUID              `json:"user_id"`
+	Status         ReplayStatus           `json:"status"`
+	Mode           ReplayMode             `json:"mode"`
+	Options        ReplayOptions          `json:"options"`
+	CurrentNodeID  *string                `json:"current_node_id,omitempty"`
+	Breakpoints    []string               `json:"breakpoints"`
+	ModifiedInputs map[string]interface{} `json:"modified_inputs,omitempty"`
+	NewExecutionID *uuid.UUID             `json:"new_execution_id,omitempty"`
+	CreatedAt      time.Time              `json:"created_at"`
+	StartedAt      *time.Time             `json:"started_at,omitempty"`
+	CompletedAt    *time.Time             `json:"completed_at,omitempty"`
 }
 
 // ReplayStatus represents the status of a replay session
@@ -34,43 +34,43 @@ const (
 	ReplayStatusPaused    ReplayStatus = "paused"
 	ReplayStatusCompleted ReplayStatus = "completed"
 	ReplayStatusFailed    ReplayStatus = "failed"
-	ReplayStatusCancelled ReplayStatus = "cancelled"
+	ReplayStatusCancelled ReplayStatus = "canceled"
 )
 
 // ReplayMode represents the replay mode
 type ReplayMode string
 
 const (
-	ReplayModeFullReplay    ReplayMode = "full"        // Replay entire execution
-	ReplayModeFromNode      ReplayMode = "from_node"   // Start from specific node
-	ReplayModeStepByStep    ReplayMode = "step"        // Execute one node at a time
-	ReplayModeToBreakpoint  ReplayMode = "breakpoint"  // Run until breakpoint
+	ReplayModeFullReplay   ReplayMode = "full"       // Replay entire execution
+	ReplayModeFromNode     ReplayMode = "from_node"  // Start from specific node
+	ReplayModeStepByStep   ReplayMode = "step"       // Execute one node at a time
+	ReplayModeToBreakpoint ReplayMode = "breakpoint" // Run until breakpoint
 )
 
 // ReplayOptions configures replay behavior
 type ReplayOptions struct {
-	StartFromNodeID  *string                `json:"start_from_node_id,omitempty"`
-	EndAtNodeID      *string                `json:"end_at_node_id,omitempty"`
-	SkipNodes        []string               `json:"skip_nodes,omitempty"`
-	ModifyInputs     map[string]interface{} `json:"modify_inputs,omitempty"`
+	StartFromNodeID  *string                           `json:"start_from_node_id,omitempty"`
+	EndAtNodeID      *string                           `json:"end_at_node_id,omitempty"`
+	SkipNodes        []string                          `json:"skip_nodes,omitempty"`
+	ModifyInputs     map[string]interface{}            `json:"modify_inputs,omitempty"`
 	ModifyNodeParams map[string]map[string]interface{} `json:"modify_node_params,omitempty"`
-	UseOriginalCreds bool                   `json:"use_original_creds"`
-	CaptureSnapshots bool                   `json:"capture_snapshots"`
-	MaxDuration      int                    `json:"max_duration_seconds,omitempty"`
+	UseOriginalCreds bool                              `json:"use_original_creds"`
+	CaptureSnapshots bool                              `json:"capture_snapshots"`
+	MaxDuration      int                               `json:"max_duration_seconds,omitempty"`
 }
 
 // EventLog represents a captured event for replay
 type EventLog struct {
-	ID           uuid.UUID              `json:"id"`
-	ExecutionID  uuid.UUID              `json:"execution_id"`
-	WorkflowID   uuid.UUID              `json:"workflow_id"`
-	WorkspaceID  uuid.UUID              `json:"workspace_id"`
-	EventType    EventType              `json:"event_type"`
-	NodeID       *string                `json:"node_id,omitempty"`
-	NodeType     *string                `json:"node_type,omitempty"`
-	Timestamp    time.Time              `json:"timestamp"`
-	Data         map[string]interface{} `json:"data"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	ID          uuid.UUID              `json:"id"`
+	ExecutionID uuid.UUID              `json:"execution_id"`
+	WorkflowID  uuid.UUID              `json:"workflow_id"`
+	WorkspaceID uuid.UUID              `json:"workspace_id"`
+	EventType   EventType              `json:"event_type"`
+	NodeID      *string                `json:"node_id,omitempty"`
+	NodeType    *string                `json:"node_type,omitempty"`
+	Timestamp   time.Time              `json:"timestamp"`
+	Data        map[string]interface{} `json:"data"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // EventType represents the type of event

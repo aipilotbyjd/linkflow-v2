@@ -13,8 +13,8 @@ type ChatResponse struct {
 	Created time.Time `json:"created"`
 
 	// Additional info
-	Provider    Provider `json:"provider"`
-	FinishReason string  `json:"finish_reason,omitempty"` // stop, length, tool_calls, content_filter
+	Provider     Provider `json:"provider"`
+	FinishReason string   `json:"finish_reason,omitempty"` // stop, length, tool_calls, content_filter
 
 	// For streaming
 	Streaming bool `json:"streaming,omitempty"`
@@ -68,11 +68,11 @@ type EmbeddingResponse struct {
 
 // ImageResponse represents an image generation response
 type ImageResponse struct {
-	ID       string       `json:"id"`
-	Model    string       `json:"model"`
-	Images   []ImageData  `json:"images"`
-	Provider Provider     `json:"provider"`
-	Created  time.Time    `json:"created"`
+	ID       string      `json:"id"`
+	Model    string      `json:"model"`
+	Images   []ImageData `json:"images"`
+	Provider Provider    `json:"provider"`
+	Created  time.Time   `json:"created"`
 
 	CostUSD   float64 `json:"cost_usd,omitempty"`
 	LatencyMS int64   `json:"latency_ms,omitempty"`
@@ -105,10 +105,10 @@ func (r *VisionResponse) GetText() string {
 
 // TTSResponse represents a text-to-speech response
 type TTSResponse struct {
-	Audio     []byte   `json:"audio"`
-	AudioURL  string   `json:"audio_url,omitempty"`
-	Format    string   `json:"format"`
-	Provider  Provider `json:"provider"`
+	Audio    []byte   `json:"audio"`
+	AudioURL string   `json:"audio_url,omitempty"`
+	Format   string   `json:"format"`
+	Provider Provider `json:"provider"`
 
 	CostUSD   float64 `json:"cost_usd,omitempty"`
 	LatencyMS int64   `json:"latency_ms,omitempty"`
@@ -116,10 +116,10 @@ type TTSResponse struct {
 
 // STTResponse represents a speech-to-text response
 type STTResponse struct {
-	Text      string   `json:"text"`
-	Language  string   `json:"language,omitempty"`
-	Duration  float64  `json:"duration,omitempty"`
-	Provider  Provider `json:"provider"`
+	Text     string   `json:"text"`
+	Language string   `json:"language,omitempty"`
+	Duration float64  `json:"duration,omitempty"`
+	Provider Provider `json:"provider"`
 
 	// Detailed segments with timestamps
 	Segments []TranscriptSegment `json:"segments,omitempty"`
@@ -150,10 +150,10 @@ type StructuredOutputResponse struct {
 
 // Usage represents token usage
 type Usage struct {
-	InputTokens   int `json:"input_tokens"`
-	OutputTokens  int `json:"output_tokens"`
-	TotalTokens   int `json:"total_tokens"`
-	CachedTokens  int `json:"cached_tokens,omitempty"`
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+	TotalTokens  int `json:"total_tokens"`
+	CachedTokens int `json:"cached_tokens,omitempty"`
 }
 
 // StreamEvent represents a streaming event

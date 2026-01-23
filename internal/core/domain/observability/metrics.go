@@ -16,7 +16,7 @@ type WorkflowMetrics struct {
 	TotalExecutions      int64 `json:"total_executions"`
 	SuccessfulExecutions int64 `json:"successful_executions"`
 	FailedExecutions     int64 `json:"failed_executions"`
-	CancelledExecutions  int64 `json:"cancelled_executions"`
+	CanceledExecutions   int64 `json:"canceled_executions"`
 	RunningExecutions    int64 `json:"running_executions"`
 
 	// Rates
@@ -119,41 +119,41 @@ type ExecutionHeatmap struct {
 
 // HeatmapCell represents a single cell in the heatmap
 type HeatmapCell struct {
-	DayOfWeek int     `json:"day_of_week"` // 0=Sunday
-	HourOfDay int     `json:"hour_of_day"` // 0-23
-	Count     int64   `json:"count"`
+	DayOfWeek   int     `json:"day_of_week"` // 0=Sunday
+	HourOfDay   int     `json:"hour_of_day"` // 0-23
+	Count       int64   `json:"count"`
 	AvgDuration float64 `json:"avg_duration_ms"`
 }
 
 // AlertRule represents an observability alert rule
 type AlertRule struct {
-	ID          uuid.UUID         `json:"id"`
-	WorkspaceID uuid.UUID         `json:"workspace_id"`
-	WorkflowID  *uuid.UUID        `json:"workflow_id,omitempty"`
-	Name        string            `json:"name"`
-	Description string            `json:"description,omitempty"`
-	Metric      string            `json:"metric"` // error_rate, duration, failures
-	Operator    string            `json:"operator"` // gt, lt, eq, gte, lte
-	Threshold   float64           `json:"threshold"`
-	Window      string            `json:"window"` // 5m, 1h, 24h
-	Channels    []string          `json:"channels"` // email, slack, webhook
-	Enabled     bool              `json:"enabled"`
-	LastTriggered *time.Time      `json:"last_triggered,omitempty"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
+	ID            uuid.UUID  `json:"id"`
+	WorkspaceID   uuid.UUID  `json:"workspace_id"`
+	WorkflowID    *uuid.UUID `json:"workflow_id,omitempty"`
+	Name          string     `json:"name"`
+	Description   string     `json:"description,omitempty"`
+	Metric        string     `json:"metric"`   // error_rate, duration, failures
+	Operator      string     `json:"operator"` // gt, lt, eq, gte, lte
+	Threshold     float64    `json:"threshold"`
+	Window        string     `json:"window"`   // 5m, 1h, 24h
+	Channels      []string   `json:"channels"` // email, slack, webhook
+	Enabled       bool       `json:"enabled"`
+	LastTriggered *time.Time `json:"last_triggered,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
 
 // Alert represents a triggered alert
 type Alert struct {
-	ID          uuid.UUID `json:"id"`
-	RuleID      uuid.UUID `json:"rule_id"`
-	WorkspaceID uuid.UUID `json:"workspace_id"`
+	ID          uuid.UUID  `json:"id"`
+	RuleID      uuid.UUID  `json:"rule_id"`
+	WorkspaceID uuid.UUID  `json:"workspace_id"`
 	WorkflowID  *uuid.UUID `json:"workflow_id,omitempty"`
-	Metric      string    `json:"metric"`
-	Value       float64   `json:"value"`
-	Threshold   float64   `json:"threshold"`
-	Message     string    `json:"message"`
-	Status      string    `json:"status"` // triggered, acknowledged, resolved
-	TriggeredAt time.Time `json:"triggered_at"`
+	Metric      string     `json:"metric"`
+	Value       float64    `json:"value"`
+	Threshold   float64    `json:"threshold"`
+	Message     string     `json:"message"`
+	Status      string     `json:"status"` // triggered, acknowledged, resolved
+	TriggeredAt time.Time  `json:"triggered_at"`
 	ResolvedAt  *time.Time `json:"resolved_at,omitempty"`
 }

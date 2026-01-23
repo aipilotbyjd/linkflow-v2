@@ -32,8 +32,8 @@ type UsageRecord struct {
 	LatencyMS int64 `json:"latency_ms"`
 
 	// Cache info
-	Cached    bool `json:"cached"`
-	CacheHit  bool `json:"cache_hit"`
+	Cached   bool `json:"cached"`
+	CacheHit bool `json:"cache_hit"`
 
 	// Metadata
 	Metadata  map[string]string `json:"metadata,omitempty"`
@@ -78,11 +78,11 @@ type UsageSummary struct {
 	Period      string    `json:"period"` // day, week, month
 
 	// Totals
-	TotalRequests   int     `json:"total_requests"`
-	TotalTokens     int     `json:"total_tokens"`
-	TotalInputTokens  int   `json:"total_input_tokens"`
-	TotalOutputTokens int   `json:"total_output_tokens"`
-	TotalCostUSD    float64 `json:"total_cost_usd"`
+	TotalRequests     int     `json:"total_requests"`
+	TotalTokens       int     `json:"total_tokens"`
+	TotalInputTokens  int     `json:"total_input_tokens"`
+	TotalOutputTokens int     `json:"total_output_tokens"`
+	TotalCostUSD      float64 `json:"total_cost_usd"`
 
 	// By provider
 	ByProvider map[Provider]ProviderUsage `json:"by_provider"`

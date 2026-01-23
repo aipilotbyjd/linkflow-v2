@@ -103,12 +103,12 @@ func (n *GoogleDriveNode) downloadFile(ctx context.Context, params map[string]in
 func (n *GoogleDriveNode) uploadFile(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
 	name, _ := params["name"].(string)
 	content := params["content"]
-	parentId, _ := params["parent_id"].(string)
+	parentID, _ := params["parent_id"].(string)
 
 	return types.JSON{
 		"file_id":   "",
 		"name":      name,
-		"parent_id": parentId,
+		"parent_id": parentID,
 		"size":      len(fmt.Sprint(content)),
 	}, nil
 }

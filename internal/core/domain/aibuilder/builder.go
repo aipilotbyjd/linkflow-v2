@@ -85,19 +85,19 @@ func (r *GenerationRequest) MarkFailed(err string) {
 
 // NodeTemplate represents a template for generating nodes
 type NodeTemplate struct {
-	Type        string   `json:"type"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Category    string   `json:"category"`
-	Keywords    []string `json:"keywords"`
+	Type        string              `json:"type"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Category    string              `json:"category"`
+	Keywords    []string            `json:"keywords"`
 	Parameters  []ParameterTemplate `json:"parameters"`
 }
 
 // ParameterTemplate describes a node parameter
 type ParameterTemplate struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	Description string      `json:"description"`
+	Required    bool        `json:"required"`
 	Default     interface{} `json:"default,omitempty"`
 }

@@ -32,28 +32,28 @@ const (
 	ExperimentStatusRunning   ExperimentStatus = "running"
 	ExperimentStatusPaused    ExperimentStatus = "paused"
 	ExperimentStatusCompleted ExperimentStatus = "completed"
-	ExperimentStatusCancelled ExperimentStatus = "cancelled"
+	ExperimentStatusCancelled ExperimentStatus = "canceled"
 )
 
 // ExperimentVariant represents a variant in an A/B test
 type ExperimentVariant struct {
-	ID           uuid.UUID  `json:"id" gorm:"type:uuid;primaryKey"`
-	ExperimentID uuid.UUID  `json:"experiment_id" gorm:"type:uuid;index;not null"`
-	Name         string     `json:"name" gorm:"size:50;not null"` // control, variant_a, variant_b
-	Description  *string    `json:"description,omitempty"`
-	WorkflowID   uuid.UUID  `json:"workflow_id" gorm:"type:uuid;not null"` // Can be same or different workflow
-	Version      int        `json:"version"`                               // Specific version or 0 for latest
-	Weight       int        `json:"weight" gorm:"default:50"`              // Traffic weight percentage
-	IsControl    bool       `json:"is_control" gorm:"default:false"`
+	ID           uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey"`
+	ExperimentID uuid.UUID      `json:"experiment_id" gorm:"type:uuid;index;not null"`
+	Name         string         `json:"name" gorm:"size:50;not null"` // control, variant_a, variant_b
+	Description  *string        `json:"description,omitempty"`
+	WorkflowID   uuid.UUID      `json:"workflow_id" gorm:"type:uuid;not null"` // Can be same or different workflow
+	Version      int            `json:"version"`                               // Specific version or 0 for latest
+	Weight       int            `json:"weight" gorm:"default:50"`              // Traffic weight percentage
+	IsControl    bool           `json:"is_control" gorm:"default:false"`
 	Metrics      VariantMetrics `json:"metrics" gorm:"type:jsonb"`
 }
 
 // TrafficSplit defines how traffic is split between variants
 type TrafficSplit struct {
-	Type      string            `json:"type"`      // percentage, user_segment, time_based
-	Rules     []TrafficRule     `json:"rules,omitempty"`
-	Sticky    bool              `json:"sticky"`    // Same user always gets same variant
-	StickyKey string            `json:"sticky_key"` // Field to use for sticky assignment (user_id, session_id)
+	Type      string        `json:"type"` // percentage, user_segment, time_based
+	Rules     []TrafficRule `json:"rules,omitempty"`
+	Sticky    bool          `json:"sticky"`     // Same user always gets same variant
+	StickyKey string        `json:"sticky_key"` // Field to use for sticky assignment (user_id, session_id)
 }
 
 // TrafficRule defines a traffic routing rule
@@ -65,17 +65,17 @@ type TrafficRule struct {
 
 // VariantMetrics holds metrics for a variant
 type VariantMetrics struct {
-	TotalExecutions    int64   `json:"total_executions"`
-	SuccessfulExecutions int64 `json:"successful_executions"`
-	FailedExecutions   int64   `json:"failed_executions"`
-	AverageDurationMs  float64 `json:"average_duration_ms"`
-	P50DurationMs      float64 `json:"p50_duration_ms"`
-	P95DurationMs      float64 `json:"p95_duration_ms"`
-	P99DurationMs      float64 `json:"p99_duration_ms"`
-	SuccessRate        float64 `json:"success_rate"`
-	ErrorRate          float64 `json:"error_rate"`
-	ConfidenceLevel    float64 `json:"confidence_level"` // Statistical confidence
-	IsWinner           bool    `json:"is_winner"`
+	TotalExecutions      int64   `json:"total_executions"`
+	SuccessfulExecutions int64   `json:"successful_executions"`
+	FailedExecutions     int64   `json:"failed_executions"`
+	AverageDurationMs    float64 `json:"average_duration_ms"`
+	P50DurationMs        float64 `json:"p50_duration_ms"`
+	P95DurationMs        float64 `json:"p95_duration_ms"`
+	P99DurationMs        float64 `json:"p99_duration_ms"`
+	SuccessRate          float64 `json:"success_rate"`
+	ErrorRate            float64 `json:"error_rate"`
+	ConfidenceLevel      float64 `json:"confidence_level"` // Statistical confidence
+	IsWinner             bool    `json:"is_winner"`
 }
 
 // NewExperiment creates a new experiment
@@ -87,8 +87,8 @@ func NewExperiment(workspaceID, workflowID, createdBy uuid.UUID, name string) *E
 		Name:        name,
 		Status:      ExperimentStatusDraft,
 		TrafficSplit: TrafficSplit{
-			Type:   "percentage",
-			Sticky: true,
+			Type:      "percentage",
+			Sticky:    true,
 			StickyKey: "user_id",
 		},
 		SuccessMetric: "completion_rate",
@@ -166,7 +166,7 @@ func (e *Experiment) SelectVariant(stickyValue string) *ExperimentVariant {
 		for _, v := range e.Variants {
 			totalWeight += v.Weight
 		}
-		
+
 		target := hash % totalWeight
 		cumWeight := 0
 		for i := range e.Variants {
@@ -190,7 +190,7 @@ func (e *Experiment) GetWinner() *ExperimentVariant {
 	for i := range e.Variants {
 		v := &e.Variants[i]
 		var metric float64
-		
+
 		switch e.SuccessMetric {
 		case "completion_rate":
 			metric = v.Metrics.SuccessRate

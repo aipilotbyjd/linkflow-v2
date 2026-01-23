@@ -164,7 +164,7 @@ func (c *WebhookConsumer) claimAndProcess(ctx context.Context) {
 	}
 
 	for _, p := range pending {
-		if time.Duration(p.Idle) < minIdleTime {
+		if p.Idle < minIdleTime {
 			continue
 		}
 

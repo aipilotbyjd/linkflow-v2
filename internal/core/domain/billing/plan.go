@@ -5,38 +5,38 @@ type Plan struct {
 	ID            string   `json:"id"`
 	Name          string   `json:"name"`
 	Description   string   `json:"description"`
-	PriceMonthly  int64    `json:"price_monthly"`  // in cents
-	PriceYearly   int64    `json:"price_yearly"`   // in cents
+	PriceMonthly  int64    `json:"price_monthly"` // in cents
+	PriceYearly   int64    `json:"price_yearly"`  // in cents
 	Currency      string   `json:"currency"`
 	Features      []string `json:"features"`
 	Limits        Limits   `json:"limits"`
 	StripePriceID string   `json:"stripe_price_id,omitempty"`
-	IsPerUser     bool     `json:"is_per_user"`    // Teams plan is per-user
-	Popular       bool     `json:"popular"`        // highlight on pricing page
+	IsPerUser     bool     `json:"is_per_user"` // Teams plan is per-user
+	Popular       bool     `json:"popular"`     // highlight on pricing page
 }
 
 // Limits defines plan limits (Make.com style - operations/credits based)
 type Limits struct {
 	// Operations (credits) - core billing unit
 	OperationsPerMonth int `json:"operations_per_month"` // -1 = unlimited
-	
+
 	// AI Credits - separate pool for AI features
 	AICreditsPerMonth int `json:"ai_credits_per_month"`
-	
+
 	// Scenarios (workflows)
-	ActiveScenarios   int `json:"active_scenarios"`   // -1 = unlimited
-	
+	ActiveScenarios int `json:"active_scenarios"` // -1 = unlimited
+
 	// Team
 	TeamMembers int `json:"team_members"` // -1 = unlimited
-	
+
 	// Execution intervals
 	MinIntervalMinutes int `json:"min_interval_minutes"` // minimum time between runs
-	
+
 	// Data & Storage
-	DataTransferMB    int `json:"data_transfer_mb"`
-	FileStorageMB     int `json:"file_storage_mb"`
-	RetentionDays     int `json:"retention_days"`
-	
+	DataTransferMB int `json:"data_transfer_mb"`
+	FileStorageMB  int `json:"file_storage_mb"`
+	RetentionDays  int `json:"retention_days"`
+
 	// Features
 	HasAPIAccess         bool `json:"has_api_access"`
 	HasPriorityExecution bool `json:"has_priority_execution"`
@@ -52,38 +52,38 @@ type Limits struct {
 
 // OverageRates defines cost for exceeding limits
 type OverageRates struct {
-	OperationsPer1000  int64   `json:"operations_per_1000_cents"`  // cost per 1000 extra ops
+	OperationsPer1000  int64   `json:"operations_per_1000_cents"` // cost per 1000 extra ops
 	AICreditsPerCredit int64   `json:"ai_credits_per_credit_cents"`
 	StoragePerGB       int64   `json:"storage_per_gb_cents"`
 	ExtraSeatMonthly   int64   `json:"extra_seat_monthly_cents"`
-	OverageMultiplier  float64 `json:"overage_multiplier"` // 1.25x for Zapier-style
+	OverageMultiplier  float64 `json:"overage_multiplier"`   // 1.25x for Zapier-style
 	MaxOverageMultiple int     `json:"max_overage_multiple"` // Cap at 3x plan limit
 }
 
 // Default overage rates
 var DefaultOverageRates = OverageRates{
-	OperationsPer1000:  350,   // $3.50 per 1000 operations
-	AICreditsPerCredit: 1,     // $0.01 per AI credit
-	StoragePerGB:       100,   // $1.00 per GB
-	ExtraSeatMonthly:   500,   // $5.00 per extra seat
-	OverageMultiplier:  1.25,  // 1.25x rate for overage (Zapier style)
-	MaxOverageMultiple: 3,     // Max 3x plan limit before hard stop
+	OperationsPer1000:  350,  // $3.50 per 1000 operations
+	AICreditsPerCredit: 1,    // $0.01 per AI credit
+	StoragePerGB:       100,  // $1.00 per GB
+	ExtraSeatMonthly:   500,  // $5.00 per extra seat
+	OverageMultiplier:  1.25, // 1.25x rate for overage (Zapier style)
+	MaxOverageMultiple: 3,    // Max 3x plan limit before hard stop
 }
 
 // TaskFreeNodes - these node types don't count toward billing (Zapier 2025 style)
 var TaskFreeNodes = map[string]bool{
-	"logic.filter":      true,
-	"logic.switch":      true,
-	"logic.if":          true,
-	"logic.router":      true,
-	"transform.format":  true,
-	"transform.set":     true,
-	"logic.delay":       true,
-	"logic.wait":        true,
-	"logic.loop":        true, // Loop itself is free, iterations count
-	"logic.noop":        true,
-	"logic.merge":       true,
-	"logic.split":       true,
+	"logic.filter":     true,
+	"logic.switch":     true,
+	"logic.if":         true,
+	"logic.router":     true,
+	"transform.format": true,
+	"transform.set":    true,
+	"logic.delay":      true,
+	"logic.wait":       true,
+	"logic.loop":       true, // Loop itself is free, iterations count
+	"logic.noop":       true,
+	"logic.merge":      true,
+	"logic.split":      true,
 }
 
 // IsTaskFreeNode checks if a node type is free (doesn't count toward billing)
@@ -102,29 +102,29 @@ type AIModelCredits struct {
 // AIModelCosts maps AI models to their credit costs
 var AIModelCosts = map[string]AIModelCredits{
 	// OpenAI
-	"gpt-4":           {InputPer1KTokens: 30, OutputPer1KTokens: 60},
-	"gpt-4-turbo":     {InputPer1KTokens: 10, OutputPer1KTokens: 30},
-	"gpt-4o":          {InputPer1KTokens: 5, OutputPer1KTokens: 15},
-	"gpt-4o-mini":     {InputPer1KTokens: 1, OutputPer1KTokens: 3},
-	"gpt-3.5-turbo":   {InputPer1KTokens: 1, OutputPer1KTokens: 2},
-	"dall-e-3":        {PerImage: 40},
-	"dall-e-2":        {PerImage: 20},
-	"whisper-1":       {PerMinuteAudio: 6},
-	"tts-1":           {InputPer1KTokens: 15},
-	"tts-1-hd":        {InputPer1KTokens: 30},
-	
+	"gpt-4":         {InputPer1KTokens: 30, OutputPer1KTokens: 60},
+	"gpt-4-turbo":   {InputPer1KTokens: 10, OutputPer1KTokens: 30},
+	"gpt-4o":        {InputPer1KTokens: 5, OutputPer1KTokens: 15},
+	"gpt-4o-mini":   {InputPer1KTokens: 1, OutputPer1KTokens: 3},
+	"gpt-3.5-turbo": {InputPer1KTokens: 1, OutputPer1KTokens: 2},
+	"dall-e-3":      {PerImage: 40},
+	"dall-e-2":      {PerImage: 20},
+	"whisper-1":     {PerMinuteAudio: 6},
+	"tts-1":         {InputPer1KTokens: 15},
+	"tts-1-hd":      {InputPer1KTokens: 30},
+
 	// Anthropic
-	"claude-3-opus":   {InputPer1KTokens: 15, OutputPer1KTokens: 75},
-	"claude-3-sonnet": {InputPer1KTokens: 3, OutputPer1KTokens: 15},
-	"claude-3-haiku":  {InputPer1KTokens: 1, OutputPer1KTokens: 5},
+	"claude-3-opus":     {InputPer1KTokens: 15, OutputPer1KTokens: 75},
+	"claude-3-sonnet":   {InputPer1KTokens: 3, OutputPer1KTokens: 15},
+	"claude-3-haiku":    {InputPer1KTokens: 1, OutputPer1KTokens: 5},
 	"claude-3.5-sonnet": {InputPer1KTokens: 3, OutputPer1KTokens: 15},
-	
+
 	// Google
-	"gemini-pro":      {InputPer1KTokens: 1, OutputPer1KTokens: 2},
-	"gemini-ultra":    {InputPer1KTokens: 5, OutputPer1KTokens: 15},
-	
+	"gemini-pro":   {InputPer1KTokens: 1, OutputPer1KTokens: 2},
+	"gemini-ultra": {InputPer1KTokens: 5, OutputPer1KTokens: 15},
+
 	// Default for unknown models
-	"default":         {InputPer1KTokens: 5, OutputPer1KTokens: 10},
+	"default": {InputPer1KTokens: 5, OutputPer1KTokens: 10},
 }
 
 // CalculateAICredits calculates credits for AI usage
@@ -133,18 +133,18 @@ func CalculateAICredits(model string, inputTokens, outputTokens, images, audioMi
 	if !ok {
 		costs = AIModelCosts["default"]
 	}
-	
+
 	credits := 0
 	credits += (inputTokens / 1000) * costs.InputPer1KTokens
 	credits += (outputTokens / 1000) * costs.OutputPer1KTokens
 	credits += images * costs.PerImage
 	credits += audioMinutes * costs.PerMinuteAudio
-	
+
 	// Minimum 1 credit for any AI operation
 	if credits < 1 && (inputTokens > 0 || outputTokens > 0 || images > 0 || audioMinutes > 0) {
 		credits = 1
 	}
-	
+
 	return credits
 }
 
@@ -193,8 +193,8 @@ var CorePlan = Plan{
 	ID:           "core",
 	Name:         "Core",
 	Description:  "For freelancers and solopreneurs",
-	PriceMonthly: 900,   // $9
-	PriceYearly:  9000,  // $90 (2 months free)
+	PriceMonthly: 900,  // $9
+	PriceYearly:  9000, // $90 (2 months free)
 	Currency:     "USD",
 	Popular:      false,
 	IsPerUser:    false,
@@ -232,8 +232,8 @@ var ProPlan = Plan{
 	ID:           "pro",
 	Name:         "Pro",
 	Description:  "For growing businesses",
-	PriceMonthly: 1600,   // $16
-	PriceYearly:  16000,  // $160 (2 months free)
+	PriceMonthly: 1600,  // $16
+	PriceYearly:  16000, // $160 (2 months free)
 	Currency:     "USD",
 	Popular:      true,
 	IsPerUser:    false,
@@ -272,8 +272,8 @@ var TeamsPlan = Plan{
 	ID:           "teams",
 	Name:         "Teams",
 	Description:  "For SMB teams collaborating on automation",
-	PriceMonthly: 2900,   // $29 per user
-	PriceYearly:  29000,  // $290 per user (2 months free)
+	PriceMonthly: 2900,  // $29 per user
+	PriceYearly:  29000, // $290 per user (2 months free)
 	Currency:     "USD",
 	Popular:      false,
 	IsPerUser:    true,
@@ -390,7 +390,7 @@ func CalculateOverage(extraOps, extraAI, extraStorageMB int, rates *OverageRates
 	if rates == nil {
 		rates = &DefaultOverageRates
 	}
-	
+
 	var total int64
 	if extraOps > 0 {
 		total += (int64(extraOps) / 1000) * rates.OperationsPer1000

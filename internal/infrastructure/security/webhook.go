@@ -14,8 +14,8 @@ import (
 
 // WebhookValidator validates incoming webhook requests
 type WebhookValidator struct {
-	nonceCache     map[string]time.Time
-	nonceMu        sync.RWMutex
+	nonceCache      map[string]time.Time
+	nonceMu         sync.RWMutex
 	maxTimestampAge time.Duration
 	cleanupInterval time.Duration
 }
@@ -31,33 +31,33 @@ type WebhookSecurityConfig struct {
 	AllowedCIDRs []string `json:"allowed_cidrs,omitempty"` // Explicit CIDRs
 
 	// Replay attack prevention
-	RequireTimestamp   bool  `json:"require_timestamp,omitempty"`
-	TimestampHeader    string `json:"timestamp_header,omitempty"`    // Default: X-Webhook-Timestamp
+	RequireTimestamp   bool   `json:"require_timestamp,omitempty"`
+	TimestampHeader    string `json:"timestamp_header,omitempty"`      // Default: X-Webhook-Timestamp
 	TimestampMaxAgeSec int64  `json:"timestamp_max_age_sec,omitempty"` // Default: 300 (5 min)
-	RequireNonce       bool  `json:"require_nonce,omitempty"`
+	RequireNonce       bool   `json:"require_nonce,omitempty"`
 	NonceHeader        string `json:"nonce_header,omitempty"` // Default: X-Webhook-Nonce
 }
 
 // ValidationResult holds the result of webhook validation
 type ValidationResult struct {
-	Valid       bool   `json:"valid"`
-	Error       string `json:"error,omitempty"`
-	ErrorCode   string `json:"error_code,omitempty"`
-	IPAddress   string `json:"ip_address,omitempty"`
-	Timestamp   int64  `json:"timestamp,omitempty"`
-	Nonce       string `json:"nonce,omitempty"`
+	Valid     bool   `json:"valid"`
+	Error     string `json:"error,omitempty"`
+	ErrorCode string `json:"error_code,omitempty"`
+	IPAddress string `json:"ip_address,omitempty"`
+	Timestamp int64  `json:"timestamp,omitempty"`
+	Nonce     string `json:"nonce,omitempty"`
 }
 
 // Error codes
 const (
-	ErrCodeInvalidSignature   = "INVALID_SIGNATURE"
-	ErrCodeMissingSignature   = "MISSING_SIGNATURE"
-	ErrCodeIPNotAllowed       = "IP_NOT_ALLOWED"
-	ErrCodeMissingTimestamp   = "MISSING_TIMESTAMP"
-	ErrCodeTimestampExpired   = "TIMESTAMP_EXPIRED"
-	ErrCodeInvalidTimestamp   = "INVALID_TIMESTAMP"
-	ErrCodeMissingNonce       = "MISSING_NONCE"
-	ErrCodeNonceReused        = "NONCE_REUSED"
+	ErrCodeInvalidSignature = "INVALID_SIGNATURE"
+	ErrCodeMissingSignature = "MISSING_SIGNATURE"
+	ErrCodeIPNotAllowed     = "IP_NOT_ALLOWED"
+	ErrCodeMissingTimestamp = "MISSING_TIMESTAMP"
+	ErrCodeTimestampExpired = "TIMESTAMP_EXPIRED"
+	ErrCodeInvalidTimestamp = "INVALID_TIMESTAMP"
+	ErrCodeMissingNonce     = "MISSING_NONCE"
+	ErrCodeNonceReused      = "NONCE_REUSED"
 )
 
 // NewWebhookValidator creates a new webhook validator

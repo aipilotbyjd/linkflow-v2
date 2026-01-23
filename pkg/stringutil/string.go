@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // IsEmpty checks if a string is empty or contains only whitespace
@@ -67,7 +70,7 @@ func ToCamelCase(s string) string {
 		if i == 0 {
 			words[i] = strings.ToLower(word)
 		} else {
-			words[i] = strings.Title(strings.ToLower(word))
+			words[i] = cases.Title(language.Und).String(strings.ToLower(word))
 		}
 	}
 	return strings.Join(words, "")
@@ -77,7 +80,7 @@ func ToCamelCase(s string) string {
 func ToPascalCase(s string) string {
 	words := splitIntoWords(s)
 	for i, word := range words {
-		words[i] = strings.Title(strings.ToLower(word))
+		words[i] = cases.Title(language.Und).String(strings.ToLower(word))
 	}
 	return strings.Join(words, "")
 }

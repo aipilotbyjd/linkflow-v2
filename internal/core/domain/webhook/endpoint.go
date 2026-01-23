@@ -9,21 +9,21 @@ import (
 
 // Endpoint entity (aggregate root)
 type Endpoint struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkflowID   uuid.UUID      `gorm:"type:uuid;index;not null" json:"workflow_id"`
-	WorkspaceID  uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	NodeID       string         `gorm:"size:100;not null" json:"node_id"`
-	Path         string         `gorm:"size:255;uniqueIndex;not null" json:"path"`
-	Method       string         `gorm:"size:10;default:POST" json:"method"`
-	IsActive     bool           `gorm:"default:true" json:"is_active"`
-	Secret       *string        `gorm:"size:255" json:"-"`
-	LastCalledAt *time.Time     `json:"last_called_at,omitempty"`
-	CallCount    int            `gorm:"default:0" json:"call_count"`
+	ID           uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkflowID   uuid.UUID  `gorm:"type:uuid;index;not null" json:"workflow_id"`
+	WorkspaceID  uuid.UUID  `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	NodeID       string     `gorm:"size:100;not null" json:"node_id"`
+	Path         string     `gorm:"size:255;uniqueIndex;not null" json:"path"`
+	Method       string     `gorm:"size:10;default:POST" json:"method"`
+	IsActive     bool       `gorm:"default:true" json:"is_active"`
+	Secret       *string    `gorm:"size:255" json:"-"`
+	LastCalledAt *time.Time `json:"last_called_at,omitempty"`
+	CallCount    int        `gorm:"default:0" json:"call_count"`
 
 	// Security settings
 	RequireSignature   bool   `gorm:"default:false" json:"require_signature"`
 	SignatureHeader    string `gorm:"size:100;default:'X-Webhook-Signature'" json:"signature_header,omitempty"`
-	AllowedIPs         string `gorm:"type:text" json:"allowed_ips,omitempty"`          // Comma-separated IPs/CIDRs
+	AllowedIPs         string `gorm:"type:text" json:"allowed_ips,omitempty"` // Comma-separated IPs/CIDRs
 	RequireTimestamp   bool   `gorm:"default:false" json:"require_timestamp"`
 	TimestampHeader    string `gorm:"size:100;default:'X-Webhook-Timestamp'" json:"timestamp_header,omitempty"`
 	TimestampMaxAgeSec int    `gorm:"default:300" json:"timestamp_max_age_sec,omitempty"` // Default 5 min

@@ -6,29 +6,29 @@ import (
 
 // CreateReplayRequest represents a request to create a replay session
 type CreateReplayRequest struct {
-	ExecutionID     string                            `json:"execution_id" validate:"required"`
-	Mode            string                            `json:"mode" validate:"required"`
-	StartFromNodeID *string                           `json:"start_from_node_id,omitempty"`
-	EndAtNodeID     *string                           `json:"end_at_node_id,omitempty"`
-	SkipNodes       []string                          `json:"skip_nodes,omitempty"`
-	ModifyInputs    map[string]interface{}            `json:"modify_inputs,omitempty"`
+	ExecutionID      string                            `json:"execution_id" validate:"required"`
+	Mode             string                            `json:"mode" validate:"required"`
+	StartFromNodeID  *string                           `json:"start_from_node_id,omitempty"`
+	EndAtNodeID      *string                           `json:"end_at_node_id,omitempty"`
+	SkipNodes        []string                          `json:"skip_nodes,omitempty"`
+	ModifyInputs     map[string]interface{}            `json:"modify_inputs,omitempty"`
 	ModifyNodeParams map[string]map[string]interface{} `json:"modify_node_params,omitempty"`
-	Breakpoints     []string                          `json:"breakpoints,omitempty"`
+	Breakpoints      []string                          `json:"breakpoints,omitempty"`
 }
 
 // ReplaySessionResponse represents a replay session response
 type ReplaySessionResponse struct {
-	ID              string   `json:"id"`
-	OriginalExecID  string   `json:"original_execution_id"`
-	WorkflowID      string   `json:"workflow_id"`
-	Status          string   `json:"status"`
-	Mode            string   `json:"mode"`
-	CurrentNodeID   *string  `json:"current_node_id,omitempty"`
-	Breakpoints     []string `json:"breakpoints"`
-	NewExecutionID  *string  `json:"new_execution_id,omitempty"`
-	CreatedAt       string   `json:"created_at"`
-	StartedAt       *string  `json:"started_at,omitempty"`
-	CompletedAt     *string  `json:"completed_at,omitempty"`
+	ID             string   `json:"id"`
+	OriginalExecID string   `json:"original_execution_id"`
+	WorkflowID     string   `json:"workflow_id"`
+	Status         string   `json:"status"`
+	Mode           string   `json:"mode"`
+	CurrentNodeID  *string  `json:"current_node_id,omitempty"`
+	Breakpoints    []string `json:"breakpoints"`
+	NewExecutionID *string  `json:"new_execution_id,omitempty"`
+	CreatedAt      string   `json:"created_at"`
+	StartedAt      *string  `json:"started_at,omitempty"`
+	CompletedAt    *string  `json:"completed_at,omitempty"`
 }
 
 // StepRequest represents a request to step through replay

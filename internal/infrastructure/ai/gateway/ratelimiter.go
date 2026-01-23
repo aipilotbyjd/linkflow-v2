@@ -10,9 +10,9 @@ import (
 
 // RateLimiter handles rate limiting for AI providers
 type RateLimiter struct {
-	limits   map[ai.Provider]*providerLimit
-	buckets  map[string]*tokenBucket
-	mu       sync.RWMutex
+	limits  map[ai.Provider]*providerLimit
+	buckets map[string]*tokenBucket
+	mu      sync.RWMutex
 }
 
 type providerLimit struct {

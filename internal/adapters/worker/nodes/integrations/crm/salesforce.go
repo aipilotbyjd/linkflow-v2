@@ -42,8 +42,8 @@ func (n *SalesforceNode) query(ctx context.Context, params map[string]interface{
 
 func (n *SalesforceNode) getRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
 	objectType, _ := params["object_type"].(string)
-	recordId, _ := params["record_id"].(string)
-	return types.JSON{"object_type": objectType, "record_id": recordId, "record": nil}, nil
+	recordID, _ := params["record_id"].(string)
+	return types.JSON{"object_type": objectType, "record_id": recordID, "record": nil}, nil
 }
 
 func (n *SalesforceNode) createRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
@@ -54,15 +54,15 @@ func (n *SalesforceNode) createRecord(ctx context.Context, params map[string]int
 
 func (n *SalesforceNode) updateRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
 	objectType, _ := params["object_type"].(string)
-	recordId, _ := params["record_id"].(string)
+	recordID, _ := params["record_id"].(string)
 	data, _ := params["data"].(map[string]interface{})
-	return types.JSON{"object_type": objectType, "record_id": recordId, "data": data, "success": true}, nil
+	return types.JSON{"object_type": objectType, "record_id": recordID, "data": data, "success": true}, nil
 }
 
 func (n *SalesforceNode) deleteRecord(ctx context.Context, params map[string]interface{}) (types.JSON, error) {
 	objectType, _ := params["object_type"].(string)
-	recordId, _ := params["record_id"].(string)
-	return types.JSON{"object_type": objectType, "record_id": recordId, "success": true}, nil
+	recordID, _ := params["record_id"].(string)
+	return types.JSON{"object_type": objectType, "record_id": recordID, "success": true}, nil
 }
 
 func (n *SalesforceNode) Metadata() wtypes.NodeMetadata {

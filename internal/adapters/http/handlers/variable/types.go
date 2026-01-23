@@ -38,14 +38,14 @@ type EnvironmentRequest struct {
 
 // EnvironmentResponse represents an environment in responses
 type EnvironmentResponse struct {
-	ID          string                    `json:"id"`
-	Name        string                    `json:"name"`
-	DisplayName string                    `json:"display_name"`
-	Description *string                   `json:"description,omitempty"`
-	Color       *string                   `json:"color,omitempty"`
-	IsDefault   bool                      `json:"is_default"`
-	Variables   []EnvironmentVarResponse  `json:"variables,omitempty"`
-	CreatedAt   string                    `json:"created_at"`
+	ID          string                   `json:"id"`
+	Name        string                   `json:"name"`
+	DisplayName string                   `json:"display_name"`
+	Description *string                  `json:"description,omitempty"`
+	Color       *string                  `json:"color,omitempty"`
+	IsDefault   bool                     `json:"is_default"`
+	Variables   []EnvironmentVarResponse `json:"variables,omitempty"`
+	CreatedAt   string                   `json:"created_at"`
 }
 
 // EnvironmentVarResponse represents an environment variable override

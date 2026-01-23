@@ -30,12 +30,12 @@ type cachedUsage struct {
 
 // Errors
 var (
-	ErrOperationsExceeded = errors.New("operations limit exceeded for this billing period")
-	ErrAICreditsExceeded  = errors.New("AI credits limit exceeded for this billing period")
-	ErrStorageExceeded    = errors.New("storage limit exceeded")
-	ErrScenariosExceeded  = errors.New("active scenarios limit exceeded")
+	ErrOperationsExceeded   = errors.New("operations limit exceeded for this billing period")
+	ErrAICreditsExceeded    = errors.New("AI credits limit exceeded for this billing period")
+	ErrStorageExceeded      = errors.New("storage limit exceeded")
+	ErrScenariosExceeded    = errors.New("active scenarios limit exceeded")
 	ErrDataTransferExceeded = errors.New("data transfer limit exceeded")
-	ErrFeatureNotAvailable = errors.New("feature not available on your plan")
+	ErrFeatureNotAvailable  = errors.New("feature not available on your plan")
 	ErrNoActiveSubscription = errors.New("no active subscription found")
 )
 
@@ -190,11 +190,11 @@ func (s *UsageService) isBYOKActive(workspaceID uuid.UUID, model string) bool {
 	s.mu.RLock()
 	configs := s.byokCache[workspaceID]
 	s.mu.RUnlock()
-	
+
 	if len(configs) == 0 {
 		return false
 	}
-	
+
 	// Determine provider from model
 	var provider billing.AIProvider
 	switch {
@@ -207,7 +207,7 @@ func (s *UsageService) isBYOKActive(workspaceID uuid.UUID, model string) bool {
 	default:
 		return false
 	}
-	
+
 	return billing.IsBYOKEnabled(configs, provider)
 }
 
@@ -446,14 +446,6 @@ func (s *UsageService) getUsageAndLimitsFromCache(ctx context.Context, workspace
 	return s.getUsageAndLimits(ctx, workspaceID)
 }
 
-func (s *UsageService) updateCache(workspaceID uuid.UUID, usage *billing.Usage, limits *billing.Limits) {
-	s.cache[workspaceID] = &cachedUsage{
-		usage:     usage,
-		limits:    limits,
-		expiresAt: time.Now().Add(5 * time.Minute),
-	}
-}
-
 func (s *UsageService) updateCacheWithPlan(workspaceID uuid.UUID, usage *billing.Usage, limits *billing.Limits, planID string) {
 	s.cache[workspaceID] = &cachedUsage{
 		usage:     usage,
@@ -514,17 +506,17 @@ func (s *UsageService) GetUsageDashboard(ctx context.Context, workspaceID uuid.U
 	}
 
 	plan := billing.GetPlan(planID)
-	
+
 	// Calculate projections
 	now := time.Now()
 	daysInMonth := float64(time.Date(now.Year(), now.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day())
 	daysPassed := float64(now.Day())
-	
+
 	var projectedOps, projectedAI int64
 	if daysPassed > 0 {
 		dailyRate := float64(usage.Operations) / daysPassed
 		projectedOps = int64(dailyRate * daysInMonth)
-		
+
 		dailyAIRate := float64(usage.AICreditsUsed) / daysPassed
 		projectedAI = int64(dailyAIRate * daysInMonth)
 	}
@@ -554,29 +546,29 @@ func (s *UsageService) GetUsageDashboard(ctx context.Context, workspaceID uuid.U
 	return &UsageDashboard{
 		PlanID:   planID,
 		PlanName: plan.Name,
-		
+
 		// Operations
 		OperationsUsed:      usage.Operations,
 		OperationsLimit:     int64(limits.OperationsPerMonth),
 		OperationsPercent:   safePercent(usage.Operations, int64(limits.OperationsPerMonth)),
 		OperationsProjected: projectedOps,
 		OperationsRollover:  int64(rolloverOps),
-		
+
 		// AI Credits
 		AICreditsUsed:      usage.AICreditsUsed,
 		AICreditsLimit:     int64(limits.AICreditsPerMonth),
 		AICreditsPercent:   safePercent(usage.AICreditsUsed, int64(limits.AICreditsPerMonth)),
 		AICreditsProjected: projectedAI,
 		AICreditsRollover:  int64(rolloverAI),
-		
+
 		// Overage
-		OverageOperations: overageOps,
-		OverageAICredits:  overageAI,
+		OverageOperations:  overageOps,
+		OverageAICredits:   overageAI,
 		OverageChargeCents: overageCharge,
-		
+
 		// Period
-		PeriodStart: usage.PeriodStart,
-		PeriodEnd:   usage.PeriodEnd,
+		PeriodStart:   usage.PeriodStart,
+		PeriodEnd:     usage.PeriodEnd,
 		DaysRemaining: int(daysInMonth - daysPassed),
 	}, nil
 }
@@ -585,26 +577,26 @@ func (s *UsageService) GetUsageDashboard(ctx context.Context, workspaceID uuid.U
 type UsageDashboard struct {
 	PlanID   string `json:"plan_id"`
 	PlanName string `json:"plan_name"`
-	
+
 	// Operations
 	OperationsUsed      int64   `json:"operations_used"`
 	OperationsLimit     int64   `json:"operations_limit"`
 	OperationsPercent   float64 `json:"operations_percent"`
 	OperationsProjected int64   `json:"operations_projected"`
 	OperationsRollover  int64   `json:"operations_rollover"`
-	
+
 	// AI Credits
 	AICreditsUsed      int64   `json:"ai_credits_used"`
 	AICreditsLimit     int64   `json:"ai_credits_limit"`
 	AICreditsPercent   float64 `json:"ai_credits_percent"`
 	AICreditsProjected int64   `json:"ai_credits_projected"`
 	AICreditsRollover  int64   `json:"ai_credits_rollover"`
-	
+
 	// Overage
 	OverageOperations  int64 `json:"overage_operations"`
 	OverageAICredits   int64 `json:"overage_ai_credits"`
 	OverageChargeCents int64 `json:"overage_charge_cents"`
-	
+
 	// Period
 	PeriodStart   time.Time `json:"period_start"`
 	PeriodEnd     time.Time `json:"period_end"`

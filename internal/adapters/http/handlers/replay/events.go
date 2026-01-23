@@ -95,10 +95,10 @@ func (h *ListEventsHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			EventType:   "execution.completed",
 			Timestamp:   time.Now().Add(-4 * time.Minute).Format(time.RFC3339),
 			Data: map[string]interface{}{
-				"status":        "success",
-				"total_nodes":   5,
-				"duration_ms":   60000,
-				"credits_used":  0.15,
+				"status":       "success",
+				"total_nodes":  5,
+				"duration_ms":  60000,
+				"credits_used": 0.15,
 			},
 		},
 	}

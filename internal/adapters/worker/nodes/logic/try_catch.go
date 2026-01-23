@@ -23,7 +23,7 @@ func (n *TryCatchNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 
 	// Check if we're receiving an error from upstream
 	errorData, hasError := inputData["error"].(map[string]interface{})
-	
+
 	// Get retry settings
 	maxRetries, _ := params["max_retries"].(float64)
 	retryDelay, _ := params["retry_delay"].(float64)
@@ -36,11 +36,11 @@ func (n *TryCatchNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 	}
 
 	result := types.JSON{
-		"has_error":     hasError,
-		"retry_count":   retryCount,
-		"max_retries":   int(maxRetries),
-		"retry_delay":   int(retryDelay),
-		"retry_on":      retryOn,
+		"has_error":        hasError,
+		"retry_count":      retryCount,
+		"max_retries":      int(maxRetries),
+		"retry_delay":      int(retryDelay),
+		"retry_on":         retryOn,
 		"continue_on_fail": params["continue_on_fail"],
 	}
 
@@ -48,7 +48,7 @@ func (n *TryCatchNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 		result["error"] = errorData
 		result["error_message"] = errorData["message"]
 		result["error_type"] = errorData["type"]
-		
+
 		// Check if should retry
 		if retryCount < int(maxRetries) {
 			result["should_retry"] = true
@@ -161,7 +161,7 @@ func NewErrorThrowNode() *ErrorThrowNode {
 // Execute throws an error with specified message and type
 func (n *ErrorThrowNode) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {
 	params, _ := node["parameters"].(map[string]interface{})
-	
+
 	errorMessage, _ := params["message"].(string)
 	errorType, _ := params["error_type"].(string)
 	errorCode, _ := params["error_code"].(string)

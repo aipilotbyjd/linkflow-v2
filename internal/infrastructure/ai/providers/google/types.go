@@ -41,12 +41,3 @@ type embeddingResponse struct {
 type embedding struct {
 	Values []float64 `json:"values"`
 }
-
-// Error response types
-type errorResponse struct {
-	Error struct {
-		Code    int    `json:"code"`
-		Message string `json:"message"`
-		Status  string `json:"status"`
-	} `json:"error"`
-}

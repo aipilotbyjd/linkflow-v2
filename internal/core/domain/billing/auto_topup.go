@@ -8,31 +8,31 @@ import (
 
 // AutoTopUp configures automatic credit purchases
 type AutoTopUp struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	WorkspaceID     uuid.UUID `gorm:"type:uuid;uniqueIndex;not null" json:"workspace_id"`
-	Enabled         bool      `gorm:"default:false" json:"enabled"`
-	
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	WorkspaceID uuid.UUID `gorm:"type:uuid;uniqueIndex;not null" json:"workspace_id"`
+	Enabled     bool      `gorm:"default:false" json:"enabled"`
+
 	// Trigger settings
 	TriggerThreshold int `gorm:"default:10" json:"trigger_threshold"` // Buy when below X% remaining
-	
+
 	// Purchase settings
-	PurchaseType     TopUpType `gorm:"size:20;default:credits" json:"purchase_type"`
-	CreditAmount     int       `gorm:"default:10000" json:"credit_amount"`      // Credits to buy
-	AICreditsAmount  int       `gorm:"default:1000" json:"ai_credits_amount"`   // AI credits to buy
-	
+	PurchaseType    TopUpType `gorm:"size:20;default:credits" json:"purchase_type"`
+	CreditAmount    int       `gorm:"default:10000" json:"credit_amount"`    // Credits to buy
+	AICreditsAmount int       `gorm:"default:1000" json:"ai_credits_amount"` // AI credits to buy
+
 	// Spending limits
 	MaxPurchasesPerMonth int   `gorm:"default:5" json:"max_purchases_per_month"`
 	MaxSpendPerMonth     int64 `gorm:"default:10000" json:"max_spend_per_month_cents"` // $100 default cap
-	
+
 	// Payment
-	PaymentMethodID  string `gorm:"size:100" json:"payment_method_id,omitempty"`
-	
+	PaymentMethodID string `gorm:"size:100" json:"payment_method_id,omitempty"`
+
 	// Tracking
-	PurchasesThisMonth int       `gorm:"default:0" json:"purchases_this_month"`
-	SpentThisMonth     int64     `gorm:"default:0" json:"spent_this_month_cents"`
+	PurchasesThisMonth int        `gorm:"default:0" json:"purchases_this_month"`
+	SpentThisMonth     int64      `gorm:"default:0" json:"spent_this_month_cents"`
 	LastPurchaseAt     *time.Time `json:"last_purchase_at,omitempty"`
-	LastResetAt        time.Time `json:"last_reset_at"`
-	
+	LastResetAt        time.Time  `json:"last_reset_at"`
+
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -48,20 +48,20 @@ const (
 
 // TopUpPurchase records auto top-up transactions
 type TopUpPurchase struct {
-	ID              uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	WorkspaceID     uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	AutoTopUpID     uuid.UUID `gorm:"type:uuid;index" json:"auto_topup_id"`
-	PurchaseType    TopUpType `gorm:"size:20" json:"purchase_type"`
-	CreditsAdded    int       `json:"credits_added"`
-	AICreditsAdded  int       `json:"ai_credits_added"`
-	AmountCharged   int64     `json:"amount_charged_cents"`
-	StripeChargeID  string    `gorm:"size:100" json:"stripe_charge_id,omitempty"`
-	TriggerReason   string    `gorm:"size:200" json:"trigger_reason"`
-	UsageAtTrigger  int64     `json:"usage_at_trigger"`
-	LimitAtTrigger  int64     `json:"limit_at_trigger"`
-	Status          string    `gorm:"size:20" json:"status"` // pending, completed, failed
-	FailureReason   string    `gorm:"size:500" json:"failure_reason,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID             uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
+	WorkspaceID    uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	AutoTopUpID    uuid.UUID `gorm:"type:uuid;index" json:"auto_topup_id"`
+	PurchaseType   TopUpType `gorm:"size:20" json:"purchase_type"`
+	CreditsAdded   int       `json:"credits_added"`
+	AICreditsAdded int       `json:"ai_credits_added"`
+	AmountCharged  int64     `json:"amount_charged_cents"`
+	StripeChargeID string    `gorm:"size:100" json:"stripe_charge_id,omitempty"`
+	TriggerReason  string    `gorm:"size:200" json:"trigger_reason"`
+	UsageAtTrigger int64     `json:"usage_at_trigger"`
+	LimitAtTrigger int64     `json:"limit_at_trigger"`
+	Status         string    `gorm:"size:20" json:"status"` // pending, completed, failed
+	FailureReason  string    `gorm:"size:500" json:"failure_reason,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
 }
 
 // CreditPack represents purchasable credit packages
@@ -143,15 +143,15 @@ func (a *AutoTopUp) CanPurchase(purchaseAmount int64) (bool, string) {
 	if !a.Enabled {
 		return false, "auto top-up is disabled"
 	}
-	
+
 	if a.PurchasesThisMonth >= a.MaxPurchasesPerMonth {
 		return false, "monthly purchase limit reached"
 	}
-	
+
 	if a.SpentThisMonth+purchaseAmount > a.MaxSpendPerMonth {
 		return false, "monthly spending limit would be exceeded"
 	}
-	
+
 	return true, ""
 }
 

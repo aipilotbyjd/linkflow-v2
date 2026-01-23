@@ -33,9 +33,9 @@ type PromptTemplate struct {
 	DefaultMaxTokens   int      `json:"default_max_tokens,omitempty"`
 
 	// Versioning
-	Version   int  `json:"version"`
-	IsActive  bool `json:"is_active"`
-	IsPublic  bool `json:"is_public"`
+	Version  int  `json:"version"`
+	IsActive bool `json:"is_active"`
+	IsPublic bool `json:"is_public"`
 
 	// Metadata
 	Tags      []string  `json:"tags,omitempty"`
@@ -45,12 +45,12 @@ type PromptTemplate struct {
 
 // TemplateVariable represents a variable in a prompt template
 type TemplateVariable struct {
-	Name         string      `json:"name"`
-	Type         string      `json:"type"` // string, number, boolean, array, object
-	Description  string      `json:"description,omitempty"`
-	Required     bool        `json:"required"`
-	Default      interface{} `json:"default,omitempty"`
-	Validation   string      `json:"validation,omitempty"` // regex pattern
+	Name        string      `json:"name"`
+	Type        string      `json:"type"` // string, number, boolean, array, object
+	Description string      `json:"description,omitempty"`
+	Required    bool        `json:"required"`
+	Default     interface{} `json:"default,omitempty"`
+	Validation  string      `json:"validation,omitempty"` // regex pattern
 }
 
 // NewPromptTemplate creates a new prompt template

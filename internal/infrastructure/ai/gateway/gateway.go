@@ -16,24 +16,24 @@ import (
 
 // Gateway is the unified AI gateway that handles all AI requests
 type Gateway struct {
-	providers     map[ai.Provider]ai.ProviderAdapter
-	router        *Router
-	fallback      *FallbackChain
-	rateLimiter   *RateLimiter
-	cache         ai.Cache
-	usageRepo     ai.UsageRepository
-	logger        logger.Logger
-	mu            sync.RWMutex
+	providers   map[ai.Provider]ai.ProviderAdapter
+	router      *Router
+	fallback    *FallbackChain
+	rateLimiter *RateLimiter
+	cache       ai.Cache
+	usageRepo   ai.UsageRepository
+	logger      logger.Logger
+	mu          sync.RWMutex
 }
 
 // GatewayConfig holds gateway configuration
 type GatewayConfig struct {
-	EnableCache      bool
-	EnableFallback   bool
-	EnableRateLimit  bool
-	DefaultTimeout   time.Duration
-	MaxRetries       int
-	RetryDelay       time.Duration
+	EnableCache     bool
+	EnableFallback  bool
+	EnableRateLimit bool
+	DefaultTimeout  time.Duration
+	MaxRetries      int
+	RetryDelay      time.Duration
 }
 
 // DefaultGatewayConfig returns default gateway configuration

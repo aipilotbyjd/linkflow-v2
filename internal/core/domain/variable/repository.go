@@ -31,7 +31,7 @@ type Repository interface {
 	SetEnvironmentVariable(ctx context.Context, ev *EnvironmentVar) error
 	DeleteEnvironmentVariable(ctx context.Context, environmentID, variableID uuid.UUID) error
 	FindEnvironmentVariables(ctx context.Context, environmentID uuid.UUID) ([]EnvironmentVar, error)
-	
+
 	// Resolution
 	ResolveVariables(ctx context.Context, workspaceID uuid.UUID, environmentName string, workflowID *uuid.UUID) (*VariableSet, error)
 }

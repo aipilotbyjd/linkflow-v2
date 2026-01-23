@@ -50,7 +50,7 @@ func (h *WorkspaceMetricsHandler) Handle(w http.ResponseWriter, r *http.Request)
 		EstimatedCostUSD:   154.25,
 		APICallsCount:      45000,
 		DataProcessedBytes: 125000000,
-		ExecutionTrend: generateTrend(period),
+		ExecutionTrend:     generateTrend(period),
 		StartTime:          time.Now().Add(-24 * time.Hour),
 		EndTime:            time.Now(),
 	}
@@ -66,7 +66,7 @@ func (h *WorkspaceMetricsHandler) Handle(w http.ResponseWriter, r *http.Request)
 func generateTrend(period string) []observability.TrendPoint {
 	var points []observability.TrendPoint
 	now := time.Now()
-	
+
 	count := 24
 	interval := time.Hour
 	if period == "week" {

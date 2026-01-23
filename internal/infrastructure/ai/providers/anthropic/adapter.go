@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/ai"
 )
 
@@ -296,9 +295,9 @@ func (a *Adapter) convertMessage(msg ai.Message) map[string]interface{} {
 					mediaType = "image/" + mediaType
 				}
 				imgContent["source"] = map[string]string{
-					"type":         "base64",
-					"media_type":   mediaType,
-					"data":         c.ImageBase64,
+					"type":       "base64",
+					"media_type": mediaType,
+					"data":       c.ImageBase64,
 				}
 			} else if c.ImageURL != "" {
 				imgContent["source"] = map[string]string{
@@ -390,9 +389,4 @@ func (a *Adapter) parseError(statusCode int, body []byte) error {
 
 	retryable := statusCode == 429 || statusCode >= 500
 	return ai.NewProviderError(ai.ProviderAnthropic, statusCode, errResp.Error.Type, errResp.Error.Message, retryable)
-}
-
-// Helper to generate unique ID
-func generateID() string {
-	return uuid.New().String()
 }

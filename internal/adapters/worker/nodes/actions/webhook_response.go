@@ -124,7 +124,7 @@ func (n *RespondToWebhookNode) Execute(ctx context.Context, runtime *executor.Ru
 	}
 
 	return types.JSON{
-		"_webhook_response":   true,
+		"_webhook_response":    true,
 		"_respond_immediately": true,
 		"status_code":          statusCode,
 		"body":                 body,

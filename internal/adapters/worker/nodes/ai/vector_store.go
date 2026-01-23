@@ -33,24 +33,11 @@ func (n *VectorStoreNode) Execute(ctx context.Context, runtime *executor.Runtime
 	}
 
 	// Get credentials
-	apiKey, _ := params["api_key"].(string)
 	indexName, _ := params["index_name"].(string)
-	
-	if apiKey == "" {
-		// Try to get from credential reference
-		if credRef, ok := params["credential"].(map[string]interface{}); ok {
-			if key, ok := credRef["api_key"].(string); ok {
-				apiKey = key
-			}
-			if idx, ok := credRef["index_name"].(string); ok {
-				indexName = idx
-			}
-		}
-	}
 
 	// Mock implementation for now - replacing with actual DB calls in future
 	// This structure ensures the node is ready for integration
-	
+
 	switch operation {
 	case "upsert":
 		// Get data to upsert
@@ -68,11 +55,11 @@ func (n *VectorStoreNode) Execute(ctx context.Context, runtime *executor.Runtime
 		}
 
 		return types.JSON{
-			"success": true,
-			"count":   len(vectors),
+			"success":   true,
+			"count":     len(vectors),
 			"operation": "upsert",
-			"provider": provider,
-			"index":    indexName,
+			"provider":  provider,
+			"index":     indexName,
 		}, nil
 
 	case "search":
@@ -98,26 +85,26 @@ func (n *VectorStoreNode) Execute(ctx context.Context, runtime *executor.Runtime
 		return types.JSON{
 			"matches": []map[string]interface{}{
 				{
-					"id": "mock-doc-1",
-					"score": 0.95,
+					"id":       "mock-doc-1",
+					"score":    0.95,
 					"metadata": map[string]interface{}{"text": "This is a relevant document"},
 				},
 				{
-					"id": "mock-doc-2",
-					"score": 0.88,
+					"id":       "mock-doc-2",
+					"score":    0.88,
 					"metadata": map[string]interface{}{"text": "Another relevant document"},
 				},
 			},
-			"count": 2,
+			"count":     2,
 			"operation": "search",
 		}, nil
 
 	case "delete":
 		ids, _ := params["ids"].([]interface{})
 		return types.JSON{
-			"success": true,
+			"success":       true,
 			"deleted_count": len(ids),
-			"operation": "delete",
+			"operation":     "delete",
 		}, nil
 	}
 

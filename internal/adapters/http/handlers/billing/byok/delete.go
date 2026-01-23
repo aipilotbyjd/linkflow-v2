@@ -21,7 +21,7 @@ func NewDeleteHandler(repo BYOKRepository) *DeleteHandler {
 func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	workspaceID := middleware.GetWorkspaceID(ctx)
-	
+
 	configID, err := uuid.Parse(chi.URLParam(r, "configId"))
 	if err != nil {
 		common.BadRequest(w, "Invalid configuration ID")

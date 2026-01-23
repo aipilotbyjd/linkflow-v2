@@ -31,16 +31,16 @@ const (
 
 // UsageAlert represents a usage threshold alert configuration
 type UsageAlert struct {
-	ID          uuid.UUID       `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID uuid.UUID       `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	AlertType   UsageAlertType  `gorm:"size:50;not null" json:"alert_type"`
-	Threshold   int             `gorm:"not null" json:"threshold"` // Percentage (50, 75, 90, 100)
-	Severity    AlertSeverity   `gorm:"size:20;not null" json:"severity"`
-	Enabled     bool            `gorm:"default:true" json:"enabled"`
-	Channels    AlertChannels   `gorm:"type:jsonb" json:"channels"`
-	CreatedAt   time.Time       `json:"created_at"`
-	UpdatedAt   time.Time       `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt  `gorm:"index" json:"-"`
+	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	AlertType   UsageAlertType `gorm:"size:50;not null" json:"alert_type"`
+	Threshold   int            `gorm:"not null" json:"threshold"` // Percentage (50, 75, 90, 100)
+	Severity    AlertSeverity  `gorm:"size:20;not null" json:"severity"`
+	Enabled     bool           `gorm:"default:true" json:"enabled"`
+	Channels    AlertChannels  `gorm:"type:jsonb" json:"channels"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (UsageAlert) TableName() string {
@@ -62,21 +62,21 @@ type AlertChannels struct {
 
 // UsageAlertLog records when alerts were triggered
 type UsageAlertLog struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID  uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	AlertID      uuid.UUID      `gorm:"type:uuid;index" json:"alert_id"`
-	AlertType    UsageAlertType `gorm:"size:50;not null" json:"alert_type"`
-	Severity     AlertSeverity  `gorm:"size:20" json:"severity"`
-	Threshold    int            `json:"threshold"`
-	CurrentUsage int64          `json:"current_usage"`
-	Limit        int64          `json:"limit"`
-	Percentage   float64        `json:"percentage"`
-	Message      string         `gorm:"size:1000" json:"message"`
-	SentAt       time.Time      `gorm:"index" json:"sent_at"`
-	ChannelsSent []string       `gorm:"type:jsonb" json:"channels_sent"`
-	Acknowledged bool           `gorm:"default:false" json:"acknowledged"`
-	AcknowledgedAt *time.Time   `json:"acknowledged_at,omitempty"`
-	AcknowledgedBy *uuid.UUID   `gorm:"type:uuid" json:"acknowledged_by,omitempty"`
+	ID             uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID    uuid.UUID      `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	AlertID        uuid.UUID      `gorm:"type:uuid;index" json:"alert_id"`
+	AlertType      UsageAlertType `gorm:"size:50;not null" json:"alert_type"`
+	Severity       AlertSeverity  `gorm:"size:20" json:"severity"`
+	Threshold      int            `json:"threshold"`
+	CurrentUsage   int64          `json:"current_usage"`
+	Limit          int64          `json:"limit"`
+	Percentage     float64        `json:"percentage"`
+	Message        string         `gorm:"size:1000" json:"message"`
+	SentAt         time.Time      `gorm:"index" json:"sent_at"`
+	ChannelsSent   []string       `gorm:"type:jsonb" json:"channels_sent"`
+	Acknowledged   bool           `gorm:"default:false" json:"acknowledged"`
+	AcknowledgedAt *time.Time     `json:"acknowledged_at,omitempty"`
+	AcknowledgedBy *uuid.UUID     `gorm:"type:uuid" json:"acknowledged_by,omitempty"`
 }
 
 func (UsageAlertLog) TableName() string {

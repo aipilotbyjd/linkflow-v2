@@ -129,7 +129,7 @@ Return a JSON object with an "explanation" string field.`
 
 func (s *Service) buildSystemPrompt() string {
 	nodeTypesJSON, _ := json.Marshal(s.nodeTemplates)
-	
+
 	return fmt.Sprintf(`You are a workflow automation expert that generates workflow definitions.
 
 AVAILABLE NODE TYPES:

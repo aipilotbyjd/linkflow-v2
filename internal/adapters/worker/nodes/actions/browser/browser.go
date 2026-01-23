@@ -53,13 +53,13 @@ func (n *BrowserNode) Execute(ctx context.Context, runtime *executor.Runtime, no
 
 	case "screenshot":
 		fullPage, _ := params["full_page"].(bool)
-		
+
 		// Mock screenshot result
 		return types.JSON{
-			"url":       url,
-			"image_url": "https://storage.example.com/screenshots/mock-123.png",
-			"format":    "png",
-			"full_page": fullPage,
+			"url":        url,
+			"image_url":  "https://storage.example.com/screenshots/mock-123.png",
+			"format":     "png",
+			"full_page":  fullPage,
 			"size_bytes": 102400,
 		}, nil
 

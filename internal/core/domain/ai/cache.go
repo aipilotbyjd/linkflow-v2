@@ -13,9 +13,9 @@ type CacheEntry struct {
 	WorkspaceID uuid.UUID `json:"workspace_id,omitempty"`
 
 	// Cache key
-	PromptHash string    `json:"prompt_hash"`
-	Model      string    `json:"model"`
-	Provider   Provider  `json:"provider"`
+	PromptHash string   `json:"prompt_hash"`
+	Model      string   `json:"model"`
+	Provider   Provider `json:"provider"`
 
 	// For semantic cache
 	Embedding []float64 `json:"embedding,omitempty"`
@@ -51,8 +51,8 @@ type CacheConfig struct {
 	TTL time.Duration `json:"ttl"`
 
 	// Semantic cache settings
-	SemanticEnabled       bool    `json:"semantic_enabled"`
-	SimilarityThreshold   float64 `json:"similarity_threshold"` // 0.0 to 1.0
+	SemanticEnabled     bool    `json:"semantic_enabled"`
+	SimilarityThreshold float64 `json:"similarity_threshold"` // 0.0 to 1.0
 
 	// Max entries per workspace
 	MaxEntriesPerWorkspace int `json:"max_entries_per_workspace"`
@@ -95,11 +95,11 @@ type Cache interface {
 
 // CacheStats represents cache statistics
 type CacheStats struct {
-	TotalEntries     int     `json:"total_entries"`
-	TotalHits        int     `json:"total_hits"`
-	TotalMisses      int     `json:"total_misses"`
-	HitRate          float64 `json:"hit_rate"`
-	EstimatedSavings float64 `json:"estimated_savings_usd"`
+	TotalEntries     int       `json:"total_entries"`
+	TotalHits        int       `json:"total_hits"`
+	TotalMisses      int       `json:"total_misses"`
+	HitRate          float64   `json:"hit_rate"`
+	EstimatedSavings float64   `json:"estimated_savings_usd"`
 	OldestEntry      time.Time `json:"oldest_entry"`
 	NewestEntry      time.Time `json:"newest_entry"`
 }

@@ -166,11 +166,11 @@ When the task is complete, provide a final summary.`
 		if !resp.HasToolCalls() {
 			// No tool calls - agent is done
 			return types.JSON{
-				"response":    resp.GetText(),
-				"iterations":  iterations,
-				"tool_calls":  allToolCalls,
-				"model":       resp.Model,
-				"provider":    resp.Provider.String(),
+				"response":   resp.GetText(),
+				"iterations": iterations,
+				"tool_calls": allToolCalls,
+				"model":      resp.Model,
+				"provider":   resp.Provider.String(),
 				"usage": map[string]interface{}{
 					"input_tokens":  totalUsage.InputTokens,
 					"output_tokens": totalUsage.OutputTokens,
@@ -219,11 +219,11 @@ When the task is complete, provide a final summary.`
 
 	// Max iterations reached
 	return types.JSON{
-		"response":    "Agent reached maximum iterations without completing the task.",
-		"iterations":  iterations,
-		"tool_calls":  allToolCalls,
-		"model":       model,
-		"provider":    provider.String(),
+		"response":   "Agent reached maximum iterations without completing the task.",
+		"iterations": iterations,
+		"tool_calls": allToolCalls,
+		"model":      model,
+		"provider":   provider.String(),
 		"usage": map[string]interface{}{
 			"input_tokens":  totalUsage.InputTokens,
 			"output_tokens": totalUsage.OutputTokens,

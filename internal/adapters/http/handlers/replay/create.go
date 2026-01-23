@@ -63,7 +63,7 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	workflowID := uuid.New() // Placeholder
 
 	session := replay.NewReplaySession(workspaceID, execID, workflowID, userID, mode, opts)
-	
+
 	for _, bp := range req.Breakpoints {
 		session.AddBreakpoint(bp)
 	}

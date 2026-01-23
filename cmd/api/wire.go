@@ -12,14 +12,14 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	userCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/user"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 	workspaceCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workspace"
-	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
+	executionQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/execution"
 	userQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/user"
 	workflowQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/workflow"
 	workspaceQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/workspace"
-	executionQuery "github.com/linkflow-ai/linkflow/internal/core/application/query/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/schedule"
@@ -38,14 +38,14 @@ import (
 
 // App holds all dependencies for the API server
 type App struct {
-	Config  *config.Config
-	Logger  logger.Logger
-	DB      *postgres.Client
-	Redis   *redisAdapter.Client
-	Queue   *asynq.Client
-	Cache   cache.Cache
-	JWT     *jwt.Manager
-	Hasher  *crypto.Hasher
+	Config *config.Config
+	Logger logger.Logger
+	DB     *postgres.Client
+	Redis  *redisAdapter.Client
+	Queue  *asynq.Client
+	Cache  cache.Cache
+	JWT    *jwt.Manager
+	Hasher *crypto.Hasher
 
 	// Repositories
 	UserRepo       user.Repository

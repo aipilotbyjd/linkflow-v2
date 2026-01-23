@@ -21,11 +21,11 @@ func (n *JiraNode) Execute(ctx context.Context, runtime *executor.Runtime, node 
 	inputData := runtime.GetInputData()
 
 	operation, _ := params["operation"].(string)
-	
+
 	baseURL := runtime.GetCredentialValue("jira", "base_url")
 	email := runtime.GetCredentialValue("jira", "email")
 	apiToken := runtime.GetCredentialValue("jira", "api_token")
-	
+
 	if baseURL == "" || apiToken == "" {
 		return nil, fmt.Errorf("jira credentials not configured")
 	}
@@ -40,7 +40,7 @@ func (n *JiraNode) Execute(ctx context.Context, runtime *executor.Runtime, node 
 		priority, _ := params["priority"].(string)
 		assignee, _ := params["assignee"].(string)
 		labels, _ := params["labels"].([]interface{})
-		
+
 		return types.JSON{
 			"operation":   "create_issue",
 			"project_key": projectKey,

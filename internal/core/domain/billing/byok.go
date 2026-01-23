@@ -9,30 +9,30 @@ import (
 
 // BYOKConfig - Bring Your Own Key configuration for AI providers
 type BYOKConfig struct {
-	ID          uuid.UUID    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID uuid.UUID    `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	Provider    AIProvider   `gorm:"size:50;not null;index" json:"provider"`
-	Name        string       `gorm:"size:100" json:"name"` // User-friendly name
-	
+	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID uuid.UUID  `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	Provider    AIProvider `gorm:"size:50;not null;index" json:"provider"`
+	Name        string     `gorm:"size:100" json:"name"` // User-friendly name
+
 	// Encrypted API key (stored encrypted in DB)
 	APIKeyEncrypted string `gorm:"size:500" json:"-"`
 	APIKeyMasked    string `gorm:"-" json:"api_key_masked"` // For display: sk-...xxxx
-	
+
 	// Optional settings
 	OrganizationID string `gorm:"size:100" json:"organization_id,omitempty"`
 	BaseURL        string `gorm:"size:255" json:"base_url,omitempty"` // For custom endpoints
-	
+
 	// Status
 	IsActive      bool       `gorm:"default:true" json:"is_active"`
 	IsValid       bool       `gorm:"default:false" json:"is_valid"` // Set after validation
 	LastValidated *time.Time `json:"last_validated,omitempty"`
 	LastUsed      *time.Time `json:"last_used,omitempty"`
 	ErrorMessage  string     `gorm:"size:500" json:"error_message,omitempty"`
-	
+
 	// Usage tracking (even with BYOK, track for analytics)
 	TotalRequests   int64 `gorm:"default:0" json:"total_requests"`
 	TotalTokensUsed int64 `gorm:"default:0" json:"total_tokens_used"`
-	
+
 	// Audit
 	CreatedBy uuid.UUID      `gorm:"type:uuid" json:"created_by"`
 	CreatedAt time.Time      `json:"created_at"`
@@ -47,14 +47,14 @@ func (BYOKConfig) TableName() string {
 type AIProvider string
 
 const (
-	ProviderOpenAI    AIProvider = "openai"
-	ProviderAnthropic AIProvider = "anthropic"
-	ProviderGoogle    AIProvider = "google"
-	ProviderAzure     AIProvider = "azure_openai"
-	ProviderCohere    AIProvider = "cohere"
-	ProviderMistral   AIProvider = "mistral"
-	ProviderGroq      AIProvider = "groq"
-	ProviderTogether  AIProvider = "together"
+	ProviderOpenAI     AIProvider = "openai"
+	ProviderAnthropic  AIProvider = "anthropic"
+	ProviderGoogle     AIProvider = "google"
+	ProviderAzure      AIProvider = "azure_openai"
+	ProviderCohere     AIProvider = "cohere"
+	ProviderMistral    AIProvider = "mistral"
+	ProviderGroq       AIProvider = "groq"
+	ProviderTogether   AIProvider = "together"
 	ProviderPerplexity AIProvider = "perplexity"
 )
 

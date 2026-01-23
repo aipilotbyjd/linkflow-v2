@@ -21,7 +21,7 @@ func (n *MailchimpNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 	inputData := runtime.GetInputData()
 
 	operation, _ := params["operation"].(string)
-	
+
 	apiKey := runtime.GetCredentialValue("mailchimp", "api_key")
 	if apiKey == "" {
 		return nil, fmt.Errorf("mailchimp credentials not configured")
@@ -37,7 +37,7 @@ func (n *MailchimpNode) Execute(ctx context.Context, runtime *executor.Runtime, 
 		firstName, _ := params["first_name"].(string)
 		lastName, _ := params["last_name"].(string)
 		tags, _ := params["tags"].([]interface{})
-		
+
 		return types.JSON{
 			"operation":  "add_subscriber",
 			"list_id":    listID,

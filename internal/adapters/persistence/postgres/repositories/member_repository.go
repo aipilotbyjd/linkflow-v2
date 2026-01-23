@@ -13,11 +13,11 @@ import (
 
 // MemberModel represents workspace member in database
 type MemberModel struct {
-	ID          uuid.UUID      `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	WorkspaceID uuid.UUID      `gorm:"type:uuid;index;not null"`
-	UserID      uuid.UUID      `gorm:"type:uuid;index;not null"`
-	Role        string         `gorm:"size:20;not null;default:member"`
-	InvitedBy   *uuid.UUID     `gorm:"type:uuid"`
+	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	WorkspaceID uuid.UUID  `gorm:"type:uuid;index;not null"`
+	UserID      uuid.UUID  `gorm:"type:uuid;index;not null"`
+	Role        string     `gorm:"size:20;not null;default:member"`
+	InvitedBy   *uuid.UUID `gorm:"type:uuid"`
 	InvitedAt   *time.Time
 	JoinedAt    *time.Time
 	CreatedAt   time.Time

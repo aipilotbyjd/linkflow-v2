@@ -21,7 +21,7 @@ func NewExecuteWorkflowNode() *ExecuteWorkflowNode {
 // Execute runs the sub-workflow and returns its output
 func (n *ExecuteWorkflowNode) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {
 	params, _ := node["parameters"].(map[string]interface{})
-	
+
 	workflowIDStr, _ := params["workflow_id"].(string)
 	if workflowIDStr == "" {
 		return nil, fmt.Errorf("workflow_id is required")
@@ -44,12 +44,6 @@ func (n *ExecuteWorkflowNode) Execute(ctx context.Context, runtime *executor.Run
 		subWorkflowInput = customInput
 	} else {
 		subWorkflowInput = make(map[string]interface{})
-	}
-
-	// Execute mode: sync or async
-	mode, _ := params["mode"].(string)
-	if mode == "" {
-		mode = "sync"
 	}
 
 	// Get wait for completion setting

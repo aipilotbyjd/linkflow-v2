@@ -31,7 +31,10 @@ func (h *CancelHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exec.Cancel()
+	if err := exec.Cancel(); err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	if err := h.executionRepo.Update(r.Context(), exec); err != nil {
 		common.HandleError(w, err)

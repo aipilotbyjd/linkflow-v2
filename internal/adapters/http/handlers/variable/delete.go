@@ -22,7 +22,7 @@ func NewDeleteHandler(repo domainvar.Repository) *DeleteHandler {
 // Handle handles the delete variable request
 func (h *DeleteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	varID, err := uuid.Parse(chi.URLParam(r, "variableId"))
 	if err != nil {
 		common.BadRequest(w, "Invalid variable ID")

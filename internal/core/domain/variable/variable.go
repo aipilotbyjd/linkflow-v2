@@ -64,17 +64,17 @@ func (v *Variable) MarkAsSecret() {
 
 // Environment represents an environment configuration
 type Environment struct {
-	ID          uuid.UUID         `json:"id" gorm:"type:uuid;primaryKey"`
-	WorkspaceID uuid.UUID         `json:"workspace_id" gorm:"type:uuid;index;not null"`
-	Name        string            `json:"name" gorm:"size:50;not null"` // development, staging, production
-	DisplayName string            `json:"display_name" gorm:"size:100"`
-	Description *string           `json:"description,omitempty" gorm:"type:text"`
-	IsDefault   bool              `json:"is_default" gorm:"default:false"`
-	Color       *string           `json:"color,omitempty" gorm:"size:20"`
-	Variables   []EnvironmentVar  `json:"variables" gorm:"-"`
-	CreatedBy   uuid.UUID         `json:"created_by" gorm:"type:uuid;not null"`
-	CreatedAt   time.Time         `json:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at"`
+	ID          uuid.UUID        `json:"id" gorm:"type:uuid;primaryKey"`
+	WorkspaceID uuid.UUID        `json:"workspace_id" gorm:"type:uuid;index;not null"`
+	Name        string           `json:"name" gorm:"size:50;not null"` // development, staging, production
+	DisplayName string           `json:"display_name" gorm:"size:100"`
+	Description *string          `json:"description,omitempty" gorm:"type:text"`
+	IsDefault   bool             `json:"is_default" gorm:"default:false"`
+	Color       *string          `json:"color,omitempty" gorm:"size:20"`
+	Variables   []EnvironmentVar `json:"variables" gorm:"-"`
+	CreatedBy   uuid.UUID        `json:"created_by" gorm:"type:uuid;not null"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
 func (Environment) TableName() string {

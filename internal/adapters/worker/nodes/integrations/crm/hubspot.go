@@ -35,8 +35,8 @@ func (n *HubSpotNode) Execute(ctx context.Context, runtime *executor.Runtime, no
 }
 
 func (n *HubSpotNode) getObject(ctx context.Context, objectType string, params map[string]interface{}) (types.JSON, error) {
-	objectId, _ := params["object_id"].(string)
-	return types.JSON{"object_type": objectType, "object_id": objectId, "object": nil}, nil
+	objectID, _ := params["object_id"].(string)
+	return types.JSON{"object_type": objectType, "object_id": objectID, "object": nil}, nil
 }
 
 func (n *HubSpotNode) createObject(ctx context.Context, objectType string, params map[string]interface{}) (types.JSON, error) {
@@ -45,9 +45,9 @@ func (n *HubSpotNode) createObject(ctx context.Context, objectType string, param
 }
 
 func (n *HubSpotNode) updateObject(ctx context.Context, objectType string, params map[string]interface{}) (types.JSON, error) {
-	objectId, _ := params["object_id"].(string)
+	objectID, _ := params["object_id"].(string)
 	properties, _ := params["properties"].(map[string]interface{})
-	return types.JSON{"object_type": objectType, "object_id": objectId, "properties": properties, "success": true}, nil
+	return types.JSON{"object_type": objectType, "object_id": objectID, "properties": properties, "success": true}, nil
 }
 
 func (n *HubSpotNode) searchObjects(ctx context.Context, objectType string, params map[string]interface{}) (types.JSON, error) {

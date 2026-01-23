@@ -67,25 +67,25 @@ type AdvancedSearchOptions struct {
 	*types.ListOptions
 
 	// Text search
-	Query       string   // Search in name, description
-	SearchIn    []string // Fields to search: name, description, nodes, tags
+	Query    string   // Search in name, description
+	SearchIn []string // Fields to search: name, description, nodes, tags
 
 	// Filters
-	Status      []Status  // Multiple statuses
-	Tags        []string  // Match any tag
-	TagsAll     []string  // Match all tags
-	NodeTypes   []string  // Workflows containing these node types
-	Category    string
-	IsFavorite  *bool
-	FolderID    *uuid.UUID
-	CreatedBy   *uuid.UUID
+	Status     []Status // Multiple statuses
+	Tags       []string // Match any tag
+	TagsAll    []string // Match all tags
+	NodeTypes  []string // Workflows containing these node types
+	Category   string
+	IsFavorite *bool
+	FolderID   *uuid.UUID
+	CreatedBy  *uuid.UUID
 
 	// Date filters
-	CreatedAfter  *int64 // Unix timestamp
-	CreatedBefore *int64
-	UpdatedAfter  *int64
-	UpdatedBefore *int64
-	ExecutedAfter *int64
+	CreatedAfter   *int64 // Unix timestamp
+	CreatedBefore  *int64
+	UpdatedAfter   *int64
+	UpdatedBefore  *int64
+	ExecutedAfter  *int64
 	ExecutedBefore *int64
 
 	// Execution filters

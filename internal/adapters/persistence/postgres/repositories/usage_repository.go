@@ -78,7 +78,7 @@ func (r *UsageRepository) IncrementOperations(ctx context.Context, workspaceID u
 
 	// Upsert with atomic increment
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "workspace_id"}, {Name: "period_start"}},
+		Columns: []clause.Column{{Name: "workspace_id"}, {Name: "period_start"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
 			"operations": gorm.Expr("operations + ?", count),
 			"updated_at": time.Now(),
@@ -101,7 +101,7 @@ func (r *UsageRepository) IncrementAICredits(ctx context.Context, workspaceID uu
 	periodEnd := periodStart.AddDate(0, 1, 0).Add(-time.Second)
 
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "workspace_id"}, {Name: "period_start"}},
+		Columns: []clause.Column{{Name: "workspace_id"}, {Name: "period_start"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
 			"ai_credits_used": gorm.Expr("ai_credits_used + ?", count),
 			"updated_at":      time.Now(),

@@ -120,11 +120,11 @@ func (n *EmbeddingsNode) Execute(ctx context.Context, runtime *executor.Runtime,
 	}
 
 	return types.JSON{
-		"embeddings":  embeddings,
-		"model":       resp.Model,
-		"provider":    resp.Provider.String(),
-		"dimensions":  resp.Dimensions,
-		"count":       len(resp.Embeddings),
+		"embeddings": embeddings,
+		"model":      resp.Model,
+		"provider":   resp.Provider.String(),
+		"dimensions": resp.Dimensions,
+		"count":      len(resp.Embeddings),
 		"usage": map[string]interface{}{
 			"total_tokens": resp.Usage.TotalTokens,
 		},

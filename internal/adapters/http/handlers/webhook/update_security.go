@@ -95,15 +95,15 @@ func (h *UpdateSecurityHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.Success(w, map[string]interface{}{
-		"id":                   endpoint.ID,
-		"require_signature":    endpoint.RequireSignature,
-		"signature_header":     endpoint.SignatureHeader,
-		"allowed_ips":          endpoint.GetAllowedIPsList(),
-		"require_timestamp":    endpoint.RequireTimestamp,
-		"timestamp_header":     endpoint.TimestampHeader,
+		"id":                    endpoint.ID,
+		"require_signature":     endpoint.RequireSignature,
+		"signature_header":      endpoint.SignatureHeader,
+		"allowed_ips":           endpoint.GetAllowedIPsList(),
+		"require_timestamp":     endpoint.RequireTimestamp,
+		"timestamp_header":      endpoint.TimestampHeader,
 		"timestamp_max_age_sec": endpoint.TimestampMaxAgeSec,
-		"require_nonce":        endpoint.RequireNonce,
-		"nonce_header":         endpoint.NonceHeader,
-		"is_secured":           endpoint.IsSecured(),
+		"require_nonce":         endpoint.RequireNonce,
+		"nonce_header":          endpoint.NonceHeader,
+		"is_secured":            endpoint.IsSecured(),
 	})
 }

@@ -24,12 +24,3 @@ type usage struct {
 	InputTokens  int `json:"input_tokens"`
 	OutputTokens int `json:"output_tokens"`
 }
-
-// Error response types
-type errorResponse struct {
-	Type  string `json:"type"`
-	Error struct {
-		Type    string `json:"type"`
-		Message string `json:"message"`
-	} `json:"error"`
-}

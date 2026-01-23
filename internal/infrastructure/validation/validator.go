@@ -169,8 +169,6 @@ func formatFieldName(field string) string {
 	return field
 }
 
-
-
 // Global validator instance
 var defaultValidator = New()
 

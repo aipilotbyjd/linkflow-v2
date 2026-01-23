@@ -87,16 +87,16 @@ type ReplayOptions struct {
 
 // DebugSession represents an active debugging session
 type DebugSession struct {
-	ID            uuid.UUID        `json:"id"`
-	ExecutionID   uuid.UUID        `json:"execution_id"`
-	UserID        uuid.UUID        `json:"user_id"`
-	Status        string           `json:"status"` // running, paused, stepping, completed
-	CurrentNodeID string           `json:"current_node_id,omitempty"`
-	Breakpoints   []string         `json:"breakpoints"`
-	WatchVariables []string        `json:"watch_variables"`
-	StepMode      bool             `json:"step_mode"`
-	CreatedAt     time.Time        `json:"created_at"`
-	LastActivity  time.Time        `json:"last_activity"`
+	ID             uuid.UUID `json:"id"`
+	ExecutionID    uuid.UUID `json:"execution_id"`
+	UserID         uuid.UUID `json:"user_id"`
+	Status         string    `json:"status"` // running, paused, stepping, completed
+	CurrentNodeID  string    `json:"current_node_id,omitempty"`
+	Breakpoints    []string  `json:"breakpoints"`
+	WatchVariables []string  `json:"watch_variables"`
+	StepMode       bool      `json:"step_mode"`
+	CreatedAt      time.Time `json:"created_at"`
+	LastActivity   time.Time `json:"last_activity"`
 }
 
 // NewNodeSnapshot creates a new node snapshot

@@ -225,7 +225,9 @@ func toFloat(v interface{}) float64 {
 		return float64(n)
 	case string:
 		var f float64
-		fmt.Sscanf(n, "%f", &f)
+		if _, err := fmt.Sscanf(n, "%f", &f); err != nil {
+			return 0
+		}
 		return f
 	default:
 		return 0
