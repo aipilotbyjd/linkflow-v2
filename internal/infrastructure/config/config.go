@@ -290,7 +290,74 @@ func Load(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("error unmarshaling config: %w", err)
 	}
 
+	// Validate configuration
+	if result := ValidateConfiguration(&cfg); !result.Valid {
+		// Collect all error messages
+		var errorMsgs []string
+		for _, err := range result.Errors {
+			errorMsgs = append(errorMsgs, err.Message)
+		}
+		return nil, fmt.Errorf("configuration validation failed: %s", strings.Join(errorMsgs, "; "))
+	}
+
 	return &cfg, nil
+}
+
+// LoadWithValidation loads configuration and returns validation result
+func LoadWithValidation(configPath string) (*Config, *ValidationResult, error) {
+	// Load .env file if it exists (ignore error if not found)
+	_ = godotenv.Load()
+
+	v := viper.New()
+
+	// Set defaults
+	setDefaults(v)
+
+	// Config file
+	if configPath != "" {
+		v.SetConfigFile(configPath)
+	} else {
+		v.SetConfigName("config")
+		v.SetConfigType("yaml")
+		v.AddConfigPath("./configs")
+		v.AddConfigPath(".")
+	}
+
+	// Environment variables
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	v.AutomaticEnv()
+
+	// Bind OAuth environment variables explicitly
+	_ = v.BindEnv("oauth.google.client_id", "OAUTH_GOOGLE_CLIENT_ID")
+	_ = v.BindEnv("oauth.google.client_secret", "OAUTH_GOOGLE_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.google.redirect_url", "OAUTH_GOOGLE_REDIRECT_URL")
+	_ = v.BindEnv("oauth.github.client_id", "OAUTH_GITHUB_CLIENT_ID")
+	_ = v.BindEnv("oauth.github.client_secret", "OAUTH_GITHUB_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.github.redirect_url", "OAUTH_GITHUB_REDIRECT_URL")
+	_ = v.BindEnv("oauth.microsoft.client_id", "OAUTH_MICROSOFT_CLIENT_ID")
+	_ = v.BindEnv("oauth.microsoft.client_secret", "OAUTH_MICROSOFT_CLIENT_SECRET")
+	_ = v.BindEnv("oauth.microsoft.redirect_url", "OAUTH_MICROSOFT_REDIRECT_URL")
+
+	// Bind AI environment variables
+	_ = v.BindEnv("ai.openai.api_key", "AI_OPENAI_API_KEY")
+	_ = v.BindEnv("ai.anthropic.api_key", "AI_ANTHROPIC_API_KEY")
+
+	// Read config file
+	if err := v.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return nil, nil, fmt.Errorf("error reading config file: %w", err)
+		}
+	}
+
+	var cfg Config
+	if err := v.Unmarshal(&cfg); err != nil {
+		return nil, nil, fmt.Errorf("error unmarshaling config: %w", err)
+	}
+
+	// Validate configuration
+	result := ValidateConfiguration(&cfg)
+
+	return &cfg, result, nil
 }
 
 func setDefaults(v *viper.Viper) {

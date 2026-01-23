@@ -504,6 +504,11 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				})
 				r.Get("/environments", handlers.Variable.ListEnvironments)
 
+				// Admin routes
+				r.Route("/admin", func(r chi.Router) {
+					// Admin functionality can be added here
+				})
+
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {
 					r.Get("/", handlers.Workflow.List)

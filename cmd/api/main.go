@@ -22,6 +22,7 @@ import (
 	credentialHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/credential"
 	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
+
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
 	marketplaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/marketplace"
@@ -79,6 +80,12 @@ import (
 )
 
 func main() {
+	// Check for validation-only mode
+	if len(os.Args) > 1 && os.Args[1] == "validate-config" {
+		validateConfigCommand()
+		return
+	}
+
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
 		env := os.Getenv("APP_ENV")
@@ -903,4 +910,61 @@ func (a *oauthProviderAdapter) GetUserInfo(token oauthHandler.Token) (oauthHandl
 		Email: userInfo.Email,
 		Name:  userInfo.Name,
 	}, nil
+}
+
+// validateConfigCommand validates the configuration and exits
+func validateConfigCommand() {
+	// Initialize logger
+	var log logger.Logger
+	if os.Getenv("APP_ENV") == "production" {
+		log = logger.NewDefault()
+	} else {
+		log = logger.NewDevelopment()
+	}
+
+	configPath := os.Getenv("CONFIG_PATH")
+	if configPath == "" {
+		env := os.Getenv("APP_ENV")
+		if env == "" {
+			env = "local"
+		}
+		configPath = fmt.Sprintf("configs/config.%s.yaml", env)
+	}
+
+	log.Info().Str("config", configPath).Msg("Validating configuration")
+
+	_, result, err := config.LoadWithValidation(configPath)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to load configuration")
+	}
+
+	// Print results
+	if result.Valid {
+		log.Info().Msg("✅ Configuration validation passed")
+	} else {
+		log.Error().Msg("❌ Configuration validation failed")
+
+		for _, err := range result.Errors {
+			log.Error().Str("field", err.Field).Msg("ERROR: " + err.Message)
+		}
+		os.Exit(1)
+	}
+
+	// Show warnings
+	if result.HasWarnings() {
+		log.Warn().Msg("⚠️  Configuration warnings:")
+		for _, warning := range result.Warnings {
+			log.Warn().Str("field", warning.Field).Msg("WARNING: " + warning.Message)
+		}
+	}
+
+	// Show info
+	if len(result.Info) > 0 {
+		log.Info().Msg("ℹ️  Configuration info:")
+		for _, info := range result.Info {
+			log.Info().Str("field", info.Field).Msg("INFO: " + info.Message)
+		}
+	}
+
+	log.Info().Msg("Configuration validation complete")
 }
