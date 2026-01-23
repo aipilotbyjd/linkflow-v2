@@ -62,6 +62,7 @@ import (
 	workflowQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workflow"
 	workspaceQry "github.com/linkflow-ai/linkflow/internal/core/application/query/workspace"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/ai"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/binarydata"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/ai/providers/openai"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
@@ -72,6 +73,7 @@ import (
 	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage/s3"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/streaming"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 )
@@ -173,9 +175,29 @@ func main() {
 	binaryDataRepo := repositories.NewBinaryDataRepository(db)
 
 	// Storage service
-	localStorage, err := storage.NewLocalStorage("./data/uploads")
-	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to initialize local storage")
+	var storageService binarydata.StorageService
+	if cfg.Storage.Provider == "s3" {
+		s3Config := storage.S3Config{
+			Region:          cfg.Storage.S3.Region,
+			Bucket:          cfg.Storage.S3.Bucket,
+			AccessKeyID:     cfg.Storage.S3.AccessKeyID,
+			SecretAccessKey: cfg.Storage.S3.SecretAccessKey,
+			Endpoint:        cfg.Storage.S3.Endpoint,
+			UsePathStyle:    cfg.Storage.S3.UsePathStyle,
+		}
+		s3Storage, err := s3.NewS3Storage(s3Config)
+		if err != nil {
+			appLogger.Fatal().Err(err).Msg("Failed to initialize S3 storage")
+		}
+		storageService = s3Storage
+		appLogger.Info().Msg("Using S3 storage")
+	} else {
+		localStorage, err := storage.NewLocalStorage("./data/uploads")
+		if err != nil {
+			appLogger.Fatal().Err(err).Msg("Failed to initialize local storage")
+		}
+		storageService = localStorage
+		appLogger.Info().Msg("Using local storage")
 	}
 
 	// Node registry
@@ -478,11 +500,11 @@ func main() {
 	shRevokeHandler := shareHandler.NewRevokeHandler(shareRepo)
 
 	// Binary data handlers
-	bdUploadHandler := binarydataHandler.NewUploadHandler(binaryDataRepo, localStorage)
+	bdUploadHandler := binarydataHandler.NewUploadHandler(binaryDataRepo, storageService)
 	bdListHandler := binarydataHandler.NewListHandler(binaryDataRepo)
 	bdGetInfoHandler := binarydataHandler.NewGetInfoHandler(binaryDataRepo)
-	bdDownloadHandler := binarydataHandler.NewDownloadHandler(binaryDataRepo, localStorage)
-	bdDeleteHandler := binarydataHandler.NewDeleteHandler(binaryDataRepo, localStorage)
+	bdDownloadHandler := binarydataHandler.NewDownloadHandler(binaryDataRepo, storageService)
+	bdDeleteHandler := binarydataHandler.NewDeleteHandler(binaryDataRepo, storageService)
 	bdStatsHandler := binarydataHandler.NewStatsHandler(binaryDataRepo)
 	bdCleanupHandler := binarydataHandler.NewCleanupHandler(binaryDataRepo)
 

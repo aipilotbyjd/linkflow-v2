@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage"
 )
 
@@ -60,6 +62,42 @@ func NewS3Storage(cfg storage.S3Config) (*S3Storage, error) {
 		region:   cfg.Region,
 		endpoint: cfg.Endpoint,
 	}, nil
+}
+
+// Upload implements StorageService.Upload
+func (s *S3Storage) Upload(ctx context.Context, workspaceID uuid.UUID, fileName string, reader io.Reader, size int64) (string, error) {
+	fileID := uuid.New().String()
+	ext := filepath.Ext(fileName)
+	storagePath := fmt.Sprintf("%s/%s%s", workspaceID.String(), fileID, ext)
+
+	// Simple content type detection (could be improved)
+	contentType := "application/octet-stream"
+	if ext == ".png" {
+		contentType = "image/png"
+	} else if ext == ".jpg" || ext == ".jpeg" {
+		contentType = "image/jpeg"
+	} else if ext == ".json" {
+		contentType = "application/json"
+	} else if ext == ".pdf" {
+		contentType = "application/pdf"
+	} else if ext == ".txt" {
+		contentType = "text/plain"
+	}
+
+	if err := s.Put(ctx, storagePath, reader, contentType); err != nil {
+		return "", err
+	}
+	return storagePath, nil
+}
+
+// Download implements StorageService.Download
+func (s *S3Storage) Download(ctx context.Context, storagePath string) (io.ReadCloser, error) {
+	return s.Get(ctx, storagePath)
+}
+
+// GetURL implements StorageService.GetURL
+func (s *S3Storage) GetURL(ctx context.Context, storagePath string) (string, error) {
+	return s.SignedURL(ctx, storagePath, 1*time.Hour)
 }
 
 func (s *S3Storage) Put(ctx context.Context, path string, reader io.Reader, contentType string) error {
