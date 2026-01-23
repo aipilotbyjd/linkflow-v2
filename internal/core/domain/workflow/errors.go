@@ -27,4 +27,14 @@ var (
 	ErrInsufficientVariants    = errors.New("experiment must have at least 2 variants")
 	ErrExperimentNotRunning    = errors.New("experiment is not running")
 	ErrWorkflowHasCycle        = errors.New("workflow has infinite loop (cycle) detected")
+
+	// Validation errors
+	ErrWorkflowNameRequired   = errors.New("workflow name is required")
+	ErrWorkflowNameTooLong    = errors.New("workflow name must be at most 255 characters")
+	ErrInvalidWorkspaceID     = errors.New("valid workspace ID is required")
+	ErrInvalidCreatedBy       = errors.New("valid creator ID is required")
+	ErrDescriptionTooLong     = errors.New("description must be at most 2000 characters")
+	ErrSelfReferencingError   = errors.New("error workflow cannot reference itself")
+	ErrInvalidTimeoutValue    = errors.New("timeout must be between 1 and 86400 seconds")
+	ErrInvalidMaxRetriesValue = errors.New("max retries must be between 0 and 10")
 )

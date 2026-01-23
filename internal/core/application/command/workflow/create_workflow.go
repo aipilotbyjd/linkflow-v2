@@ -47,12 +47,7 @@ func NewCreateWorkflowHandler(
 
 // Handle executes the create workflow command
 func (h *CreateWorkflowHandler) Handle(ctx context.Context, cmd CreateWorkflowCommand) (*workflow.Workflow, error) {
-	// Validate
-	if cmd.Name == "" {
-		return nil, workflow.ErrWorkflowNameExists // Should be validation error
-	}
-
-	// Check name uniqueness
+	// Check name uniqueness first (before domain validation to give better error)
 	exists, err := h.workflowRepo.ExistsByName(ctx, cmd.WorkspaceID, cmd.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check workflow name: %w", err)
@@ -61,8 +56,12 @@ func (h *CreateWorkflowHandler) Handle(ctx context.Context, cmd CreateWorkflowCo
 		return nil, workflow.ErrWorkflowNameExists
 	}
 
-	// Create workflow
-	wf := workflow.NewWorkflow(cmd.WorkspaceID, cmd.CreatedBy, cmd.Name)
+	// Create workflow (includes validation)
+	wf, err := workflow.NewWorkflow(cmd.WorkspaceID, cmd.CreatedBy, cmd.Name)
+	if err != nil {
+		return nil, err
+	}
+
 	wf.Description = cmd.Description
 	wf.Nodes = cmd.Nodes
 	wf.Connections = cmd.Connections
@@ -79,7 +78,7 @@ func (h *CreateWorkflowHandler) Handle(ctx context.Context, cmd CreateWorkflowCo
 	// Create initial version
 	version := workflow.NewVersion(wf, nil)
 	if err := h.versionRepo.Create(ctx, version); err != nil {
-		// Non-fatal
+		// Non-fatal, but log it in production
 	}
 
 	// Publish event

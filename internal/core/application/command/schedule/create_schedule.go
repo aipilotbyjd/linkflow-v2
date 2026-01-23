@@ -33,13 +33,6 @@ func NewCreateScheduleHandler(scheduleRepo schedule.Repository, usageService *bi
 }
 
 func (h *CreateScheduleHandler) Handle(ctx context.Context, cmd CreateScheduleCommand) (*schedule.Schedule, error) {
-	if cmd.Name == "" {
-		return nil, fmt.Errorf("schedule name is required")
-	}
-	if cmd.CronExpression == "" {
-		return nil, fmt.Errorf("cron expression is required")
-	}
-
 	// Check minimum interval from billing plan
 	if h.usageService != nil {
 		minInterval, err := h.usageService.GetMinInterval(ctx, cmd.WorkspaceID)
@@ -53,7 +46,12 @@ func (h *CreateScheduleHandler) Handle(ctx context.Context, cmd CreateScheduleCo
 		}
 	}
 
-	sched := schedule.NewSchedule(cmd.WorkflowID, cmd.WorkspaceID, cmd.CreatedBy, cmd.Name, cmd.CronExpression)
+	// Create schedule (includes validation)
+	sched, err := schedule.NewSchedule(cmd.WorkflowID, cmd.WorkspaceID, cmd.CreatedBy, cmd.Name, cmd.CronExpression)
+	if err != nil {
+		return nil, err
+	}
+
 	if cmd.Timezone != "" {
 		sched.WithTimezone(cmd.Timezone)
 	}

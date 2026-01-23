@@ -9,9 +9,9 @@ import (
 
 // VariableRequest represents a variable create/update request
 type VariableRequest struct {
-	Key         string  `json:"key" validate:"required,max=100"`
+	Key         string  `json:"key" validate:"required,min=1,max=100,variable_key"`
 	Value       string  `json:"value" validate:"required"`
-	Description *string `json:"description,omitempty"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=500"`
 	IsSecret    bool    `json:"is_secret,omitempty"`
 }
 
@@ -29,10 +29,10 @@ type VariableResponse struct {
 
 // EnvironmentRequest represents an environment create/update request
 type EnvironmentRequest struct {
-	Name        string  `json:"name" validate:"required,max=50"`
-	DisplayName string  `json:"display_name" validate:"required,max=100"`
-	Description *string `json:"description,omitempty"`
-	Color       *string `json:"color,omitempty"`
+	Name        string  `json:"name" validate:"required,min=1,max=50,slug"`
+	DisplayName string  `json:"display_name" validate:"required,min=1,max=100"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=500"`
+	Color       *string `json:"color,omitempty" validate:"omitempty,hex_color"`
 	IsDefault   bool    `json:"is_default,omitempty"`
 }
 

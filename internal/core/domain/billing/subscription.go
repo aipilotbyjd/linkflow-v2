@@ -39,7 +39,14 @@ func (Subscription) TableName() string {
 	return "subscriptions"
 }
 
-func NewSubscription(workspaceID uuid.UUID, planID string) *Subscription {
+func NewSubscription(workspaceID uuid.UUID, planID string) (*Subscription, error) {
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if planID == "" {
+		return nil, ErrPlanIDRequired
+	}
+
 	now := time.Now()
 	return &Subscription{
 		ID:                 uuid.New(),
@@ -50,7 +57,7 @@ func NewSubscription(workspaceID uuid.UUID, planID string) *Subscription {
 		CurrentPeriodEnd:   now.AddDate(0, 1, 0),
 		CreatedAt:          now,
 		UpdatedAt:          now,
-	}
+	}, nil
 }
 
 func (s *Subscription) Cancel() {

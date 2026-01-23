@@ -8,6 +8,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	appbuilder "github.com/linkflow-ai/linkflow/internal/core/application/aibuilder"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/aibuilder"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // GenerateHandler handles workflow generation from natural language
@@ -32,8 +33,12 @@ func (h *GenerateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Prompt == "" || len(req.Prompt) < 10 {
-		common.BadRequest(w, "Prompt must be at least 10 characters")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

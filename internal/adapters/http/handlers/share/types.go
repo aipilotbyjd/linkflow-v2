@@ -29,13 +29,13 @@ type CreateShareRequest struct {
 	ResourceType    string `json:"resourceType" validate:"required,oneof=workflow credential folder"`
 	ResourceID      string `json:"resourceId" validate:"required,uuid"`
 	SharedWithEmail string `json:"sharedWithEmail" validate:"required,email"`
-	Permission      string `json:"permission" validate:"required,oneof=view edit admin"`
-	Message         string `json:"message,omitempty"`
+	Permission      string `json:"permission" validate:"required,share_permission"`
+	Message         string `json:"message,omitempty" validate:"omitempty,max=500"`
 }
 
 // UpdateShareRequest represents request to update a share
 type UpdateShareRequest struct {
-	Permission string `json:"permission" validate:"required,oneof=view edit admin"`
+	Permission string `json:"permission" validate:"required,share_permission"`
 }
 
 // ToShareResponse converts domain to response

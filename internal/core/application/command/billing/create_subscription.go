@@ -29,7 +29,10 @@ func (h *CreateSubscriptionHandler) Handle(ctx context.Context, cmd CreateSubscr
 		return nil, billing.ErrPlanNotFound
 	}
 
-	sub := billing.NewSubscription(cmd.WorkspaceID, cmd.PlanID)
+	sub, err := billing.NewSubscription(cmd.WorkspaceID, cmd.PlanID)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := h.repo.Create(ctx, sub); err != nil {
 		return nil, err

@@ -23,4 +23,24 @@ var (
 	ErrSelfRoleChange          = errors.New("cannot change own role")
 	ErrInvalidRole             = errors.New("invalid role")
 	ErrPlanLimitReached        = errors.New("plan member limit reached")
+
+	// Validation errors
+	ErrWorkspaceNameRequired = errors.New("workspace name is required")
+	ErrWorkspaceNameTooLong  = errors.New("workspace name must be at most 100 characters")
+	ErrSlugRequired          = errors.New("workspace slug is required")
+	ErrSlugTooLong           = errors.New("workspace slug must be at most 100 characters")
+	ErrInvalidSlugFormat     = errors.New("workspace slug must be lowercase alphanumeric with hyphens")
+	ErrInvalidOwnerID        = errors.New("valid owner ID is required")
+	ErrDescriptionTooLong    = errors.New("description must be at most 500 characters")
+
+	// Member validation errors
+	ErrInvalidWorkspaceID = errors.New("valid workspace ID is required")
+	ErrInvalidUserID      = errors.New("valid user ID is required")
+	ErrInvalidInviterID   = errors.New("valid inviter ID is required")
+
+	// Invitation validation errors
+	ErrEmailRequired      = errors.New("email is required")
+	ErrInvalidEmailFormat = errors.New("invalid email format")
+	ErrTokenRequired      = errors.New("invitation token is required")
+	ErrInvalidExpiresIn   = errors.New("expiration duration must be positive")
 )

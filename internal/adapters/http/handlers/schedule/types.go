@@ -9,10 +9,10 @@ import (
 // CreateRequest represents schedule creation request
 type CreateRequest struct {
 	WorkflowID     uuid.UUID  `json:"workflow_id" validate:"required"`
-	Name           string     `json:"name" validate:"required"`
-	Description    *string    `json:"description,omitempty"`
-	CronExpression string     `json:"cron_expression" validate:"required"`
-	Timezone       string     `json:"timezone"`
+	Name           string     `json:"name" validate:"required,min=1,max=100"`
+	Description    *string    `json:"description,omitempty" validate:"omitempty,max=500"`
+	CronExpression string     `json:"cron_expression" validate:"required,cron"`
+	Timezone       string     `json:"timezone" validate:"omitempty,timezone"`
 	InputData      types.JSON `json:"input_data,omitempty"`
 }
 

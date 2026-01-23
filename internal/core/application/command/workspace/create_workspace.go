@@ -43,12 +43,7 @@ func NewCreateWorkspaceHandler(
 
 // Handle executes the create workspace command
 func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspaceCommand) (*workspace.Workspace, error) {
-	// Validate name
-	if cmd.Name == "" {
-		return nil, fmt.Errorf("workspace name is required")
-	}
-
-	// Generate or validate slug
+	// Generate slug if not provided
 	slug := cmd.Slug
 	if slug == "" {
 		slug = generateSlug(cmd.Name)
@@ -63,8 +58,12 @@ func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspace
 		return nil, workspace.ErrSlugAlreadyExists
 	}
 
-	// Create workspace
-	ws := workspace.NewWorkspace(cmd.OwnerID, cmd.Name, slug)
+	// Create workspace (includes validation)
+	ws, err := workspace.NewWorkspace(cmd.OwnerID, cmd.Name, slug)
+	if err != nil {
+		return nil, err
+	}
+
 	ws.Description = cmd.Description
 	if cmd.Timezone != "" {
 		ws.Timezone = cmd.Timezone
@@ -81,7 +80,11 @@ func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspace
 	}
 
 	// Add owner as member with owner role
-	member := workspace.NewMember(ws.ID, cmd.OwnerID, workspace.RoleOwner)
+	member, err := workspace.NewMember(ws.ID, cmd.OwnerID, workspace.RoleOwner)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create member entity: %w", err)
+	}
+
 	if err := h.memberRepo.Create(ctx, member); err != nil {
 		// Non-fatal but should be logged
 	}

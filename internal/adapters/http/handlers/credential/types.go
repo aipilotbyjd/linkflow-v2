@@ -7,12 +7,12 @@ import (
 
 // CreateRequest represents credential creation request
 type CreateRequest struct {
-	Name        string                  `json:"name" validate:"required"`
-	Description *string                 `json:"description,omitempty"`
-	Type        credential.Type         `json:"type" validate:"required"`
-	Provider    string                  `json:"provider"`
+	Name        string                  `json:"name" validate:"required,min=1,max=100"`
+	Description *string                 `json:"description,omitempty" validate:"omitempty,max=500"`
+	Type        credential.Type         `json:"type" validate:"required,credential_type"`
+	Provider    string                  `json:"provider" validate:"omitempty,max=50"`
 	Data        types.JSON              `json:"data" validate:"required"`
-	Scope       credential.SharingScope `json:"scope"`
+	Scope       credential.SharingScope `json:"scope" validate:"omitempty,sharing_scope"`
 }
 
 // UpdateRequest represents credential update request

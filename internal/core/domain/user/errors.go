@@ -35,8 +35,13 @@ var (
 	ErrInvalidEmail  = errors.New("invalid email format")
 
 	// Password validation errors
-	ErrPasswordTooShort   = errors.New("password must be at least 8 characters")
-	ErrPasswordTooLong    = errors.New("password must be at most 72 characters")
-	ErrPasswordWeak       = errors.New("password must contain uppercase, lowercase, and digit")
-	ErrPasswordHashFailed = errors.New("failed to hash password")
+	ErrPasswordTooShort     = errors.New("password must be at least 8 characters")
+	ErrPasswordTooLong      = errors.New("password must be at most 72 characters")
+	ErrPasswordWeak         = errors.New("password must contain uppercase, lowercase, and digit")
+	ErrPasswordHashFailed   = errors.New("failed to hash password")
+	ErrPasswordHashRequired = errors.New("password hash is required")
+	ErrFirstNameRequired    = errors.New("first name is required")
+	ErrFirstNameTooLong     = errors.New("first name must be at most 100 characters")
+	ErrLastNameRequired     = errors.New("last name is required")
+	ErrLastNameTooLong      = errors.New("last name must be at most 100 characters")
 )

@@ -44,6 +44,9 @@ func New() *Validator {
 		return nil
 	}, json.RawMessage{})
 
+	// Register custom validators
+	RegisterCustomValidators(v)
+
 	return &Validator{
 		validate: v,
 	}
@@ -102,6 +105,31 @@ func (v *Validator) getMessage(err validator.FieldError) string {
 		return fmt.Sprintf("%s must contain only letters and numbers", field)
 	case "containsany":
 		return fmt.Sprintf("%s must contain at least one special character", field)
+	// Custom validators
+	case "slug":
+		return fmt.Sprintf("%s must be lowercase alphanumeric with hyphens (e.g., my-workspace)", field)
+	case "cron":
+		return fmt.Sprintf("%s must be a valid cron expression (e.g., 0 * * * *)", field)
+	case "webhook_path":
+		return fmt.Sprintf("%s must be a valid URL path (alphanumeric, slashes, hyphens, underscores)", field)
+	case "variable_key":
+		return fmt.Sprintf("%s must start with a letter or underscore and contain only alphanumeric characters and underscores", field)
+	case "hex_color":
+		return fmt.Sprintf("%s must be a valid hex color (e.g., #FF5733)", field)
+	case "timezone":
+		return fmt.Sprintf("%s must be a valid timezone (e.g., America/New_York, UTC)", field)
+	case "credential_type":
+		return fmt.Sprintf("%s must be a valid credential type (oauth2, api_key, basic, bearer, etc.)", field)
+	case "sharing_scope":
+		return fmt.Sprintf("%s must be one of: private, workspace, specific", field)
+	case "share_permission":
+		return fmt.Sprintf("%s must be one of: view, use, edit", field)
+	case "workspace_role":
+		return fmt.Sprintf("%s must be one of: owner, admin, editor, member, viewer", field)
+	case "http_method":
+		return fmt.Sprintf("%s must be a valid HTTP method (GET, POST, PUT, PATCH, DELETE)", field)
+	case "ai_provider":
+		return fmt.Sprintf("%s must be a valid AI provider (openai, anthropic, google, etc.)", field)
 	default:
 		return fmt.Sprintf("%s is invalid", field)
 	}

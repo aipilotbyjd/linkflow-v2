@@ -42,8 +42,22 @@ func (Workflow) TableName() string {
 	return "workflows"
 }
 
-// NewWorkflow creates a new workflow
-func NewWorkflow(workspaceID, createdBy uuid.UUID, name string) *Workflow {
+// NewWorkflow creates a new workflow with validation
+func NewWorkflow(workspaceID, createdBy uuid.UUID, name string) (*Workflow, error) {
+	// Validate inputs
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if createdBy == uuid.Nil {
+		return nil, ErrInvalidCreatedBy
+	}
+	if name == "" {
+		return nil, ErrWorkflowNameRequired
+	}
+	if len(name) > 255 {
+		return nil, ErrWorkflowNameTooLong
+	}
+
 	return &Workflow{
 		ID:          uuid.New(),
 		WorkspaceID: workspaceID,
@@ -57,7 +71,7 @@ func NewWorkflow(workspaceID, createdBy uuid.UUID, name string) *Workflow {
 		Tags:        make(types.StringArray, 0),
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}
+	}, nil
 }
 
 // GetWorkspaceID implements the WorkspaceOwned interface

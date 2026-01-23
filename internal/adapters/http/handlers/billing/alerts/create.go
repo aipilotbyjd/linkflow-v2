@@ -7,6 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // CreateHandler handles creating usage alerts
@@ -28,22 +29,12 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate threshold
-	validThresholds := map[int]bool{50: true, 75: true, 90: true, 100: true}
-	if !validThresholds[req.Threshold] {
-		common.BadRequest(w, "Invalid threshold. Must be 50, 75, 90, or 100")
-		return
-	}
-
-	// Validate alert type
-	validTypes := map[string]bool{
-		"operations":    true,
-		"ai_credits":    true,
-		"storage":       true,
-		"data_transfer": true,
-	}
-	if !validTypes[req.AlertType] {
-		common.BadRequest(w, "Invalid alert type")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 

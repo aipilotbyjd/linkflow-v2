@@ -35,8 +35,34 @@ func (Schedule) TableName() string {
 	return "schedules"
 }
 
-// NewSchedule creates a new schedule
-func NewSchedule(workflowID, workspaceID, createdBy uuid.UUID, name, cronExpression string) *Schedule {
+// NewSchedule creates a new schedule with validation
+func NewSchedule(workflowID, workspaceID, createdBy uuid.UUID, name, cronExpression string) (*Schedule, error) {
+	// Validate inputs
+	if workflowID == uuid.Nil {
+		return nil, ErrInvalidWorkflowID
+	}
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if createdBy == uuid.Nil {
+		return nil, ErrInvalidCreatedBy
+	}
+	if name == "" {
+		return nil, ErrScheduleNameRequired
+	}
+	if len(name) > 100 {
+		return nil, ErrScheduleNameTooLong
+	}
+	if cronExpression == "" {
+		return nil, ErrCronRequired
+	}
+
+	// Validate cron expression
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	if _, err := parser.Parse(cronExpression); err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrInvalidCronExpression, err)
+	}
+
 	return &Schedule{
 		ID:             uuid.New(),
 		WorkflowID:     workflowID,
@@ -48,7 +74,7 @@ func NewSchedule(workflowID, workspaceID, createdBy uuid.UUID, name, cronExpress
 		IsActive:       true,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
-	}
+	}, nil
 }
 
 // GetWorkspaceID implements the WorkspaceOwned interface

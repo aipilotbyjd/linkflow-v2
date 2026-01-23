@@ -14,7 +14,7 @@ import (
 
 type InviteMemberRequest struct {
 	Email string `json:"email" validate:"required,email"`
-	Role  string `json:"role" validate:"required,oneof=admin member viewer"`
+	Role  string `json:"role" validate:"required,workspace_role"`
 }
 
 type InviteMemberHandler struct {
@@ -101,7 +101,11 @@ func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 		// Add member directly
 		role := workspace.Role(req.Role)
-		member := workspace.NewMember(workspaceID, existingUser.ID, role)
+		member, err := workspace.NewMember(workspaceID, existingUser.ID, role)
+		if err != nil {
+			common.HandleError(w, err)
+			return
+		}
 		if err := h.memberRepo.Create(r.Context(), member); err != nil {
 			common.HandleError(w, err)
 			return

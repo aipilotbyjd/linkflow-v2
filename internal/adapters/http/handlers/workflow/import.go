@@ -46,7 +46,11 @@ func (h *ImportHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wf := workflow.NewWorkflow(wsCtx.WorkspaceID, userClaims.UserID, imported.Name)
+	wf, err := workflow.NewWorkflow(wsCtx.WorkspaceID, userClaims.UserID, imported.Name)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	wf.Description = imported.Description
 	wf.Nodes = imported.Nodes
 	wf.Connections = imported.Connections

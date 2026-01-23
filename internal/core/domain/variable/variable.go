@@ -36,7 +36,23 @@ func (Variable) TableName() string {
 }
 
 // NewVariable creates a new workspace variable
-func NewVariable(workspaceID, createdBy uuid.UUID, key, value string) *Variable {
+func NewVariable(workspaceID, createdBy uuid.UUID, key, value string) (*Variable, error) {
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if createdBy == uuid.Nil {
+		return nil, ErrInvalidCreatedBy
+	}
+	if key == "" {
+		return nil, ErrKeyRequired
+	}
+	if len(key) > 100 {
+		return nil, ErrKeyTooLong
+	}
+	if value == "" {
+		return nil, ErrValueRequired
+	}
+
 	return &Variable{
 		ID:          uuid.New(),
 		WorkspaceID: workspaceID,
@@ -46,7 +62,7 @@ func NewVariable(workspaceID, createdBy uuid.UUID, key, value string) *Variable 
 		CreatedBy:   createdBy,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}
+	}, nil
 }
 
 // Update updates the variable

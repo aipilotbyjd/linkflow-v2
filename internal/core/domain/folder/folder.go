@@ -27,7 +27,20 @@ func (Folder) TableName() string {
 }
 
 // NewFolder creates a new folder
-func NewFolder(workspaceID uuid.UUID, name string, createdBy uuid.UUID) *Folder {
+func NewFolder(workspaceID uuid.UUID, name string, createdBy uuid.UUID) (*Folder, error) {
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if name == "" {
+		return nil, ErrNameRequired
+	}
+	if len(name) > 100 {
+		return nil, ErrNameTooLong
+	}
+	if createdBy == uuid.Nil {
+		return nil, ErrInvalidCreatedBy
+	}
+
 	return &Folder{
 		ID:          uuid.New(),
 		WorkspaceID: workspaceID,
@@ -36,7 +49,7 @@ func NewFolder(workspaceID uuid.UUID, name string, createdBy uuid.UUID) *Folder 
 		CreatedBy:   createdBy,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}
+	}, nil
 }
 
 // WithParent sets the parent folder

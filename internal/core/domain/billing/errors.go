@@ -10,4 +10,8 @@ var (
 	ErrSubscriptionInactive = errors.New("subscription is not active")
 	ErrLimitExceeded        = errors.New("plan limit exceeded")
 	ErrPaymentFailed        = errors.New("payment failed")
+
+	// Validation errors
+	ErrInvalidWorkspaceID = errors.New("valid workspace ID is required")
+	ErrPlanIDRequired     = errors.New("plan ID is required")
 )

@@ -20,9 +20,9 @@ func NewCreateFolderHandler(folderRepo folder.Repository) *CreateFolderHandler {
 }
 
 type CreateFolderRequest struct {
-	Name        string     `json:"name" validate:"required"`
-	Description *string    `json:"description,omitempty"`
-	Color       *string    `json:"color,omitempty"`
+	Name        string     `json:"name" validate:"required,min=1,max=100"`
+	Description *string    `json:"description,omitempty" validate:"omitempty,max=500"`
+	Color       *string    `json:"color,omitempty" validate:"omitempty,hex_color"`
 	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
 }
 
@@ -54,7 +54,11 @@ func (h *CreateFolderHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	f := folder.NewFolder(wsCtx.WorkspaceID, req.Name, userClaims.UserID)
+	f, err := folder.NewFolder(wsCtx.WorkspaceID, req.Name, userClaims.UserID)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	if req.ParentID != nil {
 		f = f.WithParent(*req.ParentID)

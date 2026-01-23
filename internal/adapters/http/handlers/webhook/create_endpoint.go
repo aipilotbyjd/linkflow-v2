@@ -16,12 +16,12 @@ import (
 
 type CreateEndpointRequest struct {
 	WorkflowID         string   `json:"workflow_id" validate:"required,uuid"`
-	NodeID             string   `json:"node_id" validate:"required"`
-	Path               string   `json:"path" validate:"required"`
-	Method             string   `json:"method" validate:"required,oneof=GET POST PUT PATCH DELETE"`
-	AuthenticationType string   `json:"authentication_type,omitempty"`
-	AllowedIPs         []string `json:"allowed_ips,omitempty"`
-	RateLimit          int      `json:"rate_limit,omitempty"`
+	NodeID             string   `json:"node_id" validate:"required,min=1,max=100"`
+	Path               string   `json:"path" validate:"required,min=1,max=255,webhook_path"`
+	Method             string   `json:"method" validate:"required,http_method"`
+	AuthenticationType string   `json:"authentication_type,omitempty" validate:"omitempty,oneof=none signature basic bearer api_key"`
+	AllowedIPs         []string `json:"allowed_ips,omitempty" validate:"omitempty,dive,ip|cidr"`
+	RateLimit          int      `json:"rate_limit,omitempty" validate:"omitempty,min=1,max=10000"`
 }
 
 type CreateEndpointHandler struct {
@@ -88,7 +88,11 @@ func (h *CreateEndpointHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	secret := base64.URLEncoding.EncodeToString(secretBytes)
 
 	// Create endpoint
-	endpoint := webhook.NewEndpoint(workflowID, workspaceID, req.NodeID, req.Path)
+	endpoint, err := webhook.NewEndpoint(workflowID, workspaceID, req.NodeID, req.Path)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	endpoint.WithMethod(req.Method)
 	endpoint.WithSecret(secret)
 

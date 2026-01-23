@@ -1,12 +1,16 @@
 package workspace
 
 import (
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 	"gorm.io/gorm"
 )
+
+// Valid slug pattern
+var slugRegex = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
 // Workspace entity (aggregate root)
 type Workspace struct {
@@ -39,8 +43,28 @@ func (Workspace) TableName() string {
 	return "workspaces"
 }
 
-// NewWorkspace creates a new workspace
-func NewWorkspace(ownerID uuid.UUID, name, slug string) *Workspace {
+// NewWorkspace creates a new workspace with validation
+func NewWorkspace(ownerID uuid.UUID, name, slug string) (*Workspace, error) {
+	// Validate inputs
+	if ownerID == uuid.Nil {
+		return nil, ErrInvalidOwnerID
+	}
+	if name == "" {
+		return nil, ErrWorkspaceNameRequired
+	}
+	if len(name) > 100 {
+		return nil, ErrWorkspaceNameTooLong
+	}
+	if slug == "" {
+		return nil, ErrSlugRequired
+	}
+	if len(slug) > 100 {
+		return nil, ErrSlugTooLong
+	}
+	if !slugRegex.MatchString(slug) {
+		return nil, ErrInvalidSlugFormat
+	}
+
 	return &Workspace{
 		ID:        uuid.New(),
 		OwnerID:   ownerID,
@@ -53,7 +77,7 @@ func NewWorkspace(ownerID uuid.UUID, name, slug string) *Workspace {
 		Settings:  make(types.JSON),
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-	}
+	}, nil
 }
 
 // IsOwner checks if user is the workspace owner

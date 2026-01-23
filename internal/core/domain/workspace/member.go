@@ -25,7 +25,17 @@ func (Member) TableName() string {
 }
 
 // NewMember creates a new workspace member
-func NewMember(workspaceID, userID uuid.UUID, role Role) *Member {
+func NewMember(workspaceID, userID uuid.UUID, role Role) (*Member, error) {
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if userID == uuid.Nil {
+		return nil, ErrInvalidUserID
+	}
+	if role == "" {
+		role = RoleMember
+	}
+
 	now := time.Now()
 	return &Member{
 		ID:          uuid.New(),
@@ -34,7 +44,7 @@ func NewMember(workspaceID, userID uuid.UUID, role Role) *Member {
 		Role:        role,
 		JoinedAt:    &now,
 		CreatedAt:   now,
-	}
+	}, nil
 }
 
 // WithInviter sets the inviter information
@@ -100,7 +110,23 @@ func (Invitation) TableName() string {
 }
 
 // NewInvitation creates a new invitation
-func NewInvitation(workspaceID uuid.UUID, email string, role Role, invitedBy uuid.UUID, token string, expiresIn time.Duration) *Invitation {
+func NewInvitation(workspaceID uuid.UUID, email string, role Role, invitedBy uuid.UUID, token string, expiresIn time.Duration) (*Invitation, error) {
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if email == "" {
+		return nil, ErrEmailRequired
+	}
+	if invitedBy == uuid.Nil {
+		return nil, ErrInvalidInviterID
+	}
+	if token == "" {
+		return nil, ErrTokenRequired
+	}
+	if expiresIn <= 0 {
+		return nil, ErrInvalidExpiresIn
+	}
+
 	return &Invitation{
 		ID:          uuid.New(),
 		WorkspaceID: workspaceID,
@@ -110,7 +136,7 @@ func NewInvitation(workspaceID uuid.UUID, email string, role Role, invitedBy uui
 		InvitedBy:   invitedBy,
 		ExpiresAt:   time.Now().Add(expiresIn),
 		CreatedAt:   time.Now(),
-	}
+	}, nil
 }
 
 // IsExpired checks if the invitation is expired

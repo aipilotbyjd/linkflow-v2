@@ -32,8 +32,28 @@ func (Credential) TableName() string {
 	return "credentials"
 }
 
-// NewCredential creates a new credential
-func NewCredential(workspaceID, createdBy uuid.UUID, name string, credType Type, encryptedData string) *Credential {
+// NewCredential creates a new credential with validation
+func NewCredential(workspaceID, createdBy uuid.UUID, name string, credType Type, encryptedData string) (*Credential, error) {
+	// Validate inputs
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if createdBy == uuid.Nil {
+		return nil, ErrInvalidCreatedBy
+	}
+	if name == "" {
+		return nil, ErrCredentialNameRequired
+	}
+	if len(name) > 100 {
+		return nil, ErrCredentialNameTooLong
+	}
+	if !credType.IsValid() {
+		return nil, ErrInvalidType
+	}
+	if encryptedData == "" {
+		return nil, ErrDataRequired
+	}
+
 	return &Credential{
 		ID:           uuid.New(),
 		WorkspaceID:  workspaceID,
@@ -44,7 +64,7 @@ func NewCredential(workspaceID, createdBy uuid.UUID, name string, credType Type,
 		SharingScope: ScopWorkspace,
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-	}
+	}, nil
 }
 
 // GetWorkspaceID implements the WorkspaceOwned interface

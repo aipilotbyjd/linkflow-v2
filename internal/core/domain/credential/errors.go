@@ -18,4 +18,12 @@ var (
 	ErrInvalidType          = errors.New("invalid credential type")
 	ErrOAuthRefreshFailed   = errors.New("OAuth token refresh failed")
 	ErrProviderNotSupported = errors.New("OAuth provider not supported")
+
+	// Validation errors
+	ErrCredentialNameRequired = errors.New("credential name is required")
+	ErrCredentialNameTooLong  = errors.New("credential name must be at most 100 characters")
+	ErrInvalidWorkspaceID     = errors.New("valid workspace ID is required")
+	ErrInvalidCreatedBy       = errors.New("valid creator ID is required")
+	ErrDataRequired           = errors.New("credential data is required")
+	ErrInvalidSharingScope    = errors.New("invalid sharing scope")
 )

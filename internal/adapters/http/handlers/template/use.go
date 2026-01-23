@@ -48,7 +48,11 @@ func (h *UseHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// Create workflow from template
 	name := tmpl.Name + " (from template)"
-	workflow := workflowDomain.NewWorkflow(workspaceID, claims.UserID, name)
+	workflow, err := workflowDomain.NewWorkflow(workspaceID, claims.UserID, name)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	if tmpl.Description != nil {
 		workflow.Description = tmpl.Description
 	}

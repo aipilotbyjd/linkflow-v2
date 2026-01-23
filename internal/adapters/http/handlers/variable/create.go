@@ -7,6 +7,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	domainvar "github.com/linkflow-ai/linkflow/internal/core/domain/variable"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
 
 // CreateHandler handles creating variables
@@ -31,8 +32,12 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Key == "" {
-		common.BadRequest(w, "Key is required")
+	if errors := validation.Validate(req); len(errors) > 0 {
+		details := make([]common.ValidationDetail, len(errors))
+		for i, e := range errors {
+			details[i] = common.ValidationDetail{Field: e.Field, Message: e.Message}
+		}
+		common.ValidationErrors(w, details)
 		return
 	}
 
@@ -43,7 +48,11 @@ func (h *CreateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v := domainvar.NewVariable(workspaceID, userID, req.Key, req.Value)
+	v, err := domainvar.NewVariable(workspaceID, userID, req.Key, req.Value)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	v.Description = req.Description
 	if req.IsSecret {
 		v.MarkAsSecret()

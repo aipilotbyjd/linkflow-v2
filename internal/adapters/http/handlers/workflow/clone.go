@@ -61,7 +61,11 @@ func (h *CloneHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cloned := workflow.NewWorkflow(wsCtx.WorkspaceID, userClaims.UserID, req.Name)
+	cloned, err := workflow.NewWorkflow(wsCtx.WorkspaceID, userClaims.UserID, req.Name)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 	cloned.Description = original.Description
 	cloned.Nodes = original.Nodes
 	cloned.Connections = original.Connections

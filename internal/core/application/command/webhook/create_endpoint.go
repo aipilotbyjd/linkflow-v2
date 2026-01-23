@@ -35,7 +35,10 @@ func (h *CreateEndpointHandler) Handle(ctx context.Context, cmd CreateEndpointCo
 		return nil, webhook.ErrPathAlreadyExists
 	}
 
-	endpoint := webhook.NewEndpoint(cmd.WorkflowID, cmd.WorkspaceID, cmd.NodeID, cmd.Path)
+	endpoint, err := webhook.NewEndpoint(cmd.WorkflowID, cmd.WorkspaceID, cmd.NodeID, cmd.Path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create endpoint entity: %w", err)
+	}
 	endpoint.Method = cmd.Method
 
 	if err := h.webhookRepo.Create(ctx, endpoint); err != nil {

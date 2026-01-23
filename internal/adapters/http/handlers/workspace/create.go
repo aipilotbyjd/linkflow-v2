@@ -13,9 +13,9 @@ import (
 
 // CreateRequest represents workspace creation request
 type CreateRequest struct {
-	Name        string  `json:"name" validate:"required"`
-	Description *string `json:"description,omitempty"`
-	Logo        *string `json:"logo,omitempty"`
+	Name        string  `json:"name" validate:"required,min=1,max=100"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=500"`
+	Logo        *string `json:"logo,omitempty" validate:"omitempty,url,max=500"`
 }
 
 // WorkspaceResponse represents workspace in responses

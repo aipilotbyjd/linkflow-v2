@@ -45,7 +45,26 @@ func (User) TableName() string {
 }
 
 // NewUser creates a new user entity
-func NewUser(email, passwordHash, firstName, lastName string) *User {
+func NewUser(email, passwordHash, firstName, lastName string) (*User, error) {
+	if email == "" {
+		return nil, ErrEmailRequired
+	}
+	if passwordHash == "" {
+		return nil, ErrPasswordHashRequired
+	}
+	if firstName == "" {
+		return nil, ErrFirstNameRequired
+	}
+	if len(firstName) > 100 {
+		return nil, ErrFirstNameTooLong
+	}
+	if lastName == "" {
+		return nil, ErrLastNameRequired
+	}
+	if len(lastName) > 100 {
+		return nil, ErrLastNameTooLong
+	}
+
 	return &User{
 		ID:           uuid.New(),
 		Email:        email,
@@ -60,7 +79,7 @@ func NewUser(email, passwordHash, firstName, lastName string) *User {
 		Theme:        "system",
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
-	}
+	}, nil
 }
 
 // FullName returns the user's full name

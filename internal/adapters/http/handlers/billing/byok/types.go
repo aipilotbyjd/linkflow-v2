@@ -8,11 +8,11 @@ import (
 
 // CreateBYOKRequest for adding a new API key
 type CreateBYOKRequest struct {
-	Provider       string `json:"provider" validate:"required"`
-	Name           string `json:"name" validate:"required,max=100"`
-	APIKey         string `json:"api_key" validate:"required"`
-	OrganizationID string `json:"organization_id,omitempty"`
-	BaseURL        string `json:"base_url,omitempty"`
+	Provider       string `json:"provider" validate:"required,ai_provider"`
+	Name           string `json:"name" validate:"required,min=1,max=100"`
+	APIKey         string `json:"api_key" validate:"required,min=10,max=500"`
+	OrganizationID string `json:"organization_id,omitempty" validate:"omitempty,max=100"`
+	BaseURL        string `json:"base_url,omitempty" validate:"omitempty,url,max=500"`
 }
 
 // UpdateBYOKRequest for updating BYOK config

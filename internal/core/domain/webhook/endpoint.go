@@ -1,11 +1,21 @@
 package webhook
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
+
+// Valid path pattern
+var validPathRegex = regexp.MustCompile(`^[a-zA-Z0-9/_-]+$`)
+
+// Valid HTTP methods
+var validMethods = map[string]bool{
+	"GET": true, "POST": true, "PUT": true, "PATCH": true, "DELETE": true, "HEAD": true, "OPTIONS": true,
+}
 
 // Endpoint entity (aggregate root)
 type Endpoint struct {
@@ -39,8 +49,32 @@ func (Endpoint) TableName() string {
 	return "webhook_endpoints"
 }
 
-// NewEndpoint creates a new webhook endpoint
-func NewEndpoint(workflowID, workspaceID uuid.UUID, nodeID, path string) *Endpoint {
+// NewEndpoint creates a new webhook endpoint with validation
+func NewEndpoint(workflowID, workspaceID uuid.UUID, nodeID, path string) (*Endpoint, error) {
+	// Validate inputs
+	if workflowID == uuid.Nil {
+		return nil, ErrInvalidWorkflowID
+	}
+	if workspaceID == uuid.Nil {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if nodeID == "" {
+		return nil, ErrNodeIDRequired
+	}
+	if len(nodeID) > 100 {
+		return nil, ErrNodeIDTooLong
+	}
+	if path == "" {
+		return nil, ErrPathRequired
+	}
+	if len(path) > 255 {
+		return nil, ErrPathTooLong
+	}
+	// Check for path traversal
+	if strings.Contains(path, "..") || !validPathRegex.MatchString(path) {
+		return nil, ErrInvalidPath
+	}
+
 	return &Endpoint{
 		ID:          uuid.New(),
 		WorkflowID:  workflowID,
@@ -51,7 +85,7 @@ func NewEndpoint(workflowID, workspaceID uuid.UUID, nodeID, path string) *Endpoi
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
-	}
+	}, nil
 }
 
 // GetWorkspaceID implements the WorkspaceOwned interface

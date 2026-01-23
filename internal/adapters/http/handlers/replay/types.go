@@ -6,14 +6,14 @@ import (
 
 // CreateReplayRequest represents a request to create a replay session
 type CreateReplayRequest struct {
-	ExecutionID      string                            `json:"execution_id" validate:"required"`
-	Mode             string                            `json:"mode" validate:"required"`
-	StartFromNodeID  *string                           `json:"start_from_node_id,omitempty"`
-	EndAtNodeID      *string                           `json:"end_at_node_id,omitempty"`
-	SkipNodes        []string                          `json:"skip_nodes,omitempty"`
+	ExecutionID      string                            `json:"execution_id" validate:"required,uuid"`
+	Mode             string                            `json:"mode" validate:"required,oneof=full from_node step breakpoint"`
+	StartFromNodeID  *string                           `json:"start_from_node_id,omitempty" validate:"omitempty,max=100"`
+	EndAtNodeID      *string                           `json:"end_at_node_id,omitempty" validate:"omitempty,max=100"`
+	SkipNodes        []string                          `json:"skip_nodes,omitempty" validate:"omitempty,max=50,dive,max=100"`
 	ModifyInputs     map[string]interface{}            `json:"modify_inputs,omitempty"`
 	ModifyNodeParams map[string]map[string]interface{} `json:"modify_node_params,omitempty"`
-	Breakpoints      []string                          `json:"breakpoints,omitempty"`
+	Breakpoints      []string                          `json:"breakpoints,omitempty" validate:"omitempty,max=50,dive,max=100"`
 }
 
 // ReplaySessionResponse represents a replay session response

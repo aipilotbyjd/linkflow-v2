@@ -70,7 +70,10 @@ func (h *RegisterUserHandler) Handle(ctx context.Context, cmd RegisterUserComman
 	}
 
 	// Create user
-	newUser := user.NewUser(cmd.Email, passwordHash, cmd.FirstName, cmd.LastName)
+	newUser, err := user.NewUser(cmd.Email, passwordHash, cmd.FirstName, cmd.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user entity: %w", err)
+	}
 
 	if err := h.userRepo.Create(ctx, newUser); err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)

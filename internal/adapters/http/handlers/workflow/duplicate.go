@@ -62,7 +62,11 @@ func (h *DuplicateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		name = original.Name + " (Copy)"
 	}
 
-	duplicated := workflow.NewWorkflow(original.WorkspaceID, userID, name)
+	duplicated, err := workflow.NewWorkflow(original.WorkspaceID, userID, name)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
 
 	duplicated.Description = original.Description
 	if req.Description != nil {

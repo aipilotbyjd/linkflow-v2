@@ -61,6 +61,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/cache"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
+	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/metrics"
 	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
@@ -179,6 +180,12 @@ func main() {
 	// Metrics collector
 	metricsCollector := metrics.NewCollector("2.0.0")
 
+	// Encryption service
+	encryptor, err := crypto.NewEncryptor(cfg.Crypto.EncryptionKey)
+	if err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to initialize encryptor")
+	}
+
 	// Stream manager (for admin)
 	streamManager := streaming.NewManager(redisClient.Redis())
 
@@ -224,7 +231,7 @@ func main() {
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
 	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, usageService, eventBus)
 	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue)
-	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus)
+	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus, encryptor)
 	updateCredentialHandler := credentialCmd.NewUpdateCredentialHandler(credentialRepo)
 	deleteCredentialHandler := credentialCmd.NewDeleteCredentialHandler(credentialRepo)
 	createScheduleHandler := scheduleCmd.NewCreateScheduleHandler(scheduleRepo, usageService, eventBus)

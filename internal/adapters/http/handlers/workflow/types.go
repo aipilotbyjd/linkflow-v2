@@ -7,15 +7,15 @@ import (
 
 // CreateWorkflowRequest represents workflow creation request
 type CreateWorkflowRequest struct {
-	Name        string          `json:"name" validate:"required"`
-	Description *string         `json:"description,omitempty"`
+	Name        string          `json:"name" validate:"required,min=1,max=255"`
+	Description *string         `json:"description,omitempty" validate:"omitempty,max=2000"`
 	Nodes       types.JSONArray `json:"nodes"`
 	Connections types.JSONArray `json:"connections"`
 	Settings    types.JSON      `json:"settings"`
-	Tags        []string        `json:"tags"`
-	Color       *string         `json:"color,omitempty"`
-	Icon        *string         `json:"icon,omitempty"`
-	Category    *string         `json:"category,omitempty"`
+	Tags        []string        `json:"tags" validate:"omitempty,max=20,dive,max=50"`
+	Color       *string         `json:"color,omitempty" validate:"omitempty,hex_color"`
+	Icon        *string         `json:"icon,omitempty" validate:"omitempty,max=50"`
+	Category    *string         `json:"category,omitempty" validate:"omitempty,max=50"`
 }
 
 // WorkflowResponse represents workflow in responses
@@ -50,14 +50,14 @@ type UpdateRequest struct {
 
 // CloneRequest represents workflow clone request
 type CloneRequest struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required,min=1,max=255"`
 }
 
 // DuplicateRequest represents workflow duplicate request
 type DuplicateRequest struct {
-	Name        string  `json:"name" validate:"required"`
-	Description *string `json:"description,omitempty"`
-	FolderID    *string `json:"folderId,omitempty"`
+	Name        string  `json:"name" validate:"required,min=1,max=255"`
+	Description *string `json:"description,omitempty" validate:"omitempty,max=2000"`
+	FolderID    *string `json:"folderId,omitempty" validate:"omitempty,uuid"`
 }
 
 // ValidateRequest represents workflow validation request
