@@ -18,6 +18,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/scheduler"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -193,7 +194,10 @@ func startHealthServer(appLogger logger.Logger, server *scheduler.Server, port i
 		}
 	})
 
-	// Metrics endpoint
+	// Prometheus metrics
+	mux.Handle("/metrics/prometheus", promhttp.Handler())
+
+	// Metrics endpoint (Legacy JSON)
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
 		metrics := server.Metrics().Snapshot()
 		w.Header().Set("Content-Type", "application/json")

@@ -8,8 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"net/http"
+
 	"github.com/google/uuid"
 	"github.com/hibiken/asynq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog/log"
 
 	"time"
@@ -228,6 +231,16 @@ func main() {
 
 	// Keep references
 	_ = redis
+
+	// Start metrics server (non-blocking)
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics/prometheus", promhttp.Handler())
+		appLogger.Info().Int("port", 8090).Msg("Starting metrics server")
+		if err := http.ListenAndServe(":8090", mux); err != nil && err != http.ErrServerClosed {
+			appLogger.Error().Err(err).Msg("Metrics server error")
+		}
+	}()
 
 	// Start server (non-blocking)
 	appLogger.Info().Msg("Starting Asynq worker server")
