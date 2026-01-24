@@ -27,12 +27,18 @@ type TaskQueue interface {
 	EnqueueWorkflowExecution(ctx context.Context, payload interface{}) error
 }
 
+// ExecutionStreamService interface for real-time updates
+type ExecutionStreamService interface {
+	BroadcastToExecution(ctx context.Context, workspaceID, executionID uuid.UUID, event string, data interface{})
+}
+
 // StartExecutionHandler handles starting workflow executions
 type StartExecutionHandler struct {
 	workflowRepo  workflow.Repository
 	executionRepo execution.Repository
 	eventBus      events.Bus
 	taskQueue     TaskQueue
+	streamService ExecutionStreamService
 }
 
 // NewStartExecutionHandler creates a new handler
@@ -41,12 +47,14 @@ func NewStartExecutionHandler(
 	executionRepo execution.Repository,
 	eventBus events.Bus,
 	taskQueue TaskQueue,
+	streamService ExecutionStreamService,
 ) *StartExecutionHandler {
 	return &StartExecutionHandler{
 		workflowRepo:  workflowRepo,
 		executionRepo: executionRepo,
 		eventBus:      eventBus,
 		taskQueue:     taskQueue,
+		streamService: streamService,
 	}
 }
 

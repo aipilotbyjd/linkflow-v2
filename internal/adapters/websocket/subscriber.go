@@ -2,17 +2,18 @@ package websocket
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/google/uuid"
 )
 
+// EventPublisher defines the interface for publishing real-time events
 type EventPublisher interface {
 	Publish(ctx context.Context, event string, data interface{}) error
 	PublishToWorkspace(ctx context.Context, workspaceID uuid.UUID, event string, data interface{}) error
 	PublishToUser(ctx context.Context, userID uuid.UUID, event string, data interface{}) error
 }
 
+// Subscriber is a local adapter that publishes events directly to the Hub
 type Subscriber struct {
 	hub *Hub
 }
@@ -37,30 +38,6 @@ func (s *Subscriber) PublishToWorkspace(ctx context.Context, workspaceID uuid.UU
 func (s *Subscriber) PublishToUser(ctx context.Context, userID uuid.UUID, event string, data interface{}) error {
 	s.hub.BroadcastToUser(userID, event, data)
 	return nil
-}
-
-// RedisSubscriber subscribes to Redis pub/sub for cross-instance communication
-type RedisSubscriber struct {
-	hub *Hub
-}
-
-func NewRedisSubscriber(hub *Hub) *RedisSubscriber {
-	return &RedisSubscriber{hub: hub}
-}
-
-func (s *RedisSubscriber) Subscribe(ctx context.Context, channel string) error {
-	// Redis subscription is handled at the infrastructure layer
-	// This subscriber receives messages through HandleMessage and broadcasts to local clients
-	// For cross-instance communication, the Redis adapter handles pub/sub
-	return nil
-}
-
-func (s *RedisSubscriber) HandleMessage(channel string, payload []byte) {
-	var msg Message
-	if err := json.Unmarshal(payload, &msg); err != nil {
-		return
-	}
-	s.hub.Broadcast(&msg)
 }
 
 // ChannelName returns the Redis channel name for a given scope

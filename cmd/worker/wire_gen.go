@@ -8,11 +8,14 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	"github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
 	execution2 "github.com/linkflow-ai/linkflow/internal/core/domain/execution"
@@ -23,7 +26,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 	"gorm.io/gorm"
-	"os"
 )
 
 // Injectors from wire.go:
@@ -59,7 +61,9 @@ func InitializeWorkerApp() (*WorkerApp, error) {
 	scheduleRepository := repositories.NewScheduleRepository(db)
 	bus := provideWorkerEventBus()
 	taskQueue := provideWorkerTaskQueue(asynqClient)
-	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue)
+	redisPublisher := websocket.NewRedisPublisher(redisClient.Redis())
+	executionStreamService := websocket.NewExecutionStreamService(redisPublisher)
+	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue, executionStreamService)
 	workerApp := provideWorkerApp(config, logger, client, redisClient, asynqClient, encryptor, workflowRepository, executionRepository, nodeExecutionRepository, credentialRepository, scheduleRepository, startExecutionHandler)
 	return workerApp, nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	executionCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/credential"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
@@ -54,7 +55,12 @@ var workerInfraSet = wire.NewSet(
 	provideWorkerAsynqClient,
 	provideWorkerTaskQueue,
 	provideWorkerEncryptor,
+	provideWorkerEncryptor,
 	provideWorkerEventBus,
+	websocket.NewRedisPublisher,
+	wire.Bind(new(websocket.EventPublisher), new(*websocket.RedisPublisher)),
+	websocket.NewExecutionStreamService,
+	wire.Bind(new(executionCmd.ExecutionStreamService), new(*websocket.ExecutionStreamService)),
 )
 
 // Repository provider set

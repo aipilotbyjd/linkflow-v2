@@ -53,6 +53,7 @@ type Handlers struct {
 	Invitation    InvitationHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
+	WebSocket     http.HandlerFunc
 }
 
 // AuthHandlers holds auth-related handlers
@@ -439,6 +440,12 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 		// Invitations (public with token)
 		r.Get("/invitations/{token}", handlers.Invitation.GetInfo)
 		r.Post("/invitations/accept", handlers.Invitation.Accept) // Authenticated usually, but might handle login flow
+
+		// WebSocket (authenticated)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
+			r.Get("/ws", handlers.WebSocket)
+		})
 
 		// Protected routes
 		r.Group(func(r chi.Router) {

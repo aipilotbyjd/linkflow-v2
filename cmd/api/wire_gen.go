@@ -8,11 +8,14 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/google/wire"
 	"github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	"github.com/linkflow-ai/linkflow/internal/core/application/command/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/application/command/user"
 	"github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
@@ -35,7 +38,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 	"gorm.io/gorm"
-	"os"
 )
 
 // Injectors from wire.go:
@@ -83,7 +85,10 @@ func InitializeApp() (*App, error) {
 	activateWorkflowHandler := workflow.NewActivateWorkflowHandler(workflowRepository, nil, bus)
 	createWorkspaceHandler := workspace.NewCreateWorkspaceHandler(workspaceRepository, memberRepository, rbacRepository, bus)
 	taskQueue := provideTaskQueue(asynqClient)
-	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue)
+	wsHub := websocket.NewHub()
+	wsSubscriber := websocket.NewSubscriber(wsHub)
+	executionStreamService := websocket.NewExecutionStreamService(wsSubscriber)
+	startExecutionHandler := execution.NewStartExecutionHandler(workflowRepository, executionRepository, bus, taskQueue, executionStreamService)
 	getUserHandler := user2.NewGetUserHandler(userRepository)
 	getWorkflowHandler := workflow2.NewGetWorkflowHandler(workflowRepository)
 	listWorkflowsHandler := workflow2.NewListWorkflowsHandler(workflowRepository)

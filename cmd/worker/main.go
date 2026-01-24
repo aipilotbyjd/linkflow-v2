@@ -16,6 +16,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
 	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
@@ -144,13 +145,18 @@ func main() {
 		processor.RegisterHandler(nodeType, &nodeAdapter{node: node})
 	}
 
-	// Initialize executor with usage tracking
+	// Initialize Execution Stream Service with Redis publisher
+	redisPublisher := websocket.NewRedisPublisher(redis.Redis())
+	executionStreamService := websocket.NewExecutionStreamService(redisPublisher)
+
+	// Initialize executor with usage tracking and streaming
 	workflowExecutor := executor.NewExecutor(
 		workflowRepo,
 		executionRepo,
 		nodeExecRepo,
 		processor,
 		usageTracker,
+		executionStreamService,
 		appLogger,
 	)
 

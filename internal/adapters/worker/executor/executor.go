@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/execution"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
@@ -21,6 +22,7 @@ type Executor struct {
 	nodeExecRepo  execution.NodeExecutionRepository
 	processor     *Processor
 	usageTracker  *UsageTracker
+	streamService *websocket.ExecutionStreamService
 	logger        logger.Logger
 }
 
@@ -30,6 +32,7 @@ func NewExecutor(
 	nodeExecRepo execution.NodeExecutionRepository,
 	processor *Processor,
 	usageTracker *UsageTracker,
+	streamService *websocket.ExecutionStreamService,
 	log logger.Logger,
 ) *Executor {
 	return &Executor{
@@ -38,6 +41,7 @@ func NewExecutor(
 		nodeExecRepo:  nodeExecRepo,
 		processor:     processor,
 		usageTracker:  usageTracker,
+		streamService: streamService,
 		logger:        log,
 	}
 }
@@ -82,6 +86,18 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 		Str("workflow_id", wf.ID.String()).
 		Msg("Starting workflow execution")
 
+	// Emit initial progress
+	if e.streamService != nil {
+		e.streamService.SendProgress(ctx, exec.WorkspaceID, websocket.ExecutionProgressData{
+			ExecutionID: exec.ID,
+			WorkflowID:  wf.ID,
+			Status:      "running",
+			Progress:    0,
+			NodesTotal:  len(wf.Nodes),
+			StartedAt:   *exec.StartedAt,
+		})
+	}
+
 	runtime := NewRuntime(exec, wf, e.logger)
 
 	err = e.executeWorkflow(ctx, runtime)
@@ -102,6 +118,20 @@ func (e *Executor) Execute(ctx context.Context, executionID uuid.UUID) error {
 			Str("execution_id", executionID.String()).
 			Dur("duration", time.Since(*exec.StartedAt)).
 			Msg("Workflow execution completed")
+
+		// Emit final progress
+		if e.streamService != nil {
+			e.streamService.SendProgress(ctx, exec.WorkspaceID, websocket.ExecutionProgressData{
+				ExecutionID:    exec.ID,
+				WorkflowID:     wf.ID,
+				Status:         "completed",
+				Progress:       100,
+				NodesCompleted: int(runtime.GetNodeCount()),
+				NodesTotal:     len(wf.Nodes),
+				StartedAt:      *exec.StartedAt,
+				ElapsedMs:      time.Since(*exec.StartedAt).Milliseconds(),
+			})
+		}
 	}
 
 	if err := e.executionRepo.Update(ctx, exec); err != nil {
@@ -164,6 +194,31 @@ func (e *Executor) executeNode(ctx context.Context, runtime *Runtime, node map[s
 
 	if err := e.nodeExecRepo.Update(ctx, nodeExec); err != nil {
 		e.logger.Warn().Err(err).Msg("Failed to update node execution")
+	}
+
+	// Emit node output event
+	if e.streamService != nil {
+		var startedAt time.Time
+		if nodeExec.StartedAt != nil {
+			startedAt = *nodeExec.StartedAt
+		}
+
+		var durationMs int64
+		if nodeExec.DurationMs != nil {
+			durationMs = int64(*nodeExec.DurationMs)
+		}
+
+		e.streamService.SendNodeOutput(ctx, runtime.Execution.WorkspaceID, websocket.NodeOutputData{
+			ExecutionID: runtime.Execution.ID,
+			NodeID:      nodeID,
+			NodeName:    fmt.Sprintf("%v", node["name"]),
+			NodeType:    nodeType,
+			Input:       nodeExec.InputData,
+			Output:      result,
+			StartedAt:   startedAt,
+			CompletedAt: nodeExec.CompletedAt,
+			DurationMs:  durationMs,
+		})
 	}
 
 	if err != nil {

@@ -44,6 +44,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
+	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/nodes"
 	appbuilder "github.com/linkflow-ai/linkflow/internal/core/application/aibuilder"
 	billingapp "github.com/linkflow-ai/linkflow/internal/core/application/billing"
@@ -285,6 +286,19 @@ func main() {
 	// Billing service for usage tracking
 	usageService := billingapp.NewUsageService(usageRepo, subscriptionRepo)
 
+	// WebSocket stack
+	wsHub := websocket.NewHub()
+	go wsHub.Run()
+	wsSubscriber := websocket.NewSubscriber(wsHub)
+	executionStreamService := websocket.NewExecutionStreamService(wsSubscriber)
+	wsHandler := websocket.NewHandler(wsHub)
+
+	// Redis WebSocket Sync (Distribution)
+	redisWSSync := websocket.NewRedisSubscriber(wsHub, redisClient.Redis())
+	if err := redisWSSync.Start(context.Background()); err != nil {
+		appLogger.Warn().Err(err).Msg("Failed to start Redis WebSocket sync")
+	}
+
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
 	loginUserHandler := userCmd.NewLoginUserHandler(userRepo, sessionRepo, jwtManager, eventBus)
@@ -293,7 +307,7 @@ func main() {
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
 	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, usageService, eventBus)
 	deactivateWorkflowHandler := workflowCmd.NewDeactivateWorkflowHandler(workflowRepo, eventBus)
-	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue)
+	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue, executionStreamService)
 	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus, encryptor)
 	updateCredentialHandler := credentialCmd.NewUpdateCredentialHandler(credentialRepo)
 	deleteCredentialHandler := credentialCmd.NewDeleteCredentialHandler(credentialRepo)
@@ -816,6 +830,7 @@ func main() {
 			ListEnvironments: varListEnvHandler.Handle,
 			Resolve:          varResolveHandler.Handle,
 		},
+		WebSocket: wsHandler.ServeHTTP,
 	}
 
 	// Create router using routes.NewRouter

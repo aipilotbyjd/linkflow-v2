@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -95,42 +96,42 @@ type ApprovalRequiredData struct {
 
 // ExecutionStreamService handles execution streaming
 type ExecutionStreamService struct {
-	hub *Hub
+	publisher EventPublisher
 }
 
 // NewExecutionStreamService creates a new execution stream service
-func NewExecutionStreamService(hub *Hub) *ExecutionStreamService {
-	return &ExecutionStreamService{hub: hub}
+func NewExecutionStreamService(publisher EventPublisher) *ExecutionStreamService {
+	return &ExecutionStreamService{publisher: publisher}
 }
 
 // SendProgress sends execution progress update
-func (s *ExecutionStreamService) SendProgress(workspaceID uuid.UUID, data ExecutionProgressData) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionProgress, data)
+func (s *ExecutionStreamService) SendProgress(ctx context.Context, workspaceID uuid.UUID, data ExecutionProgressData) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionProgress, data)
 }
 
 // SendNodeOutput sends node output for real-time debugging
-func (s *ExecutionStreamService) SendNodeOutput(workspaceID uuid.UUID, data NodeOutputData) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionNodeOutput, data)
+func (s *ExecutionStreamService) SendNodeOutput(ctx context.Context, workspaceID uuid.UUID, data NodeOutputData) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionNodeOutput, data)
 }
 
 // SendLog sends execution log entry
-func (s *ExecutionStreamService) SendLog(workspaceID uuid.UUID, data ExecutionLogData) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionLog, data)
+func (s *ExecutionStreamService) SendLog(ctx context.Context, workspaceID uuid.UUID, data ExecutionLogData) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionLog, data)
 }
 
 // SendMetrics sends execution metrics
-func (s *ExecutionStreamService) SendMetrics(workspaceID uuid.UUID, data ExecutionMetricsData) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionMetrics, data)
+func (s *ExecutionStreamService) SendMetrics(ctx context.Context, workspaceID uuid.UUID, data ExecutionMetricsData) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionMetrics, data)
 }
 
 // SendApprovalRequired notifies about approval requirement
-func (s *ExecutionStreamService) SendApprovalRequired(workspaceID uuid.UUID, data ApprovalRequiredData) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventApprovalRequired, data)
+func (s *ExecutionStreamService) SendApprovalRequired(ctx context.Context, workspaceID uuid.UUID, data ApprovalRequiredData) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventApprovalRequired, data)
 }
 
 // SendExecutionWaiting notifies that execution is waiting
-func (s *ExecutionStreamService) SendExecutionWaiting(workspaceID uuid.UUID, executionID uuid.UUID, reason string, data interface{}) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionWaiting, map[string]interface{}{
+func (s *ExecutionStreamService) SendExecutionWaiting(ctx context.Context, workspaceID uuid.UUID, executionID uuid.UUID, reason string, data interface{}) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionWaiting, map[string]interface{}{
 		"execution_id": executionID,
 		"reason":       reason,
 		"data":         data,
@@ -139,8 +140,8 @@ func (s *ExecutionStreamService) SendExecutionWaiting(workspaceID uuid.UUID, exe
 }
 
 // SendExecutionResumed notifies that execution was resumed
-func (s *ExecutionStreamService) SendExecutionResumed(workspaceID uuid.UUID, executionID uuid.UUID, resumedBy string) {
-	s.hub.BroadcastToWorkspace(workspaceID, EventExecutionResumed, map[string]interface{}{
+func (s *ExecutionStreamService) SendExecutionResumed(ctx context.Context, workspaceID uuid.UUID, executionID uuid.UUID, resumedBy string) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionResumed, map[string]interface{}{
 		"execution_id": executionID,
 		"resumed_by":   resumedBy,
 		"timestamp":    time.Now(),
@@ -148,8 +149,8 @@ func (s *ExecutionStreamService) SendExecutionResumed(workspaceID uuid.UUID, exe
 }
 
 // BroadcastToExecution sends event to all clients watching a specific execution
-func (s *ExecutionStreamService) BroadcastToExecution(workspaceID, executionID uuid.UUID, event string, data interface{}) {
-	s.hub.BroadcastToWorkspace(workspaceID, event, map[string]interface{}{
+func (s *ExecutionStreamService) BroadcastToExecution(ctx context.Context, workspaceID, executionID uuid.UUID, event string, data interface{}) {
+	s.publisher.PublishToWorkspace(ctx, workspaceID, event, map[string]interface{}{
 		"execution_id": executionID,
 		"data":         data,
 		"timestamp":    time.Now().UnixMilli(),
