@@ -1,8 +1,11 @@
 package workspace
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
@@ -19,29 +22,32 @@ type InviteMemberRequest struct {
 }
 
 type InviteMemberHandler struct {
-	workspaceRepo workspace.Repository
-	memberRepo    workspace.MemberRepository
-	userRepo      user.Repository
-	rbacRepo      rbac.Repository
-	emailService  email.Provider
-	baseURL       string
+	workspaceRepo  workspace.Repository
+	memberRepo     workspace.MemberRepository
+	invitationRepo workspace.InvitationRepository
+	userRepo       user.Repository
+	rbacRepo       rbac.Repository
+	emailService   email.Provider
+	baseURL        string
 }
 
 func NewInviteMemberHandler(
 	workspaceRepo workspace.Repository,
 	memberRepo workspace.MemberRepository,
+	invitationRepo workspace.InvitationRepository,
 	userRepo user.Repository,
 	rbacRepo rbac.Repository,
 	emailService email.Provider,
 	baseURL string,
 ) *InviteMemberHandler {
 	return &InviteMemberHandler{
-		workspaceRepo: workspaceRepo,
-		memberRepo:    memberRepo,
-		userRepo:      userRepo,
-		rbacRepo:      rbacRepo,
-		emailService:  emailService,
-		baseURL:       baseURL,
+		workspaceRepo:  workspaceRepo,
+		memberRepo:     memberRepo,
+		invitationRepo: invitationRepo,
+		userRepo:       userRepo,
+		rbacRepo:       rbacRepo,
+		emailService:   emailService,
+		baseURL:        baseURL,
 	}
 }
 
@@ -141,7 +147,47 @@ func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// User doesn't exist - send invitation email
-	inviteURL := h.baseURL + "/invite?workspace=" + workspaceID.String() + "&email=" + req.Email
+	// Generate token
+	tokenBytes := make([]byte, 32)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+	token := base64.URLEncoding.EncodeToString(tokenBytes)
+
+	// Create invitation
+	invitation, err := workspace.NewInvitation(workspaceID, req.Email, workspace.Role(req.Role), inviter.UserID, token, 7*24*time.Hour)
+	if err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	// Set RoleID for invitation
+	// Map legacy role string to RBAC Role
+	var rbacRoleName string
+	role := workspace.Role(req.Role)
+	switch role {
+	case workspace.RoleAdmin:
+		rbacRoleName = rbac.RoleAdmin
+	case workspace.RoleMember:
+		rbacRoleName = rbac.RoleEditor
+	case workspace.RoleViewer:
+		rbacRoleName = rbac.RoleViewer
+	default:
+		rbacRoleName = rbac.RoleViewer
+	}
+
+	if rbacRole, err := h.rbacRepo.GetRoleByName(r.Context(), nil, rbacRoleName); err == nil {
+		invitation.RoleID = &rbacRole.ID
+	}
+
+	// Save invitation
+	if err := h.invitationRepo.Create(r.Context(), invitation); err != nil {
+		common.HandleError(w, err)
+		return
+	}
+
+	inviteURL := h.baseURL + "/invite?token=" + token
 	msg := &email.Message{
 		To:      []string{req.Email},
 		Subject: "You've been invited to join " + ws.Name,

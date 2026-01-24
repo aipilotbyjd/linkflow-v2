@@ -58,6 +58,23 @@ type WorkspaceMember struct {
 	RoleRef *Role      `gorm:"foreignKey:RoleID"`
 }
 
-func (WorkspaceMember) TableName() string {
-	return "workspace_members"
+type WorkspaceInvitation struct {
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	WorkspaceID uuid.UUID `gorm:"type:uuid;index;not null"`
+	Email       string    `gorm:"size:255;not null"`
+	Role        string    `gorm:"size:20;not null;default:member"`
+	Token       string    `gorm:"size:255;uniqueIndex;not null"`
+	InvitedBy   uuid.UUID `gorm:"type:uuid;not null"`
+	ExpiresAt   time.Time `gorm:"not null"`
+	AcceptedAt  *time.Time
+	CreatedAt   time.Time
+
+	// RBAC
+	RoleID *uuid.UUID `gorm:"type:uuid;index"`
+
+	Workspace Workspace `gorm:"foreignKey:WorkspaceID"`
+}
+
+func (WorkspaceInvitation) TableName() string {
+	return "workspace_invitations"
 }

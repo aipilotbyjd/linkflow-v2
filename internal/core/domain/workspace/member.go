@@ -116,6 +116,7 @@ type Invitation struct {
 	WorkspaceID uuid.UUID  `gorm:"type:uuid;index;not null" json:"workspace_id"`
 	Email       string     `gorm:"size:255;not null" json:"email"`
 	Role        Role       `gorm:"size:20;not null;default:member" json:"role"`
+	RoleID      *uuid.UUID `gorm:"type:uuid;index" json:"role_id,omitempty"`
 	Token       string     `gorm:"size:255;uniqueIndex;not null" json:"-"`
 	InvitedBy   uuid.UUID  `gorm:"type:uuid;not null" json:"invited_by"`
 	ExpiresAt   time.Time  `gorm:"not null" json:"expires_at"`

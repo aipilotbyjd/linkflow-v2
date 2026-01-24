@@ -14,7 +14,8 @@ import (
 )
 
 type UpdateMemberRequest struct {
-	Role string `json:"role" validate:"required,oneof=owner admin editor viewer"`
+	Role   string     `json:"role" validate:"omitempty,oneof=owner admin editor viewer"`
+	RoleID *uuid.UUID `json:"role_id" validate:"omitempty"`
 }
 
 type UpdateMemberHandler struct {
@@ -61,10 +62,71 @@ func (h *UpdateMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := workspace.ParseRole(req.Role)
-	if err != nil {
-		common.BadRequest(w, "Invalid role: must be one of owner, admin, editor, viewer")
+	if req.Role == "" && req.RoleID == nil {
+		common.BadRequest(w, "Either role or role_id must be provided")
 		return
+	}
+
+	var role workspace.Role
+	var roleID *uuid.UUID
+
+	// Logic to determine role and roleID
+	if req.RoleID != nil {
+		// Custom or System Role by ID
+		r, err := h.rbacRepo.GetRole(r.Context(), *req.RoleID)
+		if err != nil {
+			common.BadRequest(w, "Invalid role_id")
+			return
+		}
+		// Validate scope
+		if r.WorkspaceID != nil && *r.WorkspaceID != workspaceID {
+			common.BadRequest(w, "Role does not belong to this workspace")
+			return
+		}
+
+		roleID = &r.ID
+		// Map back to legacy role string for compatibility
+		if r.IsSystem() {
+			switch r.Name {
+			case rbac.RoleOwner:
+				role = workspace.RoleOwner
+			case rbac.RoleAdmin:
+				role = workspace.RoleAdmin
+			case rbac.RoleViewer:
+				role = workspace.RoleViewer
+			default:
+				role = workspace.RoleMember // Editor -> Member
+			}
+		} else {
+			role = workspace.RoleMember // Custom roles fallback to Member/Editor behavior generally
+		}
+	} else {
+		// Legacy string role
+		parsedRole, err := workspace.ParseRole(req.Role)
+		if err != nil {
+			common.BadRequest(w, "Invalid role: must be one of owner, admin, editor, viewer")
+			return
+		}
+		role = parsedRole
+
+		// Map to RoleID
+		var rbacRoleName string
+		switch role {
+		case workspace.RoleAdmin:
+			rbacRoleName = rbac.RoleAdmin
+		case workspace.RoleMember:
+			rbacRoleName = rbac.RoleEditor
+		case workspace.RoleViewer:
+			rbacRoleName = rbac.RoleViewer
+		case workspace.RoleOwner:
+			rbacRoleName = rbac.RoleOwner
+		default:
+			rbacRoleName = rbac.RoleViewer
+		}
+
+		if rbacRole, err := h.rbacRepo.GetRoleByName(r.Context(), nil, rbacRoleName); err == nil {
+			roleID = &rbacRole.ID
+		}
 	}
 
 	currentMember, err := h.memberRepo.FindByWorkspaceAndUser(r.Context(), workspaceID, currentUserID)
@@ -115,25 +177,7 @@ func (h *UpdateMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	member.Role = role
-
-	// Update RoleID based on legacy role string
-	var rbacRoleName string
-	switch role {
-	case workspace.RoleAdmin:
-		rbacRoleName = rbac.RoleAdmin
-	case workspace.RoleMember:
-		rbacRoleName = rbac.RoleEditor
-	case workspace.RoleViewer:
-		rbacRoleName = rbac.RoleViewer
-	case workspace.RoleOwner:
-		rbacRoleName = rbac.RoleOwner
-	default:
-		rbacRoleName = rbac.RoleViewer
-	}
-
-	if rbacRole, err := h.rbacRepo.GetRoleByName(r.Context(), nil, rbacRoleName); err == nil {
-		member.RoleID = &rbacRole.ID
-	}
+	member.RoleID = roleID
 
 	if err := h.memberRepo.Update(r.Context(), member); err != nil {
 		common.HandleError(w, err)

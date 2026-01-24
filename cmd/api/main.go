@@ -29,6 +29,7 @@ import (
 	nodetypesHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/nodetypes"
 	oauthHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/oauth"
 	pinneddataHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/pinneddata"
+	rbacHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/rbac"
 	scheduleHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/schedule"
 	shareHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/share"
 	templateHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/template"
@@ -161,6 +162,7 @@ func main() {
 	sessionRepo := repositories.NewSessionRepository(db)
 	workspaceRepo := repositories.NewWorkspaceRepository(db)
 	memberRepo := repositories.NewMemberRepository(db)
+	invitationRepo := repositories.NewInvitationRepository(db)
 	rbacRepo := repositories.NewRBACRepository(db)
 	workflowRepo := repositories.NewWorkflowRepository(db)
 	versionRepo := repositories.NewVersionRepository(db)
@@ -358,7 +360,7 @@ func main() {
 	wsUpdateHandler := workspaceHandler.NewUpdateHandler(workspaceRepo)
 	wsDeleteHandler := workspaceHandler.NewDeleteHandler(workspaceRepo)
 	wsMembersHandler := workspaceHandler.NewListMembersHandler(listMembersHandler)
-	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, userRepo, rbacRepo, emailService, baseURL)
+	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, invitationRepo, userRepo, rbacRepo, emailService, baseURL)
 	wsUpdateMemberHandler := workspaceHandler.NewUpdateMemberHandler(memberRepo, workspaceRepo, rbacRepo)
 	wsRemoveMemberHandler := workspaceHandler.NewRemoveMemberHandler(workspaceRepo, memberRepo)
 
@@ -532,6 +534,13 @@ func main() {
 	admTrimStreamHandler := adminHandler.NewTrimStreamHandler(&streamAdapter{streamManager})
 	admGetDisabledNodesHandler := adminHandler.NewGetDisabledNodesHandler(siteSettingsRepo)
 	admUpdateDisabledNodesHandler := adminHandler.NewUpdateDisabledNodesHandler(siteSettingsRepo)
+
+	// RBAC handlers
+	rbacListRolesHandler := rbacHandler.NewListRolesHandler(rbacRepo)
+	rbacCreateRoleHandler := rbacHandler.NewCreateRoleHandler(rbacRepo)
+	rbacUpdateRoleHandler := rbacHandler.NewUpdateRoleHandler(rbacRepo)
+	rbacDeleteRoleHandler := rbacHandler.NewDeleteRoleHandler(rbacRepo)
+	rbacListPermissionsHandler := rbacHandler.NewListPermissionsHandler(rbacRepo)
 
 	// OAuth handlers
 	oaListProvidersHandler := oauthHandler.NewListProvidersHandler(oauthProviders)
@@ -746,6 +755,13 @@ func main() {
 			TrimStream:          admTrimStreamHandler.Handle,
 			GetDisabledNodes:    admGetDisabledNodesHandler.Handle,
 			UpdateDisabledNodes: admUpdateDisabledNodesHandler.Handle,
+		},
+		RBAC: routes.RBACHandlers{
+			ListRoles:       rbacListRolesHandler.Handle,
+			CreateRole:      rbacCreateRoleHandler.Handle,
+			UpdateRole:      rbacUpdateRoleHandler.Handle,
+			DeleteRole:      rbacDeleteRoleHandler.Handle,
+			ListPermissions: rbacListPermissionsHandler.Handle,
 		},
 		Analytics: routes.AnalyticsHandlers{
 			WorkflowAnalytics:  anWorkflowHandler.Handle,

@@ -103,6 +103,7 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		// Workspace
 		&models.Workspace{},
 		&models.WorkspaceMember{},
+		&models.WorkspaceInvitation{},
 		&models.Role{},
 		&models.Permission{},
 

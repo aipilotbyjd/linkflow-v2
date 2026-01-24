@@ -48,6 +48,7 @@ type Handlers struct {
 	Marketplace   MarketplaceHandlers
 	BinaryData    BinaryDataHandlers
 	Admin         AdminHandlers
+	RBAC          RBACHandlers
 	Analytics     AnalyticsHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
@@ -289,6 +290,15 @@ type AdminHandlers struct {
 	UpdateDisabledNodes http.HandlerFunc
 }
 
+// RBACHandlers holds RBAC handlers
+type RBACHandlers struct {
+	ListRoles       http.HandlerFunc
+	CreateRole      http.HandlerFunc
+	UpdateRole      http.HandlerFunc
+	DeleteRole      http.HandlerFunc
+	ListPermissions http.HandlerFunc
+}
+
 // AnalyticsHandlers holds analytics handlers
 type AnalyticsHandlers struct {
 	WorkflowAnalytics  http.HandlerFunc
@@ -431,6 +441,9 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			r.Post("/api-keys", handlers.APIKey.Create)
 			r.Delete("/api-keys/{keyId}", handlers.APIKey.Revoke)
 
+			// Permissions
+			r.Get("/permissions", handlers.RBAC.ListPermissions)
+
 			// User workspaces
 			r.Get("/workspaces", handlers.Workspace.List)
 			r.Post("/workspaces", handlers.Workspace.Create)
@@ -470,6 +483,21 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermMemberWrite)).Post("/invite", handlers.Workspace.InviteMember)
 					r.With(middleware.RequirePermission(rbac.PermMemberWrite)).Put("/{memberId}", handlers.Workspace.UpdateMember)
 					r.With(middleware.RequirePermission(rbac.PermMemberDelete)).Delete("/{memberId}", handlers.Workspace.RemoveMember)
+				})
+
+				// RBAC Roles
+				r.Route("/roles", func(r chi.Router) {
+					// Only Admins/Owners should manage roles usually, or specific permission
+					// Using PermMemberWrite as a proxy for "Manage Roles" if strict "role:write" doesn't exist?
+					// Or better, let's use PermWorkspaceWrite (Settings) or add PermRoleManage.
+					// Plan said "roles can be created...".
+					// Let's use PermWorkspaceWrite for now as it's configuration.
+					r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Get("/", handlers.RBAC.ListRoles)
+					r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Post("/", handlers.RBAC.CreateRole)
+					r.Route("/{roleId}", func(r chi.Router) {
+						r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Put("/", handlers.RBAC.UpdateRole)
+						r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Delete("/", handlers.RBAC.DeleteRole)
+					})
 				})
 
 				// Billing
