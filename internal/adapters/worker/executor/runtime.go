@@ -76,7 +76,6 @@ func (r *Runtime) GetNextNodes(nodeID string, sourcePort string) []map[string]in
 	for _, conn := range connections {
 		source, _ := conn["source"].(string)
 		if source == "" {
-			// Try snake_case if coming from domain model directly
 			source, _ = conn["source_node"].(string)
 		}
 
@@ -87,7 +86,6 @@ func (r *Runtime) GetNextNodes(nodeID string, sourcePort string) []map[string]in
 			}
 
 			// If sourcePort is "main" or empty, and connection is "main" or empty, match.
-			// If sourcePort is specific (e.g. "true"), only match if connection port matches.
 			match := false
 			if sourcePort == "" || sourcePort == "main" {
 				if connPort == "" || connPort == "main" {
