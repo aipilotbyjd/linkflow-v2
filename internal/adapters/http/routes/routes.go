@@ -11,6 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 )
 
@@ -367,6 +368,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 	// Health endpoints
 	r.Get("/health", handlers.Health.Health)
 	r.Get("/metrics", handlers.Admin.Metrics)
+	r.Method(http.MethodGet, "/metrics/prometheus", promhttp.Handler())
 
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
