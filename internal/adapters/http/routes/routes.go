@@ -50,6 +50,7 @@ type Handlers struct {
 	Admin         AdminHandlers
 	RBAC          RBACHandlers
 	Analytics     AnalyticsHandlers
+	Invitation    InvitationHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
 }
@@ -73,6 +74,7 @@ type AuthHandlers struct {
 type UserHandlers struct {
 	GetCurrentUser    http.HandlerFunc
 	UpdateCurrentUser http.HandlerFunc
+	MyPermissions     http.HandlerFunc
 }
 
 // APIKeyHandlers holds API key handlers
@@ -305,6 +307,12 @@ type AnalyticsHandlers struct {
 	WorkspaceAnalytics http.HandlerFunc
 }
 
+// InvitationHandlers holds invitation handlers
+type InvitationHandlers struct {
+	GetInfo http.HandlerFunc
+	Accept  http.HandlerFunc
+}
+
 // AIBuilderHandlers holds AI workflow builder handlers
 type AIBuilderHandlers struct {
 	Generate http.HandlerFunc
@@ -428,6 +436,10 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 		r.Post("/resume/{token}", handlers.Execution.Resume)
 		r.Get("/resume/{token}/status", handlers.Execution.ResumeStatus)
 
+		// Invitations (public with token)
+		r.Get("/invitations/{token}", handlers.Invitation.GetInfo)
+		r.Post("/invitations/accept", handlers.Invitation.Accept) // Authenticated usually, but might handle login flow
+
 		// Protected routes
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
@@ -435,6 +447,11 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			// User profile
 			r.Get("/users/me", handlers.User.GetCurrentUser)
 			r.Put("/users/me", handlers.User.UpdateCurrentUser)
+			// Need permission check for MyPermissions? No, it's just "me". But needs workspace scope.
+			// Actually "My Permissions" is context specific.
+			// If it's "/users/me/permissions", which workspace?
+			// The handler I wrote uses `GetWorkspaceFromContext`.
+			// So it MUST be under `/workspaces/{workspaceId}`.
 
 			// API Keys
 			r.Get("/api-keys", handlers.APIKey.List)
@@ -460,6 +477,9 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			// Workspace-scoped routes
 			r.Route("/workspaces/{workspaceId}", func(r chi.Router) {
 				r.Use(middleware.Tenant(cfg.MemberRepo, cfg.WorkspaceRepo))
+
+				// User Context in Workspace
+				r.Get("/users/me/permissions", handlers.User.MyPermissions)
 
 				// Workspace Management
 				r.With(middleware.RequirePermission(rbac.PermWorkspaceRead)).Get("/", handlers.Workspace.Get)

@@ -25,6 +25,7 @@ import (
 
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
+	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/invitation"
 	marketplaceHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/marketplace"
 	nodetypesHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/nodetypes"
 	oauthHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/oauth"
@@ -458,6 +459,7 @@ func main() {
 	// User handlers
 	usrGetHandler := userHandler.NewGetCurrentUserHandler(getUserHandler)
 	usrUpdateHandler := userHandler.NewUpdateCurrentUserHandler(userRepo)
+	usrPermissionsHandler := userHandler.NewMyPermissionsHandler()
 
 	// Folder handlers
 	fldCreateHandler := folderHandler.NewCreateFolderHandler(folderRepo)
@@ -466,6 +468,10 @@ func main() {
 	fldUpdateHandler := folderHandler.NewUpdateFolderHandler(folderRepo)
 	fldDeleteHandler := folderHandler.NewDeleteFolderHandler(folderRepo)
 	fldTreeHandler := folderHandler.NewGetFolderTreeHandler(folderRepo, workflowRepo)
+
+	// Invitation handlers
+	invGetInfoHandler := invitation.NewGetInvitationHandler(invitationRepo)
+	invAcceptHandler := invitation.NewAcceptInvitationHandler(invitationRepo, memberRepo, userRepo)
 
 	// API Key handlers
 	akCreateHandler := apikeyHandler.NewCreateAPIKeyHandler(apiKeyRepo)
@@ -576,6 +582,7 @@ func main() {
 		User: routes.UserHandlers{
 			GetCurrentUser:    usrGetHandler.Handle,
 			UpdateCurrentUser: usrUpdateHandler.Handle,
+			MyPermissions:     usrPermissionsHandler.Handle,
 		},
 		APIKey: routes.APIKeyHandlers{
 			List:   akListHandler.Handle,
@@ -766,6 +773,10 @@ func main() {
 		Analytics: routes.AnalyticsHandlers{
 			WorkflowAnalytics:  anWorkflowHandler.Handle,
 			WorkspaceAnalytics: anWorkspaceHandler.Handle,
+		},
+		Invitation: routes.InvitationHandlers{
+			GetInfo: invGetInfoHandler.Handle,
+			Accept:  invAcceptHandler.Handle,
 		},
 		AIBuilder: routes.AIBuilderHandlers{
 			Generate: func(w http.ResponseWriter, r *http.Request) {
