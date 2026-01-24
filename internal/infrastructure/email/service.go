@@ -14,14 +14,15 @@ type Service struct {
 
 // Config holds email service configuration
 type Config struct {
-	Provider    string
-	DefaultFrom string
-	APIKey      string
-	Domain      string
-	SMTPHost    string
-	SMTPPort    int
-	SMTPUser    string
-	SMTPPass    string
+	Provider     string
+	DefaultFrom  string
+	APIKey       string
+	Domain       string
+	SMTPHost     string
+	SMTPPort     int
+	SMTPUser     string
+	SMTPPass     string
+	ResendAPIKey string
 }
 
 // NewService creates a new email service
@@ -31,6 +32,8 @@ func NewService(config Config) (*Service, error) {
 	switch config.Provider {
 	case "sendgrid":
 		provider = NewSendGridProvider(config.APIKey)
+	case "resend":
+		provider = NewResendProvider(config.ResendAPIKey)
 	case "smtp":
 		provider = NewSMTPProvider(SMTPConfig{
 			Host:     config.SMTPHost,

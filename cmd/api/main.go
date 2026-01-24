@@ -357,12 +357,13 @@ func main() {
 	// Cache and email service
 	cacheService := cache.NewRedisCache(redisClient.Redis(), "cache")
 	emailService, err := email.NewService(email.Config{
-		Provider:    cfg.Email.Provider,
-		DefaultFrom: cfg.Email.From,
-		SMTPHost:    cfg.Email.SMTPHost,
-		SMTPPort:    cfg.Email.SMTPPort,
-		SMTPUser:    cfg.Email.SMTPUser,
-		SMTPPass:    cfg.Email.SMTPPass,
+		Provider:     cfg.Email.Provider,
+		DefaultFrom:  cfg.Email.From,
+		SMTPHost:     cfg.Email.SMTPHost,
+		SMTPPort:     cfg.Email.SMTPPort,
+		SMTPUser:     cfg.Email.SMTPUser,
+		SMTPPass:     cfg.Email.SMTPPass,
+		ResendAPIKey: cfg.Email.ResendAPIKey,
 	})
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to initialize email service, using noop")

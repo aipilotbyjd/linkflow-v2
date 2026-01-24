@@ -74,6 +74,7 @@ email:
   # smtp_user: set via SMTP_USER
   # smtp_pass: set via SMTP_PASS
   # sendgrid_key: set via SENDGRID_KEY
+  # resend_api_key: set via RESEND_API_KEY
 
 # -----------------------------------------------------------------------------
 # OAuth Providers

@@ -91,14 +91,15 @@ type JWTConfig struct {
 
 // EmailConfig holds email settings
 type EmailConfig struct {
-	Provider    string `mapstructure:"provider"` // smtp, sendgrid
-	From        string `mapstructure:"from"`
-	FromName    string `mapstructure:"from_name"`
-	SMTPHost    string `mapstructure:"smtp_host"`
-	SMTPPort    int    `mapstructure:"smtp_port"`
-	SMTPUser    string `mapstructure:"smtp_user"`
-	SMTPPass    string `mapstructure:"smtp_pass"`
-	SendGridKey string `mapstructure:"sendgrid_key"`
+	Provider     string `mapstructure:"provider"` // smtp, sendgrid
+	From         string `mapstructure:"from"`
+	FromName     string `mapstructure:"from_name"`
+	SMTPHost     string `mapstructure:"smtp_host"`
+	SMTPPort     int    `mapstructure:"smtp_port"`
+	SMTPUser     string `mapstructure:"smtp_user"`
+	SMTPPass     string `mapstructure:"smtp_pass"`
+	SendGridKey  string `mapstructure:"sendgrid_key"`
+	ResendAPIKey string `mapstructure:"resend_api_key"`
 }
 
 // OAuthConfig holds OAuth provider settings
