@@ -288,7 +288,6 @@ type BinaryDataHandlers struct {
 
 // AdminHandlers holds admin handlers
 type AdminHandlers struct {
-	Metrics             http.HandlerFunc
 	StreamStats         http.HandlerFunc
 	ReplayDLQ           http.HandlerFunc
 	TrimStream          http.HandlerFunc
@@ -367,7 +366,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 	// Health endpoints
 	r.Get("/health", handlers.Health.Health)
-	r.Get("/metrics", handlers.Admin.Metrics)
 	r.Method(http.MethodGet, "/metrics/prometheus", promhttp.Handler())
 
 	// API v1 routes

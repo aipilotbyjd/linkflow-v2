@@ -74,7 +74,6 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
-	"github.com/linkflow-ai/linkflow/internal/infrastructure/metrics"
 	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 	sentryPkg "github.com/linkflow-ai/linkflow/internal/infrastructure/observability/sentry"
@@ -228,9 +227,6 @@ func main() {
 	if err := nodes.LoadAllNodes(nodeRegistry); err != nil {
 		log.Fatal().Err(err).Msg("Failed to load node types")
 	}
-
-	// Metrics collector
-	metricsCollector := metrics.NewCollector("2.0.0")
 
 	// Encryption service
 	encryptor, err := crypto.NewEncryptor(cfg.Crypto.EncryptionKey)
@@ -565,7 +561,6 @@ func main() {
 	varResolveHandler := variableHandler.NewResolveHandler(variableRepo)
 
 	// Admin handlers
-	admMetricsHandler := adminHandler.NewMetricsHandler(&metricsAdapter{metricsCollector})
 	admStreamStatsHandler := adminHandler.NewStreamStatsHandler(&streamAdapter{streamManager})
 	admReplayDLQHandler := adminHandler.NewReplayDLQHandler(&streamAdapter{streamManager})
 	admTrimStreamHandler := adminHandler.NewTrimStreamHandler(&streamAdapter{streamManager})
@@ -787,7 +782,6 @@ func main() {
 			Cleanup:  bdCleanupHandler.Handle,
 		},
 		Admin: routes.AdminHandlers{
-			Metrics:             admMetricsHandler.Handle,
 			StreamStats:         admStreamStatsHandler.Handle,
 			ReplayDLQ:           admReplayDLQHandler.Handle,
 			TrimStream:          admTrimStreamHandler.Handle,
@@ -884,15 +878,6 @@ func main() {
 }
 
 // Adapters for handler interfaces
-
-// metricsAdapter adapts metrics.Collector to adminHandler.MetricsCollector
-type metricsAdapter struct {
-	collector *metrics.Collector
-}
-
-func (a *metricsAdapter) CollectMetrics() map[string]interface{} {
-	return a.collector.CollectMetrics()
-}
 
 // streamAdapter adapts streaming.Manager to adminHandler.StreamManager
 type streamAdapter struct {

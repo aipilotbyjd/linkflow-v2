@@ -34,11 +34,6 @@ type SystemMetrics struct {
 	Queues           map[string]QueueStats  `json:"queues"`
 }
 
-// MetricsCollector defines the metrics collector interface
-type MetricsCollector interface {
-	CollectMetrics() map[string]interface{}
-}
-
 // StreamManager defines the stream manager interface
 type StreamManager interface {
 	GetStats(streamName string) (*StreamStats, error)
