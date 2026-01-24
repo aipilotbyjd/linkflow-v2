@@ -1,0 +1,106 @@
+groups:
+- name: linkflow.rules
+  rules:
+  # Workflow Execution Alerts
+  - alert: LinkFlowHighWorkflowFailureRate
+    expr: sum(rate(linkflow_workflow_executions_total{status="failed"}[5m])) / sum(rate(linkflow_workflow_executions_total[5m])) > 0.1
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High workflow failure rate detected"
+      description: "Workflow failure rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+  - alert: LinkFlowWorkflowStuck
+    expr: increase(linkflow_workflow_executions_total{status="running"}[15m]) > 0
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Workflows appear to be stuck in running state"
+      description: "{{ $value }} workflows have been running for more than 10 minutes"
+
+  # Performance Alerts
+  - alert: LinkFlowHighExecutionDuration
+    expr: histogram_quantile(0.95, sum(rate(linkflow_execution_duration_seconds_bucket[5m])) by (le, workflow_id)) > 30
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High workflow execution duration"
+      description: "95th percentile execution time is {{ $value }} seconds"
+
+  - alert: LinkFlowSlowAPIResponse
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow API response times"
+      description: "95th percentile API response time is {{ $value }} seconds"
+
+  # System Alerts
+  - alert: LinkFlowWorkerDown
+    expr: up{job="linkflow-worker"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "LinkFlow worker is down"
+      description: "LinkFlow worker has been down for more than 1 minute"
+
+  - alert: LinkFlowAPIDown
+    expr: up{job="linkflow-api"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "LinkFlow API is down"
+      description: "LinkFlow API has been down for more than 1 minute"
+
+  # Database Alerts
+  - alert: PostgreSQLHighConnections
+    expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "PostgreSQL high connection usage"
+      description: "PostgreSQL connection usage is {{ $value | humanizePercentage }}"
+
+  - alert: RedisHighMemoryUsage
+    expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Redis high memory usage"
+      description: "Redis memory usage is {{ $value | humanizePercentage }}"
+
+  # Node/System Alerts
+  - alert: HighCPUUsage
+    expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is {{ $value }}%"
+
+  - alert: HighMemoryUsage
+    expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "Memory usage is {{ $value }}%"
+
+  - alert: DiskSpaceLow
+    expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Low disk space on {{ $labels.instance }}"
+      description: "Disk usage is {{ $value }}% on {{ $labels.mountpoint }}"

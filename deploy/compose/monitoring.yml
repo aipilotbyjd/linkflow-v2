@@ -1,0 +1,143 @@
+# ============================================================================
+# LinkFlow Complete Monitoring Stack
+# Usage: docker compose -f docker-compose.yml -f monitoring.yml up -d
+# ============================================================================
+
+services:
+  # ======================== PROMETHEUS ========================
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: linkflow-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== GRAFANA ========================
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: linkflow-grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - ../monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=${GRAFANA_URL:-http://localhost:3001}
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== ALERTMANAGER ========================
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: linkflow-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ../monitoring/alertmanager:/etc/alertmanager
+      - alertmanager_data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== POSTGRESQL EXPORTER ========================
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: linkflow-postgres-exporter
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${DB_USER:-linkflow}:${DB_PASSWORD:-linkflow}@postgres:5432/${DB_NAME:-linkflow}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== REDIS EXPORTER ========================
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    container_name: linkflow-redis-exporter
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis}
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== NODE EXPORTER ========================
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: linkflow-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== LOKI (Logs) ========================
+  loki:
+    image: grafana/loki:latest
+    container_name: linkflow-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ../monitoring/loki:/etc/loki
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki.yml
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+  # ======================== PROMTAIL (Log Collector) ========================
+  promtail:
+    image: grafana/promtail:latest
+    container_name: linkflow-promtail
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ../monitoring/promtail:/etc/promtail
+    command: -config.file=/etc/promtail/promtail.yml
+    depends_on:
+      - loki
+    networks:
+      - compose_linkflow
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+  loki_data:
+
+networks:
+  compose_linkflow:
+    external: true

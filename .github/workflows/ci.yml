@@ -1,31 +1,25 @@
-# ============================================================================
-# Continuous Integration - Runs on every push and PR
-# ============================================================================
-
 name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches:
+      - '**'
   pull_request:
-    branches: [main, dev]
-
-env:
-  GO_VERSION: '1.24'
+    branches:
+      - '**'
 
 jobs:
-  # ======================== LINT ========================
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
+          go-version: '1.23'
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
@@ -33,109 +27,124 @@ jobs:
           version: latest
           args: --timeout=5m
 
-  # ======================== TEST ========================
   test:
     name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:16-alpine
+        image: postgres:15
         env:
           POSTGRES_USER: linkflow
-          POSTGRES_PASSWORD: testpassword
+          POSTGRES_PASSWORD: linkflow
           POSTGRES_DB: linkflow_test
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
 
       redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
+        image: redis:7
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
+          go-version: '1.23'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download dependencies
+        run: go mod download
 
       - name: Run tests
         env:
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_USER: linkflow
-          DB_PASSWORD: testpassword
-          DB_NAME: linkflow_test
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
-        run: |
-          go test -v -race -coverprofile=coverage.out ./...
+          DATABASE_URL: postgres://linkflow:linkflow@localhost:5432/linkflow_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 
-      - name: Upload coverage
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage.out
-          fail_ci_if_error: false
+          file: ./coverage.out
+          flags: unittests
+          name: codecov-umbrella
 
-  # ======================== BUILD ========================
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-
-      - name: Build binaries
-        run: |
-          CGO_ENABLED=0 go build -o bin/api ./cmd/api
-          CGO_ENABLED=0 go build -o bin/worker ./cmd/worker
-          CGO_ENABLED=0 go build -o bin/scheduler ./cmd/scheduler
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: binaries
-          path: bin/
-
-  # ======================== SECURITY ========================
   security:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
+          go-version: '1.23'
 
-      - name: Install Gosec
-        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Run gosec security scanner
+        uses: securego/gosec@master
+        with:
+          args: '-no-fail -fmt json -out gosec-results.json ./...'
 
-      - name: Run Gosec
-        run: gosec -no-fail -fmt json -out gosec-results.json ./...
-
-      - name: Upload security results
+      - name: Upload gosec results
         uses: actions/upload-artifact@v4
         with:
           name: gosec-results
           path: gosec-results.json
+
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test, security]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build API
+        run: go build -o bin/api ./cmd/api
+
+      - name: Build Worker
+        run: go build -o bin/worker ./cmd/worker
+
+      - name: Build Scheduler
+        run: go build -o bin/scheduler ./cmd/scheduler
+
+      - name: Build Migrate
+        run: go build -o bin/migrate ./cmd/migrate
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: bin/
