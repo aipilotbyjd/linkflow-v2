@@ -325,7 +325,7 @@ func main() {
 	getUserHandler := userQry.NewGetUserHandler(userRepo)
 
 	// Cache and email service
-	cacheService := cache.NewMemoryCache()
+	cacheService := cache.NewRedisCache(redisClient.Redis(), "cache")
 	emailService, err := email.NewService(email.Config{
 		Provider:    cfg.Email.Provider,
 		DefaultFrom: cfg.Email.From,
