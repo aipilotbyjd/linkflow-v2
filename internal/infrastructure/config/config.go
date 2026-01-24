@@ -150,6 +150,7 @@ type ExecutionConfig struct {
 // MetricsConfig holds metrics settings
 type MetricsConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
+	Port    int    `mapstructure:"port"` // Internal metrics port (e.g., 9090)
 	Path    string `mapstructure:"path"`
 }
 
@@ -433,6 +434,7 @@ func setDefaults(v *viper.Viper) {
 
 	// Metrics defaults
 	v.SetDefault("metrics.enabled", true)
+	v.SetDefault("metrics.port", 9090)
 	v.SetDefault("metrics.path", "/metrics")
 
 	// Storage defaults
@@ -507,4 +509,9 @@ func (c *AppConfig) IsDevelopment() bool {
 // IsProduction checks if running in production mode
 func (c *AppConfig) IsProduction() bool {
 	return c.Environment == "production"
+}
+
+// GetAddress returns the metrics server address
+func (c *MetricsConfig) GetAddress() string {
+	return fmt.Sprintf(":%d", c.Port)
 }

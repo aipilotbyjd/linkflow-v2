@@ -81,6 +81,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage/s3"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/streaming"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -863,6 +864,26 @@ func main() {
 		}
 	}()
 
+	// Internal metrics server
+	var metricsServer *http.Server
+	if cfg.Metrics.Enabled {
+		mux := http.NewServeMux()
+		mux.Handle(cfg.Metrics.Path, promhttp.Handler())
+		metricsServer = &http.Server{
+			Addr:    cfg.Metrics.GetAddress(),
+			Handler: mux,
+		}
+		go func() {
+			appLogger.Info().
+				Str("address", cfg.Metrics.GetAddress()).
+				Str("path", cfg.Metrics.Path).
+				Msg("Internal metrics server starting")
+			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				appLogger.Error().Err(err).Msg("Internal metrics server error")
+			}
+		}()
+	}
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -874,6 +895,13 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		appLogger.Error().Err(err).Msg("Server shutdown error")
 	}
+
+	if metricsServer != nil {
+		if err := metricsServer.Shutdown(ctx); err != nil {
+			appLogger.Error().Err(err).Msg("Metrics server shutdown error")
+		}
+	}
+
 	appLogger.Info().Msg("Server stopped")
 }
 
