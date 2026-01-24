@@ -195,3 +195,13 @@ resilience:
     enabled: true
     rate: 100.0
     burst: 20
+
+# -----------------------------------------------------------------------------
+# Sentry (Error Tracking)
+# -----------------------------------------------------------------------------
+sentry:
+  enabled: false  # Set to true when you have a DSN
+  dsn: ""  # Get from sentry.io: https://xxx@sentry.io/123
+  environment: development
+  traces_sample_rate: 0.1  # 10% of transactions traced
+  debug: false

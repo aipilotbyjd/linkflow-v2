@@ -77,6 +77,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/metrics"
 	infraOAuth "github.com/linkflow-ai/linkflow/internal/infrastructure/oauth"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	sentryPkg "github.com/linkflow-ai/linkflow/internal/infrastructure/observability/sentry"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/storage/s3"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/streaming"
@@ -112,6 +113,14 @@ func main() {
 	}
 
 	appLogger.Info().Str("app", cfg.App.Name).Str("environment", cfg.App.Environment).Msg("Starting API server")
+
+	// Initialize Sentry
+	if err := initSentry(cfg); err != nil {
+		appLogger.Warn().Err(err).Msg("Failed to initialize Sentry, continuing without error tracking")
+	} else if cfg.Sentry.Enabled {
+		appLogger.Info().Msg("Sentry error tracking initialized")
+		defer sentryPkg.Flush(2 * time.Second)
+	}
 
 	db, err := postgres.NewClient(postgres.Config{
 		Host:         cfg.Database.Host,
@@ -1023,4 +1032,9 @@ func validateConfigCommand() {
 	}
 
 	log.Info().Msg("Configuration validation complete")
+}
+
+// initSentry initializes Sentry error tracking
+func initSentry(cfg *config.Config) error {
+	return sentryPkg.Init(cfg.Sentry, "linkflow-api")
 }

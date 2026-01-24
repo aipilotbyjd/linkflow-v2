@@ -27,6 +27,16 @@ type Config struct {
 	Features   FeaturesConfig   `mapstructure:"features"`
 	Metrics    MetricsConfig    `mapstructure:"metrics"`
 	Resilience ResilienceConfig `mapstructure:"resilience"`
+	Sentry     SentryConfig     `mapstructure:"sentry"`
+}
+
+// SentryConfig holds Sentry error tracking settings
+type SentryConfig struct {
+	Enabled          bool    `mapstructure:"enabled"`
+	DSN              string  `mapstructure:"dsn"`
+	Environment      string  `mapstructure:"environment"`
+	TracesSampleRate float64 `mapstructure:"traces_sample_rate"`
+	Debug            bool    `mapstructure:"debug"`
 }
 
 // AppConfig holds application settings

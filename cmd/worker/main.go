@@ -12,6 +12,8 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
 
+	"time"
+
 	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
@@ -23,6 +25,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
+	sentryPkg "github.com/linkflow-ai/linkflow/internal/infrastructure/observability/sentry"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
 )
 
@@ -63,6 +66,14 @@ func main() {
 		Str("app", cfg.App.Name).
 		Str("service", "worker").
 		Msg("Starting worker service")
+
+	// Initialize Sentry
+	if err := initSentry(cfg); err != nil {
+		appLogger.Warn().Err(err).Msg("Failed to initialize Sentry, continuing without error tracking")
+	} else if cfg.Sentry.Enabled {
+		appLogger.Info().Msg("Sentry error tracking initialized")
+		defer sentryPkg.Flush(2 * time.Second)
+	}
 
 	// Initialize database
 	db, err := postgres.NewClient(postgres.Config{
@@ -231,4 +242,9 @@ func main() {
 	appLogger.Info().Msg("Shutting down worker...")
 	server.Shutdown()
 	appLogger.Info().Msg("Worker stopped gracefully")
+}
+
+// initSentry initializes Sentry error tracking
+func initSentry(cfg *config.Config) error {
+	return sentryPkg.Init(cfg.Sentry, "linkflow-worker")
 }
