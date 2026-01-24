@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
@@ -23,9 +24,10 @@ func NewCreateAPIKeyHandler(apiKeyRepo user.APIKeyRepository) *CreateAPIKeyHandl
 }
 
 type CreateAPIKeyRequest struct {
-	Name      string   `json:"name" validate:"required"`
-	ExpiresAt *string  `json:"expires_at,omitempty"`
-	Scopes    []string `json:"scopes,omitempty"`
+	Name        string   `json:"name" validate:"required"`
+	WorkspaceID *string  `json:"workspace_id,omitempty"`
+	ExpiresAt   *string  `json:"expires_at,omitempty"`
+	Scopes      []string `json:"scopes,omitempty"`
 }
 
 type CreateAPIKeyResponse struct {
@@ -71,6 +73,15 @@ func (h *CreateAPIKeyHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	apiKey := user.NewAPIKey(userClaims.UserID, req.Name, keyPrefix, keyHash, scopes)
+
+	if req.WorkspaceID != nil && *req.WorkspaceID != "" {
+		wsID, err := uuid.Parse(*req.WorkspaceID)
+		if err != nil {
+			common.BadRequest(w, "invalid workspace_id format")
+			return
+		}
+		apiKey = apiKey.WithWorkspace(wsID)
+	}
 
 	if req.ExpiresAt != nil {
 		expiresAt, err := time.Parse(time.RFC3339, *req.ExpiresAt)

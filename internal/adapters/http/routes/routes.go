@@ -7,6 +7,7 @@ import (
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
@@ -19,6 +20,7 @@ type Config struct {
 	JWTBlacklist  *jwt.Blacklist
 	MemberRepo    workspace.MemberRepository
 	WorkspaceRepo workspace.Repository
+	APIKeyRepo    user.APIKeyRepository
 	Logger        logger.Logger
 	CorsOrigins   []string
 	RateLimit     int
@@ -447,26 +449,11 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			r.Get("/ws", handlers.WebSocket)
 		})
 
-		// Protected routes
+		// Protected routes (Mixed Auth)
 		r.Group(func(r chi.Router) {
-			r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
-
-			// User profile
-			r.Get("/users/me", handlers.User.GetCurrentUser)
-			r.Put("/users/me", handlers.User.UpdateCurrentUser)
-			// Need permission check for MyPermissions? No, it's just "me". But needs workspace scope.
-			// Actually "My Permissions" is context specific.
-			// If it's "/users/me/permissions", which workspace?
-			// The handler I wrote uses `GetWorkspaceFromContext`.
-			// So it MUST be under `/workspaces/{workspaceId}`.
-
-			// API Keys
-			r.Get("/api-keys", handlers.APIKey.List)
-			r.Post("/api-keys", handlers.APIKey.Create)
-			r.Delete("/api-keys/{keyId}", handlers.APIKey.Revoke)
-
-			// Permissions
-			r.Get("/permissions", handlers.RBAC.ListPermissions)
+			r.Use(middleware.APIKey(cfg.APIKeyRepo))
+			r.Use(middleware.OptionalAuth(cfg.JWTManager))
+			r.Use(middleware.RequireAuth)
 
 			// User workspaces
 			r.Get("/workspaces", handlers.Workspace.List)
@@ -514,11 +501,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 				// RBAC Roles
 				r.Route("/roles", func(r chi.Router) {
-					// Only Admins/Owners should manage roles usually, or specific permission
-					// Using PermMemberWrite as a proxy for "Manage Roles" if strict "role:write" doesn't exist?
-					// Or better, let's use PermWorkspaceWrite (Settings) or add PermRoleManage.
-					// Plan said "roles can be created...".
-					// Let's use PermWorkspaceWrite for now as it's configuration.
 					r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Get("/", handlers.RBAC.ListRoles)
 					r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Post("/", handlers.RBAC.CreateRole)
 					r.Route("/{roleId}", func(r chi.Router) {
@@ -533,13 +515,12 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.Get("/subscription", handlers.Billing.GetSubscription)
 					r.Get("/usage", handlers.Billing.GetUsage)
 					r.Get("/invoices", handlers.Billing.GetInvoices)
-
 					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/subscription", handlers.Billing.CreateSubscription)
 					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/subscription", handlers.Billing.CancelSubscription)
 				})
 
 				// OAuth
-				r.Get("/oauth/authorize/{provider}", handlers.OAuth.Authorize) // General access (member)
+				r.Get("/oauth/authorize/{provider}", handlers.OAuth.Authorize)
 				r.Get("/oauth/callback/{provider}", handlers.OAuth.Callback)
 
 				// Folders
@@ -547,7 +528,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Folder.List)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/tree", handlers.Folder.Tree)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Folder.Create)
-
 					r.Route("/{folderId}", func(r chi.Router) {
 						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Folder.Get)
 						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Folder.Update)
@@ -572,12 +552,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{variableId}", handlers.Variable.Delete)
 				})
 				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/environments", handlers.Variable.ListEnvironments)
-
-				// Admin routes
-				r.Route("/admin", func(r chi.Router) {
-					// Admin functionality can be added here
-					r.Use(middleware.RequireOwner) // Strict check for now
-				})
 
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {
@@ -620,7 +594,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 				// Webhooks management
 				r.Route("/webhooks", func(r chi.Router) {
-					r.Use(middleware.RequirePermission(rbac.PermWorkflowWrite)) // Generally write access for management
+					r.Use(middleware.RequirePermission(rbac.PermWorkflowWrite))
 					r.Route("/{webhookId}", func(r chi.Router) {
 						r.Post("/regenerate-secret", handlers.Webhook.RegenerateSecret)
 						r.Post("/activate", handlers.Webhook.Activate)
@@ -652,9 +626,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					})
 				})
 
-				// Waiting executions
-				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/waiting-executions", handlers.Execution.ListWaiting)
-
 				// Binary data
 				r.Route("/binary", func(r chi.Router) {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/stats", handlers.BinaryData.GetStats)
@@ -669,7 +640,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Route("/credentials", func(r chi.Router) {
 					r.With(middleware.RequirePermission(rbac.PermCredentialRead)).Get("/", handlers.Credential.List)
 					r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Post("/", handlers.Credential.Create)
-
 					r.Route("/{credentialId}", func(r chi.Router) {
 						r.With(middleware.RequirePermission(rbac.PermCredentialRead)).Get("/", handlers.Credential.Get)
 						r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Put("/", handlers.Credential.Update)
@@ -683,7 +653,6 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Route("/schedules", func(r chi.Router) {
 					r.With(middleware.RequirePermission(rbac.PermScheduleRead)).Get("/", handlers.Schedule.List)
 					r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Post("/", handlers.Schedule.Create)
-
 					r.Route("/{scheduleId}", func(r chi.Router) {
 						r.With(middleware.RequirePermission(rbac.PermScheduleRead)).Get("/", handlers.Schedule.Get)
 						r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Put("/", handlers.Schedule.Update)
@@ -693,17 +662,13 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					})
 				})
 
-				// Templates usage
-				r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/templates/{templateId}/use", handlers.Template.Use)
-
 				// Workflow sharing
 				r.Route("/workflow-shares", func(r chi.Router) {
-					// Sharing requires write permission on workflow, usually?
 					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.WorkflowShare.Create)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/shared-by-me", handlers.WorkflowShare.SharedByMe)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/shared-with-me", handlers.WorkflowShare.SharedWithMe)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/pending", handlers.WorkflowShare.Pending)
-					r.Post("/{shareId}/accept", handlers.WorkflowShare.Accept) // Accepting might be just member action?
+					r.Post("/{shareId}/accept", handlers.WorkflowShare.Accept)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/{shareId}", handlers.WorkflowShare.Update)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/{shareId}", handlers.WorkflowShare.Revoke)
 				})
@@ -718,6 +683,17 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{templateId}", handlers.Marketplace.Unpublish)
 				})
 			})
+		})
+
+		// User-only routes (JWT required)
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.AuthWithBlacklist(cfg.JWTManager, cfg.JWTBlacklist))
+			r.Get("/users/me", handlers.User.GetCurrentUser)
+			r.Put("/users/me", handlers.User.UpdateCurrentUser)
+			r.Get("/api-keys", handlers.APIKey.List)
+			r.Post("/api-keys", handlers.APIKey.Create)
+			r.Delete("/api-keys/{keyId}", handlers.APIKey.Revoke)
+			r.Get("/permissions", handlers.RBAC.ListPermissions)
 		})
 	})
 

@@ -152,15 +152,31 @@ func GetUserID(ctx context.Context) uuid.UUID {
 	return GetUserIDFromContext(ctx)
 }
 
-// RequireAuth ensures user is authenticated
+// RequireAuth ensures user is authenticated (via JWT or API Key)
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if GetUserFromContext(r.Context()) == nil {
-			common.Unauthorized(w, "authentication required")
+		// Check for JWT claims
+		if GetUserFromContext(r.Context()) != nil {
+			next.ServeHTTP(w, r)
 			return
 		}
-		next.ServeHTTP(w, r)
+
+		// Check for API Key info
+		// We use a local helper since apiKeyContextKey is private
+		if ctxHasAPIKey(r.Context()) {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		common.Unauthorized(w, "authentication required")
 	})
+}
+
+// Internal helper to check for API Key in context without exposing the key type
+func ctxHasAPIKey(ctx context.Context) bool {
+	// apiKeyContextKey is defined in apikey.go in the same package
+	_, ok := ctx.Value(apiKeyContextKey{}).(*APIKeyInfo)
+	return ok
 }
 
 // GetTokenFromContext retrieves the raw token from context

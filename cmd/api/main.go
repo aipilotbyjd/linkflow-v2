@@ -839,6 +839,7 @@ func main() {
 		JWTBlacklist:  jwtBlacklist,
 		MemberRepo:    memberRepo,
 		WorkspaceRepo: workspaceRepo,
+		APIKeyRepo:    apiKeyRepo,
 		Logger:        appLogger,
 		CorsOrigins:   cfg.App.CorsOrigins,
 	}, handlers)

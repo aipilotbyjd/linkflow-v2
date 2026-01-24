@@ -56,6 +56,14 @@ func Tenant(memberRepo workspace.MemberRepository, workspaceRepo workspace.Repos
 				return
 			}
 
+			// Security: If using API Key, ensure it's scoped to THIS workspace (if it has a scope)
+			if apiKeyInfo := GetAPIKeyFromContext(r.Context()); apiKeyInfo != nil {
+				if apiKeyInfo.WorkspaceID != uuid.Nil.String() && apiKeyInfo.WorkspaceID != workspaceID.String() {
+					common.Forbidden(w, "API key is scoped to a different workspace")
+					return
+				}
+			}
+
 			// Set workspace context
 			wsCtx := &WorkspaceContext{
 				WorkspaceID: workspaceID,
