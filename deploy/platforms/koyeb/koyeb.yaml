@@ -1,39 +1,62 @@
 # ============================================================================
-# Koyeb Configuration
-# Deploy: koyeb app create linkflow --config deploy/platforms/koyeb/koyeb.yaml
+# Koyeb Multi-Service Configuration
+# Deployment: koyeb app create linkflow --config deploy/platforms/koyeb/koyeb.yaml
 # ============================================================================
 
-name: linkflow-api
-type: web
+name: linkflow
 
-docker:
-  dockerfile: deploy/docker/Dockerfile
-  build_args:
-    SERVICE: api
+services:
+  # ------------------------ API ------------------------
+  - name: api
+    type: web
+    docker:
+      dockerfile: deploy/docker/Dockerfile
+      build_args:
+        SERVICE: api
+    ports:
+      - port: 8090
+        protocol: http
+    routes:
+      - path: /
+        port: 8090
+    scaling:
+      min: 1
+      max: 1
+    instance_types:
+      - free
+    regions:
+      - fra
+    health_checks:
+      - port: 8090
+        protocol: http
+        path: /api/v1/health
 
-ports:
-  - port: 8090
-    protocol: http
+  # ------------------------ WORKER ------------------------
+  - name: worker
+    type: worker
+    docker:
+      dockerfile: deploy/docker/Dockerfile
+      build_args:
+        SERVICE: worker
+    scaling:
+      min: 1
+      max: 1
+    instance_types:
+      - free
+    regions:
+      - fra
 
-routes:
-  - path: /
-    port: 8090
-
-scaling:
-  min: 1
-  max: 1
-
-instance_types:
-  - free
-
-regions:
-  - fra
-
-health_checks:
-  - port: 8090
-    protocol: http
-    path: /api/v1/health
-    interval: 30
-    timeout: 5
-    healthy_threshold: 2
-    unhealthy_threshold: 3
+  # ------------------------ SCHEDULER ------------------------
+  - name: scheduler
+    type: worker
+    docker:
+      dockerfile: deploy/docker/Dockerfile
+      build_args:
+        SERVICE: scheduler
+    scaling:
+      min: 1  # Leadership election requires at least 1, but keep it 1 to avoid conflicts
+      max: 1
+    instance_types:
+      - free
+    regions:
+      - fra
