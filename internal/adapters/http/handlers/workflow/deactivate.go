@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
-	"github.com/linkflow-ai/linkflow/internal/core/domain/workflow"
+	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 )
 
 type DeactivateHandler struct {
-	workflowRepo workflow.Repository
+	handler *workflowCmd.DeactivateWorkflowHandler
 }
 
-func NewDeactivateHandler(workflowRepo workflow.Repository) *DeactivateHandler {
-	return &DeactivateHandler{workflowRepo: workflowRepo}
+func NewDeactivateHandler(handler *workflowCmd.DeactivateWorkflowHandler) *DeactivateHandler {
+	return &DeactivateHandler{handler: handler}
 }
 
 func (h *DeactivateHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -25,18 +25,12 @@ func (h *DeactivateHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wf, err := h.workflowRepo.FindByID(r.Context(), workflowID)
-	if err != nil {
+	if err := h.handler.Handle(r.Context(), workflowCmd.DeactivateWorkflowCommand{
+		WorkflowID: workflowID,
+	}); err != nil {
 		common.HandleError(w, err)
 		return
 	}
 
-	wf.Deactivate()
-
-	if err := h.workflowRepo.Update(r.Context(), wf); err != nil {
-		common.HandleError(w, err)
-		return
-	}
-
-	common.Success(w, ToWorkflowResponse(wf))
+	common.Success(w, map[string]string{"status": "deactivated"})
 }

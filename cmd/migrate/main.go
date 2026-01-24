@@ -16,6 +16,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/sitesettings"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/webhook"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 )
 
@@ -135,6 +136,10 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&models.AIUsage{},
 		&models.PromptTemplate{},
 		&models.AICache{},
+
+		// Webhook
+		&webhook.Endpoint{},
+		&webhook.Event{},
 
 		// Site Settings
 		&sitesettings.SiteSettings{},

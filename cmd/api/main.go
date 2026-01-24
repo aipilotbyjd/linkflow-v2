@@ -55,6 +55,7 @@ import (
 	webhookCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/webhook"
 	workflowCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workflow"
 	workspaceCmd "github.com/linkflow-ai/linkflow/internal/core/application/command/workspace"
+	"github.com/linkflow-ai/linkflow/internal/core/application/handler"
 	analyticsQry "github.com/linkflow-ai/linkflow/internal/core/application/query/analytics"
 	billingQry "github.com/linkflow-ai/linkflow/internal/core/application/query/billing"
 	credentialQry "github.com/linkflow-ai/linkflow/internal/core/application/query/credential"
@@ -291,6 +292,7 @@ func main() {
 	createWorkflowHandler := workflowCmd.NewCreateWorkflowHandler(workflowRepo, versionRepo, eventBus)
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
 	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, usageService, eventBus)
+	deactivateWorkflowHandler := workflowCmd.NewDeactivateWorkflowHandler(workflowRepo, eventBus)
 	startExecutionHandler := executionCmd.NewStartExecutionHandler(workflowRepo, executionRepo, eventBus, taskQueue)
 	createCredentialHandler := credentialCmd.NewCreateCredentialHandler(credentialRepo, eventBus, encryptor)
 	updateCredentialHandler := credentialCmd.NewUpdateCredentialHandler(credentialRepo)
@@ -300,6 +302,11 @@ func main() {
 	createSubscriptionHandler := billingCmd.NewCreateSubscriptionHandler(subscriptionRepo, eventBus)
 	cancelSubscriptionHandler := billingCmd.NewCancelSubscriptionHandler(subscriptionRepo)
 	refreshService := credentialCmd.NewRefreshService(encryptor, refreshProviders)
+
+	// Event handlers
+	webhookAutoRegHandler := handler.NewWebhookAutoRegHandler(webhookRepo, workflowRepo)
+	eventBus.Subscribe("workflow.activated", webhookAutoRegHandler.Handle)
+	eventBus.Subscribe("workflow.deactivated", webhookAutoRegHandler.Handle)
 
 	// Query handlers
 	getWorkspaceHandler := workspaceQry.NewGetWorkspaceHandler(workspaceRepo)
@@ -372,7 +379,7 @@ func main() {
 	wfUpdateHandler := workflowHandler.NewUpdateHandler(updateWorkflowHandler)
 	wfDeleteHandler := workflowHandler.NewDeleteHandler(workflowRepo)
 	wfActivateHandler := workflowHandler.NewActivateHandler(activateWorkflowHandler)
-	wfDeactivateHandler := workflowHandler.NewDeactivateHandler(workflowRepo)
+	wfDeactivateHandler := workflowHandler.NewDeactivateHandler(deactivateWorkflowHandler)
 	wfVersionsHandler := workflowHandler.NewListVersionsHandler(versionRepo)
 	wfGetVersionHandler := workflowHandler.NewGetVersionHandler(versionRepo)
 	wfRollbackHandler := workflowHandler.NewRollbackHandler(workflowRepo, versionRepo)
