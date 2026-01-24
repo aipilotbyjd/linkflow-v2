@@ -4,18 +4,26 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 )
 
 // Member represents a workspace member
 type Member struct {
-	ID          uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
-	WorkspaceID uuid.UUID  `gorm:"type:uuid;index;not null" json:"workspace_id"`
-	UserID      uuid.UUID  `gorm:"type:uuid;index;not null" json:"user_id"`
-	Role        Role       `gorm:"size:20;not null;default:member" json:"role"`
-	InvitedBy   *uuid.UUID `gorm:"type:uuid" json:"invited_by,omitempty"`
-	InvitedAt   *time.Time `json:"invited_at,omitempty"`
-	JoinedAt    *time.Time `gorm:"default:now()" json:"joined_at,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	WorkspaceID uuid.UUID `gorm:"type:uuid;index;not null" json:"workspace_id"`
+	UserID      uuid.UUID `gorm:"type:uuid;index;not null" json:"user_id"`
+
+	// Legacy Role (String) - kept for backward compatibility until migration is complete
+	Role Role `gorm:"size:20;not null;default:member" json:"role"`
+
+	// New RBAC Role
+	RoleID   *uuid.UUID `gorm:"type:uuid;index" json:"role_id,omitempty"`
+	RBACRole *rbac.Role `gorm:"-" json:"rbac_role,omitempty"`
+
+	InvitedBy *uuid.UUID `gorm:"type:uuid" json:"invited_by,omitempty"`
+	InvitedAt *time.Time `json:"invited_at,omitempty"`
+	JoinedAt  *time.Time `gorm:"default:now()" json:"joined_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
 
 	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"-"`
 }
@@ -45,6 +53,18 @@ func NewMember(workspaceID, userID uuid.UUID, role Role) (*Member, error) {
 		JoinedAt:    &now,
 		CreatedAt:   now,
 	}, nil
+}
+
+// HasPermission checks if the member has a specific permission
+func (m *Member) HasPermission(permID string) bool {
+	// 1. Check RBAC Role if available
+	if m.RBACRole != nil {
+		return m.RBACRole.HasPermission(permID)
+	}
+
+	// 2. Fallback: Map legacy string role to permissions
+	// This ensures the system works even if role_id is not yet set
+	return m.Role.HasPermission(permID)
 }
 
 // WithInviter sets the inviter information

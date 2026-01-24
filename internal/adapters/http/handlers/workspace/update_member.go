@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/validation"
 )
@@ -19,12 +20,18 @@ type UpdateMemberRequest struct {
 type UpdateMemberHandler struct {
 	memberRepo    workspace.MemberRepository
 	workspaceRepo workspace.Repository
+	rbacRepo      rbac.Repository
 }
 
-func NewUpdateMemberHandler(memberRepo workspace.MemberRepository, workspaceRepo workspace.Repository) *UpdateMemberHandler {
+func NewUpdateMemberHandler(
+	memberRepo workspace.MemberRepository,
+	workspaceRepo workspace.Repository,
+	rbacRepo rbac.Repository,
+) *UpdateMemberHandler {
 	return &UpdateMemberHandler{
 		memberRepo:    memberRepo,
 		workspaceRepo: workspaceRepo,
+		rbacRepo:      rbacRepo,
 	}
 }
 
@@ -108,6 +115,26 @@ func (h *UpdateMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	member.Role = role
+
+	// Update RoleID based on legacy role string
+	var rbacRoleName string
+	switch role {
+	case workspace.RoleAdmin:
+		rbacRoleName = rbac.RoleAdmin
+	case workspace.RoleMember:
+		rbacRoleName = rbac.RoleEditor
+	case workspace.RoleViewer:
+		rbacRoleName = rbac.RoleViewer
+	case workspace.RoleOwner:
+		rbacRoleName = rbac.RoleOwner
+	default:
+		rbacRoleName = rbac.RoleViewer
+	}
+
+	if rbacRole, err := h.rbacRepo.GetRoleByName(r.Context(), nil, rbacRoleName); err == nil {
+		member.RoleID = &rbacRole.ID
+	}
+
 	if err := h.memberRepo.Update(r.Context(), member); err != nil {
 		common.HandleError(w, err)
 		return

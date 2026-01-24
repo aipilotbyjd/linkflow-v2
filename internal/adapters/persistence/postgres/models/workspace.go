@@ -52,6 +52,10 @@ type WorkspaceMember struct {
 
 	Workspace Workspace `gorm:"foreignKey:WorkspaceID"`
 	User      User      `gorm:"foreignKey:UserID"`
+
+	// RBAC
+	RoleID  *uuid.UUID `gorm:"type:uuid;index"`
+	RoleRef *Role      `gorm:"foreignKey:RoleID"`
 }
 
 func (WorkspaceMember) TableName() string {

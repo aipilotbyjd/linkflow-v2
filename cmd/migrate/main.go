@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/mappers"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/sitesettings"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
@@ -100,6 +103,8 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		// Workspace
 		&models.Workspace{},
 		&models.WorkspaceMember{},
+		&models.Role{},
+		&models.Permission{},
 
 		// Workflow
 		&models.Workflow{},
@@ -136,7 +141,117 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		return fmt.Errorf("auto-migrate failed: %w", err)
 	}
 
+	// Seed RBAC
+	if err := seedRBAC(db); err != nil {
+		return fmt.Errorf("rbac seeding failed: %w", err)
+	}
+
+	// Migrate Member Roles
+	if err := migrateMemberRoles(db); err != nil {
+		// Log error but don't fail migration, as this might be partial or redundant
+		log.Error().Err(err).Msg("Member role migration failed")
+	}
+
 	log.Info().Msg("All tables created/updated successfully")
+	return nil
+}
+
+func migrateMemberRoles(db *gorm.DB) error {
+	log.Info().Msg("Migrating member roles to RBAC")
+
+	// Get system roles map
+	systemRoles := make(map[string]uuid.UUID)
+	var roles []models.Role
+	if err := db.Where("workspace_id IS NULL").Find(&roles).Error; err != nil {
+		return err
+	}
+	for _, r := range roles {
+		systemRoles[r.Name] = r.ID
+	}
+
+	// Find members with NULL role_id
+	var members []models.WorkspaceMember
+	if err := db.Where("role_id IS NULL").Find(&members).Error; err != nil {
+		return err
+	}
+
+	for _, m := range members {
+		roleName := ""
+		// Map existing lowercase role string to System Role Name (Capitalized)
+		switch m.Role {
+		case "owner":
+			roleName = rbac.RoleOwner
+		case "admin":
+			roleName = rbac.RoleAdmin
+		case "member":
+			roleName = rbac.RoleEditor // Map member -> Editor
+		case "viewer":
+			roleName = rbac.RoleViewer
+		default:
+			roleName = rbac.RoleViewer // Default fallback
+		}
+
+		if roleID, ok := systemRoles[roleName]; ok {
+			// Update role_id
+			if err := db.Model(&m).Update("role_id", roleID).Error; err != nil {
+				log.Error().Err(err).Str("member_id", m.ID.String()).Msg("Failed to update member role_id")
+			}
+		} else {
+			log.Warn().Str("role", m.Role).Msg("Could not map legacy role to system role")
+		}
+	}
+	return nil
+}
+
+func seedRBAC(db *gorm.DB) error {
+	log.Info().Msg("Seeding RBAC permissions and roles")
+
+	// 1. Seed Permissions
+	for _, p := range rbac.AllPermissions {
+		model := mappers.ToModelPermission(p)
+		// Use FirstOrCreate to ensure we don't duplicate, but also update fields if needed?
+		// For permissions, ID is key. If name/desc changes, we might want to update.
+		// For now FirstOrCreate on ID is enough.
+		if err := db.FirstOrCreate(&model, models.Permission{ID: p.ID}).Error; err != nil {
+			return err
+		}
+	}
+
+	// 2. Seed System Roles
+	systemRoles := rbac.GetSystemRoles()
+	for _, r := range systemRoles {
+		// Check if role exists by Name and WorkspaceID (NULL)
+		var existing models.Role
+		err := db.Where("name = ? AND workspace_id IS NULL", r.Name).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			// Create
+			roleModel := mappers.ToModelRole(r)
+			if err := db.Create(roleModel).Error; err != nil {
+				return err
+			}
+			// Assign permissions
+			perms := make([]models.Permission, len(r.Permissions))
+			for i, p := range r.Permissions {
+				perms[i] = models.Permission{ID: p.ID}
+			}
+			if err := db.Model(roleModel).Association("Permissions").Replace(perms); err != nil {
+				return err
+			}
+			log.Info().Str("role", r.Name).Msg("Created system role")
+		} else if err != nil {
+			return err
+		} else {
+			// Update permissions for existing system role
+			perms := make([]models.Permission, len(r.Permissions))
+			for i, p := range r.Permissions {
+				perms[i] = models.Permission{ID: p.ID}
+			}
+			if err := db.Model(&existing).Association("Permissions").Replace(perms); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

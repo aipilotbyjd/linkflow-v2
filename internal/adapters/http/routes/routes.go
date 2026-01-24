@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
@@ -447,52 +448,61 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 			r.Route("/workspaces/{workspaceId}", func(r chi.Router) {
 				r.Use(middleware.Tenant(cfg.MemberRepo, cfg.WorkspaceRepo))
 
-				r.Get("/", handlers.Workspace.Get)
-				r.Put("/", handlers.Workspace.Update)
-				r.Delete("/", handlers.Workspace.Delete)
+				// Workspace Management
+				r.With(middleware.RequirePermission(rbac.PermWorkspaceRead)).Get("/", handlers.Workspace.Get)
+				r.With(middleware.RequirePermission(rbac.PermWorkspaceWrite)).Put("/", handlers.Workspace.Update)
+				r.With(middleware.RequirePermission(rbac.PermWorkspaceDelete)).Delete("/", handlers.Workspace.Delete)
 
 				// Dashboard
-				r.Get("/dashboard", handlers.Dashboard.GetDashboard)
-				r.Get("/stats", handlers.Dashboard.GetQuickStats)
+				r.Group(func(r chi.Router) {
+					r.Use(middleware.RequirePermission(rbac.PermWorkspaceRead))
+					r.Get("/dashboard", handlers.Dashboard.GetDashboard)
+					r.Get("/stats", handlers.Dashboard.GetQuickStats)
+				})
 
 				// Analytics
-				r.Get("/analytics", handlers.Analytics.WorkspaceAnalytics)
+				r.With(middleware.RequirePermission(rbac.PermWorkspaceRead)).Get("/analytics", handlers.Analytics.WorkspaceAnalytics)
 
 				// Members
-				r.Get("/members", handlers.Workspace.ListMembers)
-				r.Post("/members", handlers.Workspace.InviteMember)
-				r.Post("/members/invite", handlers.Workspace.InviteMember)
-				r.Put("/members/{memberId}", handlers.Workspace.UpdateMember)
-				r.Delete("/members/{memberId}", handlers.Workspace.RemoveMember)
+				r.Route("/members", func(r chi.Router) {
+					r.With(middleware.RequirePermission(rbac.PermMemberRead)).Get("/", handlers.Workspace.ListMembers)
+					r.With(middleware.RequirePermission(rbac.PermMemberWrite)).Post("/", handlers.Workspace.InviteMember)
+					r.With(middleware.RequirePermission(rbac.PermMemberWrite)).Post("/invite", handlers.Workspace.InviteMember)
+					r.With(middleware.RequirePermission(rbac.PermMemberWrite)).Put("/{memberId}", handlers.Workspace.UpdateMember)
+					r.With(middleware.RequirePermission(rbac.PermMemberDelete)).Delete("/{memberId}", handlers.Workspace.RemoveMember)
+				})
 
 				// Billing
 				r.Route("/billing", func(r chi.Router) {
+					r.Use(middleware.RequirePermission(rbac.PermBillingRead))
 					r.Get("/subscription", handlers.Billing.GetSubscription)
-					r.Post("/subscription", handlers.Billing.CreateSubscription)
-					r.Delete("/subscription", handlers.Billing.CancelSubscription)
 					r.Get("/usage", handlers.Billing.GetUsage)
 					r.Get("/invoices", handlers.Billing.GetInvoices)
+
+					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/subscription", handlers.Billing.CreateSubscription)
+					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/subscription", handlers.Billing.CancelSubscription)
 				})
 
 				// OAuth
-				r.Get("/oauth/authorize/{provider}", handlers.OAuth.Authorize)
+				r.Get("/oauth/authorize/{provider}", handlers.OAuth.Authorize) // General access (member)
 				r.Get("/oauth/callback/{provider}", handlers.OAuth.Callback)
 
 				// Folders
 				r.Route("/folders", func(r chi.Router) {
-					r.Get("/", handlers.Folder.List)
-					r.Get("/tree", handlers.Folder.Tree)
-					r.Post("/", handlers.Folder.Create)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Folder.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/tree", handlers.Folder.Tree)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Folder.Create)
 
 					r.Route("/{folderId}", func(r chi.Router) {
-						r.Get("/", handlers.Folder.Get)
-						r.Put("/", handlers.Folder.Update)
-						r.Delete("/", handlers.Folder.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Folder.Get)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Folder.Update)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/", handlers.Folder.Delete)
 					})
 				})
 
 				// AI Workflow Builder
 				r.Route("/ai-builder", func(r chi.Router) {
+					r.Use(middleware.RequirePermission(rbac.PermWorkflowWrite))
 					r.Post("/generate", handlers.AIBuilder.Generate)
 					r.Post("/suggest", handlers.AIBuilder.Suggest)
 					r.Post("/explain", handlers.AIBuilder.Explain)
@@ -500,60 +510,62 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 				// Variables & Environments
 				r.Route("/variables", func(r chi.Router) {
-					r.Get("/", handlers.Variable.List)
-					r.Post("/", handlers.Variable.Create)
-					r.Get("/resolve", handlers.Variable.Resolve)
-					r.Put("/{variableId}", handlers.Variable.Update)
-					r.Delete("/{variableId}", handlers.Variable.Delete)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Variable.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/resolve", handlers.Variable.Resolve)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Variable.Create)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/{variableId}", handlers.Variable.Update)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{variableId}", handlers.Variable.Delete)
 				})
-				r.Get("/environments", handlers.Variable.ListEnvironments)
+				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/environments", handlers.Variable.ListEnvironments)
 
 				// Admin routes
 				r.Route("/admin", func(r chi.Router) {
 					// Admin functionality can be added here
+					r.Use(middleware.RequireOwner) // Strict check for now
 				})
 
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {
-					r.Get("/", handlers.Workflow.List)
-					r.Post("/", handlers.Workflow.Create)
-					r.Get("/search/advanced", handlers.Workflow.AdvancedSearch)
-					r.Post("/search/advanced", handlers.Workflow.AdvancedSearch)
-					r.Get("/search/filters", handlers.Workflow.SearchFilters)
-					r.Post("/validate", handlers.Workflow.Validate)
-					r.Post("/test-node", handlers.Workflow.TestNode)
-					r.Post("/import", handlers.Workflow.Import)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Workflow.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Workflow.Create)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/search/advanced", handlers.Workflow.AdvancedSearch)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Post("/search/advanced", handlers.Workflow.AdvancedSearch)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/search/filters", handlers.Workflow.SearchFilters)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/validate", handlers.Workflow.Validate)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/test-node", handlers.Workflow.TestNode)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/import", handlers.Workflow.Import)
 
 					r.Route("/{workflowId}", func(r chi.Router) {
-						r.Get("/", handlers.Workflow.Get)
-						r.Put("/", handlers.Workflow.Update)
-						r.Delete("/", handlers.Workflow.Delete)
-						r.Post("/activate", handlers.Workflow.Activate)
-						r.Post("/deactivate", handlers.Workflow.Deactivate)
-						r.Post("/execute", handlers.Execution.Start)
-						r.Post("/clone", handlers.Workflow.Clone)
-						r.Post("/duplicate", handlers.Workflow.Duplicate)
-						r.Get("/export", handlers.Workflow.Export)
-						r.Get("/versions", handlers.Workflow.GetVersions)
-						r.Get("/versions/{version}", handlers.Workflow.GetVersion)
-						r.Post("/versions/{version}/rollback", handlers.Workflow.Rollback)
-						r.Get("/compare-versions", handlers.Workflow.CompareVersions)
-						r.Get("/analytics", handlers.Analytics.WorkflowAnalytics)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Workflow.Get)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Workflow.Update)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/", handlers.Workflow.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowPublish)).Post("/activate", handlers.Workflow.Activate)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowPublish)).Post("/deactivate", handlers.Workflow.Deactivate)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/execute", handlers.Execution.Start)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/clone", handlers.Workflow.Clone)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/duplicate", handlers.Workflow.Duplicate)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/export", handlers.Workflow.Export)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/versions", handlers.Workflow.GetVersions)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/versions/{version}", handlers.Workflow.GetVersion)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/versions/{version}/rollback", handlers.Workflow.Rollback)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/compare-versions", handlers.Workflow.CompareVersions)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/analytics", handlers.Analytics.WorkflowAnalytics)
 
 						// Webhooks for workflow
-						r.Post("/webhooks", handlers.Webhook.Create)
-						r.Get("/webhooks", handlers.Webhook.List)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/webhooks", handlers.Webhook.Create)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/webhooks", handlers.Webhook.List)
 
 						// Pinned data
-						r.Get("/pinned-data", handlers.PinnedData.GetAll)
-						r.Post("/pinned-data", handlers.PinnedData.Set)
-						r.Get("/pinned-data/{nodeId}", handlers.PinnedData.GetByNode)
-						r.Delete("/pinned-data/{nodeId}", handlers.PinnedData.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/pinned-data", handlers.PinnedData.GetAll)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/pinned-data", handlers.PinnedData.Set)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/pinned-data/{nodeId}", handlers.PinnedData.GetByNode)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/pinned-data/{nodeId}", handlers.PinnedData.Delete)
 					})
 				})
 
 				// Webhooks management
 				r.Route("/webhooks", func(r chi.Router) {
+					r.Use(middleware.RequirePermission(rbac.PermWorkflowWrite)) // Generally write access for management
 					r.Route("/{webhookId}", func(r chi.Router) {
 						r.Post("/regenerate-secret", handlers.Webhook.RegenerateSecret)
 						r.Post("/activate", handlers.Webhook.Activate)
@@ -563,91 +575,92 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 
 				// Executions
 				r.Route("/executions", func(r chi.Router) {
-					r.Get("/", handlers.Execution.List)
-					r.Get("/search", handlers.Execution.Search)
-					r.Get("/stats", handlers.Execution.Stats)
-					r.Delete("/bulk", handlers.Execution.BulkDelete)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Execution.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/search", handlers.Execution.Search)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/stats", handlers.Execution.Stats)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/bulk", handlers.Execution.BulkDelete)
 
 					r.Route("/{executionId}", func(r chi.Router) {
-						r.Get("/", handlers.Execution.Get)
-						r.Post("/cancel", handlers.Execution.Cancel)
-						r.Post("/retry", handlers.Execution.Retry)
-						r.Post("/replay", handlers.Execution.Replay)
-						r.Post("/replay-from-node", handlers.Execution.ReplayFromNode)
-						r.Get("/nodes", handlers.Execution.GetNodes)
-						r.Get("/nodes/{nodeId}", handlers.Execution.GetNode)
-						r.Get("/waiting", handlers.Execution.GetWaiting)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Execution.Get)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/cancel", handlers.Execution.Cancel)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/retry", handlers.Execution.Retry)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/replay", handlers.Execution.Replay)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/replay-from-node", handlers.Execution.ReplayFromNode)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/nodes", handlers.Execution.GetNodes)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/nodes/{nodeId}", handlers.Execution.GetNode)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/waiting", handlers.Execution.GetWaiting)
 
 						// Binary data for execution
-						r.Post("/binary", handlers.BinaryData.Upload)
-						r.Get("/binary", handlers.BinaryData.List)
-						r.Delete("/binary/cleanup", handlers.BinaryData.Cleanup)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowExecute)).Post("/binary", handlers.BinaryData.Upload)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/binary", handlers.BinaryData.List)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/binary/cleanup", handlers.BinaryData.Cleanup)
 					})
 				})
 
 				// Waiting executions
-				r.Get("/waiting-executions", handlers.Execution.ListWaiting)
+				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/waiting-executions", handlers.Execution.ListWaiting)
 
 				// Binary data
 				r.Route("/binary", func(r chi.Router) {
-					r.Get("/stats", handlers.BinaryData.GetStats)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/stats", handlers.BinaryData.GetStats)
 					r.Route("/{binaryId}", func(r chi.Router) {
-						r.Get("/", handlers.BinaryData.GetInfo)
-						r.Get("/download", handlers.BinaryData.Download)
-						r.Delete("/", handlers.BinaryData.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.BinaryData.GetInfo)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/download", handlers.BinaryData.Download)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/", handlers.BinaryData.Delete)
 					})
 				})
 
 				// Credentials
 				r.Route("/credentials", func(r chi.Router) {
-					r.Get("/", handlers.Credential.List)
-					r.Post("/", handlers.Credential.Create)
+					r.With(middleware.RequirePermission(rbac.PermCredentialRead)).Get("/", handlers.Credential.List)
+					r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Post("/", handlers.Credential.Create)
 
 					r.Route("/{credentialId}", func(r chi.Router) {
-						r.Get("/", handlers.Credential.Get)
-						r.Put("/", handlers.Credential.Update)
-						r.Delete("/", handlers.Credential.Delete)
-						r.Post("/test", handlers.Credential.Test)
-						r.Post("/refresh", handlers.Credential.Refresh)
+						r.With(middleware.RequirePermission(rbac.PermCredentialRead)).Get("/", handlers.Credential.Get)
+						r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Put("/", handlers.Credential.Update)
+						r.With(middleware.RequirePermission(rbac.PermCredentialDelete)).Delete("/", handlers.Credential.Delete)
+						r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Post("/test", handlers.Credential.Test)
+						r.With(middleware.RequirePermission(rbac.PermCredentialWrite)).Post("/refresh", handlers.Credential.Refresh)
 					})
 				})
 
 				// Schedules
 				r.Route("/schedules", func(r chi.Router) {
-					r.Get("/", handlers.Schedule.List)
-					r.Post("/", handlers.Schedule.Create)
+					r.With(middleware.RequirePermission(rbac.PermScheduleRead)).Get("/", handlers.Schedule.List)
+					r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Post("/", handlers.Schedule.Create)
 
 					r.Route("/{scheduleId}", func(r chi.Router) {
-						r.Get("/", handlers.Schedule.Get)
-						r.Put("/", handlers.Schedule.Update)
-						r.Delete("/", handlers.Schedule.Delete)
-						r.Post("/pause", handlers.Schedule.Pause)
-						r.Post("/resume", handlers.Schedule.Resume)
+						r.With(middleware.RequirePermission(rbac.PermScheduleRead)).Get("/", handlers.Schedule.Get)
+						r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Put("/", handlers.Schedule.Update)
+						r.With(middleware.RequirePermission(rbac.PermScheduleDelete)).Delete("/", handlers.Schedule.Delete)
+						r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Post("/pause", handlers.Schedule.Pause)
+						r.With(middleware.RequirePermission(rbac.PermScheduleWrite)).Post("/resume", handlers.Schedule.Resume)
 					})
 				})
 
 				// Templates usage
-				r.Post("/templates/{templateId}/use", handlers.Template.Use)
+				r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/templates/{templateId}/use", handlers.Template.Use)
 
 				// Workflow sharing
 				r.Route("/workflow-shares", func(r chi.Router) {
-					r.Post("/", handlers.WorkflowShare.Create)
-					r.Get("/shared-by-me", handlers.WorkflowShare.SharedByMe)
-					r.Get("/shared-with-me", handlers.WorkflowShare.SharedWithMe)
-					r.Get("/pending", handlers.WorkflowShare.Pending)
-					r.Post("/{shareId}/accept", handlers.WorkflowShare.Accept)
-					r.Put("/{shareId}", handlers.WorkflowShare.Update)
-					r.Delete("/{shareId}", handlers.WorkflowShare.Revoke)
+					// Sharing requires write permission on workflow, usually?
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.WorkflowShare.Create)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/shared-by-me", handlers.WorkflowShare.SharedByMe)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/shared-with-me", handlers.WorkflowShare.SharedWithMe)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/pending", handlers.WorkflowShare.Pending)
+					r.Post("/{shareId}/accept", handlers.WorkflowShare.Accept) // Accepting might be just member action?
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/{shareId}", handlers.WorkflowShare.Update)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/{shareId}", handlers.WorkflowShare.Revoke)
 				})
 
 				// Marketplace publishing
 				r.Route("/marketplace", func(r chi.Router) {
-					r.Post("/", handlers.Marketplace.Publish)
-					r.Get("/my-published", handlers.Marketplace.MyPublished)
-					r.Post("/{templateId}/use", handlers.Marketplace.Use)
-					r.Put("/{templateId}", handlers.Marketplace.Update)
-					r.Post("/{templateId}/sync", handlers.Marketplace.Sync)
-					r.Delete("/{templateId}", handlers.Marketplace.Unpublish)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Marketplace.Publish)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/my-published", handlers.Marketplace.MyPublished)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/{templateId}/use", handlers.Marketplace.Use)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/{templateId}", handlers.Marketplace.Update)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/{templateId}/sync", handlers.Marketplace.Sync)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{templateId}", handlers.Marketplace.Unpublish)
 				})
 			})
 		})

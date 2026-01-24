@@ -132,23 +132,3 @@ func RequireAdmin(next http.Handler) http.Handler {
 func RequireOwner(next http.Handler) http.Handler {
 	return RequireRole(workspace.RoleOwner)(next)
 }
-
-// RequirePermission creates middleware that requires a specific permission
-func RequirePermission(permission string) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			wsCtx := GetWorkspaceFromContext(r.Context())
-			if wsCtx == nil {
-				common.BadRequest(w, "workspace context required")
-				return
-			}
-
-			if !wsCtx.Role.HasPermission(permission) {
-				common.Forbidden(w, "permission denied: "+permission)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/dto/common"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/middleware"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/email"
@@ -21,6 +22,7 @@ type InviteMemberHandler struct {
 	workspaceRepo workspace.Repository
 	memberRepo    workspace.MemberRepository
 	userRepo      user.Repository
+	rbacRepo      rbac.Repository
 	emailService  email.Provider
 	baseURL       string
 }
@@ -29,6 +31,7 @@ func NewInviteMemberHandler(
 	workspaceRepo workspace.Repository,
 	memberRepo workspace.MemberRepository,
 	userRepo user.Repository,
+	rbacRepo rbac.Repository,
 	emailService email.Provider,
 	baseURL string,
 ) *InviteMemberHandler {
@@ -36,6 +39,7 @@ func NewInviteMemberHandler(
 		workspaceRepo: workspaceRepo,
 		memberRepo:    memberRepo,
 		userRepo:      userRepo,
+		rbacRepo:      rbacRepo,
 		emailService:  emailService,
 		baseURL:       baseURL,
 	}
@@ -106,6 +110,25 @@ func (h *InviteMemberHandler) Handle(w http.ResponseWriter, r *http.Request) {
 			common.HandleError(w, err)
 			return
 		}
+
+		// Set RoleID based on legacy role string
+		// Map: "admin" -> "Admin", "member" -> "Editor", "viewer" -> "Viewer"
+		var rbacRoleName string
+		switch role {
+		case workspace.RoleAdmin:
+			rbacRoleName = rbac.RoleAdmin
+		case workspace.RoleMember:
+			rbacRoleName = rbac.RoleEditor // Map member to Editor in RBAC
+		case workspace.RoleViewer:
+			rbacRoleName = rbac.RoleViewer
+		default:
+			rbacRoleName = rbac.RoleViewer
+		}
+
+		if rbacRole, err := h.rbacRepo.GetRoleByName(r.Context(), nil, rbacRoleName); err == nil {
+			member.RoleID = &rbacRole.ID
+		}
+
 		if err := h.memberRepo.Create(r.Context(), member); err != nil {
 			common.HandleError(w, err)
 			return

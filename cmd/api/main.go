@@ -161,6 +161,7 @@ func main() {
 	sessionRepo := repositories.NewSessionRepository(db)
 	workspaceRepo := repositories.NewWorkspaceRepository(db)
 	memberRepo := repositories.NewMemberRepository(db)
+	rbacRepo := repositories.NewRBACRepository(db)
 	workflowRepo := repositories.NewWorkflowRepository(db)
 	versionRepo := repositories.NewVersionRepository(db)
 	executionRepo := repositories.NewExecutionRepository(db)
@@ -283,7 +284,7 @@ func main() {
 	// Command handlers
 	registerUserHandler := userCmd.NewRegisterUserHandler(userRepo, jwtManager, eventBus)
 	loginUserHandler := userCmd.NewLoginUserHandler(userRepo, sessionRepo, jwtManager, eventBus)
-	createWorkspaceHandler := workspaceCmd.NewCreateWorkspaceHandler(workspaceRepo, memberRepo, eventBus)
+	createWorkspaceHandler := workspaceCmd.NewCreateWorkspaceHandler(workspaceRepo, memberRepo, rbacRepo, eventBus)
 	createWorkflowHandler := workflowCmd.NewCreateWorkflowHandler(workflowRepo, versionRepo, eventBus)
 	updateWorkflowHandler := workflowCmd.NewUpdateWorkflowHandler(workflowRepo, versionRepo)
 	activateWorkflowHandler := workflowCmd.NewActivateWorkflowHandler(workflowRepo, usageService, eventBus)
@@ -357,8 +358,8 @@ func main() {
 	wsUpdateHandler := workspaceHandler.NewUpdateHandler(workspaceRepo)
 	wsDeleteHandler := workspaceHandler.NewDeleteHandler(workspaceRepo)
 	wsMembersHandler := workspaceHandler.NewListMembersHandler(listMembersHandler)
-	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, userRepo, emailService, baseURL)
-	wsUpdateMemberHandler := workspaceHandler.NewUpdateMemberHandler(memberRepo, workspaceRepo)
+	wsInviteHandler := workspaceHandler.NewInviteMemberHandler(workspaceRepo, memberRepo, userRepo, rbacRepo, emailService, baseURL)
+	wsUpdateMemberHandler := workspaceHandler.NewUpdateMemberHandler(memberRepo, workspaceRepo, rbacRepo)
 	wsRemoveMemberHandler := workspaceHandler.NewRemoveMemberHandler(workspaceRepo, memberRepo)
 
 	// Workflow handlers

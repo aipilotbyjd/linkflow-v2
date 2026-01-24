@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
 )
@@ -25,6 +26,7 @@ type CreateWorkspaceCommand struct {
 type CreateWorkspaceHandler struct {
 	workspaceRepo workspace.Repository
 	memberRepo    workspace.MemberRepository
+	rbacRepo      rbac.Repository
 	eventBus      events.Bus
 }
 
@@ -32,11 +34,13 @@ type CreateWorkspaceHandler struct {
 func NewCreateWorkspaceHandler(
 	workspaceRepo workspace.Repository,
 	memberRepo workspace.MemberRepository,
+	rbacRepo rbac.Repository,
 	eventBus events.Bus,
 ) *CreateWorkspaceHandler {
 	return &CreateWorkspaceHandler{
 		workspaceRepo: workspaceRepo,
 		memberRepo:    memberRepo,
+		rbacRepo:      rbacRepo,
 		eventBus:      eventBus,
 	}
 }
@@ -83,6 +87,15 @@ func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspace
 	member, err := workspace.NewMember(ws.ID, cmd.OwnerID, workspace.RoleOwner)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create member entity: %w", err)
+	}
+
+	// Fetch RBAC Owner role
+	ownerRole, err := h.rbacRepo.GetRoleByName(ctx, nil, rbac.RoleOwner)
+	if err == nil && ownerRole != nil {
+		member.RoleID = &ownerRole.ID
+	} else {
+		// Log warning but proceed with legacy role
+		// TODO: Log warning
 	}
 
 	if err := h.memberRepo.Create(ctx, member); err != nil {
