@@ -296,6 +296,11 @@ func Load(configPath string) (*Config, error) {
 	// Bind Crypto environment variables
 	_ = v.BindEnv("crypto.encryption_key", "CRYPTO_ENCRYPTION_KEY")
 
+	// Bind Metrics environment variables
+	_ = v.BindEnv("metrics.enabled", "METRICS_ENABLED")
+	_ = v.BindEnv("metrics.port", "METRICS_PORT")
+	_ = v.BindEnv("metrics.path", "METRICS_PATH")
+
 	// Read config file
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
@@ -359,6 +364,11 @@ func LoadWithValidation(configPath string) (*Config, *ValidationResult, error) {
 	// Bind AI environment variables
 	_ = v.BindEnv("ai.openai.api_key", "AI_OPENAI_API_KEY")
 	_ = v.BindEnv("ai.anthropic.api_key", "AI_ANTHROPIC_API_KEY")
+
+	// Bind Metrics environment variables
+	_ = v.BindEnv("metrics.enabled", "METRICS_ENABLED")
+	_ = v.BindEnv("metrics.port", "METRICS_PORT")
+	_ = v.BindEnv("metrics.path", "METRICS_PATH")
 
 	// Read config file
 	if err := v.ReadInConfig(); err != nil {

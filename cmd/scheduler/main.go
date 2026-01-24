@@ -113,6 +113,26 @@ func main() {
 	// Start health check server
 	healthServer := startHealthServer(appLogger, server, cfg.Scheduler.HealthPort)
 
+	// Start metrics server
+	var metricsServer *http.Server
+	if cfg.Metrics.Enabled {
+		mux := http.NewServeMux()
+		mux.Handle(cfg.Metrics.Path, promhttp.Handler())
+		metricsServer = &http.Server{
+			Addr:    cfg.Metrics.GetAddress(),
+			Handler: mux,
+		}
+		go func() {
+			appLogger.Info().
+				Str("address", cfg.Metrics.GetAddress()).
+				Str("path", cfg.Metrics.Path).
+				Msg("Starting scheduler metrics server")
+			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				appLogger.Error().Err(err).Msg("Metrics server error")
+			}
+		}()
+	}
+
 	// Handle shutdown
 	go func() {
 		quit := make(chan os.Signal, 1)
@@ -150,6 +170,11 @@ func main() {
 	// Stop health server
 	if healthServer != nil {
 		_ = healthServer.Shutdown(shutdownCtx)
+	}
+
+	// Stop metrics server
+	if metricsServer != nil {
+		_ = metricsServer.Shutdown(shutdownCtx)
 	}
 
 	appLogger.Info().Msg("Scheduler stopped gracefully")
@@ -194,11 +219,8 @@ func startHealthServer(appLogger logger.Logger, server *scheduler.Server, port i
 		}
 	})
 
-	// Prometheus metrics
-	mux.Handle("/metrics/prometheus", promhttp.Handler())
-
-	// Metrics endpoint (Legacy JSON)
-	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+	// Metrics endpoint (Legacy JSON) - keep for now but consider deprecating
+	mux.HandleFunc("/metrics/json", func(w http.ResponseWriter, r *http.Request) {
 		metrics := server.Metrics().Snapshot()
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

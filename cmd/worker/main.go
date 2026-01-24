@@ -233,14 +233,19 @@ func main() {
 	_ = redis
 
 	// Start metrics server (non-blocking)
-	go func() {
-		mux := http.NewServeMux()
-		mux.Handle("/metrics/prometheus", promhttp.Handler())
-		appLogger.Info().Int("port", 8090).Msg("Starting metrics server")
-		if err := http.ListenAndServe(":8090", mux); err != nil && err != http.ErrServerClosed {
-			appLogger.Error().Err(err).Msg("Metrics server error")
-		}
-	}()
+	if cfg.Metrics.Enabled {
+		go func() {
+			mux := http.NewServeMux()
+			mux.Handle(cfg.Metrics.Path, promhttp.Handler())
+			appLogger.Info().
+				Str("address", cfg.Metrics.GetAddress()).
+				Str("path", cfg.Metrics.Path).
+				Msg("Starting worker metrics server")
+			if err := http.ListenAndServe(cfg.Metrics.GetAddress(), mux); err != nil && err != http.ErrServerClosed {
+				appLogger.Error().Err(err).Msg("Metrics server error")
+			}
+		}()
+	}
 
 	// Start server (non-blocking)
 	appLogger.Info().Msg("Starting Asynq worker server")

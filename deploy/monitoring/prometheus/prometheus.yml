@@ -18,20 +18,20 @@ scrape_configs:
 
   - job_name: 'linkflow-api'
     static_configs:
-      - targets: ['api:8090']
-    metrics_path: /metrics/prometheus
+      - targets: ['api:9090']
+    metrics_path: /metrics
     scrape_interval: 15s
 
   - job_name: 'linkflow-worker'
     static_configs:
-      - targets: ['worker:8090']
-    metrics_path: /metrics/prometheus
+      - targets: ['worker:9090']
+    metrics_path: /metrics
     scrape_interval: 15s
 
   - job_name: 'linkflow-scheduler'
     static_configs:
-      - targets: ['scheduler:8091']
-    metrics_path: /metrics/prometheus
+      - targets: ['scheduler:9090']
+    metrics_path: /metrics
     scrape_interval: 15s
 
   - job_name: 'postgres'

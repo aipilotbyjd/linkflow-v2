@@ -86,6 +86,7 @@ func ValidateConfiguration(cfg *Config) *ValidationResult {
 	validateStorageConfig(cfg, result)
 	validateCryptoConfig(cfg, result)
 	validateFeaturesConfig(cfg, result)
+	validateMetricsConfig(cfg, result)
 
 	// Validate cross-dependencies
 	validateCrossDependencies(cfg, result)
@@ -335,6 +336,18 @@ func validateCryptoConfig(cfg *Config, result *ValidationResult) {
 // validateFeaturesConfig validates features configuration
 func validateFeaturesConfig(cfg *Config, result *ValidationResult) {
 	// No feature flags to validate
+}
+
+// validateMetricsConfig validates metrics configuration
+func validateMetricsConfig(cfg *Config, result *ValidationResult) {
+	if cfg.Metrics.Enabled {
+		if cfg.Metrics.Port <= 0 || cfg.Metrics.Port > 65535 {
+			result.AddError("metrics.port", "metrics port must be between 1 and 65535")
+		}
+		if cfg.Metrics.Path == "" {
+			result.AddWarning("metrics.path", "metrics path not specified, using default /metrics")
+		}
+	}
 }
 
 // validateCrossDependencies validates interdependencies between configurations
