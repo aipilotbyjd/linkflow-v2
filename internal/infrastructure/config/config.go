@@ -278,6 +278,12 @@ func Load(configPath string) (*Config, error) {
 	_ = v.BindEnv("ai.openai.api_key", "AI_OPENAI_API_KEY")
 	_ = v.BindEnv("ai.anthropic.api_key", "AI_ANTHROPIC_API_KEY")
 
+	// Bind JWT environment variables
+	_ = v.BindEnv("jwt.secret", "JWT_SECRET")
+
+	// Bind Crypto environment variables
+	_ = v.BindEnv("crypto.encryption_key", "CRYPTO_ENCRYPTION_KEY")
+
 	// Read config file
 	if err := v.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
