@@ -120,7 +120,7 @@ func validateAppConfig(cfg *Config, result *ValidationResult) {
 		result.AddError("server.port", "port must be between 1 and 65535")
 	}
 
-	if cfg.App.CorsOrigins == nil || len(cfg.App.CorsOrigins) == 0 {
+	if len(cfg.App.CorsOrigins) == 0 {
 		result.AddWarning("app.cors_origins", "no CORS origins specified, API may be inaccessible from browsers")
 	}
 }
