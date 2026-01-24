@@ -180,6 +180,7 @@ func main() {
 	shareRepo := repositories.NewShareRepository(db)
 	variableRepo := repositories.NewVariableRepository(db)
 	binaryDataRepo := repositories.NewBinaryDataRepository(db)
+	siteSettingsRepo := repositories.NewSiteSettingsRepository(db)
 
 	// Storage service
 	var storageService binarydata.StorageService
@@ -469,7 +470,7 @@ func main() {
 	akRevokeHandler := apikeyHandler.NewRevokeAPIKeyHandler(apiKeyRepo)
 
 	// Node types handlers
-	ntListHandler := nodetypesHandler.NewListNodeTypesHandler(nodeRegistry)
+	ntListHandler := nodetypesHandler.NewListNodeTypesHandler(nodeRegistry, siteSettingsRepo)
 	ntCategoriesHandler := nodetypesHandler.NewListCategoriesHandler(nodeRegistry)
 	ntGetHandler := nodetypesHandler.NewGetNodeTypeHandler(nodeRegistry)
 
@@ -528,6 +529,8 @@ func main() {
 	admStreamStatsHandler := adminHandler.NewStreamStatsHandler(&streamAdapter{streamManager})
 	admReplayDLQHandler := adminHandler.NewReplayDLQHandler(&streamAdapter{streamManager})
 	admTrimStreamHandler := adminHandler.NewTrimStreamHandler(&streamAdapter{streamManager})
+	admGetDisabledNodesHandler := adminHandler.NewGetDisabledNodesHandler(siteSettingsRepo)
+	admUpdateDisabledNodesHandler := adminHandler.NewUpdateDisabledNodesHandler(siteSettingsRepo)
 
 	// OAuth handlers
 	oaListProvidersHandler := oauthHandler.NewListProvidersHandler(oauthProviders)
@@ -736,10 +739,12 @@ func main() {
 			Cleanup:  bdCleanupHandler.Handle,
 		},
 		Admin: routes.AdminHandlers{
-			Metrics:     admMetricsHandler.Handle,
-			StreamStats: admStreamStatsHandler.Handle,
-			ReplayDLQ:   admReplayDLQHandler.Handle,
-			TrimStream:  admTrimStreamHandler.Handle,
+			Metrics:             admMetricsHandler.Handle,
+			StreamStats:         admStreamStatsHandler.Handle,
+			ReplayDLQ:           admReplayDLQHandler.Handle,
+			TrimStream:          admTrimStreamHandler.Handle,
+			GetDisabledNodes:    admGetDisabledNodesHandler.Handle,
+			UpdateDisabledNodes: admUpdateDisabledNodesHandler.Handle,
 		},
 		Analytics: routes.AnalyticsHandlers{
 			WorkflowAnalytics:  anWorkflowHandler.Handle,

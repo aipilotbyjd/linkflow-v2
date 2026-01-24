@@ -11,6 +11,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/linkflow-ai/linkflow/internal/core/domain/sitesettings"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/user"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/config"
 )
@@ -128,6 +129,9 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&models.AIUsage{},
 		&models.PromptTemplate{},
 		&models.AICache{},
+
+		// Site Settings
+		&sitesettings.SiteSettings{},
 	); err != nil {
 		return fmt.Errorf("auto-migrate failed: %w", err)
 	}
@@ -154,6 +158,7 @@ func showMigrationStatus(db *gorm.DB) error {
 		"templates", "folders", "shares", "pinned_data", "binary_data",
 		"variables", "environments", "environment_variables",
 		"plans", "subscriptions", "usage_records", "invoices",
+		"site_settings",
 	}
 
 	for _, table := range tables {

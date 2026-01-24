@@ -280,10 +280,12 @@ type BinaryDataHandlers struct {
 
 // AdminHandlers holds admin handlers
 type AdminHandlers struct {
-	Metrics     http.HandlerFunc
-	StreamStats http.HandlerFunc
-	ReplayDLQ   http.HandlerFunc
-	TrimStream  http.HandlerFunc
+	Metrics             http.HandlerFunc
+	StreamStats         http.HandlerFunc
+	ReplayDLQ           http.HandlerFunc
+	TrimStream          http.HandlerFunc
+	GetDisabledNodes    http.HandlerFunc
+	UpdateDisabledNodes http.HandlerFunc
 }
 
 // AnalyticsHandlers holds analytics handlers
@@ -437,6 +439,8 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				r.Get("/streams/webhooks/stats", handlers.Admin.StreamStats)
 				r.Post("/streams/webhooks/replay", handlers.Admin.ReplayDLQ)
 				r.Post("/streams/webhooks/trim", handlers.Admin.TrimStream)
+				r.Get("/disabled-nodes", handlers.Admin.GetDisabledNodes)
+				r.Put("/disabled-nodes", handlers.Admin.UpdateDisabledNodes)
 			})
 
 			// Workspace-scoped routes
