@@ -90,7 +90,9 @@ func (n *JavaScriptNode) Execute(ctx context.Context, runtime *executor.Runtime,
 	}
 
 	// Execute the code
-	result, err := vm.RunString(code)
+	// Wrap in an IIFE to support top-level return
+	wrappedCode := fmt.Sprintf("(function() {\n%s\n})()", code)
+	result, err := vm.RunString(wrappedCode)
 	if err != nil {
 		return nil, fmt.Errorf("JavaScript execution error: %w", err)
 	}

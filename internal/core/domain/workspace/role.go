@@ -89,7 +89,7 @@ func (r Role) Permissions() []string {
 		return append(base,
 			"workspace:write", "workspace:delete", "workspace:transfer",
 			"member:write", "member:delete",
-			"workflow:write", "workflow:delete", "workflow:execute",
+			"workflow:write", "workflow:delete", "workflow:execute", "workflow:publish",
 			"credential:write", "credential:delete",
 			"schedule:write", "schedule:delete",
 			"billing:read", "billing:write",
@@ -98,13 +98,13 @@ func (r Role) Permissions() []string {
 		return append(base,
 			"workspace:write",
 			"member:write", "member:delete",
-			"workflow:write", "workflow:delete", "workflow:execute",
+			"workflow:write", "workflow:delete", "workflow:execute", "workflow:publish",
 			"credential:write", "credential:delete",
 			"schedule:write", "schedule:delete",
 		)
 	case RoleMember:
 		return append(base,
-			"workflow:write", "workflow:execute",
+			"workflow:write", "workflow:execute", "workflow:publish",
 			"credential:write",
 			"schedule:write",
 		)

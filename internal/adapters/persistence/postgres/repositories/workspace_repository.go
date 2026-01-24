@@ -20,6 +20,10 @@ func NewWorkspaceRepository(db *gorm.DB) *WorkspaceRepository {
 	return &WorkspaceRepository{db: db}
 }
 
+func (r *WorkspaceRepository) DB() *gorm.DB {
+	return r.db
+}
+
 func (r *WorkspaceRepository) Create(ctx context.Context, ws *workspace.Workspace) error {
 	model := mappers.WorkspaceToModel(ws)
 	return postgres.GetTx(ctx, r.db).Create(model).Error

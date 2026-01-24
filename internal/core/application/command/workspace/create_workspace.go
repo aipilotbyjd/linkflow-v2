@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/workspace"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
@@ -62,47 +64,54 @@ func (h *CreateWorkspaceHandler) Handle(ctx context.Context, cmd CreateWorkspace
 		return nil, workspace.ErrSlugAlreadyExists
 	}
 
-	// Create workspace (includes validation)
-	ws, err := workspace.NewWorkspace(cmd.OwnerID, cmd.Name, slug)
+	var ws *workspace.Workspace
+	err = postgres.WithTransaction(ctx, h.workspaceRepo.(*repositories.WorkspaceRepository).DB(), func(txCtx context.Context) error {
+		// Create workspace (includes validation)
+		var innerErr error
+		ws, innerErr = workspace.NewWorkspace(cmd.OwnerID, cmd.Name, slug)
+		if innerErr != nil {
+			return innerErr
+		}
+
+		ws.Description = cmd.Description
+		if cmd.Timezone != "" {
+			ws.Timezone = cmd.Timezone
+		}
+		if cmd.Language != "" {
+			ws.Language = cmd.Language
+		}
+
+		if innerErr := h.workspaceRepo.Create(txCtx, ws); innerErr != nil {
+			if strings.Contains(innerErr.Error(), "duplicate key") || strings.Contains(innerErr.Error(), "unique constraint") {
+				return workspace.ErrSlugAlreadyExists
+			}
+			return fmt.Errorf("failed to create workspace: %w", innerErr)
+		}
+
+		// Add owner as member with owner role
+		member, innerErr := workspace.NewMember(ws.ID, cmd.OwnerID, workspace.RoleOwner)
+		if innerErr != nil {
+			return fmt.Errorf("failed to create member entity: %w", innerErr)
+		}
+
+		// Fetch RBAC Owner role
+		ownerRole, innerErr := h.rbacRepo.GetRoleByName(txCtx, nil, rbac.RoleOwner)
+		if innerErr == nil && ownerRole != nil {
+			member.RoleID = &ownerRole.ID
+		}
+
+		if innerErr := h.memberRepo.Create(txCtx, member); innerErr != nil {
+			return fmt.Errorf("failed to create workspace member: %w", innerErr)
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	ws.Description = cmd.Description
-	if cmd.Timezone != "" {
-		ws.Timezone = cmd.Timezone
-	}
-	if cmd.Language != "" {
-		ws.Language = cmd.Language
-	}
-
-	if err := h.workspaceRepo.Create(ctx, ws); err != nil {
-		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
-			return nil, workspace.ErrSlugAlreadyExists
-		}
-		return nil, fmt.Errorf("failed to create workspace: %w", err)
-	}
-
-	// Add owner as member with owner role
-	member, err := workspace.NewMember(ws.ID, cmd.OwnerID, workspace.RoleOwner)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create member entity: %w", err)
-	}
-
-	// Fetch RBAC Owner role
-	ownerRole, err := h.rbacRepo.GetRoleByName(ctx, nil, rbac.RoleOwner)
-	if err == nil && ownerRole != nil {
-		member.RoleID = &ownerRole.ID
-	} else {
-		// Log warning but proceed with legacy role
-		// TODO: Log warning
-	}
-
-	if err := h.memberRepo.Create(ctx, member); err != nil {
-		// Non-fatal but should be logged
-	}
-
-	// Publish event
+	// Publish event (after transaction)
 	if h.eventBus != nil {
 		event := events.WorkspaceCreated{
 			BaseEvent:   events.NewBaseEvent("workspace.created", ws.ID, "workspace"),

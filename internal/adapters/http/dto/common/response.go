@@ -7,6 +7,7 @@ import (
 
 	"github.com/linkflow-ai/linkflow/internal/shared/errors"
 	"github.com/linkflow-ai/linkflow/internal/shared/types"
+	"github.com/rs/zerolog/log"
 )
 
 // Response represents a standard API response
@@ -258,6 +259,8 @@ func HandleError(w http.ResponseWriter, err error) {
 		Error(w, http.StatusConflict, "WORKFLOW_ALREADY_ACTIVE", "Workflow is already active")
 	case "version not found":
 		Error(w, http.StatusNotFound, "VERSION_NOT_FOUND", "Workflow version not found")
+	case "active scenarios limit exceeded":
+		Error(w, http.StatusForbidden, "LIMIT_EXCEEDED", "Active scenarios limit exceeded for your plan. Please upgrade or deactivate other workflows.")
 
 	// Webhook errors
 	case "webhook path already exists":
@@ -303,6 +306,7 @@ func HandleError(w http.ResponseWriter, err error) {
 		case errors.IsConflictError(err):
 			Conflict(w, err.Error())
 		default:
+			log.Error().Err(err).Msg("Unhandled server error")
 			InternalError(w, "")
 		}
 	}
