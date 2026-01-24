@@ -54,6 +54,35 @@ func (n *HTTPRequestNode) Execute(ctx context.Context, runtime *executor.Runtime
 		}
 	}
 
+	// Handle Authentication
+	authType, _ := params["authentication"].(string)
+	switch authType {
+	case "basic":
+		username, _ := params["username"].(string)
+		password, _ := params["password"].(string)
+		if username != "" || password != "" {
+			req.SetBasicAuth(username, password)
+		}
+	case "bearer":
+		token, _ := params["bearer_token"].(string)
+		if token != "" {
+			req.Header.Set("Authorization", "Bearer "+token)
+		}
+	case "api_key":
+		keyName, _ := params["api_key_name"].(string)
+		keyValue, _ := params["api_key_value"].(string)
+		location, _ := params["api_key_location"].(string)
+		if keyName != "" && keyValue != "" {
+			if location == "query" {
+				q := req.URL.Query()
+				q.Add(keyName, keyValue)
+				req.URL.RawQuery = q.Encode()
+			} else {
+				req.Header.Set(keyName, keyValue)
+			}
+		}
+	}
+
 	if req.Header.Get("Content-Type") == "" && body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}

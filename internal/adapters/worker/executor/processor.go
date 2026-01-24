@@ -44,7 +44,18 @@ func (p *Processor) Process(ctx context.Context, runtime *Runtime, node map[stri
 		Str("node_id", node["id"].(string)).
 		Msg("Processing node")
 
-	return handler.Execute(ctx, runtime, node)
+	// Create a shallow copy of node to modify parameters without affecting the original in workflow
+	nodeCopy := make(map[string]interface{})
+	for k, v := range node {
+		nodeCopy[k] = v
+	}
+
+	// Resolve parameters
+	if params, ok := node["parameters"].(map[string]interface{}); ok {
+		nodeCopy["parameters"] = runtime.ResolveParameters(params)
+	}
+
+	return handler.Execute(ctx, runtime, nodeCopy)
 }
 
 func (p *Processor) HasHandler(nodeType string) bool {

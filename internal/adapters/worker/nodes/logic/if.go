@@ -2,6 +2,8 @@ package logic
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/linkflow-ai/linkflow/internal/adapters/worker/executor"
 	wtypes "github.com/linkflow-ai/linkflow/internal/adapters/worker/types"
@@ -16,7 +18,18 @@ func NewIfNode() *IfNode {
 
 func (n *IfNode) Execute(ctx context.Context, runtime *executor.Runtime, node map[string]interface{}) (types.JSON, error) {
 	params, _ := node["parameters"].(map[string]interface{})
-	condition, _ := params["condition"].(bool)
+
+	conditionRaw := params["condition"]
+	condition := false
+
+	switch v := conditionRaw.(type) {
+	case bool:
+		condition = v
+	case string:
+		condition = strings.ToLower(v) == "true" || v == "1" || strings.ToLower(v) == "yes"
+	case int, int64, float64:
+		condition = fmt.Sprintf("%v", v) != "0"
+	}
 
 	result := types.JSON{
 		"condition": condition,

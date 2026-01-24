@@ -82,7 +82,7 @@ func (r Role) CanManage(target Role) bool {
 
 // Permissions returns the permissions for this role
 func (r Role) Permissions() []string {
-	base := []string{"workspace:read", "workflow:read", "execution:read"}
+	base := []string{"workspace:read", "workflow:read", "execution:read", "credential:read"}
 
 	switch r {
 	case RoleOwner:

@@ -11,6 +11,10 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/observability/logger"
 )
 
+const (
+	MaxNodesPerExecution = 500
+)
+
 type Executor struct {
 	workflowRepo  workflow.Repository
 	executionRepo execution.Repository
@@ -122,6 +126,11 @@ func (e *Executor) executeNode(ctx context.Context, runtime *Runtime, node map[s
 	nodeID, _ := node["id"].(string)
 	nodeType, _ := node["type"].(string)
 
+	// Check execution limit
+	if runtime.IncrementNodeCount() > MaxNodesPerExecution {
+		return fmt.Errorf("execution limit exceeded: maximum of %d nodes allowed", MaxNodesPerExecution)
+	}
+
 	// Track node execution for billing
 	if e.usageTracker != nil {
 		if err := e.usageTracker.TrackNodeExecution(ctx, runtime.Execution.WorkspaceID, runtime.Execution.ID, nodeType); err != nil {
@@ -131,6 +140,13 @@ func (e *Executor) executeNode(ctx context.Context, runtime *Runtime, node map[s
 	}
 
 	nodeExec := execution.NewNodeExecution(runtime.Execution.ID, nodeID, nodeType, nil)
+
+	// Resolve parameters and set as input data
+	if params, ok := node["parameters"].(map[string]interface{}); ok {
+		resolvedParams := runtime.ResolveParameters(params)
+		nodeExec.InputData = resolvedParams
+	}
+
 	nodeExec.Start()
 
 	if err := e.nodeExecRepo.Create(ctx, nodeExec); err != nil {
@@ -154,7 +170,13 @@ func (e *Executor) executeNode(ctx context.Context, runtime *Runtime, node map[s
 		return err
 	}
 
-	nextNodes := runtime.GetNextNodes(nodeID)
+	// Determine output port (branch)
+	sourcePort := "main"
+	if branch, ok := result["branch"].(string); ok {
+		sourcePort = branch
+	}
+
+	nextNodes := runtime.GetNextNodes(nodeID, sourcePort)
 	for _, next := range nextNodes {
 		if err := e.executeNode(ctx, runtime, next); err != nil {
 			return err

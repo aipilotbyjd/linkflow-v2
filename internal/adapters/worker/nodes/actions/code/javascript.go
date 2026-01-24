@@ -48,7 +48,11 @@ func (n *JavaScriptNode) Execute(ctx context.Context, runtime *executor.Runtime,
 	defer close(done)
 
 	// Inject input data as $input
-	if err := vm.Set("$input", inputData); err != nil {
+	m := make(map[string]interface{})
+	for k, v := range inputData {
+		m[k] = v
+	}
+	if err := vm.Set("$input", m); err != nil {
 		return nil, fmt.Errorf("failed to set input data: %w", err)
 	}
 
