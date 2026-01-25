@@ -100,7 +100,7 @@ func (n *GoogleSheetsNode) Metadata() wtypes.NodeMetadata {
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Credentials: []string{"google_sheets"},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
 				{Value: "read", Name: "Read Rows"},
 				{Value: "append", Name: "Append Rows"},
 				{Value: "update", Name: "Update Cells"},

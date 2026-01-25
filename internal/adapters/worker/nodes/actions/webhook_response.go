@@ -77,16 +77,38 @@ func (n *WebhookResponseNode) Metadata() wtypes.NodeMetadata {
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "status_code", Type: "number", Description: "HTTP status code", Default: 200},
-			{Name: "content_type", Type: "select", Description: "Response content type", Default: "application/json", Options: []wtypes.ParamOption{
-				{Value: "application/json", Name: "JSON"},
-				{Value: "text/plain", Name: "Plain Text"},
-				{Value: "text/html", Name: "HTML"},
-				{Value: "application/xml", Name: "XML"},
-			}},
+			{
+				Name:               "status_code",
+				Type:               "number",
+				Description:        "HTTP status code",
+				Default:            200,
+				ExpressionDisabled: true,
+				Validation: &wtypes.Validation{
+					Min: wtypes.Float64Ptr(100),
+					Max: wtypes.Float64Ptr(599),
+				},
+			},
+			{
+				Name:               "content_type",
+				Type:               "options",
+				Description:        "Response content type",
+				Default:            "application/json",
+				ExpressionDisabled: true,
+				Options: []wtypes.ParamOption{
+					{Value: "application/json", Name: "JSON"},
+					{Value: "text/plain", Name: "Plain Text"},
+					{Value: "text/html", Name: "HTML"},
+					{Value: "application/xml", Name: "XML"},
+				},
+			},
 			{Name: "headers", Type: "json", Description: "Custom response headers"},
 			{Name: "body", Type: "json", Description: "Response body (overrides input)"},
-			{Name: "body_template", Type: "string", Description: "Response body template"},
+			{
+				Name:         "body_template",
+				Type:         "string",
+				Description:  "Response body template",
+				CodeLanguage: "html",
+			},
 		},
 	}
 }
@@ -142,13 +164,30 @@ func (n *RespondToWebhookNode) Metadata() wtypes.NodeMetadata {
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "respond_with", Type: "select", Description: "What to respond with", Default: "first_input", Options: []wtypes.ParamOption{
-				{Value: "first_input", Name: "First Input Data"},
-				{Value: "last_node", Name: "Last Node Output"},
-				{Value: "custom", Name: "Custom Body"},
-				{Value: "empty", Name: "Empty Response"},
-			}},
-			{Name: "status_code", Type: "number", Description: "HTTP status code", Default: 200},
+			{
+				Name:               "respond_with",
+				Type:               "options",
+				Description:        "What to respond with",
+				Default:            "first_input",
+				ExpressionDisabled: true,
+				Options: []wtypes.ParamOption{
+					{Value: "first_input", Name: "First Input Data"},
+					{Value: "last_node", Name: "Last Node Output"},
+					{Value: "custom", Name: "Custom Body"},
+					{Value: "empty", Name: "Empty Response"},
+				},
+			},
+			{
+				Name:               "status_code",
+				Type:               "number",
+				Description:        "HTTP status code",
+				Default:            200,
+				ExpressionDisabled: true,
+				Validation: &wtypes.Validation{
+					Min: wtypes.Float64Ptr(100),
+					Max: wtypes.Float64Ptr(599),
+				},
+			},
 			{Name: "body", Type: "json", Description: "Custom response body"},
 			{Name: "headers", Type: "json", Description: "Custom headers"},
 		},

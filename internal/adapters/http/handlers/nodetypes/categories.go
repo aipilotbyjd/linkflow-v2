@@ -15,11 +15,6 @@ func NewListCategoriesHandler(registry *nodes.Registry) *ListCategoriesHandler {
 	return &ListCategoriesHandler{registry: registry}
 }
 
-type CategoryResponse struct {
-	Name  string `json:"name"`
-	Count int    `json:"count"`
-}
-
 func (h *ListCategoriesHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	byCategory := h.registry.ListByCategory()
 

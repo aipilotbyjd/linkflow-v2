@@ -79,7 +79,7 @@ func (n *ExecuteWorkflowNode) Metadata() wtypes.NodeMetadata {
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
 			{Name: "workflow_id", Type: "string", Description: "ID of the workflow to execute", Required: true},
-			{Name: "mode", Type: "select", Description: "Execution mode", Default: "sync", Options: []wtypes.ParamOption{{Value: "sync", Name: "Synchronous"}, {Value: "async", Name: "Asynchronous"}}},
+			{Name: "mode", Type: "options", Description: "Execution mode", Default: "sync", Options: []wtypes.ParamOption{{Value: "sync", Name: "Synchronous"}, {Value: "async", Name: "Asynchronous"}}},
 			{Name: "pass_input", Type: "boolean", Description: "Pass current input to sub-workflow", Default: true},
 			{Name: "input", Type: "json", Description: "Custom input data for sub-workflow"},
 			{Name: "wait_for_completion", Type: "boolean", Description: "Wait for sub-workflow to complete", Default: true},

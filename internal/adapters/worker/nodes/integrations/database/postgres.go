@@ -52,12 +52,13 @@ func (n *PostgresNode) Metadata() wtypes.NodeMetadata {
 		},
 		Parameters: []wtypes.NodeParameter{
 			{
-				Name:        "operation",
-				DisplayName: "Operation",
-				Type:        "options",
-				Required:    true,
-				Default:     "select",
-				Description: "Database operation to perform",
+				Name:               "operation",
+				DisplayName:        "Operation",
+				Type:               "options",
+				Required:           true,
+				Default:            "select",
+				Description:        "Database operation to perform",
+				ExpressionDisabled: true,
 				Options: []wtypes.ParamOption{
 					{Name: "Select", Value: "select", Description: "Query data from table"},
 					{Name: "Insert", Value: "insert", Description: "Insert new row(s)"},
@@ -105,13 +106,14 @@ func (n *PostgresNode) Metadata() wtypes.NodeMetadata {
 				ShowIf:      "operation === 'insert' || operation === 'update'",
 			},
 			{
-				Name:        "query",
-				DisplayName: "SQL Query",
-				Type:        "code",
-				Required:    false,
-				Description: "Raw SQL query to execute",
-				Placeholder: "SELECT * FROM users WHERE id = $1",
-				ShowIf:      "operation === 'query'",
+				Name:         "query",
+				DisplayName:  "SQL Query",
+				Type:         "code",
+				Required:     false,
+				Description:  "Raw SQL query to execute",
+				CodeLanguage: "sql",
+				Placeholder:  "SELECT * FROM users WHERE id = $1",
+				ShowIf:       "operation === 'query'",
 			},
 			{
 				Name:        "params",
@@ -154,6 +156,9 @@ func (n *PostgresNode) Metadata() wtypes.NodeMetadata {
 				Required:    false,
 				Description: "Maximum number of rows to return",
 				ShowIf:      "operation === 'select'",
+				Validation: &wtypes.Validation{
+					Min: wtypes.Float64Ptr(1),
+				},
 			},
 			{
 				Name:        "offset",

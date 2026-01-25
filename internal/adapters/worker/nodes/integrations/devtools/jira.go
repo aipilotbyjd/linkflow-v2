@@ -135,7 +135,7 @@ func (n *JiraNode) Metadata() wtypes.NodeMetadata {
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Credentials: []string{"jira"},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
 				{Value: "create_issue", Name: "Create Issue"},
 				{Value: "update_issue", Name: "Update Issue"},
 				{Value: "get_issue", Name: "Get Issue"},
@@ -146,7 +146,7 @@ func (n *JiraNode) Metadata() wtypes.NodeMetadata {
 			}},
 			{Name: "project_key", Type: "string", Description: "Project key (e.g., PROJ)"},
 			{Name: "issue_key", Type: "string", Description: "Issue key (e.g., PROJ-123)"},
-			{Name: "issue_type", Type: "select", Description: "Issue type", Options: []wtypes.ParamOption{
+			{Name: "issue_type", Type: "options", Description: "Issue type", Options: []wtypes.ParamOption{
 				{Value: "Bug", Name: "Bug"},
 				{Value: "Task", Name: "Task"},
 				{Value: "Story", Name: "Story"},
@@ -154,7 +154,7 @@ func (n *JiraNode) Metadata() wtypes.NodeMetadata {
 			}},
 			{Name: "summary", Type: "string", Description: "Issue summary"},
 			{Name: "description", Type: "string", Description: "Issue description"},
-			{Name: "priority", Type: "select", Description: "Priority", Options: []wtypes.ParamOption{
+			{Name: "priority", Type: "options", Description: "Priority", Options: []wtypes.ParamOption{
 				{Value: "Highest", Name: "Highest"},
 				{Value: "High", Name: "High"},
 				{Value: "Medium", Name: "Medium"},

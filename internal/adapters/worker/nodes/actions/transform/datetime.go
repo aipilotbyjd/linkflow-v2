@@ -170,7 +170,7 @@ func (n *DateTimeNode) Metadata() wtypes.NodeMetadata {
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Date operation", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Date operation", Required: true, Options: []wtypes.ParamOption{
 				{Value: "now", Name: "Current Time"},
 				{Value: "parse", Name: "Parse String"},
 				{Value: "format", Name: "Format Date"},
@@ -185,7 +185,7 @@ func (n *DateTimeNode) Metadata() wtypes.NodeMetadata {
 			{Name: "unix1", Type: "number", Description: "First timestamp"},
 			{Name: "unix2", Type: "number", Description: "Second timestamp"},
 			{Name: "amount", Type: "number", Description: "Amount to add"},
-			{Name: "unit", Type: "select", Description: "Time unit", Options: []wtypes.ParamOption{
+			{Name: "unit", Type: "options", Description: "Time unit", Options: []wtypes.ParamOption{
 				{Value: "seconds", Name: "Seconds"},
 				{Value: "minutes", Name: "Minutes"},
 				{Value: "hours", Name: "Hours"},

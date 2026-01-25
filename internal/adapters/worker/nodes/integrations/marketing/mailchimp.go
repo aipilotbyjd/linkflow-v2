@@ -104,7 +104,7 @@ func (n *MailchimpNode) Metadata() wtypes.NodeMetadata {
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Credentials: []string{"mailchimp"},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Operation", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Operation", Required: true, Options: []wtypes.ParamOption{
 				{Value: "add_subscriber", Name: "Add Subscriber"},
 				{Value: "update_subscriber", Name: "Update Subscriber"},
 				{Value: "remove_subscriber", Name: "Remove Subscriber"},

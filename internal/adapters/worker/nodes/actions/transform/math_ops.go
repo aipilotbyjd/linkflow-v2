@@ -86,7 +86,7 @@ func (n *MathOperationNode) Metadata() wtypes.NodeMetadata {
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "number"}},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Math operation", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Math operation", Required: true, Options: []wtypes.ParamOption{
 				{Value: "add", Name: "Add (+)"},
 				{Value: "subtract", Name: "Subtract (-)"},
 				{Value: "multiply", Name: "Multiply (*)"},
@@ -200,7 +200,7 @@ func (n *AggregateNumbersNode) Metadata() wtypes.NodeMetadata {
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "array"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "number"}},
 		Parameters: []wtypes.NodeParameter{
-			{Name: "operation", Type: "select", Description: "Aggregation operation", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Aggregation operation", Required: true, Options: []wtypes.ParamOption{
 				{Value: "sum", Name: "Sum"},
 				{Value: "average", Name: "Average"},
 				{Value: "min", Name: "Minimum"},

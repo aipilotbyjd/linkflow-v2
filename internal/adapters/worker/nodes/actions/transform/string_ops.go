@@ -136,7 +136,7 @@ func (n *StringOperationNode) Metadata() wtypes.NodeMetadata {
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
 			{Name: "string", Type: "string", Description: "Input string"},
-			{Name: "operation", Type: "select", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
+			{Name: "operation", Type: "options", Description: "Operation to perform", Required: true, Options: []wtypes.ParamOption{
 				{Value: "uppercase", Name: "Uppercase"},
 				{Value: "lowercase", Name: "Lowercase"},
 				{Value: "trim", Name: "Trim"},

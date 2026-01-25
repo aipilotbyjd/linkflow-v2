@@ -132,11 +132,12 @@ func (n *JavaScriptNode) Metadata() wtypes.NodeMetadata {
 		},
 		Parameters: []wtypes.NodeParameter{
 			{
-				Name:        "code",
-				DisplayName: "JavaScript Code",
-				Type:        "code",
-				Required:    true,
-				Description: "JavaScript code to execute. Access input data via $input. Return value becomes node output.",
+				Name:         "code",
+				DisplayName:  "JavaScript Code",
+				Type:         "code",
+				Required:     true,
+				Description:  "JavaScript code to execute. Access input data via $input. Return value becomes node output.",
+				CodeLanguage: "javascript",
 				Placeholder: `// Access input data with $input
 const items = $input.items || [];
 
@@ -151,12 +152,13 @@ const result = items.map(item => ({
 return result;`,
 			},
 			{
-				Name:        "mode",
-				DisplayName: "Execution Mode",
-				Type:        "options",
-				Required:    false,
-				Default:     "expression",
-				Description: "How to execute the code",
+				Name:               "mode",
+				DisplayName:        "Execution Mode",
+				Type:               "options",
+				Required:           false,
+				Default:            "expression",
+				Description:        "How to execute the code",
+				ExpressionDisabled: true,
 				Options: []wtypes.ParamOption{
 					{Name: "Expression", Value: "expression", Description: "Last expression value is returned"},
 					{Name: "Function", Value: "function", Description: "Must use return statement"},
@@ -170,6 +172,10 @@ return result;`,
 				Required:    false,
 				Default:     30,
 				Description: "Maximum execution time in seconds",
+				Validation: &wtypes.Validation{
+					Min: wtypes.Float64Ptr(1),
+					Max: wtypes.Float64Ptr(60),
+				},
 			},
 			{
 				Name:        "continue_on_error",
