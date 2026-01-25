@@ -55,6 +55,7 @@ type Handlers struct {
 	Invitation    InvitationHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
+	Replay        ReplayHandlers
 	WebSocket     http.HandlerFunc
 }
 
@@ -174,6 +175,7 @@ type WebhookHandlers struct {
 	RegenerateSecret http.HandlerFunc
 	Activate         http.HandlerFunc
 	Deactivate       http.HandlerFunc
+	UpdateSecurity   http.HandlerFunc
 }
 
 // FolderHandlers holds folder-related handlers
@@ -215,6 +217,24 @@ type BillingHandlers struct {
 	GetUsage           http.HandlerFunc
 	GetInvoices        http.HandlerFunc
 	StripeWebhook      http.HandlerFunc
+	GetDashboard       http.HandlerFunc
+	GetUsageStatus     http.HandlerFunc
+	// Usage Alerts
+	ListAlerts         http.HandlerFunc
+	CreateAlert        http.HandlerFunc
+	UpdateAlert        http.HandlerFunc
+	DeleteAlert        http.HandlerFunc
+	GetAlertHistory    http.HandlerFunc
+	AcknowledgeAlert   http.HandlerFunc
+	// BYOK
+	ListBYOKProviders  http.HandlerFunc
+	ListBYOK           http.HandlerFunc
+	CreateBYOK         http.HandlerFunc
+	DeleteBYOK         http.HandlerFunc
+	// Credit Top-Up
+	ListCreditPacks    http.HandlerFunc
+	GetTopUpSettings   http.HandlerFunc
+	UpdateTopUpSettings http.HandlerFunc
 }
 
 // OAuthHandlers holds OAuth-related handlers
@@ -330,6 +350,12 @@ type VariableHandlers struct {
 	Delete           http.HandlerFunc
 	ListEnvironments http.HandlerFunc
 	Resolve          http.HandlerFunc
+}
+
+// ReplayHandlers holds debug replay handlers
+type ReplayHandlers struct {
+	Create    http.HandlerFunc
+	GetEvents http.HandlerFunc
 }
 
 // NewRouter creates a new HTTP router
@@ -515,6 +541,33 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.Get("/invoices", handlers.Billing.GetInvoices)
 					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/subscription", handlers.Billing.CreateSubscription)
 					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/subscription", handlers.Billing.CancelSubscription)
+					r.Get("/dashboard", handlers.Billing.GetDashboard)
+					r.Get("/usage-status", handlers.Billing.GetUsageStatus)
+					
+					// Usage Alerts
+					r.Route("/alerts", func(r chi.Router) {
+						r.Get("/", handlers.Billing.ListAlerts)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/", handlers.Billing.CreateAlert)
+						r.Get("/history", handlers.Billing.GetAlertHistory)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Put("/{alertId}", handlers.Billing.UpdateAlert)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/{alertId}", handlers.Billing.DeleteAlert)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/{alertLogId}/acknowledge", handlers.Billing.AcknowledgeAlert)
+					})
+					
+					// BYOK (Bring Your Own Key)
+					r.Route("/byok", func(r chi.Router) {
+						r.Get("/providers", handlers.Billing.ListBYOKProviders)
+						r.Get("/", handlers.Billing.ListBYOK)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/", handlers.Billing.CreateBYOK)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/{byokId}", handlers.Billing.DeleteBYOK)
+					})
+					
+					// Credit Top-Up
+					r.Route("/topup", func(r chi.Router) {
+						r.Get("/packs", handlers.Billing.ListCreditPacks)
+						r.Get("/settings", handlers.Billing.GetTopUpSettings)
+						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Put("/settings", handlers.Billing.UpdateTopUpSettings)
+					})
 				})
 
 				// OAuth
@@ -550,6 +603,13 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{variableId}", handlers.Variable.Delete)
 				})
 				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/environments", handlers.Variable.ListEnvironments)
+
+				// Debug Replay
+				r.Route("/replay", func(r chi.Router) {
+					r.Use(middleware.RequirePermission(rbac.PermWorkflowExecute))
+					r.Post("/", handlers.Replay.Create)
+					r.Get("/{sessionId}/events", handlers.Replay.GetEvents)
+				})
 
 				// Workflows
 				r.Route("/workflows", func(r chi.Router) {
@@ -597,6 +657,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 						r.Post("/regenerate-secret", handlers.Webhook.RegenerateSecret)
 						r.Post("/activate", handlers.Webhook.Activate)
 						r.Post("/deactivate", handlers.Webhook.Deactivate)
+						r.Put("/security", handlers.Webhook.UpdateSecurity)
 					})
 				})
 
@@ -605,6 +666,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Execution.List)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/search", handlers.Execution.Search)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/stats", handlers.Execution.Stats)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/waiting", handlers.Execution.ListWaiting)
 					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/bulk", handlers.Execution.BulkDelete)
 
 					r.Route("/{executionId}", func(r chi.Router) {

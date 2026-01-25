@@ -54,13 +54,21 @@
 				{
 					"name": "Health Check",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/health",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "health"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"health"
+							]
 						},
 						"description": "Overall system health status"
 					}
@@ -68,13 +76,22 @@
 				{
 					"name": "Liveness Probe",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/health/live",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "health", "live"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"health",
+								"live"
+							]
 						},
 						"description": "Kubernetes liveness probe"
 					}
@@ -82,13 +99,22 @@
 				{
 					"name": "Readiness Probe",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/health/ready",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "health", "ready"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"health",
+								"ready"
+							]
 						},
 						"description": "Kubernetes readiness probe"
 					}
@@ -120,10 +146,15 @@
 						}
 					],
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -131,8 +162,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "register"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
 						},
 						"description": "Register a new user account"
 					}
@@ -159,10 +197,15 @@
 						}
 					],
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -170,8 +213,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "login"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
 						},
 						"description": "Login with email and password"
 					}
@@ -195,10 +245,15 @@
 						}
 					],
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -206,8 +261,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/refresh",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "refresh"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
 						},
 						"description": "Get new access token using refresh token"
 					}
@@ -219,8 +281,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/logout",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "logout"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"logout"
+							]
 						},
 						"description": "Invalidate current session"
 					}
@@ -228,10 +297,15 @@
 				{
 					"name": "Forgot Password",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -239,8 +313,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/forgot-password",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "forgot-password"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"forgot-password"
+							]
 						},
 						"description": "Request password reset email"
 					}
@@ -248,10 +329,15 @@
 				{
 					"name": "Reset Password",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -259,8 +345,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/reset-password",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "reset-password"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"reset-password"
+							]
 						},
 						"description": "Reset password with token"
 					}
@@ -272,8 +365,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/mfa/setup",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "mfa", "setup"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"mfa",
+								"setup"
+							]
 						},
 						"description": "Setup multi-factor authentication"
 					}
@@ -283,7 +384,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -291,8 +395,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/mfa/verify",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "mfa", "verify"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"mfa",
+								"verify"
+							]
 						},
 						"description": "Verify MFA code"
 					}
@@ -304,8 +416,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/mfa",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "mfa"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"mfa"
+							]
 						},
 						"description": "Disable multi-factor authentication"
 					}
@@ -313,13 +432,23 @@
 				{
 					"name": "OAuth Login Redirect",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/oauth/{{provider}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "oauth", "{{provider}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"oauth",
+								"{{provider}}"
+							]
 						},
 						"description": "Redirect user to OAuth provider for login. Supported providers: google, github, etc."
 					}
@@ -327,16 +456,33 @@
 				{
 					"name": "OAuth Login Callback",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/auth/oauth/{{provider}}/callback?code={{oauth_code}}&state={{oauth_state}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "auth", "oauth", "{{provider}}", "callback"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"oauth",
+								"{{provider}}",
+								"callback"
+							],
 							"query": [
-								{ "key": "code", "value": "{{oauth_code}}" },
-								{ "key": "state", "value": "{{oauth_state}}" }
+								{
+									"key": "code",
+									"value": "{{oauth_code}}"
+								},
+								{
+									"key": "state",
+									"value": "{{oauth_state}}"
+								}
 							]
 						},
 						"description": "OAuth callback endpoint for login. Creates or authenticates user and returns JWT tokens."
@@ -355,8 +501,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "users", "me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"me"
+							]
 						},
 						"description": "Get current user profile"
 					}
@@ -366,7 +519,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -374,8 +530,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/users/me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "users", "me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"me"
+							]
 						},
 						"description": "Update current user profile. Fields: phone, bio, job_title, company, timezone (IANA), language (en/es/fr), date_format (MM/DD/YYYY, DD/MM/YYYY, YYYY-MM-DD), time_format (12h/24h), theme (light/dark/system)"
 					}
@@ -393,8 +556,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/api-keys",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "api-keys"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"api-keys"
+							]
 						},
 						"description": "List all API keys for the current user"
 					}
@@ -420,7 +589,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -428,8 +600,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/api-keys",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "api-keys"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"api-keys"
+							]
 						},
 						"description": "Create a new API key. The key value is only returned once - save it securely!"
 					}
@@ -441,8 +619,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/api-keys/{{api_key_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "api-keys", "{{api_key_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"api-keys",
+								"{{api_key_id}}"
+							]
 						},
 						"description": "Revoke an API key"
 					}
@@ -476,8 +661,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces"
+							]
 						},
 						"description": "List all workspaces for current user"
 					}
@@ -501,7 +692,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -509,8 +703,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces"
+							]
 						},
 						"description": "Create a new workspace. Fields: timezone (IANA), language (en/es/fr), currency (USD/EUR/GBP), country (2-letter ISO), industry, company_size (1-10, 11-50, 51-200, 201-500, 501-1000, 1000+), website, billing_email"
 					}
@@ -522,8 +722,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}"
+							]
 						},
 						"description": "Get workspace details"
 					}
@@ -533,7 +740,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -541,8 +751,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}"
+							]
 						},
 						"description": "Update workspace settings. Fields: timezone, language, currency, country, industry, company_size, website, billing_email"
 					}
@@ -554,8 +771,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}"
+							]
 						},
 						"description": "Delete a workspace"
 					}
@@ -567,8 +791,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"members"
+							]
 						},
 						"description": "List workspace members"
 					}
@@ -578,7 +810,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -586,10 +821,49 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"members"
+							]
 						},
 						"description": "Invite a new member (roles: admin, member, viewer)"
+					}
+				},
+				{
+					"name": "Invite Member (Alias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"teammate@example.com\",\n    \"role\": \"member\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members/invite",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"members",
+								"invite"
+							]
+						},
+						"description": "Invite a new member using the /invite alias"
 					}
 				},
 				{
@@ -597,7 +871,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -605,8 +882,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members/{{member_user_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members", "{{member_user_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"members",
+								"{{member_user_id}}"
+							]
 						},
 						"description": "Update a member's role"
 					}
@@ -618,11 +904,130 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/members/{{member_user_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "members", "{{member_user_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"members",
+								"{{member_user_id}}"
+							]
 						},
 						"description": "Remove a member from workspace"
 					}
+				},
+				{
+					"name": "🔐 RBAC Roles",
+					"item": [
+						{
+							"name": "List Roles",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/roles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspaces",
+										"{{workspace_id}}",
+										"roles"
+									]
+								},
+								"description": "List all custom and built-in roles in the workspace"
+							}
+						},
+						{
+							"name": "Create Role",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Custom Role\",\n    \"description\": \"Description of the custom role\",\n    \"permissions\": [\"workspace.read\", \"workflow.write\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/roles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspaces",
+										"{{workspace_id}}",
+										"roles"
+									]
+								},
+								"description": "Create a new custom role in the workspace"
+							}
+						},
+						{
+							"name": "Update Role",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Updated Role Name\",\n    \"permissions\": [\"workspace.read\", \"workflow.read\"]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/roles/{{role_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspaces",
+										"{{workspace_id}}",
+										"roles",
+										"{{role_id}}"
+									]
+								},
+								"description": "Update an existing custom role"
+							}
+						},
+						{
+							"name": "Delete Role",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/roles/{{role_id}}",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"workspaces",
+										"{{workspace_id}}",
+										"roles",
+										"{{role_id}}"
+									]
+								},
+								"description": "Delete a custom role. Built-in roles cannot be deleted."
+							}
+						}
+					],
+					"description": "Role-Based Access Control (RBAC) management"
 				}
 			],
 			"description": "Workspace and team management"
@@ -637,8 +1042,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders"
+							]
 						},
 						"description": "List all folders in workspace"
 					}
@@ -650,8 +1063,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/tree",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "tree"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders",
+								"tree"
+							]
 						},
 						"description": "Get folders as a hierarchical tree structure with nested workflows"
 					}
@@ -675,7 +1097,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -683,8 +1108,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders"
+							]
 						},
 						"description": "Create a new folder for organizing workflows"
 					}
@@ -696,8 +1129,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders",
+								"{{folder_id}}"
+							]
 						},
 						"description": "Get folder details"
 					}
@@ -707,7 +1149,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -715,8 +1160,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders",
+								"{{folder_id}}"
+							]
 						},
 						"description": "Update folder details"
 					}
@@ -728,8 +1182,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/folders/{{folder_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "folders", "{{folder_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"folders",
+								"{{folder_id}}"
+							]
 						},
 						"description": "Delete a folder. Must be empty (no sub-folders or workflows)."
 					}
@@ -747,11 +1210,25 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows?page=1&per_page=20",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows"
+							],
 							"query": [
-								{ "key": "page", "value": "1" },
-								{ "key": "per_page", "value": "20" }
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "20"
+								}
 							]
 						},
 						"description": "List all workflows in workspace"
@@ -776,7 +1253,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -784,8 +1264,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows"
+							]
 						},
 						"description": "Create a new workflow. Optional fields: color (hex), icon (string), category (string), tags (array)"
 					}
@@ -797,8 +1285,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}"
+							]
 						},
 						"description": "Get workflow details"
 					}
@@ -808,7 +1305,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -816,8 +1316,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}"
+							]
 						},
 						"description": "Update workflow. Optional fields: color (hex), icon (string), category (string), is_favorite (boolean), tags (array)"
 					}
@@ -829,8 +1338,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}"
+							]
 						},
 						"description": "Delete a workflow"
 					}
@@ -854,7 +1372,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -862,8 +1383,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/execute",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "execute"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"execute"
+							]
 						},
 						"description": "Execute a workflow manually"
 					}
@@ -875,8 +1406,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/activate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "activate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"activate"
+							]
 						},
 						"description": "Activate workflow for triggers"
 					}
@@ -888,8 +1429,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/deactivate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "deactivate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"deactivate"
+							]
 						},
 						"description": "Deactivate workflow"
 					}
@@ -899,7 +1450,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -907,8 +1461,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/clone",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "clone"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"clone"
+							]
 						},
 						"description": "Clone an existing workflow"
 					}
@@ -918,7 +1482,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -926,8 +1493,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/duplicate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "duplicate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"duplicate"
+							]
 						},
 						"description": "Duplicate workflow with variable substitution"
 					}
@@ -939,8 +1516,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/export",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "export"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"export"
+							]
 						},
 						"description": "Export workflow as JSON file"
 					}
@@ -950,7 +1537,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -958,8 +1548,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/import",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "import"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"import"
+							]
 						},
 						"description": "Import workflow from JSON"
 					}
@@ -971,8 +1570,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"versions"
+							]
 						},
 						"description": "List workflow versions"
 					}
@@ -984,8 +1593,19 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"versions",
+								"1"
+							]
 						},
 						"description": "Get a specific workflow version"
 					}
@@ -997,8 +1617,20 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1/rollback",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1", "rollback"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"versions",
+								"1",
+								"rollback"
+							]
 						},
 						"description": "Rollback workflow to a previous version. Creates a new version with the content from the specified historical version."
 					}
@@ -1010,11 +1642,29 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/compare-versions?from=1&to=2",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "compare-versions"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"compare-versions"
+							],
 							"query": [
-								{ "key": "from", "value": "1", "description": "Source version number" },
-								{ "key": "to", "value": "2", "description": "Target version number" }
+								{
+									"key": "from",
+									"value": "1",
+									"description": "Source version number"
+								},
+								{
+									"key": "to",
+									"value": "2",
+									"description": "Target version number"
+								}
 							]
 						},
 						"description": "Compare two workflow versions and get a detailed diff.\n\nReturns:\n- nodes.added - New nodes in target version\n- nodes.removed - Nodes removed from source\n- nodes.modified - Changed nodes with field-level diffs\n- connections.added/removed - Connection changes\n- settings.changes - Settings differences\n- summary - Change counts"
@@ -1027,10 +1677,22 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/versions/1/compare",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "versions", "1", "compare"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"versions",
+								"1",
+								"compare"
+							]
 						},
-						"description": "Compare a specific version with the current workflow state. Useful for seeing what changed since a particular version."
+						"description": "Compare a specific version with the current workflow state"
 					}
 				}
 			],
@@ -1046,11 +1708,25 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions?page=1&per_page=20",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions"
+							],
 							"query": [
-								{ "key": "page", "value": "1" },
-								{ "key": "per_page", "value": "20" }
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "20"
+								}
 							]
 						},
 						"description": "List all executions"
@@ -1063,8 +1739,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}"
+							]
 						},
 						"description": "Get execution details"
 					}
@@ -1076,8 +1761,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/nodes",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "nodes"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"nodes"
+							]
 						},
 						"description": "Get node execution details"
 					}
@@ -1089,8 +1784,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/cancel",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "cancel"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"cancel"
+							]
 						},
 						"description": "Cancel a running execution"
 					}
@@ -1102,8 +1807,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/retry",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "retry"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"retry"
+							]
 						},
 						"description": "Retry a failed execution"
 					}
@@ -1115,17 +1830,60 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/search?status=failed&workflow_id={{workflow_id}}&start_date=2024-01-01T00:00:00Z&q=timeout",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "search"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"search"
+							],
 							"query": [
-								{ "key": "status", "value": "failed", "description": "Filter by status: queued, running, completed, failed, cancelled, timeout" },
-								{ "key": "workflow_id", "value": "{{workflow_id}}", "description": "Filter by workflow ID" },
-								{ "key": "trigger_type", "value": "webhook", "disabled": true, "description": "Filter by trigger: manual, webhook, schedule" },
-								{ "key": "start_date", "value": "2024-01-01T00:00:00Z", "description": "Start date (RFC3339)" },
-								{ "key": "end_date", "value": "", "disabled": true, "description": "End date (RFC3339)" },
-								{ "key": "q", "value": "timeout", "description": "Search in error messages" },
-								{ "key": "page", "value": "1", "disabled": true },
-								{ "key": "per_page", "value": "20", "disabled": true }
+								{
+									"key": "status",
+									"value": "failed",
+									"description": "Filter by status: queued, running, completed, failed, cancelled, timeout"
+								},
+								{
+									"key": "workflow_id",
+									"value": "{{workflow_id}}",
+									"description": "Filter by workflow ID"
+								},
+								{
+									"key": "trigger_type",
+									"value": "webhook",
+									"disabled": true,
+									"description": "Filter by trigger: manual, webhook, schedule"
+								},
+								{
+									"key": "start_date",
+									"value": "2024-01-01T00:00:00Z",
+									"description": "Start date (RFC3339)"
+								},
+								{
+									"key": "end_date",
+									"value": "",
+									"disabled": true,
+									"description": "End date (RFC3339)"
+								},
+								{
+									"key": "q",
+									"value": "timeout",
+									"description": "Search in error messages"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"disabled": true
+								}
 							]
 						},
 						"description": "Search executions with advanced filters. Supports filtering by status, workflow, trigger type, date range, and text search in error messages."
@@ -1138,10 +1896,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/stats?period=24h",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "stats"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"stats"
+							],
 							"query": [
-								{ "key": "period", "value": "24h", "description": "Time period: 1h, 24h (default), 7d, 30d" }
+								{
+									"key": "period",
+									"value": "24h",
+									"description": "Time period: 1h, 24h (default), 7d, 30d"
+								}
 							]
 						},
 						"description": "Get execution statistics for the workspace. Returns total count by status, average duration, and time range."
@@ -1152,7 +1923,10 @@
 					"request": {
 						"method": "DELETE",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1160,8 +1934,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/bulk",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "bulk"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"bulk"
+							]
 						},
 						"description": "Delete multiple executions at once.\n\nOptions:\n- `execution_ids`: Array of specific execution IDs to delete\n- `older_than`: Delete all executions older than this date (RFC3339)\n- `status`: Only delete executions with this status\n\nUse execution_ids OR older_than, not both."
 					}
@@ -1171,7 +1954,10 @@
 					"request": {
 						"method": "DELETE",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1179,8 +1965,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/bulk",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "bulk"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"bulk"
+							]
 						},
 						"description": "Delete all executions older than a specified date. Useful for cleanup of old execution history."
 					}
@@ -1198,8 +1993,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=7d",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"dashboard"
+							],
 							"query": [
 								{
 									"key": "period",
@@ -1218,8 +2021,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=30d",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"dashboard"
+							],
 							"query": [
 								{
 									"key": "period",
@@ -1237,8 +2048,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/dashboard?period=90d",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "dashboard"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"dashboard"
+							],
 							"query": [
 								{
 									"key": "period",
@@ -1256,8 +2075,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/stats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "stats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"stats"
+							]
 						},
 						"description": "Get lightweight quick stats for sidebar or header display.\n\nReturns:\n- **Workflows**: total, active count\n- **Executions**: running, queued, today count\n- **Credentials**: total, expiring soon\n- **Schedules**: total, active count\n\nUse this endpoint for frequent polling (every 30 seconds) instead of the full dashboard endpoint."
 					}
@@ -1275,8 +2102,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials"
+							]
 						},
 						"description": "List all credentials"
 					}
@@ -1300,7 +2135,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1308,8 +2146,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials"
+							]
 						},
 						"description": "Create a new credential"
 					}
@@ -1321,8 +2167,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials",
+								"{{credential_id}}"
+							]
 						},
 						"description": "Get credential details (data is encrypted)"
 					}
@@ -1332,7 +2187,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1340,8 +2198,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials",
+								"{{credential_id}}"
+							]
 						},
 						"description": "Update credential"
 					}
@@ -1353,8 +2220,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials",
+								"{{credential_id}}"
+							]
 						},
 						"description": "Delete a credential"
 					}
@@ -1366,8 +2242,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}/test",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}", "test"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials",
+								"{{credential_id}}",
+								"test"
+							]
 						},
 						"description": "Test if credential is valid"
 					}
@@ -1385,8 +2271,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules"
+							]
 						},
 						"description": "List all schedules"
 					}
@@ -1410,7 +2304,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1418,8 +2315,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules"
+							]
 						},
 						"description": "Create a cron schedule"
 					}
@@ -1431,8 +2336,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules",
+								"{{schedule_id}}"
+							]
 						},
 						"description": "Get schedule details"
 					}
@@ -1442,7 +2356,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1450,8 +2367,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules",
+								"{{schedule_id}}"
+							]
 						},
 						"description": "Update schedule"
 					}
@@ -1463,8 +2389,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules",
+								"{{schedule_id}}"
+							]
 						},
 						"description": "Delete a schedule"
 					}
@@ -1476,8 +2411,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/pause",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "pause"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules",
+								"{{schedule_id}}",
+								"pause"
+							]
 						},
 						"description": "Pause a schedule"
 					}
@@ -1489,8 +2434,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/schedules/{{schedule_id}}/resume",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "schedules", "{{schedule_id}}", "resume"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"schedules",
+								"{{schedule_id}}",
+								"resume"
+							]
 						},
 						"description": "Resume a paused schedule"
 					}
@@ -1508,8 +2463,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/node-types",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "node-types"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"node-types"
+							]
 						},
 						"description": "List all available node types for the workflow editor. Returns node metadata including type, name, description, category, and input/output schema."
 					}
@@ -1521,10 +2482,19 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/node-types?category=action",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "node-types"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"node-types"
+							],
 							"query": [
-								{ "key": "category", "value": "action" }
+								{
+									"key": "category",
+									"value": "action"
+								}
 							]
 						},
 						"description": "Filter node types by category (trigger, action, logic, integration)"
@@ -1537,8 +2507,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/node-types/categories",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "node-types", "categories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"node-types",
+								"categories"
+							]
 						},
 						"description": "Get all node categories with their counts. Categories include: trigger, action, logic, integration"
 					}
@@ -1550,8 +2527,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/node-types/action.http",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "node-types", "action.http"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"node-types",
+								"action.http"
+							]
 						},
 						"description": "Get detailed information about a specific node type including its input/output schema for the editor UI"
 					}
@@ -1561,7 +2545,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1569,8 +2556,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/validate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "validate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"validate"
+							]
 						},
 						"description": "Validate a workflow definition before saving. Checks for:\n- Valid node types\n- Unique node IDs\n- Valid connections\n- Presence of trigger nodes\n\nReturns validation errors and warnings."
 					}
@@ -1580,7 +2576,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1588,8 +2587,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/test-node",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "test-node"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"test-node"
+							]
 						},
 						"description": "Test a single node execution without creating a workflow. Useful for testing node configuration in the editor before saving.\n\nReturns:\n- success: boolean\n- output: node execution result\n- duration: execution time in ms\n- error: error message if failed"
 					}
@@ -1603,13 +2611,22 @@
 				{
 					"name": "Get Plans",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/billing/plans",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "billing", "plans"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"billing",
+								"plans"
+							]
 						},
 						"description": "List available subscription plans"
 					}
@@ -1621,8 +2638,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"subscription"
+							]
 						},
 						"description": "Get current subscription"
 					}
@@ -1632,7 +2658,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1640,8 +2669,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"subscription"
+							]
 						},
 						"description": "Create or upgrade subscription"
 					}
@@ -1653,10 +2691,22 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/subscription?at_period_end=true",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "subscription"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"subscription"
+							],
 							"query": [
-								{ "key": "at_period_end", "value": "true" }
+								{
+									"key": "at_period_end",
+									"value": "true"
+								}
 							]
 						},
 						"description": "Cancel subscription"
@@ -1669,8 +2719,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/usage",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "usage"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"usage"
+							]
 						},
 						"description": "Get current billing period usage"
 					}
@@ -1682,8 +2741,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/invoices",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "invoices"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"invoices"
+							]
 						},
 						"description": "List billing invoices"
 					}
@@ -1695,8 +2763,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/dashboard",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "dashboard"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"dashboard"
+							]
 						},
 						"description": "Get comprehensive usage dashboard with plan info, operations, AI credits, overage charges, and billing period details.\n\nReturns:\n- **Plan**: Current plan ID and name\n- **Operations**: Used, limit, percent, projected, rollover, remaining\n- **AI Credits**: Used, limit, percent, projected, rollover, remaining\n- **Overage**: Operations/AI credits overage and charges\n- **Period**: Start/end dates and days remaining"
 					}
@@ -1708,10 +2785,50 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/usage-status",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "usage-status"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"usage-status"
+							]
 						},
 						"description": "Get current usage status with limits and overage rates.\n\nReturns:\n- Operations: used, limit, percent, exceeded, remaining\n- AI Credits: used, limit, percent, exceeded, remaining\n- Data Transfer: usedMB, limitMB, exceeded\n- Overage Rates: per 1000 operations and per AI credit"
+					}
+				},
+				{
+					"name": "Stripe Webhook",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Stripe-Signature",
+								"value": "{{stripe_signature}}",
+								"description": "Required for production signature verification"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"evt_123\",\n    \"type\": \"checkout.session.completed\",\n    \"data\": {\n        \"object\": {\n            \"id\": \"cs_test_123\",\n            \"customer\": \"cus_123\",\n            \"subscription\": \"sub_123\"\n        }\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/stripe/webhook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stripe",
+								"webhook"
+							]
+						},
+						"description": "Stripe webhook endpoint for handling billing events (checkout completed, subscription deleted, etc.)"
 					}
 				}
 			],
@@ -1727,8 +2844,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts"
+							]
 						},
 						"description": "List all usage alerts configured for the workspace"
 					}
@@ -1752,7 +2878,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1760,8 +2889,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts"
+							]
 						},
 						"description": "Create a new usage alert.\n\nAlert types: operations, ai_credits, storage, data_transfer\nThresholds: 50, 75, 90, 100 (percent)\nChannels: email, slack, webhook, in_app, sms"
 					}
@@ -1771,7 +2909,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1779,8 +2920,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts",
+								"{{alert_id}}"
+							]
 						},
 						"description": "Update an existing usage alert"
 					}
@@ -1792,8 +2943,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts",
+								"{{alert_id}}"
+							]
 						},
 						"description": "Delete a usage alert"
 					}
@@ -1805,10 +2966,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/history?limit=50",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "history"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts",
+								"history"
+							],
 							"query": [
-								{ "key": "limit", "value": "50" }
+								{
+									"key": "limit",
+									"value": "50"
+								}
 							]
 						},
 						"description": "Get history of triggered alerts"
@@ -1821,8 +2995,19 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/alerts/{{alert_log_id}}/acknowledge",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "alerts", "{{alert_log_id}}", "acknowledge"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"alerts",
+								"{{alert_log_id}}",
+								"acknowledge"
+							]
 						},
 						"description": "Acknowledge a triggered alert"
 					}
@@ -1840,8 +3025,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok/providers",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok", "providers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"byok",
+								"providers"
+							]
 						},
 						"description": "List supported AI providers for BYOK.\n\nReturns provider ID, name, description, docs URL, supported models, and whether org ID is supported."
 					}
@@ -1853,8 +3048,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"byok"
+							]
 						},
 						"description": "List all BYOK API key configurations for the workspace"
 					}
@@ -1878,7 +3082,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1886,8 +3093,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"byok"
+							]
 						},
 						"description": "Add your own AI provider API key.\n\nSupported providers: openai, anthropic, google, azure, cohere, mistral\n\nUsing BYOK bypasses AI credit consumption."
 					}
@@ -1899,14 +3115,103 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/byok/{{byok_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "byok", "{{byok_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"byok",
+								"{{byok_id}}"
+							]
 						},
 						"description": "Remove a BYOK API key configuration"
 					}
 				}
 			],
 			"description": "Bring Your Own Key - Use your own AI provider API keys"
+		},
+		{
+			"name": "🔄 Debug Replay",
+			"item": [
+				{
+					"name": "Create Replay Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const data = pm.response.json().data;",
+									"    pm.environment.set('replay_session_id', data.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"execution_id\": \"{{execution_id}}\",\n    \"mode\": \"step\",\n    \"start_from_node_id\": null,\n    \"end_at_node_id\": null,\n    \"skip_nodes\": [],\n    \"modify_inputs\": {},\n    \"modify_node_params\": {},\n    \"breakpoints\": [\"http_request_1\", \"transform_1\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"replay"
+							]
+						},
+						"description": "Create a debug replay session for step-by-step execution debugging"
+					}
+				},
+				{
+					"name": "Get Replay Events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay/{{replay_session_id}}/events?limit=100",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"replay",
+								"{{replay_session_id}}",
+								"events"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						},
+						"description": "Get event log for a replay session"
+					}
+				}
+			],
+			"description": "Advanced execution debugging with step-by-step replay"
 		},
 		{
 			"name": "💰 Credit Top-Up",
@@ -1918,8 +3223,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/packs",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "packs"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"topup",
+								"packs"
+							]
 						},
 						"description": "List available credit packs for purchase"
 					}
@@ -1931,8 +3246,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/settings",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "settings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"topup",
+								"settings"
+							]
 						},
 						"description": "Get current auto top-up configuration"
 					}
@@ -1942,7 +3267,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1950,8 +3278,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/billing/topup/settings",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "billing", "topup", "settings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"billing",
+								"topup",
+								"settings"
+							]
 						},
 						"description": "Configure automatic credit top-up.\n\nOptions:\n- `enabled`: Turn auto top-up on/off\n- `trigger_threshold`: Percent remaining to trigger (e.g., 10 = when 10% left)\n- `purchase_type`: operations or ai_credits\n- `credit_amount`: Amount to purchase\n- `max_purchases_per_month`: Safety limit\n- `max_spend_per_month_cents`: Maximum monthly spend"
 					}
@@ -1965,10 +3303,15 @@
 				{
 					"name": "Trigger Webhook (POST)",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -1976,8 +3319,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/webhooks/{{webhook_endpoint_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["webhooks", "{{webhook_endpoint_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"webhooks",
+								"{{webhook_endpoint_id}}"
+							]
 						},
 						"description": "Trigger a workflow via webhook. The endpoint_id is defined in the workflow settings.\n\nThe webhook payload is available in the workflow as:\n- $input.method - HTTP method\n- $input.headers - Request headers\n- $input.body - Raw body string\n- $input.json - Parsed JSON body\n- $input.query - Query parameters"
 					}
@@ -1985,16 +3333,29 @@
 				{
 					"name": "Trigger Webhook (GET)",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/webhooks/{{webhook_endpoint_id}}?param1=value1&param2=value2",
-							"host": ["{{base_url}}"],
-							"path": ["webhooks", "{{webhook_endpoint_id}}"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"webhooks",
+								"{{webhook_endpoint_id}}"
+							],
 							"query": [
-								{ "key": "param1", "value": "value1" },
-								{ "key": "param2", "value": "value2" }
+								{
+									"key": "param1",
+									"value": "value1"
+								},
+								{
+									"key": "param2",
+									"value": "value2"
+								}
 							]
 						},
 						"description": "Trigger a workflow via webhook using GET request. Query parameters are available in $input.query"
@@ -2017,12 +3378,24 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}", "description": "JWT access token (required)" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}", "description": "Workspace ID to receive events for" }
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"description": "JWT access token (required)"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}",
+									"description": "Workspace ID to receive events for"
+								}
 							]
 						},
 						"description": "## WebSocket Real-time Events\n\n**To use WebSocket in Postman:**\n1. Click 'New' → 'WebSocket Request'\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click 'Connect'\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Parameters\n| Parameter | Required | Description |\n|-----------|----------|-------------|\n| token | Yes | JWT access token |\n| workspace_id | Yes | Workspace to receive events for |\n\n### Events You'll Receive\n- `execution.started` - Workflow execution began\n- `execution.completed` - Execution finished successfully\n- `execution.failed` - Execution failed\n- `node.started` - Node began executing\n- `node.completed` - Node finished\n- `node.failed` - Node failed\n\n### Example Event\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```"
@@ -2043,12 +3416,22 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+								{
+									"key": "token",
+									"value": "{{access_token}}"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}"
+								}
 							]
 						},
 						"description": "## Subscribe to Execution Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"subscribed\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\nYou'll then receive all events for that specific execution."
@@ -2069,12 +3452,22 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+								{
+									"key": "token",
+									"value": "{{access_token}}"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}"
+								}
 							]
 						},
 						"description": "## Subscribe to Workflow Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"subscribed\",\n  \"data\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```\n\nYou'll receive events for all executions of this workflow."
@@ -2095,12 +3488,22 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+								{
+									"key": "token",
+									"value": "{{access_token}}"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}"
+								}
 							]
 						},
 						"description": "## Unsubscribe from Events\n\n**Send this message after connecting:**\n```json\n{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\"\n  }\n}\n```\n\nOr for workflow:\n```json\n{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\"\n  }\n}\n```"
@@ -2121,12 +3524,22 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+								{
+									"key": "token",
+									"value": "{{access_token}}"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}"
+								}
 							]
 						},
 						"description": "## Ping (Keep-Alive)\n\n**Send this message to keep connection alive:**\n```json\n{\n  \"type\": \"ping\"\n}\n```\n\n### Response\n```json\n{\n  \"type\": \"pong\"\n}\n```"
@@ -2143,12 +3556,22 @@
 						"url": {
 							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
-							"host": ["{{host}}"],
+							"host": [
+								"{{host}}"
+							],
 							"port": "{{port}}",
-							"path": ["ws"],
+							"path": [
+								"ws"
+							],
 							"query": [
-								{ "key": "token", "value": "{{access_token}}" },
-								{ "key": "workspace_id", "value": "{{workspace_id}}" }
+								{
+									"key": "token",
+									"value": "{{access_token}}"
+								},
+								{
+									"key": "workspace_id",
+									"value": "{{workspace_id}}"
+								}
 							]
 						},
 						"description": "## WebSocket Events Reference\n\n### execution.started\nReceived when a workflow execution begins.\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```\n\n### node.started\nReceived when a node begins executing.\n```json\n{\n  \"type\": \"node.started\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"workflow_id\": \"...\",\n    \"node_id\": \"http\",\n    \"node_name\": \"Fetch Data\",\n    \"node_type\": \"action.http\",\n    \"status\": \"running\"\n  }\n}\n```\n\n### node.completed\nReceived when a node finishes successfully.\n```json\n{\n  \"type\": \"node.completed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"node_id\": \"http\",\n    \"status\": \"completed\",\n    \"duration_ms\": 3302,\n    \"output_preview\": { \"status\": 200, \"ok\": true }\n  }\n}\n```\n\n### node.failed\nReceived when a node fails.\n```json\n{\n  \"type\": \"node.failed\",\n  \"data\": {\n    \"node_id\": \"http\",\n    \"status\": \"failed\",\n    \"error\": \"connection timeout\",\n    \"duration_ms\": 30000\n  }\n}\n```\n\n### execution.completed\nReceived when workflow finishes successfully.\n```json\n{\n  \"type\": \"execution.completed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"completed\",\n    \"duration_ms\": 3303,\n    \"nodes_completed\": 2\n  }\n}\n```\n\n### execution.failed\nReceived when workflow fails.\n```json\n{\n  \"type\": \"execution.failed\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"failed\",\n    \"error\": \"Node 'http' failed: timeout\",\n    \"error_node_id\": \"http\"\n  }\n}\n```\n\n### execution.cancelled\nReceived when workflow is cancelled.\n```json\n{\n  \"type\": \"execution.cancelled\",\n  \"data\": {\n    \"execution_id\": \"...\",\n    \"status\": \"cancelled\",\n    \"cancelled_by\": \"user\"\n  }\n}\n```"
@@ -2167,8 +3590,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/oauth/providers",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "oauth", "providers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"oauth",
+								"providers"
+							]
 						},
 						"description": "Get list of supported OAuth providers (Google, Slack, GitHub, Notion, HubSpot, Salesforce, Stripe, Airtable)"
 					}
@@ -2180,8 +3610,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/oauth/authorize/{{provider}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "oauth", "authorize", "{{provider}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"oauth",
+								"authorize",
+								"{{provider}}"
+							]
 						},
 						"description": "Initiate OAuth flow for a provider. Returns authorization URL to redirect user to.\n\nSupported providers: google, slack, github, notion, hubspot, salesforce, stripe, airtable"
 					}
@@ -2189,16 +3629,34 @@
 				{
 					"name": "OAuth Callback",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/oauth/callback/{{provider}}?code={{oauth_code}}&state={{oauth_state}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "oauth", "callback", "{{provider}}"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"oauth",
+								"callback",
+								"{{provider}}"
+							],
 							"query": [
-								{ "key": "code", "value": "{{oauth_code}}" },
-								{ "key": "state", "value": "{{oauth_state}}" }
+								{
+									"key": "code",
+									"value": "{{oauth_code}}"
+								},
+								{
+									"key": "state",
+									"value": "{{oauth_state}}"
+								}
 							]
 						},
 						"description": "OAuth callback endpoint. Called by OAuth provider after user authorization. Creates credential automatically."
@@ -2211,8 +3669,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/credentials/{{credential_id}}/refresh",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "credentials", "{{credential_id}}", "refresh"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"credentials",
+								"{{credential_id}}",
+								"refresh"
+							]
 						},
 						"description": "Refresh an OAuth token before it expires"
 					}
@@ -2230,11 +3698,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates?limit=20&offset=0",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates"
+							],
 							"query": [
-								{ "key": "limit", "value": "20" },
-								{ "key": "offset", "value": "0" }
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						},
 						"description": "List all public workflow templates"
@@ -2247,10 +3727,20 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates/featured?limit=10",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "featured"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates",
+								"featured"
+							],
 							"query": [
-								{ "key": "limit", "value": "10" }
+								{
+									"key": "limit",
+									"value": "10"
+								}
 							]
 						},
 						"description": "Get featured/popular templates"
@@ -2263,8 +3753,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates/categories",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "categories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates",
+								"categories"
+							]
 						},
 						"description": "Get all template categories (marketing, sales, devops, etc.)"
 					}
@@ -2276,8 +3773,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates/categories/{{category}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "categories", "{{category}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates",
+								"categories",
+								"{{category}}"
+							]
 						},
 						"description": "Get templates filtered by category"
 					}
@@ -2289,10 +3794,20 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates/search?q=slack notification",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "search"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates",
+								"search"
+							],
 							"query": [
-								{ "key": "q", "value": "slack notification" }
+								{
+									"key": "q",
+									"value": "slack notification"
+								}
 							]
 						},
 						"description": "Search templates by name or description"
@@ -2305,8 +3820,15 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/templates/{{template_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "templates", "{{template_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"templates",
+								"{{template_id}}"
+							]
 						},
 						"description": "Get template details including nodes, connections, and required variables"
 					}
@@ -2316,7 +3838,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2324,8 +3849,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/templates/{{template_id}}/use",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "templates", "{{template_id}}", "use"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"templates",
+								"{{template_id}}",
+								"use"
+							]
 						},
 						"description": "Create a new workflow from a template with variable substitution"
 					}
@@ -2341,7 +3876,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2349,8 +3887,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/replay",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "replay"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"replay"
+							]
 						},
 						"description": "Replay an execution from the beginning with original or new input data"
 					}
@@ -2360,7 +3908,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2368,8 +3919,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/replay-from-node",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "replay-from-node"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"replay-from-node"
+							]
 						},
 						"description": "Replay execution starting from a specific node using its original input. The execution will resume from the specified node, using the output data from the previous node execution."
 					}
@@ -2381,8 +3942,19 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/nodes/{{node_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "nodes", "{{node_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"nodes",
+								"{{node_id}}"
+							]
 						},
 						"description": "Get detailed input/output data for a specific node in an execution"
 					}
@@ -2394,21 +3966,60 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/waiting-executions",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "waiting-executions"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"waiting-executions"
+							]
 						},
 						"description": "List executions waiting for external resume (webhook callback)"
 					}
 				},
 				{
-					"name": "Get Waiting by Execution",
+					"name": "Get Waiting Executions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/waiting",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"waiting"
+							]
+						},
+						"description": "List all executions waiting for external resume"
+					}
+				},
+				{
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/waiting",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "waiting"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"waiting"
+							]
 						},
 						"description": "Get waiting executions for a specific execution"
 					}
@@ -2418,7 +4029,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2426,8 +4040,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/resume/{{resume_token}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "resume", "{{resume_token}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"resume",
+								"{{resume_token}}"
+							]
 						},
 						"description": "Resume a paused execution. The resume_token is provided when the workflow pauses at a Wait node."
 					}
@@ -2439,8 +4060,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/resume/{{resume_token}}/status",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "resume", "{{resume_token}}", "status"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"resume",
+								"{{resume_token}}",
+								"status"
+							]
 						},
 						"description": "Check status of a waiting execution by resume token"
 					}
@@ -2458,8 +4087,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"pinned-data"
+							]
 						},
 						"description": "Get all pinned test data for a workflow"
 					}
@@ -2471,8 +4110,19 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data/{{node_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data", "{{node_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"pinned-data",
+								"{{node_id}}"
+							]
 						},
 						"description": "Get pinned data for a specific node"
 					}
@@ -2482,7 +4132,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2490,8 +4143,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"pinned-data"
+							]
 						},
 						"description": "Pin test data to a node for development/testing. This data will be used instead of actual execution data during test runs."
 					}
@@ -2503,43 +4166,77 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/pinned-data/{{node_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "pinned-data", "{{node_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"pinned-data",
+								"{{node_id}}"
+							]
 						},
-						"description": "Remove pinned data from a node"
+						"description": "Remove pinned data from a specific node"
 					}
 				}
 			],
 			"description": "Pin test data to nodes for development and testing"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8090"
 		},
 		{
-			"name": "📈 Metrics & Monitoring",
-			"item": [
-				{
-					"name": "Prometheus Metrics",
-					"request": {
-						"auth": { "type": "noauth" },
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/metrics",
-							"host": ["{{base_url}}"],
-							"path": ["metrics"]
+			"key": "host",
+			"value": "localhost"
+		},
+		{
+			"key": "port",
+			"value": "8090"
+		},
+		{
+			"key": "workspace_id",
+			"value": ""
+		},
+		{
+			"key": "workflow_id",
+			"value": ""
+		},
+		{
+			"key": "execution_id",
+			"value": ""
+		},
+		{
+			"key": "node_id",
+			"value": ""
+		},
+		{
+			"key": "template_id",
+			"value": ""
+		},
+		{
+			"key": "resume_token",
+			"value": ""
+		}
+	]
+}
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"disabled-nodes"
+							]
 						},
-						"description": "Prometheus-compatible metrics endpoint for monitoring.\n\n### Available Metrics\n\n**HTTP Metrics:**\n- `linkflow_http_requests_total` - Total HTTP requests by method, path, status\n- `linkflow_http_request_duration_seconds` - Request latency histogram\n\n**Workflow Metrics:**\n- `linkflow_workflow_executions_total` - Executions by workspace, status, trigger\n- `linkflow_workflow_execution_duration_seconds` - Execution duration histogram\n- `linkflow_workflow_executions_in_progress` - Current running executions\n\n**Node Metrics:**\n- `linkflow_node_executions_total` - Node executions by type and status\n- `linkflow_node_execution_duration_seconds` - Node duration histogram\n\n**Webhook Metrics:**\n- `linkflow_webhooks_received_total` - Webhooks received by workspace\n- `linkflow_webhook_queue_depth` - Current webhook queue size\n- `linkflow_webhook_dlq_depth` - Dead letter queue size\n\n**Rate Limiting:**\n- `linkflow_rate_limit_hits_total` - Rate limit hits by workspace"
-					}
-				},
-				{
-					"name": "Webhook Stream Stats",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/stats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "admin", "streams", "webhooks", "stats"]
-						},
-						"description": "Get Redis Streams webhook queue statistics.\n\nReturns:\n- `stream_length` - Messages in main queue\n- `dlq_length` - Messages in dead letter queue\n- `pending_count` - Messages being processed\n- `consumers` - Active consumer count"
+						"description": "Update the global list of disabled nodes. Disabling a node prevents it from being used in any workflow execution."
 					}
 				},
 				{
@@ -2549,10 +4246,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/replay?count=10",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "admin", "streams", "webhooks", "replay"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"streams",
+								"webhooks",
+								"replay"
+							],
 							"query": [
-								{ "key": "count", "value": "10", "description": "Number of messages to replay (default: 10)" }
+								{
+									"key": "count",
+									"value": "10",
+									"description": "Number of messages to replay (default: 10)"
+								}
 							]
 						},
 						"description": "Replay failed webhooks from the dead letter queue back to the main queue for reprocessing."
@@ -2565,10 +4275,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/trim?maxlen=50000",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "admin", "streams", "webhooks", "trim"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"streams",
+								"webhooks",
+								"trim"
+							],
 							"query": [
-								{ "key": "maxlen", "value": "50000", "description": "Maximum messages to keep in stream" }
+								{
+									"key": "maxlen",
+									"value": "50000",
+									"description": "Maximum messages to keep in stream"
+								}
 							]
 						},
 						"description": "Trim old messages from the webhook stream to free up memory. Messages are trimmed from the oldest first."
@@ -2585,7 +4308,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2593,8 +4319,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/webhooks",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "webhooks"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"webhooks"
+							]
 						},
 						"description": "Generate a unique webhook URL for a workflow. Returns the webhook URL, test URL, and secret for signature verification."
 					}
@@ -2606,8 +4342,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/webhooks",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "webhooks"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"webhooks"
+							]
 						},
 						"description": "List all webhook endpoints for a workflow"
 					}
@@ -2619,8 +4365,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/webhooks/{{webhook_id}}/regenerate-secret",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "webhooks", "{{webhook_id}}", "regenerate-secret"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"webhooks",
+								"{{webhook_id}}",
+								"regenerate-secret"
+							]
 						},
 						"description": "Generate a new secret for webhook signature verification"
 					}
@@ -2632,8 +4388,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/webhooks/{{webhook_id}}/activate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "webhooks", "{{webhook_id}}", "activate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"webhooks",
+								"{{webhook_id}}",
+								"activate"
+							]
 						},
 						"description": "Activate a webhook endpoint"
 					}
@@ -2645,8 +4411,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/webhooks/{{webhook_id}}/deactivate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "webhooks", "{{webhook_id}}", "deactivate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"webhooks",
+								"{{webhook_id}}",
+								"deactivate"
+							]
 						},
 						"description": "Deactivate a webhook endpoint"
 					}
@@ -2656,7 +4432,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2664,10 +4443,20 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/webhooks/{{webhook_id}}/security",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "webhooks", "{{webhook_id}}", "security"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"webhooks",
+								"{{webhook_id}}",
+								"security"
+							]
 						},
-						"description": "Update webhook security settings.\n\nOptions:\n- `require_signature`: Require HMAC signature validation\n- `signature_header`: Header name for signature (default: X-Signature-256)\n- `allowed_ips`: Whitelist of allowed IP addresses/CIDRs\n- `require_timestamp`: Require timestamp for replay protection\n- `timestamp_header`: Header name for timestamp\n- `timestamp_max_age_sec`: Max age of timestamp (default: 300)\n- `require_nonce`: Require nonce for replay protection\n- `nonce_header`: Header name for nonce"
+						"description": "Update webhook security settings"
 					}
 				}
 			],
@@ -2695,7 +4484,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2703,8 +4495,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "replay"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"replay"
+							]
 						},
 						"description": "Create a debug replay session for step-by-step execution debugging.\n\nModes:\n- `full`: Complete replay from start\n- `from_node`: Start from a specific node\n- `step`: Step-by-step execution\n- `breakpoint`: Run until breakpoint\n\nOptions:\n- `start_from_node_id`: Node to start replay from\n- `end_at_node_id`: Node to stop at\n- `skip_nodes`: Nodes to skip during replay\n- `modify_inputs`: Override workflow inputs\n- `modify_node_params`: Override specific node parameters\n- `breakpoints`: Nodes to pause at"
 					}
@@ -2716,10 +4516,23 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/replay/{{replay_session_id}}/events?limit=100",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "replay", "{{replay_session_id}}", "events"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"replay",
+								"{{replay_session_id}}",
+								"events"
+							],
 							"query": [
-								{ "key": "limit", "value": "100" }
+								{
+									"key": "limit",
+									"value": "100"
+								}
 							]
 						},
 						"description": "Get event log for a replay session. Shows detailed execution events including node starts, completions, input/output data, and errors."
@@ -2736,7 +4549,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2744,8 +4560,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares"
+							]
 						},
 						"description": "Share a workflow with another workspace.\n\nPermissions:\n- `read` - View only\n- `execute` - Can execute\n- `edit` - Full access"
 					}
@@ -2757,8 +4581,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/shared-by-me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "shared-by-me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"shared-by-me"
+							]
 						},
 						"description": "List workflows I've shared with other workspaces"
 					}
@@ -2770,8 +4603,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/shared-with-me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "shared-with-me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"shared-with-me"
+							]
 						},
 						"description": "List workflows shared with my workspace"
 					}
@@ -2783,8 +4625,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/pending",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "pending"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"pending"
+							]
 						},
 						"description": "List pending share invitations"
 					}
@@ -2796,8 +4647,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}/accept",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}", "accept"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"{{share_id}}",
+								"accept"
+							]
 						},
 						"description": "Accept a pending share invitation"
 					}
@@ -2807,7 +4668,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2815,8 +4679,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"{{share_id}}"
+							]
 						},
 						"description": "Update permission level for a share"
 					}
@@ -2828,8 +4701,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflow-shares/{{share_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflow-shares", "{{share_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflow-shares",
+								"{{share_id}}"
+							]
 						},
 						"description": "Revoke a workflow share"
 					}
@@ -2843,17 +4725,35 @@
 				{
 					"name": "Browse Public Templates",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace?category=&limit=20&offset=0",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace"
+							],
 							"query": [
-								{ "key": "category", "value": "", "description": "Filter by category" },
-								{ "key": "limit", "value": "20" },
-								{ "key": "offset", "value": "0" }
+								{
+									"key": "category",
+									"value": "",
+									"description": "Filter by category"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
 							]
 						},
 						"description": "Browse public workflow templates in the marketplace"
@@ -2862,15 +4762,27 @@
 				{
 					"name": "Get Featured Templates",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/featured?limit=10",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "featured"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"featured"
+							],
 							"query": [
-								{ "key": "limit", "value": "10" }
+								{
+									"key": "limit",
+									"value": "10"
+								}
 							]
 						},
 						"description": "Get featured marketplace templates"
@@ -2879,13 +4791,22 @@
 				{
 					"name": "Get Categories",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/categories",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "categories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"categories"
+							]
 						},
 						"description": "Get all marketplace categories"
 					}
@@ -2893,16 +4814,32 @@
 				{
 					"name": "Search Templates",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/search?q=email&limit=20",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "search"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"search"
+							],
 							"query": [
-								{ "key": "q", "value": "email", "description": "Search query" },
-								{ "key": "limit", "value": "20" }
+								{
+									"key": "q",
+									"value": "email",
+									"description": "Search query"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
 							]
 						},
 						"description": "Search marketplace templates"
@@ -2911,13 +4848,22 @@
 				{
 					"name": "Get Template",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}"
+							]
 						},
 						"description": "Get marketplace template details"
 					}
@@ -2927,7 +4873,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2935,8 +4884,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}/use",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}", "use"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"use"
+							]
 						},
 						"description": "Create a workflow from a marketplace template"
 					}
@@ -2946,7 +4905,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2954,8 +4916,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace"
+							]
 						},
 						"description": "Publish a workflow to the marketplace"
 					}
@@ -2967,8 +4937,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/my-published",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "my-published"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace",
+								"my-published"
+							]
 						},
 						"description": "List templates I've published"
 					}
@@ -2978,7 +4957,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -2986,8 +4968,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace",
+								"{{marketplace_template_id}}"
+							]
 						},
 						"description": "Update a published template"
 					}
@@ -2999,8 +4990,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}/sync",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}", "sync"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"sync"
+							]
 						},
 						"description": "Sync template with latest workflow changes"
 					}
@@ -3012,8 +5013,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/marketplace/{{marketplace_template_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "marketplace", "{{marketplace_template_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"marketplace",
+								"{{marketplace_template_id}}"
+							]
 						},
 						"description": "Remove template from marketplace"
 					}
@@ -3023,7 +5033,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3031,8 +5044,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"ratings"
+							]
 						},
 						"description": "Rate a marketplace template (1-5 stars)"
 					}
@@ -3044,8 +5065,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings/me",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings", "me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"ratings",
+								"me"
+							]
 						},
 						"description": "Get my rating for a template"
 					}
@@ -3053,15 +5083,28 @@
 				{
 					"name": "List Ratings",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings?limit=20",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"ratings"
+							],
 							"query": [
-								{ "key": "limit", "value": "20" }
+								{
+									"key": "limit",
+									"value": "20"
+								}
 							]
 						},
 						"description": "List all ratings for a template"
@@ -3070,13 +5113,24 @@
 				{
 					"name": "Get Rating Stats",
 					"request": {
-						"auth": { "type": "noauth" },
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings/stats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings", "stats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"ratings",
+								"stats"
+							]
 						},
 						"description": "Get rating statistics (average, distribution)"
 					}
@@ -3088,8 +5142,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/marketplace/{{marketplace_template_id}}/ratings",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "marketplace", "{{marketplace_template_id}}", "ratings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"marketplace",
+								"{{marketplace_template_id}}",
+								"ratings"
+							]
 						},
 						"description": "Delete my rating for a template"
 					}
@@ -3105,7 +5167,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3113,8 +5178,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/generate",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "generate"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"ai-builder",
+								"generate"
+							]
 						},
 						"description": "Generate a complete workflow from a natural language prompt using AI.\n\nParameters:\n- `prompt` (required): Natural language description of the desired workflow (10-2000 chars)\n- `preferred_trigger`: Preferred trigger type (manual, webhook, schedule)\n- `available_credentials`: List of credential types available in the workspace\n- `constraints`: Additional constraints like max_nodes\n\nReturns:\n- Generated workflow with nodes and connections\n- AI explanation of the workflow\n- Suggestions for improvements"
 					}
@@ -3124,7 +5198,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3132,8 +5209,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/suggest",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "suggest"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"ai-builder",
+								"suggest"
+							]
 						},
 						"description": "Get AI-powered suggestions to improve an existing workflow.\n\nParameters:\n- `workflow_json` (required): JSON string of the current workflow\n\nReturns:\n- Array of improvement suggestions"
 					}
@@ -3143,7 +5229,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3151,8 +5240,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/ai-builder/explain",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "ai-builder", "explain"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"ai-builder",
+								"explain"
+							]
 						},
 						"description": "Get an AI-generated explanation of what a workflow does.\n\nParameters:\n- `workflow_json` (required): JSON string of the workflow to explain\n\nReturns:\n- Human-readable explanation of the workflow's purpose and logic"
 					}
@@ -3170,8 +5268,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"variables"
+							]
 						},
 						"description": "List all variables in the workspace"
 					}
@@ -3195,7 +5301,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3203,8 +5312,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"variables"
+							]
 						},
 						"description": "Create a new workspace variable.\n\nParameters:\n- `key` (required): Variable name (max 100 chars)\n- `value` (required): Variable value\n- `description`: Optional description\n- `is_secret`: If true, value is masked in responses"
 					}
@@ -3214,7 +5331,10 @@
 					"request": {
 						"method": "PUT",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3222,8 +5342,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/{{variable_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "{{variable_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"variables",
+								"{{variable_id}}"
+							]
 						},
 						"description": "Update an existing variable"
 					}
@@ -3235,8 +5364,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/{{variable_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "{{variable_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"variables",
+								"{{variable_id}}"
+							]
 						},
 						"description": "Delete a variable"
 					}
@@ -3248,8 +5386,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/environments",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "environments"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"environments"
+							]
 						},
 						"description": "List all environments in the workspace (e.g., development, staging, production)"
 					}
@@ -3261,11 +5407,28 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/variables/resolve?environment=production&workflow_id={{workflow_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "variables", "resolve"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"variables",
+								"resolve"
+							],
 							"query": [
-								{ "key": "environment", "value": "production", "description": "Environment name" },
-								{ "key": "workflow_id", "value": "{{workflow_id}}", "description": "Optional workflow ID for workflow-specific vars" }
+								{
+									"key": "environment",
+									"value": "production",
+									"description": "Environment name"
+								},
+								{
+									"key": "workflow_id",
+									"value": "{{workflow_id}}",
+									"description": "Optional workflow ID for workflow-specific vars"
+								}
 							]
 						},
 						"description": "Resolve all variables for a specific environment.\n\nReturns merged variables with environment-specific overrides applied."
@@ -3284,10 +5447,22 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/analytics?period=30d",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "analytics"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"analytics"
+							],
 							"query": [
-								{ "key": "period", "value": "30d", "description": "Time period: 7d, 30d, 90d" }
+								{
+									"key": "period",
+									"value": "30d",
+									"description": "Time period: 7d, 30d, 90d"
+								}
 							]
 						},
 						"description": "Get comprehensive analytics for the workspace.\n\nReturns:\n- **Stats**: Total executions, completed, failed, canceled, running, queued, avg duration, success rate\n- **Daily Stats**: Execution counts per day for charting"
@@ -3300,10 +5475,24 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/{{workflow_id}}/analytics?period=30d",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "{{workflow_id}}", "analytics"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"{{workflow_id}}",
+								"analytics"
+							],
 							"query": [
-								{ "key": "period", "value": "30d", "description": "Time period: 7d, 30d, 90d" }
+								{
+									"key": "period",
+									"value": "30d",
+									"description": "Time period: 7d, 30d, 90d"
+								}
 							]
 						},
 						"description": "Get analytics for a specific workflow.\n\nReturns execution statistics and daily breakdown for the selected workflow."
@@ -3322,19 +5511,71 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/advanced?q=slack&status=active&tags=marketing,automation&sort=-updated_at&page=1&per_page=20",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "advanced"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"search",
+								"advanced"
+							],
 							"query": [
-								{ "key": "q", "value": "slack", "description": "Search query" },
-								{ "key": "status", "value": "active", "description": "Filter by status: draft, active, inactive" },
-								{ "key": "tags", "value": "marketing,automation", "description": "Filter by tags (comma-separated)" },
-								{ "key": "folder_id", "value": "", "disabled": true, "description": "Filter by folder" },
-								{ "key": "has_trigger", "value": "", "disabled": true, "description": "Filter by trigger type" },
-								{ "key": "created_after", "value": "", "disabled": true, "description": "Created after date (RFC3339)" },
-								{ "key": "created_before", "value": "", "disabled": true, "description": "Created before date" },
-								{ "key": "sort", "value": "-updated_at", "description": "Sort: name, -name, created_at, -created_at, updated_at, -updated_at" },
-								{ "key": "page", "value": "1" },
-								{ "key": "per_page", "value": "20" }
+								{
+									"key": "q",
+									"value": "slack",
+									"description": "Search query"
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filter by status: draft, active, inactive"
+								},
+								{
+									"key": "tags",
+									"value": "marketing,automation",
+									"description": "Filter by tags (comma-separated)"
+								},
+								{
+									"key": "folder_id",
+									"value": "",
+									"disabled": true,
+									"description": "Filter by folder"
+								},
+								{
+									"key": "has_trigger",
+									"value": "",
+									"disabled": true,
+									"description": "Filter by trigger type"
+								},
+								{
+									"key": "created_after",
+									"value": "",
+									"disabled": true,
+									"description": "Created after date (RFC3339)"
+								},
+								{
+									"key": "created_before",
+									"value": "",
+									"disabled": true,
+									"description": "Created before date"
+								},
+								{
+									"key": "sort",
+									"value": "-updated_at",
+									"description": "Sort: name, -name, created_at, -created_at, updated_at, -updated_at"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "per_page",
+									"value": "20"
+								}
 							]
 						},
 						"description": "Advanced search for workflows with multiple filter criteria.\n\nFilters:\n- `q`: Full-text search in name and description\n- `status`: draft, active, inactive\n- `tags`: Comma-separated tag list\n- `folder_id`: Filter by folder\n- `has_trigger`: Filter by trigger type (webhook, schedule, manual)\n- `created_after/before`: Date range filters\n\nSort options: name, created_at, updated_at (prefix with - for descending)"
@@ -3345,7 +5586,10 @@
 					"request": {
 						"method": "POST",
 						"header": [
-							{ "key": "Content-Type", "value": "application/json" }
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
 						],
 						"body": {
 							"mode": "raw",
@@ -3353,8 +5597,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/advanced",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "advanced"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"search",
+								"advanced"
+							]
 						},
 						"description": "Advanced search with complex filter combinations using POST body.\n\nUse POST when you need to send complex filter arrays or when query string would be too long."
 					}
@@ -3366,8 +5620,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/workflows/search/filters",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "workflows", "search", "filters"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"workflows",
+								"search",
+								"filters"
+							]
 						},
 						"description": "Get available filter options for workflow search.\n\nReturns:\n- Available statuses\n- All tags used in workspace\n- Trigger types present\n- Folders\n- Categories"
 					}
@@ -3386,16 +5650,42 @@
 						"body": {
 							"mode": "formdata",
 							"formdata": [
-								{ "key": "file", "type": "file", "src": "" },
-								{ "key": "node_id", "value": "", "description": "Optional node ID" },
-								{ "key": "expires_in_hours", "value": "24", "description": "Auto-delete after hours" },
-								{ "key": "metadata", "value": "", "description": "Custom metadata" }
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "node_id",
+									"value": "",
+									"description": "Optional node ID"
+								},
+								{
+									"key": "expires_in_hours",
+									"value": "24",
+									"description": "Auto-delete after hours"
+								},
+								{
+									"key": "metadata",
+									"value": "",
+									"description": "Custom metadata"
+								}
 							]
 						},
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"binary"
+							]
 						},
 						"description": "Upload a binary file for an execution (max 32MB)"
 					}
@@ -3407,10 +5697,24 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary?node_id=",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"binary"
+							],
 							"query": [
-								{ "key": "node_id", "value": "", "description": "Filter by node ID" }
+								{
+									"key": "node_id",
+									"value": "",
+									"description": "Filter by node ID"
+								}
 							]
 						},
 						"description": "List all binary files for an execution"
@@ -3423,8 +5727,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"binary",
+								"{{binary_id}}"
+							]
 						},
 						"description": "Get binary file metadata"
 					}
@@ -3436,8 +5749,18 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}/download",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}", "download"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"binary",
+								"{{binary_id}}",
+								"download"
+							]
 						},
 						"description": "Download a binary file"
 					}
@@ -3449,8 +5772,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/{{binary_id}}",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "{{binary_id}}"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"binary",
+								"{{binary_id}}"
+							]
 						},
 						"description": "Delete a binary file"
 					}
@@ -3462,8 +5794,17 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/binary/stats",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "binary", "stats"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"binary",
+								"stats"
+							]
 						},
 						"description": "Get storage statistics for workspace"
 					}
@@ -3475,14 +5816,83 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/executions/{{execution_id}}/binary/cleanup",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "workspaces", "{{workspace_id}}", "executions", "{{execution_id}}", "binary", "cleanup"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"executions",
+								"{{execution_id}}",
+								"binary",
+								"cleanup"
+							]
 						},
 						"description": "Delete all binary files for an execution"
 					}
 				}
 			],
 			"description": "Binary file storage for workflow executions"
+		},
+		{
+			"name": "📩 Invitations",
+			"item": [
+				{
+					"name": "Get Invitation Info",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/invitations/{{invitation_token}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"invitations",
+								"{{invitation_token}}"
+							]
+						},
+						"description": "Get information about an invitation before accepting"
+					}
+				},
+				{
+					"name": "Accept Invitation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"{{invitation_token}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/invitations/accept",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"invitations",
+								"accept"
+							]
+						},
+						"description": "Accept a workspace invitation"
+					}
+				}
+			],
+			"description": "Workspace invitation management"
 		}
 	],
 	"variable": [
