@@ -52,6 +52,26 @@
 			"name": "🏥 Health",
 			"item": [
 				{
+					"name": "Root Health Check",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Overall system health status (root)"
+					}
+				},
+				{
 					"name": "Health Check",
 					"request": {
 						"auth": {
@@ -1031,6 +1051,54 @@
 				}
 			],
 			"description": "Workspace and team management"
+		},
+		{
+			"name": "🛡️ Permissions",
+			"item": [
+				{
+					"name": "List Permissions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/permissions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"permissions"
+							]
+						},
+						"description": "List all available permissions"
+					}
+				},
+				{
+					"name": "My Workspace Permissions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/workspaces/{{workspace_id}}/users/me/permissions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"workspaces",
+								"{{workspace_id}}",
+								"users",
+								"me",
+								"permissions"
+							]
+						},
+						"description": "Get the current user's permissions in a workspace"
+					}
+				}
+			],
+			"description": "Permission discovery and per-workspace access checks"
 		},
 		{
 			"name": "📁 Folders",
@@ -3376,13 +3444,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3398,7 +3468,7 @@
 								}
 							]
 						},
-						"description": "## WebSocket Real-time Events\n\n**To use WebSocket in Postman:**\n1. Click 'New' → 'WebSocket Request'\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click 'Connect'\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Parameters\n| Parameter | Required | Description |\n|-----------|----------|-------------|\n| token | Yes | JWT access token |\n| workspace_id | Yes | Workspace to receive events for |\n\n### Events You'll Receive\n- `execution.started` - Workflow execution began\n- `execution.completed` - Execution finished successfully\n- `execution.failed` - Execution failed\n- `node.started` - Node began executing\n- `node.completed` - Node finished\n- `node.failed` - Node failed\n\n### Example Event\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```"
+						"description": "## WebSocket Real-time Events\n\n**To use WebSocket in Postman:**\n1. Click 'New' → 'WebSocket Request'\n2. Enter URL: `ws://localhost:8090/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click 'Connect'\n\n### Connection URL\n```\nws://localhost:8090/api/v1/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Parameters\n| Parameter | Required | Description |\n|-----------|----------|-------------|\n| token | Yes | JWT access token |\n| workspace_id | Yes | Workspace to receive events for |\n\n### Events You'll Receive\n- `execution.started` - Workflow execution began\n- `execution.completed` - Execution finished successfully\n- `execution.failed` - Execution failed\n- `node.started` - Node began executing\n- `node.completed` - Node finished\n- `node.failed` - Node failed\n\n### Example Event\n```json\n{\n  \"type\": \"execution.started\",\n  \"timestamp\": \"2025-12-21T12:58:21Z\",\n  \"data\": {\n    \"execution_id\": \"ce5a9175-1691-4f58-84f2-c814768e68fa\",\n    \"workflow_id\": \"092e689f-a562-4e3e-8c22-160db0126695\",\n    \"status\": \"running\",\n    \"trigger_type\": \"manual\"\n  }\n}\n```"
 					}
 				},
 				{
@@ -3414,13 +3484,15 @@
 							"raw": "{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"execution_id\": \"{{execution_id}}\"\n  }\n}"
 						},
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3450,13 +3522,15 @@
 							"raw": "{\n  \"type\": \"subscribe\",\n  \"payload\": {\n    \"workflow_id\": \"{{workflow_id}}\"\n  }\n}"
 						},
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3486,13 +3560,15 @@
 							"raw": "{\n  \"type\": \"unsubscribe\",\n  \"payload\": {\n    \"execution_id\": \"{{execution_id}}\"\n  }\n}"
 						},
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3522,13 +3598,15 @@
 							"raw": "{\n  \"type\": \"ping\"\n}"
 						},
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3554,13 +3632,15 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "ws://{{host}}:{{port}}/ws?token={{access_token}}&workspace_id={{workspace_id}}",
+							"raw": "ws://{{host}}:{{port}}/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}",
 							"protocol": "ws",
 							"host": [
 								"{{host}}"
 							],
 							"port": "{{port}}",
 							"path": [
+								"api",
+								"v1",
 								"ws"
 							],
 							"query": [
@@ -3578,7 +3658,7 @@
 					}
 				}
 			],
-			"description": "## WebSocket Real-time Events\n\nReceive real-time updates for workflow executions via WebSocket.\n\n### How to Test in Postman\n1. Click **New** → **WebSocket Request**\n2. Enter URL: `ws://localhost:8090/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click **Connect**\n4. Execute a workflow and watch events stream in!\n\n### Connection URL\n```\nws://localhost:8090/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Quick Test (CLI)\n```bash\nwscat -c \"ws://localhost:8090/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```\n\n### JavaScript Example\n```javascript\nconst ws = new WebSocket(\n  `ws://localhost:8090/ws?token=${token}&workspace_id=${workspaceId}`\n);\n\nws.onmessage = (e) => {\n  const event = JSON.parse(e.data);\n  console.log(event.type, event.data);\n};\n```\n\n### Event Types\n| Event | Description |\n|-------|-------------|\n| execution.started | Workflow began |\n| execution.completed | Finished successfully |\n| execution.failed | Failed |\n| node.started | Node began |\n| node.completed | Node finished |\n| node.failed | Node failed |"
+			"description": "## WebSocket Real-time Events\n\nReceive real-time updates for workflow executions via WebSocket.\n\n### How to Test in Postman\n1. Click **New** → **WebSocket Request**\n2. Enter URL: `ws://localhost:8090/api/v1/ws?token={{access_token}}&workspace_id={{workspace_id}}`\n3. Click **Connect**\n4. Execute a workflow and watch events stream in!\n\n### Connection URL\n```\nws://localhost:8090/api/v1/ws?token={jwt}&workspace_id={workspace_id}\n```\n\n### Quick Test (CLI)\n```bash\nwscat -c \"ws://localhost:8090/api/v1/ws?token=YOUR_TOKEN&workspace_id=YOUR_WORKSPACE_ID\"\n```\n\n### JavaScript Example\n```javascript\nconst ws = new WebSocket(\n  `ws://localhost:8090/api/v1/ws?token=${token}&workspace_id=${workspaceId}`\n);\n\nws.onmessage = (e) => {\n  const event = JSON.parse(e.data);\n  console.log(event.type, event.data);\n};\n```\n\n### Event Types\n| Event | Description |\n|-------|-------------|\n| execution.started | Workflow began |\n| execution.completed | Finished successfully |\n| execution.failed | Failed |\n| node.started | Node began |\n| node.completed | Node finished |\n| node.failed | Node failed |"
 		},
 		{
 			"name": "🔐 OAuth",
@@ -3687,6 +3767,127 @@
 				}
 			],
 			"description": "OAuth credential flows for third-party integrations"
+		},
+		{
+			"name": "🛠️ Admin",
+			"item": [
+				{
+					"name": "Webhooks Stream Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"streams",
+								"webhooks",
+								"stats"
+							]
+						},
+						"description": "Get webhook stream processing stats"
+					}
+				},
+				{
+					"name": "Replay Webhooks DLQ",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/replay",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"streams",
+								"webhooks",
+								"replay"
+							]
+						},
+						"description": "Replay webhook events from the dead-letter queue"
+					}
+				},
+				{
+					"name": "Trim Webhooks Stream",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/streams/webhooks/trim",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"streams",
+								"webhooks",
+								"trim"
+							]
+						},
+						"description": "Trim old webhook stream entries"
+					}
+				},
+				{
+					"name": "List Disabled Nodes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/disabled-nodes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"disabled-nodes"
+							]
+						},
+						"description": "List node types disabled by administrators"
+					}
+				},
+				{
+					"name": "Update Disabled Nodes",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"disabled_nodes\": [\"action.http\", \"integration.slack\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/admin/disabled-nodes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"admin",
+								"disabled-nodes"
+							]
+						},
+						"description": "Update the list of disabled node types"
+					}
+				}
+			],
+			"description": "Administrative system endpoints"
 		},
 		{
 			"name": "📋 Templates",
