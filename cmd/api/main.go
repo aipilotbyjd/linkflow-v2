@@ -22,6 +22,7 @@ import (
 	credentialHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/credential"
 	dashboardHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/dashboard"
 	executionHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/execution"
+	noteHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/note"
 
 	folderHandler "github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/folder"
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/handlers/health"
@@ -196,6 +197,7 @@ func main() {
 	variableRepo := repositories.NewVariableRepository(db)
 	binaryDataRepo := repositories.NewBinaryDataRepository(db)
 	siteSettingsRepo := repositories.NewSiteSettingsRepository(db)
+	noteRepo := repositories.NewNoteRepository(db)
 
 	// Storage service
 	var storageService binarydata.StorageService
@@ -507,7 +509,7 @@ func main() {
 	akRevokeHandler := apikeyHandler.NewRevokeAPIKeyHandler(apiKeyRepo)
 
 	// Node types handlers
-	ntListHandler := nodetypesHandler.NewListNodeTypesHandler(nodeRegistry, siteSettingsRepo)
+	ntListHandler = nodetypesHandler.NewListNodeTypesHandler(nodeRegistry, siteSettingsRepo)
 	ntCategoriesHandler := nodetypesHandler.NewListCategoriesHandler(nodeRegistry)
 	ntGetHandler := nodetypesHandler.NewGetNodeTypeHandler(nodeRegistry)
 
@@ -543,6 +545,13 @@ func main() {
 	shAcceptHandler := shareHandler.NewAcceptHandler(shareRepo)
 	shUpdateHandler := shareHandler.NewUpdateHandler(shareRepo)
 	shRevokeHandler := shareHandler.NewRevokeHandler(shareRepo)
+
+	// Comment handlers
+	ntListHandler = noteHandler.NewListNotesHandler(noteRepo)
+	ntCreateHandler = noteHandler.NewCreateNoteHandler(noteRepo)
+	ntUpdateHandler = noteHandler.NewUpdateNoteHandler(noteRepo)
+	ntDeleteHandler = noteHandler.NewDeleteNoteHandler(noteRepo)
+	ntResolveHandler = noteHandler.NewResolveNoteHandler(noteRepo)
 
 	// Binary data handlers
 	bdUploadHandler := binarydataHandler.NewUploadHandler(binaryDataRepo, storageService)
@@ -834,6 +843,13 @@ func main() {
 			Delete:           varDeleteHandler.Handle,
 			ListEnvironments: varListEnvHandler.Handle,
 			Resolve:          varResolveHandler.Handle,
+		},
+		Note: routes.NoteHandlers{
+			List:    ntListHandler.Handle,
+			Create:  ntCreateHandler.Handle,
+			Update:  ntUpdateHandler.Handle,
+			Delete:  ntDeleteHandler.Handle,
+			Resolve: ntResolveHandler.Handle,
 		},
 		WebSocket: wsHandler.ServeHTTP,
 	}

@@ -55,6 +55,7 @@ type Handlers struct {
 	Invitation    InvitationHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
+	Comment       CommentHandlers
 	Replay        ReplayHandlers
 	WebSocket     http.HandlerFunc
 }
@@ -352,6 +353,15 @@ type VariableHandlers struct {
 	Resolve          http.HandlerFunc
 }
 
+// CommentHandlers holds comment handlers
+type CommentHandlers struct {
+	List     http.HandlerFunc
+	Create   http.HandlerFunc
+	Update   http.HandlerFunc
+	Delete   http.HandlerFunc
+	Resolve  http.HandlerFunc
+}
+
 // ReplayHandlers holds debug replay handlers
 type ReplayHandlers struct {
 	Create    http.HandlerFunc
@@ -603,6 +613,17 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermWorkflowDelete)).Delete("/{variableId}", handlers.Variable.Delete)
 				})
 				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/environments", handlers.Variable.ListEnvironments)
+
+				// Comments
+				r.Route("/workflows/{workflowId}/comments", func(r chi.Router) {
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Comment.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Comment.Create)
+					r.Route("/{commentId}", func(r chi.Router) {
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Comment.Update)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/", handlers.Comment.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/resolve", handlers.Comment.Resolve)
+					})
+				})
 
 				// Debug Replay
 				r.Route("/replay", func(r chi.Router) {

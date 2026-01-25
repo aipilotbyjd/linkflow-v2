@@ -12,6 +12,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/mappers"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models/note"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/rbac"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/sitesettings"
@@ -126,6 +127,7 @@ func runMigrationsUp(db *gorm.DB, steps int) error {
 		&models.Variable{},
 		&models.Environment{},
 		&models.EnvironmentVariable{},
+		&note.Note{},
 
 		// Billing
 		&billing.Subscription{},
