@@ -29,6 +29,12 @@
   - [Node Types](#node-types)
   - [Health](#health)
   - [Admin](#admin)
+  - [AI Builder](#ai-builder)
+  - [Workflow Sharing](#workflow-sharing)
+  - [Marketplace](#marketplace)
+  - [RBAC](#rbac)
+  - [Binary Data](#binary-data)
+  - [Invitations](#invitations)
 
 ---
 
@@ -2711,6 +2717,62 @@ GET /workspaces/{workspaceID}/billing/invoices
 
 ---
 
+### Get Usage Status
+
+Get detailed usage status.
+
+```
+GET /workspaces/{workspaceID}/billing/usage-status
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### List Usage Alerts
+
+List billing alerts.
+
+```
+GET /workspaces/{workspaceID}/billing/alerts
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### List BYOK Providers
+
+List supported BYOK providers.
+
+```
+GET /workspaces/{workspaceID}/billing/byok/providers
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### Credit Top-Up Settings
+
+Get auto top-up settings.
+
+```
+GET /workspaces/{workspaceID}/billing/topup/settings
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
 ## Webhooks
 
 ### Trigger Webhook
@@ -3475,6 +3537,42 @@ POST /admin/streams/webhooks/trim
 
 ---
 
+### Get Disabled Nodes
+
+Get list of globally disabled nodes.
+
+```
+GET /admin/disabled-nodes
+```
+
+**Headers:** `Authorization: Bearer <token>` (Admin)
+
+**Response:** `200 OK`
+
+---
+
+### Update Disabled Nodes
+
+Update list of globally disabled nodes.
+
+```
+PUT /admin/disabled-nodes
+```
+
+**Headers:** `Authorization: Bearer <token>` (Admin)
+
+**Request Body:**
+
+```json
+{
+  "disabled_nodes": ["trigger.cron", "action.http"]
+}
+```
+
+**Response:** `200 OK`
+
+---
+
 ## WebSocket
 
 ### Connect to WebSocket
@@ -3721,3 +3819,325 @@ POST /workspaces/{workspaceID}/executions/{executionID}/replay-from-node
 ```
 
 **Response:** `202 Accepted`
+
+---
+
+## AI Builder
+
+### Generate Workflow
+
+Generate a workflow from a text description.
+
+```
+POST /workspaces/{workspaceID}/ai-builder/generate
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "prompt": "Create a workflow that scrapes a website and sends an email",
+  "model": "gpt-4"
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Suggest Nodes
+
+Get suggestions for the next node.
+
+```
+POST /workspaces/{workspaceID}/ai-builder/suggest
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "workflow_id": "wf_123",
+  "current_node_id": "node_1"
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Explain Workflow
+
+Get an explanation of what a workflow does.
+
+```
+POST /workspaces/{workspaceID}/ai-builder/explain
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "workflow_id": "wf_123"
+}
+```
+
+**Response:** `200 OK`
+
+---
+
+## Workflow Sharing
+
+### Share Workflow
+
+Share a workflow with another user.
+
+```
+POST /workspaces/{workspaceID}/workflow-shares
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "workflow_id": "wf_123",
+  "email": "user@example.com",
+  "permission": "read"
+}
+```
+
+**Response:** `201 Created`
+
+---
+
+### List Shared By Me
+
+List workflows shared by the current user.
+
+```
+GET /workspaces/{workspaceID}/workflow-shares/shared-by-me
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### List Shared With Me
+
+List workflows shared with the current user.
+
+```
+GET /workspaces/{workspaceID}/workflow-shares/shared-with-me
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### Revoke Share
+
+Revoke a workflow share.
+
+```
+DELETE /workspaces/{workspaceID}/workflow-shares/{shareID}
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `204 No Content`
+
+---
+
+## Marketplace
+
+### Browse Templates
+
+Browse available templates in the marketplace.
+
+```
+GET /marketplace
+```
+
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| category | string | Filter by functional category |
+| search | string | Search term |
+| sort | string | Sort by (popular, newest, rating) |
+
+**Response:** `200 OK`
+
+---
+
+### Get Template Details
+
+Get details of a specific marketplace template.
+
+```
+GET /marketplace/{templateId}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Publish Template
+
+Publish a workflow to the marketplace.
+
+```
+POST /workspaces/{workspaceID}/marketplace
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "workflow_id": "wf_123",
+  "name": "My Template",
+  "description": "Public description",
+  "category": "productivity",
+  "version": "1.0.0"
+}
+```
+
+**Response:** `201 Created`
+
+---
+
+### Unpublish Template
+
+Remove a template from the marketplace.
+
+```
+DELETE /workspaces/{workspaceID}/marketplace/{templateId}
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `204 No Content`
+
+---
+
+## RBAC
+
+### List Roles
+
+List custom roles in workspace.
+
+```
+GET /workspaces/{workspaceID}/roles
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+
+---
+
+### Create Role
+
+Create a new custom role.
+
+```
+POST /workspaces/{workspaceID}/roles
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+
+```json
+{
+  "name": "Editor",
+  "description": "Can edit workflows but not settings",
+  "permissions": ["workflow.read", "workflow.write"]
+}
+```
+
+**Response:** `201 Created`
+
+---
+
+## Binary Data
+
+### Upload Binary
+
+Upload a file for use in workflows.
+
+```
+POST /workspaces/{workspaceID}/executions/{executionID}/binary
+```
+
+**Headers:** 
+- `Authorization: Bearer <token>`
+- `Content-Type: multipart/form-data`
+
+**Form Data:**
+- `file`: (Binary content)
+- `metadata`: (JSON string, optional)
+
+**Response:** `201 Created`
+
+---
+
+### Download Binary
+
+Download a processed file.
+
+```
+GET /workspaces/{workspaceID}/binary/{binaryId}/download
+```
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK` (Binary stream)
+
+---
+
+## Invitations
+
+### Get Invitation Info
+
+Get details about an invitation token.
+
+```
+GET /invitations/{token}
+```
+
+**Response:** `200 OK`
+
+---
+
+### Accept Invitation
+
+Accept an invitation to join a workspace.
+
+```
+POST /invitations/accept
+```
+
+**Request Body:**
+
+```json
+{
+  "token": "inv_token_123"
+}
+```
+
+**Response:** `200 OK`
