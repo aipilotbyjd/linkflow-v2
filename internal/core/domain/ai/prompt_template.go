@@ -80,7 +80,7 @@ func (pt *PromptTemplate) extractVariables() []TemplateVariable {
 	matches := re.FindAllStringSubmatch(pt.Template, -1)
 
 	seen := make(map[string]bool)
-	var variables []TemplateVariable
+	variables := make([]TemplateVariable, 0, 10)
 
 	for _, match := range matches {
 		name := match[1]

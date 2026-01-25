@@ -44,7 +44,7 @@ func (h *ListHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var responses []ScheduleResponse
+	responses := make([]ScheduleResponse, 0, len(result.Schedules))
 	for _, s := range result.Schedules {
 		responses = append(responses, ToScheduleResponse(&s))
 	}

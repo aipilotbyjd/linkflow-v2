@@ -106,53 +106,70 @@ func NewExecutionStreamService(publisher EventPublisher) *ExecutionStreamService
 
 // SendProgress sends execution progress update
 func (s *ExecutionStreamService) SendProgress(ctx context.Context, workspaceID uuid.UUID, data ExecutionProgressData) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionProgress, data)
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionProgress, data); err != nil {
+		// Log error but don't fail the execution
+		_ = err
+	}
 }
 
 // SendNodeOutput sends node output for real-time debugging
 func (s *ExecutionStreamService) SendNodeOutput(ctx context.Context, workspaceID uuid.UUID, data NodeOutputData) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionNodeOutput, data)
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionNodeOutput, data); err != nil {
+		_ = err
+	}
 }
 
 // SendLog sends execution log entry
 func (s *ExecutionStreamService) SendLog(ctx context.Context, workspaceID uuid.UUID, data ExecutionLogData) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionLog, data)
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionLog, data); err != nil {
+		_ = err
+	}
 }
 
 // SendMetrics sends execution metrics
 func (s *ExecutionStreamService) SendMetrics(ctx context.Context, workspaceID uuid.UUID, data ExecutionMetricsData) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionMetrics, data)
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionMetrics, data); err != nil {
+		_ = err
+	}
 }
 
 // SendApprovalRequired notifies about approval requirement
 func (s *ExecutionStreamService) SendApprovalRequired(ctx context.Context, workspaceID uuid.UUID, data ApprovalRequiredData) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventApprovalRequired, data)
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventApprovalRequired, data); err != nil {
+		_ = err
+	}
 }
 
 // SendExecutionWaiting notifies that execution is waiting
 func (s *ExecutionStreamService) SendExecutionWaiting(ctx context.Context, workspaceID uuid.UUID, executionID uuid.UUID, reason string, data interface{}) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionWaiting, map[string]interface{}{
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionWaiting, map[string]interface{}{
 		"execution_id": executionID,
 		"reason":       reason,
 		"data":         data,
 		"timestamp":    time.Now(),
-	})
+	}); err != nil {
+		_ = err
+	}
 }
 
 // SendExecutionResumed notifies that execution was resumed
 func (s *ExecutionStreamService) SendExecutionResumed(ctx context.Context, workspaceID uuid.UUID, executionID uuid.UUID, resumedBy string) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionResumed, map[string]interface{}{
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, EventExecutionResumed, map[string]interface{}{
 		"execution_id": executionID,
 		"resumed_by":   resumedBy,
 		"timestamp":    time.Now(),
-	})
+	}); err != nil {
+		_ = err
+	}
 }
 
 // BroadcastToExecution sends event to all clients watching a specific execution
 func (s *ExecutionStreamService) BroadcastToExecution(ctx context.Context, workspaceID, executionID uuid.UUID, event string, data interface{}) {
-	s.publisher.PublishToWorkspace(ctx, workspaceID, event, map[string]interface{}{
+	if err := s.publisher.PublishToWorkspace(ctx, workspaceID, event, map[string]interface{}{
 		"execution_id": executionID,
 		"data":         data,
 		"timestamp":    time.Now().UnixMilli(),
-	})
+	}); err != nil {
+		_ = err
+	}
 }

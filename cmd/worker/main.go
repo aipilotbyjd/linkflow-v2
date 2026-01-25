@@ -241,7 +241,14 @@ func main() {
 				Str("address", cfg.Metrics.GetAddress()).
 				Str("path", cfg.Metrics.Path).
 				Msg("Starting worker metrics server")
-			if err := http.ListenAndServe(cfg.Metrics.GetAddress(), mux); err != nil && err != http.ErrServerClosed {
+			server := &http.Server{
+				Addr:               cfg.Metrics.GetAddress(),
+				Handler:            mux,
+				ReadHeaderTimeout:  10 * time.Second,
+				ReadTimeout:        30 * time.Second,
+				WriteTimeout:       30 * time.Second,
+			}
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				appLogger.Error().Err(err).Msg("Metrics server error")
 			}
 		}()

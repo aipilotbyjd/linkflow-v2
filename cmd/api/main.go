@@ -870,8 +870,11 @@ func main() {
 		mux := http.NewServeMux()
 		mux.Handle(cfg.Metrics.Path, promhttp.Handler())
 		metricsServer = &http.Server{
-			Addr:    cfg.Metrics.GetAddress(),
-			Handler: mux,
+			Addr:               cfg.Metrics.GetAddress(),
+			Handler:            mux,
+			ReadHeaderTimeout:  10 * time.Second,
+			ReadTimeout:        30 * time.Second,
+			WriteTimeout:       30 * time.Second,
 		}
 		go func() {
 			appLogger.Info().
