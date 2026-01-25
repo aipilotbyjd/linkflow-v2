@@ -509,7 +509,7 @@ func main() {
 	akRevokeHandler := apikeyHandler.NewRevokeAPIKeyHandler(apiKeyRepo)
 
 	// Node types handlers
-	ntListHandler = nodetypesHandler.NewListNodeTypesHandler(nodeRegistry, siteSettingsRepo)
+	ntListHandler := nodetypesHandler.NewListNodeTypesHandler(nodeRegistry, siteSettingsRepo)
 	ntCategoriesHandler := nodetypesHandler.NewListCategoriesHandler(nodeRegistry)
 	ntGetHandler := nodetypesHandler.NewGetNodeTypeHandler(nodeRegistry)
 
@@ -546,12 +546,12 @@ func main() {
 	shUpdateHandler := shareHandler.NewUpdateHandler(shareRepo)
 	shRevokeHandler := shareHandler.NewRevokeHandler(shareRepo)
 
-	// Comment handlers
-	ntListHandler = noteHandler.NewListNotesHandler(noteRepo)
-	ntCreateHandler = noteHandler.NewCreateNoteHandler(noteRepo)
-	ntUpdateHandler = noteHandler.NewUpdateNoteHandler(noteRepo)
-	ntDeleteHandler = noteHandler.NewDeleteNoteHandler(noteRepo)
-	ntResolveHandler = noteHandler.NewResolveNoteHandler(noteRepo)
+	// Note handlers
+	noteListHandler := noteHandler.NewListNotesHandler(noteRepo)
+	noteCreateHandler := noteHandler.NewCreateNoteHandler(noteRepo)
+	noteUpdateHandler := noteHandler.NewUpdateNoteHandler(noteRepo)
+	noteDeleteHandler := noteHandler.NewDeleteNoteHandler(noteRepo)
+	noteResolveHandler := noteHandler.NewResolveNoteHandler(noteRepo)
 
 	// Binary data handlers
 	bdUploadHandler := binarydataHandler.NewUploadHandler(binaryDataRepo, storageService)
@@ -844,12 +844,12 @@ func main() {
 			ListEnvironments: varListEnvHandler.Handle,
 			Resolve:          varResolveHandler.Handle,
 		},
-		Note: routes.NoteHandlers{
-			List:    ntListHandler.Handle,
-			Create:  ntCreateHandler.Handle,
-			Update:  ntUpdateHandler.Handle,
-			Delete:  ntDeleteHandler.Handle,
-			Resolve: ntResolveHandler.Handle,
+		Comment: routes.CommentHandlers{
+			List:    noteListHandler.Handle,
+			Create:  noteCreateHandler.Handle,
+			Update:  noteUpdateHandler.Handle,
+			Delete:  noteDeleteHandler.Handle,
+			Resolve: noteResolveHandler.Handle,
 		},
 		WebSocket: wsHandler.ServeHTTP,
 	}
