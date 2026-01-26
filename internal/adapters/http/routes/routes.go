@@ -221,20 +221,20 @@ type BillingHandlers struct {
 	GetDashboard       http.HandlerFunc
 	GetUsageStatus     http.HandlerFunc
 	// Usage Alerts
-	ListAlerts         http.HandlerFunc
-	CreateAlert        http.HandlerFunc
-	UpdateAlert        http.HandlerFunc
-	DeleteAlert        http.HandlerFunc
-	GetAlertHistory    http.HandlerFunc
-	AcknowledgeAlert   http.HandlerFunc
+	ListAlerts       http.HandlerFunc
+	CreateAlert      http.HandlerFunc
+	UpdateAlert      http.HandlerFunc
+	DeleteAlert      http.HandlerFunc
+	GetAlertHistory  http.HandlerFunc
+	AcknowledgeAlert http.HandlerFunc
 	// BYOK
-	ListBYOKProviders  http.HandlerFunc
-	ListBYOK           http.HandlerFunc
-	CreateBYOK         http.HandlerFunc
-	DeleteBYOK         http.HandlerFunc
+	ListBYOKProviders http.HandlerFunc
+	ListBYOK          http.HandlerFunc
+	CreateBYOK        http.HandlerFunc
+	DeleteBYOK        http.HandlerFunc
 	// Credit Top-Up
-	ListCreditPacks    http.HandlerFunc
-	GetTopUpSettings   http.HandlerFunc
+	ListCreditPacks     http.HandlerFunc
+	GetTopUpSettings    http.HandlerFunc
 	UpdateTopUpSettings http.HandlerFunc
 }
 
@@ -355,11 +355,11 @@ type VariableHandlers struct {
 
 // CommentHandlers holds comment handlers
 type CommentHandlers struct {
-	List     http.HandlerFunc
-	Create   http.HandlerFunc
-	Update   http.HandlerFunc
-	Delete   http.HandlerFunc
-	Resolve  http.HandlerFunc
+	List    http.HandlerFunc
+	Create  http.HandlerFunc
+	Update  http.HandlerFunc
+	Delete  http.HandlerFunc
+	Resolve http.HandlerFunc
 }
 
 // ReplayHandlers holds debug replay handlers
@@ -553,7 +553,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 					r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/subscription", handlers.Billing.CancelSubscription)
 					r.Get("/dashboard", handlers.Billing.GetDashboard)
 					r.Get("/usage-status", handlers.Billing.GetUsageStatus)
-					
+
 					// Usage Alerts
 					r.Route("/alerts", func(r chi.Router) {
 						r.Get("/", handlers.Billing.ListAlerts)
@@ -563,7 +563,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/{alertId}", handlers.Billing.DeleteAlert)
 						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/{alertLogId}/acknowledge", handlers.Billing.AcknowledgeAlert)
 					})
-					
+
 					// BYOK (Bring Your Own Key)
 					r.Route("/byok", func(r chi.Router) {
 						r.Get("/providers", handlers.Billing.ListBYOKProviders)
@@ -571,7 +571,7 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Post("/", handlers.Billing.CreateBYOK)
 						r.With(middleware.RequirePermission(rbac.PermBillingWrite)).Delete("/{byokId}", handlers.Billing.DeleteBYOK)
 					})
-					
+
 					// Credit Top-Up
 					r.Route("/topup", func(r chi.Router) {
 						r.Get("/packs", handlers.Billing.ListCreditPacks)

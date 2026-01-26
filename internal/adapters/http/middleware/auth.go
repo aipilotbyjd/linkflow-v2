@@ -36,20 +36,25 @@ func Auth(jwtManager *jwt.Manager) func(http.Handler) http.Handler {
 func AuthWithBlacklist(jwtManager *jwt.Manager, blacklist *jwt.Blacklist) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Get token from header
+			// Get token from header or query param
+			token := ""
 			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				common.Unauthorized(w, "missing authorization header")
-				return
+			if authHeader != "" {
+				parts := strings.SplitN(authHeader, " ", 2)
+				if len(parts) == 2 && strings.EqualFold(parts[0], "bearer") {
+					token = parts[1]
+				}
 			}
 
-			// Extract token
-			parts := strings.SplitN(authHeader, " ", 2)
-			if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-				common.Unauthorized(w, "invalid authorization header format")
+			// Fallback to query param (useful for WebSockets)
+			if token == "" {
+				token = r.URL.Query().Get("token")
+			}
+
+			if token == "" {
+				common.Unauthorized(w, "missing authorization")
 				return
 			}
-			token := parts[1]
 
 			// Validate token
 			claims, err := jwtManager.ValidateAccessToken(token)
