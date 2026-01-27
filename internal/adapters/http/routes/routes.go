@@ -55,7 +55,7 @@ type Handlers struct {
 	Invitation    InvitationHandlers
 	AIBuilder     AIBuilderHandlers
 	Variable      VariableHandlers
-	Comment       CommentHandlers
+	Note          NoteHandlers
 	Replay        ReplayHandlers
 	WebSocket     http.HandlerFunc
 }
@@ -353,8 +353,8 @@ type VariableHandlers struct {
 	Resolve          http.HandlerFunc
 }
 
-// CommentHandlers holds comment handlers
-type CommentHandlers struct {
+// NoteHandlers holds note handlers
+type NoteHandlers struct {
 	List    http.HandlerFunc
 	Create  http.HandlerFunc
 	Update  http.HandlerFunc
@@ -614,15 +614,20 @@ func NewRouter(cfg Config, handlers Handlers) *chi.Mux {
 				})
 				r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/environments", handlers.Variable.ListEnvironments)
 
-				// Comments
-				r.Route("/workflows/{workflowId}/comments", func(r chi.Router) {
-					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Comment.List)
-					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Comment.Create)
-					r.Route("/{commentId}", func(r chi.Router) {
-						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Comment.Update)
-						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/", handlers.Comment.Delete)
-						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/resolve", handlers.Comment.Resolve)
+				// Notes
+				r.Route("/workflows/{workflowId}/notes", func(r chi.Router) {
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Note.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Note.Create)
+					r.Route("/{noteId}", func(r chi.Router) {
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Put("/", handlers.Note.Update)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Delete("/", handlers.Note.Delete)
+						r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/resolve", handlers.Note.Resolve)
 					})
+				})
+
+				r.Route("/notes", func(r chi.Router) {
+					r.With(middleware.RequirePermission(rbac.PermWorkflowRead)).Get("/", handlers.Note.List)
+					r.With(middleware.RequirePermission(rbac.PermWorkflowWrite)).Post("/", handlers.Note.Create)
 				})
 
 				// Debug Replay

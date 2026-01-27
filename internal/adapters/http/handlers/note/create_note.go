@@ -22,15 +22,24 @@ func NewCreateNoteHandler(repo note.Repository) *CreateNoteHandler {
 func (h *CreateNoteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	workspaceID := middleware.GetWorkspaceID(r.Context())
 	userID := middleware.GetUserID(r.Context())
-	workflowID, err := uuid.Parse(chi.URLParam(r, "workflowID"))
-	if err != nil {
-		common.BadRequest(w, "invalid workflow ID")
-		return
-	}
 
 	var req CreateNoteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		common.BadRequest(w, "invalid request body")
+		return
+	}
+
+	workflowIDStr := chi.URLParam(r, "workflowId")
+	if workflowIDStr == "" {
+		workflowIDStr = r.URL.Query().Get("resource_id")
+	}
+	if workflowIDStr == "" {
+		workflowIDStr = req.ResourceID
+	}
+
+	workflowID, err := uuid.Parse(workflowIDStr)
+	if err != nil {
+		common.BadRequest(w, "invalid workflow ID")
 		return
 	}
 

@@ -25,7 +25,7 @@
   - [Alerts](#alerts)
   - [Audit Logs](#audit-logs)
   - [Environment Variables](#environment-variables)
-  - [Comments](#comments)
+  - [Notes](#notes)
   - [Node Types](#node-types)
   - [Health](#health)
   - [Admin](#admin)
@@ -3219,14 +3219,14 @@ DELETE /workspaces/{workspaceID}/env-vars/{varID}
 
 ---
 
-## Comments
+## Notes
 
-### List Workflow Comments
+### List Workflow Notes
 
-Get comments on a workflow.
+Get notes on a workflow.
 
 ```
-GET /workspaces/{workspaceID}/workflows/{workflowID}/comments
+GET /api/v1/workspaces/{workspaceID}/workflows/{workflowID}/notes
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -3235,12 +3235,12 @@ GET /workspaces/{workspaceID}/workflows/{workflowID}/comments
 
 ---
 
-### Create Comment
+### Create Note
 
-Add a comment to a workflow.
+Add a note to a workflow.
 
 ```
-POST /workspaces/{workspaceID}/workflows/{workflowID}/comments
+POST /api/v1/workspaces/{workspaceID}/workflows/{workflowID}/notes
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -3258,12 +3258,12 @@ POST /workspaces/{workspaceID}/workflows/{workflowID}/comments
 
 ---
 
-### Update Comment
+### Update Note
 
-Update a comment.
+Update a note.
 
 ```
-PUT /workspaces/{workspaceID}/comments/{commentID}
+PUT /api/v1/workspaces/{workspaceID}/workflows/{workflowID}/notes/{noteID}
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -3272,7 +3272,7 @@ PUT /workspaces/{workspaceID}/comments/{commentID}
 
 ```json
 {
-  "content": "Updated comment content"
+  "content": "Updated note content"
 }
 ```
 
@@ -3280,12 +3280,12 @@ PUT /workspaces/{workspaceID}/comments/{commentID}
 
 ---
 
-### Delete Comment
+### Delete Note
 
-Delete a comment.
+Delete a note.
 
 ```
-DELETE /workspaces/{workspaceID}/comments/{commentID}
+DELETE /api/v1/workspaces/{workspaceID}/workflows/{workflowID}/notes/{noteID}
 ```
 
 **Headers:** `Authorization: Bearer <token>`
@@ -3294,12 +3294,12 @@ DELETE /workspaces/{workspaceID}/comments/{commentID}
 
 ---
 
-### Resolve Comment
+### Resolve Note
 
-Mark a comment as resolved.
+Mark a note as resolved.
 
 ```
-POST /workspaces/{workspaceID}/comments/{commentID}/resolve
+POST /api/v1/workspaces/{workspaceID}/workflows/{workflowID}/notes/{noteID}/resolve
 ```
 
 **Headers:** `Authorization: Bearer <token>`

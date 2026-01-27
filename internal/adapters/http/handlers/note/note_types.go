@@ -9,19 +9,19 @@ import (
 
 // NoteResponse represents a note in API responses
 type NoteResponse struct {
-	ID          uuid.UUID        `json:"id"`
-	WorkspaceID uuid.UUID        `json:"workspace_id"`
-	WorkflowID  uuid.UUID        `json:"workflow_id"`
-	UserID      uuid.UUID        `json:"user_id"`
-	NodeID      *string          `json:"node_id,omitempty"`
-	Content     string           `json:"content"`
-	Resolved    bool             `json:"resolved"`
-	ResolvedAt  *time.Time       `json:"resolved_at,omitempty"`
-	ResolvedBy  *uuid.UUID       `json:"resolved_by,omitempty"`
-	CreatedAt   time.Time        `json:"created_at"`
-	UpdatedAt   time.Time        `json:"updated_at"`
-	User        *UserBrief       `json:"user,omitempty"`
-	ResolvedByUser *UserBrief    `json:"resolved_by_user,omitempty"`
+	ID             uuid.UUID  `json:"id"`
+	WorkspaceID    uuid.UUID  `json:"workspace_id"`
+	WorkflowID     uuid.UUID  `json:"workflow_id"`
+	UserID         uuid.UUID  `json:"user_id"`
+	NodeID         *string    `json:"node_id,omitempty"`
+	Content        string     `json:"content"`
+	Resolved       bool       `json:"resolved"`
+	ResolvedAt     *time.Time `json:"resolved_at,omitempty"`
+	ResolvedBy     *uuid.UUID `json:"resolved_by,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+	User           *UserBrief `json:"user,omitempty"`
+	ResolvedByUser *UserBrief `json:"resolved_by_user,omitempty"`
 }
 
 // UserBrief is a minimal user representation for embedding
@@ -35,8 +35,10 @@ type UserBrief struct {
 
 // CreateNoteRequest is the request body for creating a note
 type CreateNoteRequest struct {
-	Content string  `json:"content" validate:"required,min=1,max=10000"`
-	NodeID  *string `json:"node_id,omitempty" validate:"omitempty,max=100"`
+	Content      string  `json:"content" validate:"required,min=1,max=10000"`
+	NodeID       *string `json:"node_id,omitempty" validate:"omitempty,max=100"`
+	ResourceID   string  `json:"resource_id,omitempty"`
+	ResourceName string  `json:"resource_name,omitempty"`
 }
 
 // UpdateNoteRequest is the request body for updating a note

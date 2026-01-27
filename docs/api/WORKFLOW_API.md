@@ -1078,11 +1078,11 @@ workflow_versions (
 - `DELETE /workspaces/{id}/workflows/{wfId}/variables/{varId}` - Delete variable
 
 ### Workflow Comments
-- `GET /workspaces/{id}/workflows/{wfId}/comments` - List comments
-- `POST /workspaces/{id}/workflows/{wfId}/comments` - Create comment
-- `PUT /comments/{commentId}` - Update comment
-- `DELETE /comments/{commentId}` - Delete comment
-- `POST /comments/{commentId}/resolve` - Resolve comment
+- `GET /api/v1/workspaces/{id}/workflows/{wfId}/notes` - List notes
+- `POST /api/v1/workspaces/{id}/workflows/{wfId}/notes` - Create note
+- `PUT /api/v1/workspaces/{id}/workflows/{wfId}/notes/{noteId}` - Update note
+- `DELETE /api/v1/workspaces/{id}/workflows/{wfId}/notes/{noteId}` - Delete note
+- `POST /api/v1/workspaces/{id}/workflows/{wfId}/notes/{noteId}/resolve` - Resolve note
 
 ### Workflow Webhooks
 - `POST /workspaces/{id}/workflows/{wfId}/webhooks` - Generate webhook

@@ -43,6 +43,8 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/adapters/http/routes"
 	asynqAdapter "github.com/linkflow-ai/linkflow/internal/adapters/messaging/asynq"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models"
+	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/models/note"
 	"github.com/linkflow-ai/linkflow/internal/adapters/persistence/postgres/repositories"
 	redisAdapter "github.com/linkflow-ai/linkflow/internal/adapters/persistence/redis"
 	"github.com/linkflow-ai/linkflow/internal/adapters/websocket"
@@ -138,6 +140,23 @@ func main() {
 		appLogger.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 	defer postgres.Close(db)
+
+	// AutoMigrate models
+	appLogger.Info().Msg("Running database auto-migrations")
+	if err := db.AutoMigrate(
+		&models.User{},
+		&models.Workspace{},
+		&models.Workflow{},
+		&models.WorkflowVersion{},
+		&models.Execution{},
+		&models.NodeExecution{},
+		&models.Folder{},
+		&models.BinaryData{},
+		&models.Variable{},
+		&note.Note{},
+	); err != nil {
+		appLogger.Fatal().Err(err).Msg("Failed to run auto-migrations")
+	}
 
 	redisClient, err := redisAdapter.NewClient(redisAdapter.Config{
 		Host:     cfg.Redis.Host,
@@ -844,7 +863,7 @@ func main() {
 			ListEnvironments: varListEnvHandler.Handle,
 			Resolve:          varResolveHandler.Handle,
 		},
-		Comment: routes.CommentHandlers{
+		Note: routes.NoteHandlers{
 			List:    noteListHandler.Handle,
 			Create:  noteCreateHandler.Handle,
 			Update:  noteUpdateHandler.Handle,
@@ -886,11 +905,11 @@ func main() {
 		mux := http.NewServeMux()
 		mux.Handle(cfg.Metrics.Path, promhttp.Handler())
 		metricsServer = &http.Server{
-			Addr:               cfg.Metrics.GetAddress(),
-			Handler:            mux,
-			ReadHeaderTimeout:  10 * time.Second,
-			ReadTimeout:        30 * time.Second,
-			WriteTimeout:       30 * time.Second,
+			Addr:              cfg.Metrics.GetAddress(),
+			Handler:           mux,
+			ReadHeaderTimeout: 10 * time.Second,
+			ReadTimeout:       30 * time.Second,
+			WriteTimeout:      30 * time.Second,
 		}
 		go func() {
 			appLogger.Info().

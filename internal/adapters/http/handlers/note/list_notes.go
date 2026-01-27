@@ -20,7 +20,12 @@ func NewListNotesHandler(repo note.Repository) *ListNotesHandler {
 }
 
 func (h *ListNotesHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	workflowID, err := uuid.Parse(chi.URLParam(r, "workflowId"))
+	workflowIDStr := chi.URLParam(r, "workflowId")
+	if workflowIDStr == "" {
+		workflowIDStr = r.URL.Query().Get("resource_id")
+	}
+
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		common.BadRequest(w, "invalid workflow ID")
 		return

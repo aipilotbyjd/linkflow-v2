@@ -21,7 +21,7 @@ func NewUpdateNoteHandler(repo note.Repository) *UpdateNoteHandler {
 
 func (h *UpdateNoteHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
-	noteID, err := uuid.Parse(chi.URLParam(r, "noteID"))
+	noteID, err := uuid.Parse(chi.URLParam(r, "noteId"))
 	if err != nil {
 		common.BadRequest(w, "invalid note ID")
 		return
