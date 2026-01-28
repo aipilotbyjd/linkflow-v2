@@ -62,7 +62,7 @@ func (n *TwilioNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send SMS and calls via Twilio",
 		Category:    "integration",
 		Version:     "1.0.0",
-		Icon:        "MessageTextSquare02",
+		Icon:        "Message02",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

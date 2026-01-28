@@ -151,7 +151,7 @@ func (n *ImageNode) Metadata() wtypes.NodeMetadata {
 		Description: "Generate images from text prompts using DALL-E",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "Image03",
+		Icon:        "Image01",
 		Color:       "#06B6D4",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

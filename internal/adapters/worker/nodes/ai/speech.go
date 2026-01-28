@@ -221,7 +221,7 @@ func (n *SpeechNode) Metadata() wtypes.NodeMetadata {
 		Description: "Text-to-speech and speech-to-text using OpenAI",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "Microphone01",
+		Icon:        "Voice",
 		Color:       "#EF4444",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

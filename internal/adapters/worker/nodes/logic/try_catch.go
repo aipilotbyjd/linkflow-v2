@@ -67,7 +67,7 @@ func (n *TryCatchNode) Execute(ctx context.Context, runtime *executor.Runtime, n
 func (n *TryCatchNode) Metadata() wtypes.NodeMetadata {
 	return wtypes.NodeMetadata{
 		Type:        "logic.try_catch",
-		Name:        "Try/Catch",
+		Name:        "Try / Catch",
 		Description: "Handle errors gracefully with try/catch/finally semantics. Supports automatic retries and error recovery.",
 		Category:    "logic",
 		Version:     "1.0.0",
