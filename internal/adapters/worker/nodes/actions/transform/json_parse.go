@@ -48,7 +48,7 @@ func (n *JSONParseNode) Metadata() wtypes.NodeMetadata {
 		Description: "Parse a JSON string into an object",
 		Category:    "transform",
 		Version:     "1.0.0",
-		Icon:        "FileCode",
+		Icon:        "CodeSquare",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
