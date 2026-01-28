@@ -103,7 +103,7 @@ func (n *SendEmailNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send emails via SMTP, SendGrid, AWS SES, or other email providers with support for HTML, attachments, and templates",
 		Category:    "action",
 		Version:     "1.0.0",
-		Icon:        "mail",
+		Icon:        "MailSend01",
 		Color:       "#EA580C",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data for dynamic email content"},

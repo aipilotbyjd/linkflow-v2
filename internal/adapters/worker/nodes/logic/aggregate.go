@@ -82,7 +82,7 @@ func (n *AggregateNode) Metadata() wtypes.NodeMetadata {
 		Description: "Perform aggregation operations on arrays: sum, average, min, max, count, and group by",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "calculator",
+		Icon:        "Layers01",
 		Color:       "#0EA5E9",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "array", Description: "Array of items to aggregate"},

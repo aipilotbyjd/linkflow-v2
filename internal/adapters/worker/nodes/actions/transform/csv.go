@@ -88,6 +88,7 @@ func (n *CSVParseNode) Metadata() wtypes.NodeMetadata {
 		Description: "Parse CSV string into array of objects",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "File02",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "array"}},
 		Parameters: []wtypes.NodeParameter{
@@ -165,6 +166,7 @@ func (n *CSVStringifyNode) Metadata() wtypes.NodeMetadata {
 		Description: "Convert array of objects to CSV string",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "File02",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "array"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Parameters: []wtypes.NodeParameter{

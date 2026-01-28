@@ -132,6 +132,7 @@ func (n *StringOperationNode) Metadata() wtypes.NodeMetadata {
 		Description: "Perform string manipulation operations",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "TextFont",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
@@ -200,6 +201,7 @@ func (n *JoinNode) Metadata() wtypes.NodeMetadata {
 		Description: "Join array elements into a string",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "TextFont",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "array"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Parameters: []wtypes.NodeParameter{

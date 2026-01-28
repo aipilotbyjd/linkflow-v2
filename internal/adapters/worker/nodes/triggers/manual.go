@@ -25,7 +25,7 @@ func (t *ManualTrigger) Metadata() wtypes.NodeMetadata {
 		Description: "Start workflow execution manually via UI or API with optional input data",
 		Category:    "trigger",
 		Version:     "1.0.0",
-		Icon:        "play-circle",
+		Icon:        "Cursor01",
 		Color:       "#22C55E",
 		Inputs:      []wtypes.NodePort{},
 		Outputs: []wtypes.NodePort{

@@ -34,7 +34,7 @@ func (n *SetNode) Metadata() wtypes.NodeMetadata {
 		Description: "Set, transform, or rename fields in your data. Create new objects with computed values.",
 		Category:    "action",
 		Version:     "1.0.0",
-		Icon:        "edit-3",
+		Icon:        "Edit02",
 		Color:       "#F97316",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data to transform"},

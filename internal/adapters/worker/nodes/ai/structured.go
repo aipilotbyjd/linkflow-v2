@@ -160,7 +160,7 @@ func (n *StructuredNode) Metadata() wtypes.NodeMetadata {
 		Description: "Extract structured JSON data from text using a schema",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "brackets",
+		Icon:        "BracketsCheck",
 		Color:       "#14B8A6",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

@@ -57,7 +57,7 @@ func (n *LimitNode) Metadata() wtypes.NodeMetadata {
 		Description: "Limit the number of items and implement pagination with offset support",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "list",
+		Icon:        "FilterHorizontal",
 		Color:       "#84CC16",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "array", Description: "Array of items to limit"},

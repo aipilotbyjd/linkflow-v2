@@ -118,7 +118,7 @@ func (n *VectorStoreNode) Metadata() wtypes.NodeMetadata {
 		Description: "Store and search vector embeddings (Pinecone, PgVector)",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "database",
+		Icon:        "Database01",
 		Color:       "#10B981", // Emerald
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

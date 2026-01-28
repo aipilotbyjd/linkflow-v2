@@ -72,7 +72,7 @@ func (n *SlackNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send messages, upload files, and interact with Slack channels, users, and workflows",
 		Category:    "integration",
 		Version:     "1.0.0",
-		Icon:        "slack",
+		Icon:        "Slack",
 		Color:       "#4A154B",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data for message content"},

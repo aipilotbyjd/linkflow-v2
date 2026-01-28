@@ -140,7 +140,7 @@ func (n *EmbeddingsNode) Metadata() wtypes.NodeMetadata {
 		Description: "Generate vector embeddings for text (for semantic search, RAG, etc.)",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "database",
+		Icon:        "Database01",
 		Color:       "#F59E0B",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

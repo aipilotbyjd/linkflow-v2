@@ -74,7 +74,7 @@ func (n *SortNode) Metadata() wtypes.NodeMetadata {
 		Description: "Sort array items by one or more fields in ascending or descending order",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "arrow-up-down",
+		Icon:        "SortingAZ01",
 		Color:       "#14B8A6",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "array", Description: "Array of items to sort"},

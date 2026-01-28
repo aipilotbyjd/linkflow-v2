@@ -85,7 +85,7 @@ func (n *BrowserNode) Metadata() wtypes.NodeMetadata {
 		Description: "Automate web browsing (scrape, screenshot, interact)",
 		Category:    "action",
 		Version:     "1.0.0",
-		Icon:        "globe",
+		Icon:        "Globe02",
 		Color:       "#3B82F6", // Blue
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

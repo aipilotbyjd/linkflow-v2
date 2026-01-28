@@ -131,6 +131,7 @@ func (n *JiraNode) Metadata() wtypes.NodeMetadata {
 		Description: "Create, update, and manage Jira issues",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "TaskDaily02",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Credentials: []string{"jira"},

@@ -34,7 +34,7 @@ func (n *LoopNode) Metadata() wtypes.NodeMetadata {
 		Description: "Iterate over arrays or execute a fixed number of times. Process each item individually with access to index and item data.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "repeat",
+		Icon:        "Repeat",
 		Color:       "#8B5CF6",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "array", Description: "Array of items to iterate over"},

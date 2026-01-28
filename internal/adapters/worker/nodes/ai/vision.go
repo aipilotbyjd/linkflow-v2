@@ -216,7 +216,7 @@ func (n *VisionNode) Metadata() wtypes.NodeMetadata {
 		Description: "Analyze images using AI vision models",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "eye",
+		Icon:        "Eye",
 		Color:       "#EC4899",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

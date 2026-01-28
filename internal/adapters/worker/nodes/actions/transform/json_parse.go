@@ -48,6 +48,7 @@ func (n *JSONParseNode) Metadata() wtypes.NodeMetadata {
 		Description: "Parse a JSON string into an object",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "BracketsCheck",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
@@ -96,6 +97,7 @@ func (n *JSONStringifyNode) Metadata() wtypes.NodeMetadata {
 		Description: "Convert an object to a JSON string",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "BracketsCheck",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "string"}},
 		Parameters: []wtypes.NodeParameter{

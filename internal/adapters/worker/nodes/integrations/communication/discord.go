@@ -144,7 +144,7 @@ func (n *DiscordNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send messages, embeds, and interact with Discord servers via webhooks or bot API",
 		Category:    "integration",
 		Version:     "1.0.0",
-		Icon:        "message-circle",
+		Icon:        "Discord",
 		Color:       "#5865F2",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data for message content"},

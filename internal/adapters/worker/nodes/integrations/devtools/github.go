@@ -149,7 +149,7 @@ func (n *GitHubNode) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with GitHub repositories: manage issues, pull requests, releases, workflows, and more",
 		Category:    "integration",
 		Version:     "1.0.0",
-		Icon:        "github",
+		Icon:        "Github",
 		Color:       "#181717",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data for GitHub operations"},

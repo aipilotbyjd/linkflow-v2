@@ -71,7 +71,7 @@ func (n *TryCatchNode) Metadata() wtypes.NodeMetadata {
 		Description: "Handle errors gracefully with try/catch/finally semantics. Supports automatic retries and error recovery.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "shield",
+		Icon:        "AlertCircle",
 		Color:       "#EF4444",
 		Inputs: []wtypes.NodePort{
 			{Name: "try", Type: "any", Description: "Main execution path (connect nodes to try)"},

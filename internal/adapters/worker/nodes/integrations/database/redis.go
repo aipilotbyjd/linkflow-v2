@@ -71,6 +71,7 @@ func (n *RedisNode) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with Redis",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Database01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

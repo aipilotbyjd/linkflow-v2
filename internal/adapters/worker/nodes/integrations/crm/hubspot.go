@@ -62,6 +62,7 @@ func (n *HubSpotNode) Metadata() wtypes.NodeMetadata {
 		Description: "Integrate with HubSpot CRM",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "UserGroup",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

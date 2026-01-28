@@ -41,7 +41,7 @@ func (n *WaitNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pause workflow execution for a specified duration or until a specific time",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "clock",
+		Icon:        "Clock02",
 		Color:       "#64748B",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data (passed through after wait)"},

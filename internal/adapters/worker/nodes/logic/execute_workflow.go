@@ -75,6 +75,7 @@ func (n *ExecuteWorkflowNode) Metadata() wtypes.NodeMetadata {
 		Description: "Execute another workflow as a sub-workflow",
 		Category:    "logic",
 		Version:     "1.0.0",
+		Icon:        "Zap",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{

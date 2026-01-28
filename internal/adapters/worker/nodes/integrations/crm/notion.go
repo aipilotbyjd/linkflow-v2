@@ -62,6 +62,7 @@ func (n *NotionNode) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with Notion pages",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Notion",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

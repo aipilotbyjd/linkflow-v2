@@ -148,7 +148,7 @@ func (n *GenerateNode) Metadata() wtypes.NodeMetadata {
 		Description: "Generate text from a single prompt",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "sparkles",
+		Icon:        "Sparkles",
 		Color:       "#8B5CF6",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

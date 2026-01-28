@@ -92,6 +92,7 @@ func (n *ApprovalNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pause workflow until human approval is received",
 		Category:    "logic",
 		Version:     "1.0.0",
+		Icon:        "UserCheck",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "approved", Type: "any"}, {Name: "rejected", Type: "any"}, {Name: "timeout", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
@@ -166,6 +167,7 @@ func (n *WaitForEventNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pause workflow until an external event is received",
 		Category:    "logic",
 		Version:     "1.0.0",
+		Icon:        "Zap",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "event", Type: "any"}, {Name: "timeout", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{

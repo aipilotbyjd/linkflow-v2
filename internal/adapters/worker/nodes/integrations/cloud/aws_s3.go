@@ -98,6 +98,7 @@ func (n *AWSS3Node) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with AWS S3 storage",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "CloudUpload",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

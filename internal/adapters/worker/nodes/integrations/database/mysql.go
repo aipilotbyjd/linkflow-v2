@@ -89,6 +89,7 @@ func (n *MySQLNode) Metadata() wtypes.NodeMetadata {
 		Description: "Query MySQL databases",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Database01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

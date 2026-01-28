@@ -42,7 +42,7 @@ func (n *PostgresNode) Metadata() wtypes.NodeMetadata {
 		Description: "Execute queries and operations on PostgreSQL databases. Supports SELECT, INSERT, UPDATE, DELETE, and raw SQL.",
 		Category:    "integration",
 		Version:     "1.0.0",
-		Icon:        "database",
+		Icon:        "Database01",
 		Color:       "#336791",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data for query parameters"},

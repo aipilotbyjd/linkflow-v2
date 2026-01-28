@@ -74,6 +74,7 @@ func (n *WebhookResponseNode) Metadata() wtypes.NodeMetadata {
 		Description: "Customize the HTTP response for webhook triggers",
 		Category:    "action",
 		Version:     "1.0.0",
+		Icon:        "Link01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
@@ -161,6 +162,7 @@ func (n *RespondToWebhookNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send immediate response to webhook caller",
 		Category:    "action",
 		Version:     "1.0.0",
+		Icon:        "Link01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{

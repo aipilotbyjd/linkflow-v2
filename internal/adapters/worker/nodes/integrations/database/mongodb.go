@@ -104,6 +104,7 @@ func (n *MongoDBNode) Metadata() wtypes.NodeMetadata {
 		Description: "Query MongoDB databases",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Database01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

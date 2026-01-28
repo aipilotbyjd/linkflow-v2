@@ -120,6 +120,7 @@ func (n *GoogleDriveNode) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with Google Drive",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "GoogleDrive",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

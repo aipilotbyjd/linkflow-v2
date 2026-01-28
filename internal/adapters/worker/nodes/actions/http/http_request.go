@@ -119,7 +119,7 @@ func (n *HTTPRequestNode) Metadata() wtypes.NodeMetadata {
 		Description: "Make HTTP requests to external APIs and web services with full control over method, headers, body, and authentication",
 		Category:    "action",
 		Version:     "1.0.0",
-		Icon:        "globe",
+		Icon:        "Globe02",
 		Color:       "#3B82F6",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data available for use in request parameters"},

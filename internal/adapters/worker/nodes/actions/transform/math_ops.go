@@ -83,6 +83,7 @@ func (n *MathOperationNode) Metadata() wtypes.NodeMetadata {
 		Description: "Perform mathematical operations",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "Calculator",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "number"}},
 		Parameters: []wtypes.NodeParameter{
@@ -197,6 +198,7 @@ func (n *AggregateNumbersNode) Metadata() wtypes.NodeMetadata {
 		Description: "Perform aggregate operations on number arrays",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "Calculator",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "array"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "number"}},
 		Parameters: []wtypes.NodeParameter{

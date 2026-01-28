@@ -63,6 +63,7 @@ func (n *AnthropicNode) Metadata() wtypes.NodeMetadata {
 		Description: "Integrate with Anthropic Claude API",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "AiBrain01",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

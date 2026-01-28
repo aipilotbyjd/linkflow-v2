@@ -128,7 +128,7 @@ func (n *RouterNode) Metadata() wtypes.NodeMetadata {
 		Description: "Intelligently route to the optimal AI model based on cost, speed, and capability requirements",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "git-branch",
+		Icon:        "Route01",
 		Color:       "#A855F7",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

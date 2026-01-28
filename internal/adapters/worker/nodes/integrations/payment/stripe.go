@@ -81,6 +81,7 @@ func (n *StripeNode) Metadata() wtypes.NodeMetadata {
 		Description: "Process payments with Stripe",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "CreditCard",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

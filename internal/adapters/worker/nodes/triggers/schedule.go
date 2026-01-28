@@ -25,7 +25,7 @@ func (t *ScheduleTrigger) Metadata() wtypes.NodeMetadata {
 		Description: "Trigger workflow automatically on a recurring schedule using cron expressions or intervals",
 		Category:    "trigger",
 		Version:     "1.0.0",
-		Icon:        "clock",
+		Icon:        "Clock01",
 		Color:       "#8B5CF6",
 		Inputs:      []wtypes.NodePort{},
 		Outputs: []wtypes.NodePort{

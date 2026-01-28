@@ -122,7 +122,7 @@ func (n *JavaScriptNode) Metadata() wtypes.NodeMetadata {
 		Description: "Execute custom JavaScript code to transform data, perform calculations, or implement custom logic",
 		Category:    "action",
 		Version:     "1.0.0",
-		Icon:        "code",
+		Icon:        "SourceCodeSquare",
 		Color:       "#F7DF1E",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data available as $input variable"},

@@ -60,6 +60,7 @@ func (n *TelegramNode) Metadata() wtypes.NodeMetadata {
 		Description: "Send messages via Telegram",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Telegram",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

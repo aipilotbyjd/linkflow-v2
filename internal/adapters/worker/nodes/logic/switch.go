@@ -44,7 +44,7 @@ func (n *SwitchNode) Metadata() wtypes.NodeMetadata {
 		Description: "Route data to multiple branches based on matching values. Like a multi-way if statement with multiple possible outputs.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "shuffle",
+		Icon:        "Route01",
 		Color:       "#EC4899",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data to evaluate"},

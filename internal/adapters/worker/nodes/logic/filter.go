@@ -73,7 +73,7 @@ func (n *FilterNode) Metadata() wtypes.NodeMetadata {
 		Description: "Filter array items based on conditions. Keep only items that match specified criteria.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "filter",
+		Icon:        "FilterHorizontal",
 		Color:       "#06B6D4",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "array", Description: "Array of items to filter"},

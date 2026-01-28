@@ -241,7 +241,7 @@ func (n *AgentNode) Metadata() wtypes.NodeMetadata {
 		Description: "Autonomous AI agent that uses tools to accomplish tasks",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "bot",
+		Icon:        "AiBrain01",
 		Color:       "#6366F1",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

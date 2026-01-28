@@ -199,7 +199,7 @@ func (n *ChatNode) Metadata() wtypes.NodeMetadata {
 		Description: "Multi-turn AI chat conversation with support for tools and vision",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "message-circle",
+		Icon:        "MessageChatCircle",
 		Color:       "#10B981",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

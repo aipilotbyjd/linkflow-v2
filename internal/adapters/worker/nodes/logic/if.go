@@ -50,7 +50,7 @@ func (n *IfNode) Metadata() wtypes.NodeMetadata {
 		Description: "Route data to different branches based on conditions. Supports multiple condition types including comparisons, regex, and expressions.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "git-branch",
+		Icon:        "GitBranch",
 		Color:       "#F59E0B",
 		Inputs: []wtypes.NodePort{
 			{Name: "main", Type: "any", Description: "Input data to evaluate"},

@@ -220,7 +220,7 @@ func (n *EvaluateNode) Metadata() wtypes.NodeMetadata {
 		Description: "Use LLM-as-a-judge to evaluate content quality, accuracy, or custom criteria",
 		Category:    "ai",
 		Version:     "1.0.0",
-		Icon:        "check-circle",
+		Icon:        "CheckmarkCircle01",
 		Color:       "#22C55E",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},

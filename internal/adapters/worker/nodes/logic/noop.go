@@ -26,6 +26,7 @@ func (n *NoopNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pass-through node that does nothing",
 		Category:    "logic",
 		Version:     "1.0.0",
+		Icon:        "Circle",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters:  []wtypes.NodeParameter{},

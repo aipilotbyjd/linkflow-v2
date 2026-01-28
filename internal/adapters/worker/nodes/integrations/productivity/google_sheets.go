@@ -96,6 +96,7 @@ func (n *GoogleSheetsNode) Metadata() wtypes.NodeMetadata {
 		Description: "Read, write, and manage Google Sheets",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Table",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Credentials: []string{"google_sheets"},

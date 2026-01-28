@@ -28,7 +28,7 @@ func (n *MergeNode) Metadata() wtypes.NodeMetadata {
 		Description: "Combine data from multiple branches into a single output. Useful for joining parallel paths.",
 		Category:    "logic",
 		Version:     "1.0.0",
-		Icon:        "git-merge",
+		Icon:        "GitMerge",
 		Color:       "#A855F7",
 		Inputs: []wtypes.NodePort{
 			{Name: "input1", Type: "any", Description: "First input branch"},

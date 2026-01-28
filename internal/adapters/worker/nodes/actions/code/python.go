@@ -121,6 +121,7 @@ func (n *PythonNode) Metadata() wtypes.NodeMetadata {
 		Description: "Execute Python code with full standard library access",
 		Category:    "action",
 		Version:     "1.0.0",
+		Icon:        "SourceCodeSquare",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Parameters: []wtypes.NodeParameter{
@@ -235,6 +236,7 @@ func (n *TypeScriptNode) Metadata() wtypes.NodeMetadata {
 		Description: "Execute TypeScript code with type safety",
 		Category:    "action",
 		Version:     "1.0.0",
+		Icon:        "SourceCodeSquare",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}, {Name: "error", Type: "error"}},
 		Parameters: []wtypes.NodeParameter{

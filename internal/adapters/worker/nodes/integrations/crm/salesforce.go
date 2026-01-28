@@ -72,6 +72,7 @@ func (n *SalesforceNode) Metadata() wtypes.NodeMetadata {
 		Description: "Integrate with Salesforce CRM",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "CloudUpload",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

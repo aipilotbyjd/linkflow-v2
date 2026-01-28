@@ -77,6 +77,7 @@ func (n *AirtableNode) Metadata() wtypes.NodeMetadata {
 		Description: "Interact with Airtable bases",
 		Category:    "integration",
 		Version:     "1.0.0",
+		Icon:        "Table",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}},
 		Parameters:  []wtypes.NodeParameter{},

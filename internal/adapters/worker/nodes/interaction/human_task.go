@@ -92,7 +92,7 @@ func (n *HumanTaskNode) Metadata() wtypes.NodeMetadata {
 		Description: "Pause workflow and request human input via a form",
 		Category:    "interaction",
 		Version:     "1.0.0",
-		Icon:        "user-check",
+		Icon:        "UserCheck",
 		Color:       "#EC4899", // Pink/Magenta
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "object"}, {Name: "timeout", Type: "any"}},

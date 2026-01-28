@@ -167,6 +167,7 @@ func (n *DateTimeNode) Metadata() wtypes.NodeMetadata {
 		Description: "Parse, format, and manipulate dates and times",
 		Category:    "transform",
 		Version:     "1.0.0",
+		Icon:        "Calendar03",
 		Inputs:      []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Outputs:     []wtypes.NodePort{{Name: "main", Type: "any"}},
 		Parameters: []wtypes.NodeParameter{
