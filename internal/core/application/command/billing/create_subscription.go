@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
+	"github.com/rs/zerolog/log"
 )
 
 type CreateSubscriptionCommand struct {
@@ -39,7 +40,9 @@ func (h *CreateSubscriptionHandler) Handle(ctx context.Context, cmd CreateSubscr
 	}
 
 	if h.eventBus != nil {
-		_ = h.eventBus.Publish(ctx, events.NewBaseEvent("subscription.created", sub.ID, "subscription"))
+		if err := h.eventBus.Publish(ctx, events.NewBaseEvent("subscription.created", sub.ID, "subscription")); err != nil {
+			log.Error().Err(err).Msg("failed to publish subscription.created event")
+		}
 	}
 
 	return sub, nil

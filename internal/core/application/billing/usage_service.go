@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/rs/zerolog/log"
 )
 
 // UsageService handles all usage tracking and enforcement
@@ -68,8 +69,10 @@ func (s *UsageService) CheckAndConsumeOperations(ctx context.Context, workspaceI
 
 	// -1 means unlimited
 	if limits.OperationsPerMonth < 0 {
+		if err := s.usageRepo.IncrementOperations(ctx, workspaceID, count); err != nil {
+			log.Error().Err(err).Msg("failed to update operations usage for unlimited plan")
+		}
 		usage.IncrementOperations(count)
-		_ = s.usageRepo.Update(ctx, usage)
 		s.updateCacheWithPlan(workspaceID, usage, limits, planID)
 		return nil
 	}
@@ -100,17 +103,18 @@ func (s *UsageService) CheckAndConsumeOperations(ctx context.Context, workspaceI
 	// Check if entering overage territory
 	if newTotal > limit {
 		// Allow but mark as overage
-		usage.IncrementOperations(remaining)
-		if err := s.usageRepo.Update(ctx, usage); err != nil {
+		if err := s.usageRepo.IncrementOperations(ctx, workspaceID, remaining); err != nil {
 			return err
 		}
+		usage.IncrementOperations(remaining)
+
 		// Trigger overage alert
 		s.alertService.TriggerOverageAlert(workspaceID, billing.AlertTypeOperations, newTotal-limit)
 	} else {
-		usage.IncrementOperations(remaining)
-		if err := s.usageRepo.Update(ctx, usage); err != nil {
+		if err := s.usageRepo.IncrementOperations(ctx, workspaceID, remaining); err != nil {
 			return err
 		}
+		usage.IncrementOperations(remaining)
 	}
 
 	// Check and trigger threshold alerts
@@ -145,8 +149,10 @@ func (s *UsageService) CheckAndConsumeAICredits(ctx context.Context, workspaceID
 
 	// -1 means unlimited
 	if limits.AICreditsPerMonth < 0 {
+		if err := s.usageRepo.IncrementAICredits(ctx, workspaceID, credits); err != nil {
+			log.Error().Err(err).Msg("failed to update AI credits usage for unlimited plan")
+		}
 		usage.IncrementAICredits(credits)
-		_ = s.usageRepo.Update(ctx, usage)
 		s.updateCacheWithPlan(workspaceID, usage, limits, planID)
 		return nil
 	}
@@ -172,10 +178,10 @@ func (s *UsageService) CheckAndConsumeAICredits(ctx context.Context, workspaceID
 		return ErrAICreditsExceeded
 	}
 
-	usage.IncrementAICredits(remaining)
-	if err := s.usageRepo.Update(ctx, usage); err != nil {
+	if err := s.usageRepo.IncrementAICredits(ctx, workspaceID, remaining); err != nil {
 		return err
 	}
+	usage.IncrementAICredits(remaining)
 
 	// Check thresholds
 	percentage := float64(usage.AICreditsUsed) / float64(limit) * 100
@@ -456,6 +462,11 @@ func (s *UsageService) updateCacheWithPlan(workspaceID uuid.UUID, usage *billing
 }
 
 func (s *UsageService) getUsageAndLimitsWithPlan(ctx context.Context, workspaceID uuid.UUID) (*billing.Usage, *billing.Limits, string, error) {
+	// Check cache first
+	if cached, ok := s.cache[workspaceID]; ok && time.Now().Before(cached.expiresAt) {
+		return cached.usage, cached.limits, cached.planID, nil
+	}
+
 	// Get subscription - use free plan if no subscription exists
 	planID := "free"
 	sub, err := s.subscriptionRepo.FindByWorkspaceID(ctx, workspaceID)

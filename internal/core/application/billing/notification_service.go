@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/linkflow-ai/linkflow/internal/core/domain/billing"
+	"github.com/rs/zerolog/log"
 )
 
 // NotificationService handles sending usage alerts via various channels
@@ -90,7 +91,9 @@ func (s *NotificationService) SendAlert(ctx context.Context, alert *billing.Usag
 	alertLog.ChannelsSent = sentChannels
 	alertLog.Message = message
 	if s.alertLogRepo != nil {
-		_ = s.alertLogRepo.Create(ctx, alertLog)
+		if err := s.alertLogRepo.Create(ctx, alertLog); err != nil {
+			log.Error().Err(err).Msg("failed to create alert log")
+		}
 	}
 
 	return nil
@@ -106,11 +109,15 @@ func (s *NotificationService) SendOverageAlert(ctx context.Context, workspaceID 
 
 	if channels.Email && len(channels.EmailAddrs) > 0 {
 		subject := fmt.Sprintf("[ACTION REQUIRED] %s Overage Alert", alertType)
-		_ = s.emailSender.SendEmail(ctx, channels.EmailAddrs, subject, message)
+		if err := s.emailSender.SendEmail(ctx, channels.EmailAddrs, subject, message); err != nil {
+			log.Error().Err(err).Msg("failed to send overage alert email")
+		}
 	}
 
 	if channels.Slack && channels.SlackWebhook != "" {
-		_ = s.slackClient.SendMessage(ctx, channels.SlackWebhook, message)
+		if err := s.slackClient.SendMessage(ctx, channels.SlackWebhook, message); err != nil {
+			log.Error().Err(err).Msg("failed to send overage alert slack message")
+		}
 	}
 
 	return nil

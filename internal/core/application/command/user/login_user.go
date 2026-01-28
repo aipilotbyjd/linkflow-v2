@@ -9,6 +9,7 @@ import (
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/auth/jwt"
 	"github.com/linkflow-ai/linkflow/internal/infrastructure/crypto"
 	"github.com/linkflow-ai/linkflow/internal/shared/events"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -74,12 +75,16 @@ func (h *LoginUserHandler) Handle(ctx context.Context, cmd LoginUserCommand) (*L
 	// Verify password
 	if !crypto.CheckPassword(cmd.Password, u.PasswordHash) {
 		// Track failed login
-		_ = h.userRepo.IncrementFailedLogins(ctx, u.ID)
+		if err := h.userRepo.IncrementFailedLogins(ctx, u.ID); err != nil {
+			log.Error().Err(err).Msg("failed to increment failed logins")
+		}
 
 		// Lock account if too many failures
 		if u.FailedLogins >= MaxFailedLoginAttempts-1 {
 			lockUntil := time.Now().Add(AccountLockDuration)
-			_ = h.userRepo.LockUser(ctx, u.ID, lockUntil)
+			if err := h.userRepo.LockUser(ctx, u.ID, lockUntil); err != nil {
+				log.Error().Err(err).Msg("failed to lock user account")
+			}
 		}
 
 		return nil, user.ErrInvalidCredentials
@@ -98,7 +103,9 @@ func (h *LoginUserHandler) Handle(ctx context.Context, cmd LoginUserCommand) (*L
 	}
 
 	// Update last login
-	_ = h.userRepo.UpdateLastLogin(ctx, u.ID)
+	if err := h.userRepo.UpdateLastLogin(ctx, u.ID); err != nil {
+		log.Error().Err(err).Msg("failed to update last login")
+	}
 
 	// Generate tokens
 	tokenPair, err := h.jwtManager.GenerateTokenPair(u.ID, u.Email, nil)
@@ -112,6 +119,7 @@ func (h *LoginUserHandler) Handle(ctx context.Context, cmd LoginUserCommand) (*L
 
 	if err := h.sessionRepo.Create(ctx, session); err != nil {
 		// Non-fatal, continue
+		log.Warn().Err(err).Msg("failed to create session")
 	}
 
 	// Publish event
@@ -122,7 +130,9 @@ func (h *LoginUserHandler) Handle(ctx context.Context, cmd LoginUserCommand) (*L
 			IPAddress: cmd.IPAddress,
 			UserAgent: cmd.UserAgent,
 		}
-		_ = h.eventBus.Publish(ctx, event)
+		if err := h.eventBus.Publish(ctx, event); err != nil {
+			log.Error().Err(err).Msg("failed to publish user.logged_in event")
+		}
 	}
 
 	return &LoginUserResult{
